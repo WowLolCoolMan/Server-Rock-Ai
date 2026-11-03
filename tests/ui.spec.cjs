@@ -57,6 +57,41 @@ test("workspace exposes model and tool entry points and advanced temperature con
   await page.locator("#temperatureControl").fill("1.2");
   await expect(page.locator("#temperatureValue")).toHaveText("1.2");
 });
+test("Core updates expose clear sign-in, stable check, download and recovery states", async ({ page }) => {
+  await page.addInitScript(() => {
+    let signedIn = true;
+    window.desktopModels = {
+      aiUpdateStatus: async () => ({ configured: true, signedIn, currentVersion: "0.1.2" }),
+      aiUpdateSignIn: async () => { signedIn = true; return { signedIn }; },
+      aiUpdateSignOut: async () => { signedIn = false; return { signedIn }; },
+      aiUpdateCheck: async (ring) => ({ version: ring === "stable" ? "0.1.3" : "0.1.4-beta.1", currentVersion: "0.1.2", rollbackVersion: "0.1.2", available: true }),
+      aiUpdateDownload: async (_ring, version) => ({ opened: true, version: version || "0.1.3" }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#coreUpdates summary").click();
+  await expect(page.locator("#coreAccountStatus")).toHaveText(/Signed in/);
+  await page.locator("#coreUpdateCheck").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("Version 0.1.3 is ready");
+  await expect(page.locator("#coreUpdateDownload")).toBeEnabled();
+  await expect(page.locator("#coreUpdateRollback")).toBeEnabled();
+  await page.locator("#coreUpdateDownload").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("Complete the operating-system install");
+  await page.locator("#coreUpdateRollback").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("verified recovery installer 0.1.2");
+});
+test("Core update actions stay disabled when this build has no pinned distribution configuration", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = { aiUpdateStatus: async () => ({ configured: false, signedIn: false, currentVersion: "0.1.2" }) };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#coreUpdates summary").click();
+  await expect(page.locator("#coreAccountStatus")).toHaveText("Core updates are not configured in this build.");
+  await expect(page.locator("#coreAccountAction")).toBeDisabled();
+  await expect(page.locator("#coreUpdateCheck")).toBeDisabled();
+});
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
 }) => {

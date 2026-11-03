@@ -312,6 +312,22 @@
           <span class="github-controls"><input id="githubClientId" autocomplete="off" placeholder="GitHub App client ID" /><button type="button" id="githubConnect">Connect</button><button type="button" id="githubOpenRepos">Browse repositories</button></span>
         </div>
         <div id="githubDeviceCode" class="modal-note github-device-code" hidden><span id="githubDeviceCodeText"></span><button type="button" id="githubCancelAuth">Cancel sign-in</button></div>
+        <details class="settings-group" id="coreUpdates">
+          <summary>Server Rock Core downloads and updates</summary>
+          <p class="muted">Free Server Rock: AI downloads and updates require a signed-in Server Rock website account. Stable is recommended; beta receives prerelease builds. Core verifies the signed release manifest and package digest before offering an installer.</p>
+          <div class="setting-row">
+            <div><b>Server Rock account</b><small id="coreAccountStatus">Checking update configuration…</small></div>
+            <div class="core-update-actions"><button type="button" id="coreAccountAction">Sign in with Server Rock</button></div>
+          </div>
+          <div class="setting-row">
+            <div><b>Release channel</b><small id="coreUpdateStatus">Check for a signed release for this computer.</small></div>
+            <div class="core-update-actions"><select id="coreUpdateRing"><option value="stable">Stable</option><option value="beta">Beta</option></select><button type="button" id="coreUpdateCheck">Check for updates</button></div>
+          </div>
+          <div class="setting-row">
+            <div><b>Verified package</b><small>Review the operating-system installer prompt before opening.</small></div>
+            <div class="core-update-actions"><button type="button" id="coreUpdateDownload" disabled>Download update</button><button type="button" id="coreUpdateRollback" disabled>Download recovery version</button></div>
+          </div>
+        </details>
         <div class="setting-row" id="endpointSettingRow">
           <div>
             <b>Endpoint</b><small>Local services work without an account</small>
@@ -448,8 +464,7 @@
           </select>
         </div>
         <div class="setting-row">
-          <div><b>Application updates</b><small id="updateStatus">Check GitHub releases for a newer Server Rock: AI build.</small></div>
-          <span class="update-controls"><button type="button" id="checkUpdates">Check for updates</button><button type="button" id="downloadUpdate" hidden>Download</button><button type="button" id="installUpdate" hidden>Restart and install</button></span>
+          <div><b>Application updates</b><small>Use the signed Server Rock Core controls above. GitHub source releases are not the customer download or update channel.</small></div>
         </div>
         <div class="modal-note">
           Server Rock: AI makes no telemetry or analytics requests. Cloud

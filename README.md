@@ -34,7 +34,7 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
 - Voice turn-taking with microphone speech recognition and spoken replies; click the mic again to interrupt audio and stop listening. Speech recognition availability and whether transcription is offline depend on the installed Electron/OS speech service.
 - Attach an image for offline captioning/OCR or local image-to-image processing with compatible downloaded ONNX models.
-- No analytics, telemetry, or background update checks. The app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you explicitly search the catalog or download a selected model.
+- No analytics or telemetry. Core release checks are user initiated; the app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you explicitly search the catalog or download a selected model.
 
 ## Run locally
 
@@ -55,13 +55,21 @@ npm run build:mac   # DMG and ZIP
 npm run build:linux # AppImage, DEB, and tar.gz
 ```
 
-GitHub Actions builds Windows x64, macOS Intel x64 and Apple Silicon arm64, and Linux x64 and arm64. Push a version tag such as `v0.2.0` to attach all platform files and a `SHA256SUMS.txt` checksum list to one GitHub Release. A manual workflow run builds downloadable artifacts without publishing a release. The website can link to the latest GitHub Release or list its attached assets. The site deployment source is not included here. Updates are currently user initiated: download and install the newer version; the app does not check for updates in the background.
+GitHub Actions builds Windows x64, macOS Intel x64 and Apple Silicon arm64, and Linux x64 and arm64. Push a version tag such as `v0.2.0` to attach platform artifacts and a `SHA256SUMS.txt` checksum list to a GitHub Release. A manual workflow run builds artifacts without publishing a release. These repository release assets are build outputs for the owner; customer downloads and updates use the signed-in Server Rock Core flow below, not direct GitHub release links. Updates are user initiated, with no background check.
 
 The Windows NSIS wizard supports a per-user install, a selectable destination, and optional desktop/Start Menu shortcuts. The portable executable runs without installation. Windows' Apps & Features entry launches the included uninstaller. Uninstall preserves the user's Server Rock: AI profile by default; remove app data separately if you also want to erase local conversations and settings. Linux AppImage is a portable single file; DEB integrates with Debian/Ubuntu package tools, and tar.gz is a generic archive. macOS DMG installs by dragging the app to Applications; ZIP is an alternative archive. Builds are unsigned unless release signing certificates are configured, so Windows SmartScreen or macOS Gatekeeper may warn users.
 
-## Free distribution
+## Server Rock Core free distribution and updates
 
-Push a version tag such as `v0.1.0` to build installers and attach them to a GitHub Release. Updates are currently user initiated: download and run the newer installer. The app does not check for updates in the background. Link the Windows installer and other platform builds from `www.server-rock.com`; the site repository/hosting configuration is not present in this workspace. The app contains no paid feature gates or telemetry.
+The app includes a user-initiated Core updater. In **Settings → Server Rock Core downloads and updates**, sign in through the existing Server Rock Google website flow, choose Stable or Beta, and check for a release. The website and app require a verified Server Rock account, not a paid purchase or subscription. The app keeps the Core session in Electron `safeStorage`; signing out removes the locally stored session.
+
+Core signs a platform-specific release manifest with Ed25519. The app pins Core's public key, verifies the signed manifest and its exact Core-hosted artifact URL, then downloads to a private app-data folder and verifies SHA-256 before showing an operating-system installer prompt. The updater does not silently replace a running installation: Windows opens the per-user NSIS installer, macOS opens the DMG, and Linux launches the verified AppImage so the user can place it at their usual install path. Profiles and local conversation data remain separate from these installer steps. Rollback is offered only for the prior version explicitly named in the current signed channel manifest.
+
+The tagged build workflow accepts `vX.Y.Z` stable and `vX.Y.Z-beta.N` prerelease tags. Configure the GitHub repository variables `SERVER_ROCK_AI_CORE_ORIGIN` and `SERVER_ROCK_UPDATE_PUBLIC_KEY_B64` before building a release; CI fails closed when either is absent. The public key must match Core's Ed25519 manifest signer. Never put Core's private signing key in this repository.
+
+Core release publication is a separate owner action. Copy each finished platform artifact into Core's private `SERVER_ROCK_PRIVATE_INSTALLER_DIRECTORY` using `scripts/stage_server_rock_ai_release.py`, then publish its emitted manifest through Core's authenticated `/api/admin/releases` workflow. Core serves immutable versioned artifacts only after signature configuration and the staged SHA-256 match. For a later version, the manifest must name the previous published version as `rollback_version`. This repository cannot confirm the Core production directory, signing key, owner API credentials, Google OAuth setup, GitHub variables, or whether a release has been published; those must be checked in the actual environments before distribution is described as live.
+
+The app has no automatic background check, native Windows/macOS code signing or macOS notarization in this updater slice, and no unattended self-replacement. Core's signed-manifest and SHA-256 checks detect artifact substitution when the Core signing key remains trusted; changing/rotating that key requires a coordinated app release. Stable website downloads appear only after a stable artifact is staged and published in Core. Beta is for desktop updater users; it is not listed as a stable website download. No paid AI entitlement or telemetry is added.
 
 ## Providers and privacy
 

@@ -74,4 +74,10 @@ contextBridge.exposeInMainWorld("desktopModels", {
       .finally(() => ipcRenderer.removeListener("chatgpt:chunk", h));
   },
   cancelChatGPT: (id) => ipcRenderer.send("chatgpt:cancel", id),
+  aiUpdateStatus: () => ipcRenderer.invoke("ai-updates:status"),
+  aiUpdateSignIn: () => ipcRenderer.invoke("ai-updates:signin"),
+  aiUpdateSignOut: () => ipcRenderer.invoke("ai-updates:signout"),
+  aiUpdateCheck: (ring) => ipcRenderer.invoke("ai-updates:check", ring),
+  aiUpdateRollback: (ring) => ipcRenderer.invoke("ai-updates:rollback", ring),
+  aiUpdateDownload: (ring, version) => ipcRenderer.invoke("ai-updates:download", ring, version),
 });

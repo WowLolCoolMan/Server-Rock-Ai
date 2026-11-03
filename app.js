@@ -910,6 +910,71 @@ document.querySelectorAll("[data-agent-mode]").forEach(
 );
 updateAgentModeLabel();
 $("#settings").onclick = () => $("#settingsDialog").showModal();
+let checkedCoreUpdate = null;
+async function refreshCoreUpdateStatus() {
+  const status = await window.desktopModels.aiUpdateStatus();
+  $("#coreAccountAction").disabled = !status.configured;
+  $("#coreUpdateCheck").disabled = !status.configured;
+  $("#coreAccountStatus").textContent = !status.configured
+    ? "Core updates are not configured in this build."
+    : status.signedIn ? "Signed in. Free downloads do not require a paid entitlement." : "Sign in to access free downloads and updates.";
+  $("#coreAccountAction").textContent = status.signedIn ? "Sign out" : "Sign in with Server Rock";
+  return status;
+}
+$("#coreAccountAction").onclick = async () => {
+  const button = $("#coreAccountAction");
+  button.disabled = true;
+  try {
+    const status = await window.desktopModels.aiUpdateStatus();
+    if (status.signedIn) await window.desktopModels.aiUpdateSignOut();
+    else await window.desktopModels.aiUpdateSignIn();
+    checkedCoreUpdate = null;
+    $("#coreUpdateDownload").disabled = true;
+    $("#coreUpdateRollback").disabled = true;
+    await refreshCoreUpdateStatus();
+  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
+  finally { button.disabled = false; }
+};
+$("#coreUpdateCheck").onclick = async () => {
+  const button = $("#coreUpdateCheck");
+  button.disabled = true;
+  try {
+    checkedCoreUpdate = await window.desktopModels.aiUpdateCheck($("#coreUpdateRing").value);
+    const updateAvailable = checkedCoreUpdate.available;
+    $("#coreUpdateStatus").textContent = updateAvailable
+      ? `Version ${checkedCoreUpdate.version} is ready (you have ${checkedCoreUpdate.currentVersion}).`
+      : `You have ${checkedCoreUpdate.currentVersion}; Core reports ${checkedCoreUpdate.version} as current.`;
+    $("#coreUpdateDownload").disabled = !updateAvailable;
+    $("#coreUpdateRollback").disabled = !checkedCoreUpdate.rollbackVersion;
+  } catch (error) {
+    checkedCoreUpdate = null;
+    $("#coreUpdateStatus").textContent = error.message;
+    $("#coreUpdateDownload").disabled = true;
+    $("#coreUpdateRollback").disabled = true;
+  } finally { button.disabled = false; }
+};
+$("#coreUpdateDownload").onclick = async () => {
+  if (!checkedCoreUpdate?.available) return;
+  const button = $("#coreUpdateDownload");
+  button.disabled = true;
+  try {
+    const result = await window.desktopModels.aiUpdateDownload($("#coreUpdateRing").value);
+    $("#coreUpdateStatus").textContent = result.opened ? `Opened verified installer ${result.version}. Complete the operating-system install to update.` : `Verified ${result.version}; downloaded package kept for later.`;
+  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
+  finally { button.disabled = !checkedCoreUpdate?.available; }
+};
+$("#coreUpdateRollback").onclick = async () => {
+  if (!checkedCoreUpdate?.rollbackVersion) return;
+  const button = $("#coreUpdateRollback");
+  button.disabled = true;
+  try {
+    const result = await window.desktopModels.aiUpdateDownload($("#coreUpdateRing").value, checkedCoreUpdate.rollbackVersion);
+    $("#coreUpdateStatus").textContent = result.opened ? `Opened verified recovery installer ${result.version}. Complete the operating-system install to recover.` : `Verified ${result.version}; recovery package kept for later.`;
+  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
+  finally { button.disabled = !checkedCoreUpdate?.rollbackVersion; }
+};
+$("#coreUpdateRing").onchange = () => { checkedCoreUpdate = null; $("#coreUpdateDownload").disabled = true; $("#coreUpdateRollback").disabled = true; $("#coreUpdateStatus").textContent = "Check for a signed release for this computer."; };
+$("#coreUpdates").addEventListener("toggle", () => { if ($("#coreUpdates").open) refreshCoreUpdateStatus().catch((error) => { $("#coreAccountStatus").textContent = error.message; }); });
 $(".close").onclick = () => $("#settingsDialog").close();
 function renderUpdateState(update) {
   const status = $("#updateStatus");
@@ -926,15 +991,18 @@ function renderUpdateState(update) {
   else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
   else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
 }
-$("#checkUpdates").onclick = async () => {
+const checkUpdatesButton = $("#checkUpdates");
+if (checkUpdatesButton) checkUpdatesButton.onclick = async () => {
   try { renderUpdateState(await window.desktopModels.checkForUpdates()); }
   catch (error) { renderUpdateState({ status: "error", message: error.message }); }
 };
-$("#downloadUpdate").onclick = async () => {
+const downloadUpdateButton = $("#downloadUpdate");
+if (downloadUpdateButton) downloadUpdateButton.onclick = async () => {
   try { renderUpdateState(await window.desktopModels.downloadUpdate()); }
   catch (error) { renderUpdateState({ status: "error", message: error.message }); }
 };
-$("#installUpdate").onclick = () => window.desktopModels.installUpdate();
+const installUpdateButton = $("#installUpdate");
+if (installUpdateButton) installUpdateButton.onclick = () => window.desktopModels.installUpdate();
 window.desktopModels?.updateState?.().then(renderUpdateState);
 window.desktopModels?.onUpdateState?.(renderUpdateState);
 $("#githubConnect").onclick = async () => {

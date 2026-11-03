@@ -1,18 +1,11 @@
-# Rolling updates
+# Server Rock Core rolling updates
 
-Packaged Server Rock: AI builds use electron-updater with GitHub Releases as the update channel. The application checks only when the user selects Check for updates in Settings; there is no background telemetry or analytics service.
+Customer downloads and rolling updates use the signed-in Server Rock Core API. GitHub Releases remain owner-side build outputs and are not the customer distribution URL. A packaged customer build must include `SERVER_ROCK_AI_CORE_ORIGIN` and the raw Ed25519 public key in `SERVER_ROCK_UPDATE_PUBLIC_KEY_B64`; CI fails if either release variable is missing. The matching private key stays in Core.
 
-## Release workflow
+1. Build stable tags `vX.Y.Z` or beta tags `vX.Y.Z-beta.N`. GitHub Actions builds the supported platform packages and retains an owner-side GitHub Release as a source/build artifact.
+2. An authorized Core operator copies each finished package into Core's private artifact directory with `scripts/stage_server_rock_ai_release.py`. The script emits the URL, immutable version/channel, and SHA-256 manifest data. The operator publishes that manifest through Core's existing authenticated `/api/admin/releases` endpoint, where Core signs it.
+3. Core serves only allowlisted `ai-stable-*` and `ai-beta-*` channel paths. Each artifact is private, versioned and immutable. The signed manifest binds channel, version, exact Core URL, SHA-256, minimum version and rollback version.
+4. In Settings, users sign into the existing Core account, choose Stable or Beta, and press Check for updates. The AI app uses the one-time desktop Google sign-in handoff, encrypts the Core session with Electron safeStorage, verifies Ed25519 before accepting the manifest, downloads without redirects, and verifies SHA-256 before opening the OS installer.
+5. The installer remains user controlled. Windows opens the per-user NSIS installer, macOS opens the DMG, and Linux launches the verified AppImage for the user to place at their install path. Profiles and conversations are not removed. Recovery is offered only for the prior version in the latest signed channel manifest.
 
-1. Update the version in package.json.
-2. Build the platform artifacts:
-   - Windows: npm run build:win
-   - Linux: npm run build:linux
-   - macOS: npm run build:mac
-3. Create a GitHub Release tagged with the exact version, for example v0.1.3.
-4. Upload the generated installer artifacts and the generated update metadata files (latest.yml, latest-linux.yml, or latest-mac.yml plus its blockmap files).
-5. Users can check for the new release in Settings. They choose when to download and when to restart and install it.
-
-The GitHub repository is configured in package.json under build.publish. Development runs intentionally report that updates are available only in packaged builds.
-
-Windows NSIS installs support in-app replacement. Portable Windows builds can detect a release but should use the downloaded installer for replacement because a running portable executable cannot safely replace itself.
+The client does not use `electron-updater`'s GitHub provider in a Core-configured customer build. Update checks are manual, not background. This updater slice does not add native Authenticode signing, Apple notarization, autonomous replacement or update-key rotation. Signed manifest plus SHA-256 protects package integrity while the pinned Core key remains trusted. No deployment, key, repository variables, staged package or published AI channel is claimed configured until verified in that environment.
