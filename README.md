@@ -8,10 +8,10 @@ A local-first desktop workspace for chatting with local models and compatible AI
 
 - Windows, macOS, and Linux Electron desktop packaging.
 - Conversation history and preferences stored in the local browser profile.
-- OpenAI-compatible streaming chat endpoint configuration, including Ollama-compatible endpoints, LM Studio, and other local servers.
+- Model picker scans known local hosts (Ollama, LM Studio, Jan, LocalAI, llama.cpp, vLLM, KoboldCpp, and Text Generation WebUI), lists available models, and shows measured per-model latency and throughput after use. It also lists models from a configured compatible/cloud endpoint.
 - Optional API key for endpoints that require one. Keys are stored in the local browser profile; avoid shared Windows accounts.
 - Light and dark themes, attachment picker, and workspace chat history.
-- Choose Chatbot or Coding agent mode. Coding agent mode can create named projects and add local source folders with the native folder picker; folder paths are kept in the local app profile.
+- Choose Chatbot or Coding Agent from the Codex-style mode switch. Coding Agent mode can create named projects and add local source folders with the native folder picker; folder paths are kept in the local app profile.
 - Live response streaming with a Stop control for active provider, image, and local text-generation requests.
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
 - Voice turn-taking with microphone speech recognition and spoken replies; click the mic again to interrupt audio and stop listening. Speech recognition availability and whether transcription is offline depend on the installed Electron/OS speech service.
@@ -32,14 +32,14 @@ Configure a provider using the gear button. Ollama is commonly available at `htt
 ## Build installers
 
 ```sh
-npm run build:win
-npm run build:mac
-npm run build:linux
+npm run build:win   # NSIS installer and portable executable
+npm run build:mac   # DMG and ZIP
+npm run build:linux # AppImage, DEB, and tar.gz
 ```
 
-Build each platform on its supported OS. GitHub Actions is configured in `.github/workflows/release.yml`: push a version tag such as `v0.1.0` to build and attach installers to a GitHub Release. Updates are distributed through GitHub Releases; this starter intentionally does not silently download or install updates. Users download and install the release they choose.
+GitHub Actions builds Windows x64, macOS Intel x64 and Apple Silicon arm64, and Linux x64 and arm64. Push a version tag such as `v0.2.0` to attach all platform files and a `SHA256SUMS.txt` checksum list to one GitHub Release. A manual workflow run builds downloadable artifacts without publishing a release. The website can link to the latest GitHub Release or list its attached assets. The site deployment source is not included here. Updates are currently user initiated: download and install the newer version; the app does not check for updates in the background.
 
-The Windows NSIS wizard supports a per-user install, a selectable destination, and optional desktop/Start Menu shortcuts. Windows' Apps & Features entry launches the included uninstaller. Uninstall preserves the user's Server Rock: AI profile by default; remove app data separately if you also want to erase local conversations and settings. Linux AppImage is a portable single file. macOS DMG installs by dragging the app to Applications; remove it by deleting the app from Applications.
+The Windows NSIS wizard supports a per-user install, a selectable destination, and optional desktop/Start Menu shortcuts. The portable executable runs without installation. Windows' Apps & Features entry launches the included uninstaller. Uninstall preserves the user's Server Rock: AI profile by default; remove app data separately if you also want to erase local conversations and settings. Linux AppImage is a portable single file; DEB integrates with Debian/Ubuntu package tools, and tar.gz is a generic archive. macOS DMG installs by dragging the app to Applications; ZIP is an alternative archive. Builds are unsigned unless release signing certificates are configured, so Windows SmartScreen or macOS Gatekeeper may warn users.
 
 ## Free distribution
 
@@ -47,7 +47,7 @@ Push a version tag such as `v0.1.0` to build installers and attach them to a Git
 
 ## Providers and privacy
 
-The chat client uses the OpenAI-compatible `/chat/completions` streaming shape. Hugging Face provider mode uses the Hub model catalog search filtered by task and the Router chat endpoint for compatible chat models. `/imagegen` can call HF Inference text-to-image for selected models; other HF tasks still require a matching endpoint/runtime. Catalog search sends a query and selected task to Hugging Face only when Search is clicked. Local servers should bind to loopback and allow the app origin. Cloud API providers receive the content you submit, under their own policies. This app does not implement ChatGPT Plus or Claude account-cookie login; those consumer subscriptions do not provide a general-purpose local OAuth API for third-party clients. Use official API credentials or a local compatible bridge you trust. Never paste account cookies or session tokens here.
+The chat client uses the OpenAI-compatible `/chat/completions` streaming shape and supports the Anthropic Messages API. Hugging Face provider mode uses the Hub model catalog search filtered by task and the Router chat endpoint for compatible chat models. `/imagegen` can call HF Inference text-to-image for selected models; other HF tasks still require a matching endpoint/runtime. Catalog search sends a query and selected task to Hugging Face only when Search is clicked. Local servers should bind to loopback and allow the app origin. Cloud API providers receive the content you submit, under their own policies. An optional ChatGPT plan connection uses the supported Sign in with ChatGPT authorization flow and keeps its tokens in the Electron main process using OS-backed encryption. Claude.ai consumer sign-in is not available to third-party clients; use an Anthropic API key from the API Console (Claude subscriptions and API billing are separate). Never paste account cookies or session tokens here.
 
 Local history and settings are stored in Electron's app profile using browser local storage. Clear app data through the operating system's app data controls to remove them. API keys are not encrypted in this prototype; do not use it on a shared Windows account. Offline chat/inference works with a local provider and already downloaded model. Hub search and downloads require a connection. A cloud endpoint, cloud model, or hosted image generation service sends the request data to that provider.
 

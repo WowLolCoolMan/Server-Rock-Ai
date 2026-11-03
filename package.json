@@ -10,9 +10,9 @@
     "start": "electron .",
     "test": "playwright test",
     "build": "electron-builder --publish never",
-    "build:win": "electron-builder --win nsis --publish never",
-    "build:linux": "electron-builder --linux AppImage --publish never",
-    "build:mac": "electron-builder --mac dmg --publish never"
+    "build:win": "electron-builder --win nsis portable --publish never",
+    "build:linux": "electron-builder --linux AppImage deb tar.gz --publish never",
+    "build:mac": "electron-builder --mac dmg zip --publish never"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -22,6 +22,7 @@
   "build": {
     "appId": "com.server-rock.ai",
     "productName": "Server Rock: AI",
+    "compression": "normal",
     "directories": {
       "output": "dist"
     },
@@ -38,16 +39,31 @@
       "node_modules/@huggingface/jinja/**/*",
       "node_modules/onnxruntime-node/**/*",
       "node_modules/onnxruntime-web/**/*",
-      "node_modules/sharp/**/*"
+      "node_modules/sharp/**/*",
+      "node_modules/marked/**/*",
+      "node_modules/dompurify/dist/**/*",
+      "node_modules/dompurify/LICENSE*",
+      "THIRD_PARTY_NOTICES.md",
+      "docs/OPEN_WEBUI_RESEARCH.md"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ]
     },
     "mac": {
-      "target": "dmg"
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -62,6 +78,9 @@
     "npmRebuild": false
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0"
+    "@huggingface/transformers": "^4.2.0",
+    "dompurify": "^3.4.17",
+    "jose": "^6.2.15",
+    "marked": "^18.1.3"
   }
 }
