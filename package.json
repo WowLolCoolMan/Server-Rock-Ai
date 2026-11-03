@@ -1,0 +1,67 @@
+{
+  "name": "server-rock-ai",
+  "version": "0.1.0",
+  "description": "A local-first desktop AI workspace with pluggable model providers",
+  "author": "Server Rock",
+  "license": "MIT",
+  "private": false,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "playwright test",
+    "build": "electron-builder --publish never",
+    "build:win": "electron-builder --win nsis --publish never",
+    "build:linux": "electron-builder --linux AppImage --publish never",
+    "build:mac": "electron-builder --mac dmg --publish never"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.server-rock.ai",
+    "productName": "Server Rock: AI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "app.js",
+      "commands.js",
+      "runtime/**/*",
+      "electron/**/*",
+      "README.md",
+      "node_modules/@huggingface/transformers/**/*",
+      "node_modules/@huggingface/tokenizers/**/*",
+      "node_modules/@huggingface/jinja/**/*",
+      "node_modules/onnxruntime-node/**/*",
+      "node_modules/onnxruntime-web/**/*",
+      "node_modules/sharp/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Server Rock: AI",
+      "uninstallDisplayName": "Server Rock: AI",
+      "deleteAppDataOnUninstall": false
+    },
+    "npmRebuild": false
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0"
+  }
+}
