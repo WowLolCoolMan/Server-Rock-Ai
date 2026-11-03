@@ -62,12 +62,16 @@
             </button>
           </div>
         </div>
-        <button id="settings">⚙</button>
+      <button id="settings" aria-label="Settings" title="Settings">⚙</button>
       </header>
       <button class="new" id="newChat">＋　New chat</button>
-      <div class="section">Projects</div>
+      <div class="section">WORKSPACE</div>
       <button class="project" id="newProject">＋　New project</button>
       <div id="projectList"></div>
+      <div class="section library-label">LIBRARY</div>
+      <button class="project library-link" id="openModelLibrary">▤　Browse models <span>›</span></button>
+      <button class="project library-link" id="openConnections">⌘　Provider settings <span>›</span></button>
+      <button class="project library-link" id="openGitHub">⑂　GitHub repositories <span>›</span></button>
       <div class="section">RECENTS <button id="clear">Clear</button></div>
       <div id="history"></div>
       <div class="sidebottom">
@@ -77,14 +81,15 @@
     </aside>
     <main>
       <header class="top">
-        <span id="crumb">New chat</span>
-        <div>
+        <div class="top-title"><span id="crumb">New chat</span><span id="projectContextBadge" class="project-context-badge" hidden>Project context on</span></div>
+        <div class="top-actions">
           <span class="pill"
             ><i></i> <span id="connectionModeLabel">Local</span></span
           >
-          <button id="newTop">＋</button>
+          <button id="githubSync" hidden>Push changes</button><button id="newTop">＋</button>
         </div>
       </header>
+      <div id="branchBar" class="branch-bar" hidden></div>
       <section class="welcome" id="welcome">
         <div class="spark">✳</div>
         <h1>What are we building today?</h1>
@@ -117,12 +122,12 @@
             </div>
           </div>
           <span id="activeMode" class="active-mode" hidden></span
-          ><span class="context-right" id="runtimeStatus">⌖　This device</span>
+          ><span class="context-right" id="runtimeStatus">⌖　This device</span><details class="advanced-menu"><summary title="Advanced settings">Advanced</summary><div class="advanced-popover"><b>Generation controls</b><label for="temperatureControl">Temperature <input id="temperatureControl" aria-label="Temperature" type="range" min="0" max="2" step="0.1" value="0.7"><output id="temperatureValue">0.7</output></label><p>These controls are saved on this device. Provider support varies.</p></div></details>
         </div>
         <div class="composer">
           <textarea
             id="prompt"
-            placeholder="Message your local model… try /plan, /status, /review or /imagegen"
+            placeholder="Message a model… try /plan, /status, /review, /imagegen or /push"
             rows="2"
           ></textarea>
           <div class="tools">
@@ -135,14 +140,13 @@
             /><span id="commandHint" class="command-hint" hidden></span
             ><span id="queueHint" class="queue-hint" hidden></span
             ><button id="voice" title="Start voice conversation">🎙</button
-            ><button id="mode">▣　Chat</button
             ><button id="slashHelp" title="Slash commands">/</button
             ><span class="grow"></span><span class="privacy">● Offline</span
             ><button class="send" id="send">↑</button>
           </div>
         </div>
         <div class="foot">
-          Models run on your device. Your conversations stay local.
+          Chats stay on this device. Cloud providers receive the prompts you send.
         </div>
       </section>
       <section id="imagePage" class="image-page" hidden>
@@ -156,8 +160,8 @@
             </p>
           </div>
           <div class="image-tabs">
-            <button class="active" id="imageTrending">Trending</button
-            ><button id="imageTemplates">Templates</button>
+            <button class="active" id="imageTrending">Prompt ideas</button
+            ><button id="imageTemplates">Recent images</button>
           </div>
         </div>
         <div class="image-section-heading">
@@ -210,6 +214,7 @@
             ><span class="template-desc">Small worlds and story scenes</span>
           </button>
         </div>
+        <div id="generatedGallery" class="generated-gallery" hidden></div>
         <div class="image-page-composer">
           <textarea
             id="imagePrompt"
@@ -242,6 +247,7 @@
         </div>
         <label class="project-name-label" for="projectName">Project name</label
         ><input id="projectName" placeholder="Project name" required />
+        <label class="project-name-label" for="projectInstructions">Project instructions</label><textarea id="projectInstructions" rows="3" placeholder="What should the assistant know about this project?"></textarea>
         <div class="project-sources-head">
           <b>Source folders</b
           ><small>Choose the folders this coding agent should work with.</small>
@@ -255,7 +261,7 @@
         <div class="modal-actions">
           <button type="button" class="cancel-project" id="cancelProject">
             Cancel</button
-          ><button type="submit" class="save">Create project</button>
+          ><button type="button" id="editProject" class="cancel-project" hidden>Save project</button><button type="submit" class="save">Create project</button>
         </div>
       </form>
     </dialog>
@@ -280,6 +286,10 @@
             <option>Hugging Face</option>
             <option>OpenAI API</option>
             <option>Anthropic API</option>
+            <option>OpenRouter</option>
+            <option>Groq</option>
+            <option>DeepSeek</option>
+            <option>Mistral</option>
             <option>ChatGPT plan</option>
           </select>
         </div>
@@ -295,6 +305,13 @@
             Continue with ChatGPT
           </button>
         </div>
+        <div class="setting-row">
+          <div>
+            <b>GitHub</b><small id="githubConnectionStatus">Connect to browse your repositories and push project changes.</small>
+          </div>
+          <span class="github-controls"><input id="githubClientId" autocomplete="off" placeholder="GitHub App client ID" /><button type="button" id="githubConnect">Connect</button><button type="button" id="githubOpenRepos">Browse repositories</button></span>
+        </div>
+        <div id="githubDeviceCode" class="modal-note github-device-code" hidden><span id="githubDeviceCodeText"></span><button type="button" id="githubCancelAuth">Cancel sign-in</button></div>
         <div class="setting-row" id="endpointSettingRow">
           <div>
             <b>Endpoint</b><small>Local services work without an account</small>
@@ -392,13 +409,14 @@
         </details>
         <div class="setting-row" id="providerSecretSettingRow">
           <div>
-            <b>Provider API key</b><small id="providerSecretStatus">Stored with the operating system's secure credential storage.</small>
+            <b id="providerKeyTitle">Provider API key</b><small id="providerKeyHelp">Use an API key issued by this provider.</small><small id="providerSecretStatus">Stored with the operating system's secure credential storage.</small>
           </div>
-          <input
+          <span class="key-entry"><input
             id="apiKey"
             type="password"
-            placeholder="Leave blank for local models"
-          />
+            autocomplete="new-password"
+            placeholder="Paste provider API key"
+          /><button type="button" id="forgetProviderKey">Forget key</button></span>
         </div>
         <details class="settings-group">
           <summary>More options</summary>
@@ -429,6 +447,10 @@
             <option value="light">Daylight</option>
           </select>
         </div>
+        <div class="setting-row">
+          <div><b>Application updates</b><small id="updateStatus">Check GitHub releases for a newer Server Rock: AI build.</small></div>
+          <span class="update-controls"><button type="button" id="checkUpdates">Check for updates</button><button type="button" id="downloadUpdate" hidden>Download</button><button type="button" id="installUpdate" hidden>Restart and install</button></span>
+        </div>
         <div class="modal-note">
           Server Rock: AI makes no telemetry or analytics requests. Cloud
           providers send prompts to the endpoint you configure. ChatGPT plan
@@ -438,6 +460,23 @@
         </div>
         </details>
         <button type="button" class="save" id="saveSettings">Save settings</button>
+      </form>
+    </dialog>
+    <dialog id="githubDialog">
+      <form method="dialog">
+        <div class="modal-head">
+          <div><span class="eyebrow">GITHUB</span><h2>Open a repository</h2></div>
+          <button class="close" id="githubClose">×</button>
+        </div>
+        <p id="githubDialogStatus" class="model-host-status">Sign in to list repositories you can access.</p>
+        <input id="githubRepoSearch" type="search" placeholder="Filter repositories" />
+        <select id="githubRepoList" size="10" aria-label="GitHub repositories"></select>
+        <div class="modal-actions">
+          <button type="button" id="githubDisconnect">Disconnect</button>
+          <span class="grow"></span>
+          <button type="button" id="githubRefresh">Refresh</button>
+          <button type="button" class="save" id="githubClone">Clone and open</button>
+        </div>
       </form>
     </dialog>
     <script src="./node_modules/marked/lib/marked.umd.js"></script>

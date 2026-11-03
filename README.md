@@ -4,6 +4,24 @@
 
 A local-first desktop workspace for chatting with local models and compatible AI endpoints. It uses a compact, keyboard-friendly layout inspired by modern chat desktop apps.
 
+## Native cross-platform app (migration in progress)
+
+The repository includes a C# and XAML app in `native/ServerRock.Native`, built with Uno Platform, plus a UI-independent `native/ServerRock.Core` library for application models, provider transport, and settings storage. The UI uses a shared `net10.0-desktop` Skia target for Linux and desktop Windows plus a Windows App SDK target. The native app has a working OpenAI-compatible local chat path: saved endpoint/model settings, model discovery, streamed responses, cancellation, and project instructions in the request context. Settings contain no API keys.
+
+This is an incremental migration, not feature parity. The Electron app remains the complete product and its packaged builds are still the supported distribution. Native conversations/history, multi-project management, secure hosted-provider credentials, GitHub sign-in/repository selection/commit and push, coding-agent file inspection and edits, attachments, image/audio workflows, and production installers still need to be ported and verified. Native controls for these unfinished areas must describe their current status accurately. Do not remove the Electron app or user data until those workflows have native replacements and migration has been verified.
+
+The requested Windows 8 compatibility conflicts with the current .NET 10 target: Microsoft lists Windows 8.1 as unsupported for current .NET releases. Windows 10 support is edition/build-specific in Microsoft's current support table. Treat Windows 8 and general consumer Windows 10 support as unresolved compatibility requirements; do not advertise them based only on a successful compile. Evaluate a legacy runtime/package strategy or explain the support limit before release.
+
+Build the shared desktop target with the .NET 10 SDK:
+
+```sh
+dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
+dotnet run --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
+dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+```
+
+On Linux, install the system GTK 3 and graphics dependencies documented by [Uno Platform](https://platform.uno/docs/articles/get-started-with-linux.html). The Skia Desktop target supports Linux desktop and Windows; the WinAppSDK target is Windows-only. Distros and architectures must be tested on actual runners before claiming support. See the [Uno platform matrix](https://platform.uno/docs/articles/getting-started/requirements.html) and Microsoft's [.NET on Windows support matrix](https://learn.microsoft.com/en-us/dotnet/core/install/windows).
+
 ## Features
 
 - Windows, macOS, and Linux Electron desktop packaging.

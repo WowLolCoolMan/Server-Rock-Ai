@@ -47,10 +47,20 @@ test("workspace boots, shows command help, and opens preferences", async ({
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("#providerSelect")).toHaveValue("Ollama");
 });
+test("workspace exposes model and tool entry points and advanced temperature controls", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await expect(page.locator("#openModelLibrary")).toBeVisible();
+  await page.locator("#openConnections").click();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await page.locator("#settingsDialog .close").click();
+  await page.locator(".advanced-menu summary").click();
+  await page.locator("#temperatureControl").fill("1.2");
+  await expect(page.locator("#temperatureValue")).toHaveText("1.2");
+});
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
 }) => {
-  await page.addInitScript(() =>
+  await page.addInitScript(() => {
     localStorage.setItem(
       "local-studio-v1",
       JSON.stringify({
@@ -63,28 +73,23 @@ test("/fast selects the configured fast model and strips command before sending"
           theme: "dark",
         },
       }),
-    ),
-  );
-  await page.route("**/v1/chat/completions", async (route) => {
-    const body = route.request().postDataJSON();
-    expect(body.model).toBe("small-model");
-    expect(body.messages.at(-1).content).toBe("say hello");
-    await route.fulfill({
-      status: 200,
-      contentType: "text/event-stream",
-      body:
-        "data: " +
-        JSON.stringify({ choices: [{ delta: { content: "hello" } }] }) +
-        "\n\ndata: [DONE]\n\n",
-    });
+    );
+    window.desktopModels = { getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }), streamProviderChat: async (body, onChunk) => { window.lastProviderRequest = body; onChunk("hello"); }, cancelProviderChat: () => {} };
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.evaluate(() => {});
+  const checkRequest = async () => {
+    const body = await page.evaluate(() => window.lastProviderRequest);
+    expect(body.model).toBe("small-model");
+    expect(body.messages.at(-1).content).toBe("say hello");
+  };
   await page.locator("#prompt").fill("/fast say hello");
   await page.locator("#send").click();
   await expect(page.locator(".assistant")).toContainText("hello");
+  await checkRequest();
 });
 test("/goal creates a structured plan request", async ({ page }) => {
-  await page.addInitScript(() =>
+  await page.addInitScript(() => {
     localStorage.setItem(
       "local-studio-v1",
       JSON.stringify({
@@ -96,23 +101,11 @@ test("/goal creates a structured plan request", async ({ page }) => {
           theme: "dark",
         },
       }),
-    ),
-  );
-  await page.route("**/v1/chat/completions", async (route) => {
-    const body = route.request().postDataJSON();
-    expect(body.model).toBe("planner");
-    expect(body.messages.at(-1).content).toContain("Create a practical plan");
-    expect(body.messages.at(-1).content).toContain("build a recipe app");
-    await route.fulfill({
-      status: 200,
-      contentType: "text/event-stream",
-      body:
-        "data: " +
-        JSON.stringify({
-          choices: [{ delta: { content: "Objective: build a recipe app." } }],
-        }) +
-        "\n\ndata: [DONE]\n\n",
-    });
+    );
+    window.desktopModels = { getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }), streamProviderChat: async (body, onChunk) => {
+      window.lastPlanRequest = body;
+      onChunk("Objective: build a recipe app.");
+    }, cancelProviderChat: () => {} };
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("/goal build a recipe app");
@@ -120,6 +113,10 @@ test("/goal creates a structured plan request", async ({ page }) => {
   await expect(page.locator(".assistant")).toContainText(
     "Objective: build a recipe app",
   );
+  const request = await page.evaluate(() => window.lastPlanRequest);
+  expect(request.model).toBe("planner");
+  expect(request.messages.at(-1).content).toContain("Create a practical plan");
+  expect(request.messages.at(-1).content).toContain("build a recipe app");
 });
 test("voice toggle is present and explains unavailable recognition", async ({
   page,
@@ -172,7 +169,7 @@ test("/imagegen sends prompt to ComfyUI", async ({ page }) => {
 test("Hugging Face catalog filters by selected task and chooses a result", async ({
   page,
 }) => {
-  await page.addInitScript(() =>
+  await page.addInitScript(() => {
     localStorage.setItem(
       "local-studio-v1",
       JSON.stringify({
@@ -185,21 +182,18 @@ test("Hugging Face catalog filters by selected task and chooses a result", async
           theme: "dark",
         },
       }),
-    ),
-  );
-  await page.route("https://huggingface.co/api/models**", async (route) => {
-    const u = new URL(route.request().url());
-    expect(u.searchParams.get("pipeline_tag")).toBe("text-generation");
-    await route.fulfill({
-      json: [
-        {
+    );
+    window.desktopModels = {
+      searchHuggingFace: async (_query, task) => {
+        if (task !== "text-generation") throw Error("unexpected task filter");
+        return [{
           id: "org/model-a",
           pipeline_tag: "text-generation",
           cardData: { license: "apache-2.0" },
           siblings: [{ rfilename: "onnx/model.onnx" }],
-        },
-      ],
-    });
+        }];
+      },
+    };
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
@@ -229,6 +223,12 @@ test("/imagegen uses the local desktop inference bridge for a downloaded HF text
       }),
     );
     window.desktopModels = {
+      runHuggingFaceTask: async (_task, _model, prompt, mediaData) => {
+        expect(mediaData).toBe(image.toString("base64"));
+        expect(prompt).toBe("Turn this into blue watercolor");
+        return { kind: "image", mime: "image/png", data: image.toString("base64") };
+      },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }),
       generate: async (model, task, prompt, id, onChunk) => {
         if (
           model !== "org/model-a" ||
@@ -347,24 +347,18 @@ test("a running provider request can be stopped from the composer", async ({
       }),
     ),
   );
-  await page.route(
-    "http://127.0.0.1:11434/v1/chat/completions",
-    async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (!route.request().failure())
-        await route.fulfill({
-          status: 200,
-          contentType: "text/event-stream",
-          body: "data: [DONE]\n\n",
-        });
-    },
-  );
+  await page.addInitScript(() => { window.desktopModels = { getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }), streamProviderChat: async (_request, onChunk) => new Promise((resolve) => { window.streamStarted = true; window.finishSlowRequest = () => { onChunk("Done"); resolve(); }; }), cancelProviderChat: () => { window.cancelWasCalled = true; } }; });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("wait forever");
   await page.locator("#send").click();
   await expect(page.locator("#send")).toHaveText("■");
+  await expect.poll(() => page.evaluate(() => window.streamStarted)).toBe(true);
   await page.locator("#send").click();
-  await expect(page.locator(".assistant")).toContainText("Generation stopped.");
+  await expect.poll(() => page.evaluate(() => window.cancelWasCalled)).toBe(true);
+  await expect(page.locator("#send")).toHaveText("■");
+  await page.evaluate(() => window.finishSlowRequest?.());
+  await expect(page.locator(".assistant")).toContainText("Done");
+  await expect(page.locator("#send")).toHaveText("↑");
 });
 
 test("top-left mode switch opens coding agent setup and creates a sourced project", async ({
@@ -396,6 +390,7 @@ test("top-left mode switch opens coding agent setup and creates a sourced projec
   await expect(page.locator("#agentModeToggle")).toContainText("Coding Agent");
   await expect(page.locator("#projectDialog")).toBeVisible();
   await page.locator("#projectName").fill("Demo project");
+  await page.locator("#projectInstructions").fill("Prefer concise answers.");
   await page.locator("#addProjectFolder").click();
   await expect(page.locator("#projectSources")).toContainText(
     "E:\\Projects\\Demo",
@@ -403,6 +398,9 @@ test("top-left mode switch opens coding agent setup and creates a sourced projec
   await page.getByRole("button", { name: "Create project" }).click();
   await expect(page.locator("#projectList")).toContainText("Demo project");
   await expect(page.locator("#crumb")).toHaveText("Demo project");
+  await expect(page.locator("#projectContextBadge")).toBeVisible();
+  await page.locator("#projectList .project-item").dblclick();
+  await expect(page.locator("#projectInstructions")).toHaveValue("Prefer concise answers.");
 });
 
 test("model picker scans local hosts, displays measured performance, and switches provider/model", async ({
@@ -647,6 +645,7 @@ test("Coding Agent reads project files and saves generated files into its select
       }),
     );
     window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }),
       readProjectFiles: async () => ({
         files: [{ path: "README.md", content: "Existing project context" }],
       }),
@@ -656,36 +655,21 @@ test("Coding Agent reads project files and saves generated files into its select
       },
     };
   });
-  await page.route(
-    "http://127.0.0.1:11434/v1/chat/completions",
-    async (route) => {
-      const request = route.request().postDataJSON();
-      expect(request.messages[0].content).toContain("Existing project context");
-      expect(request.messages[0].content).toContain("file:relative/path.ext");
-      const newline = String.fromCharCode(10),
-        delta =
-          "```file:snake.py" + newline + 'print("ready")' + newline + "```",
-        payload =
-          "data: " +
-          JSON.stringify({ choices: [{ delta: { content: delta } }] }) +
-          newline +
-          newline +
-          "data: [DONE]" +
-          newline +
-          newline;
-      await route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        body: payload,
-      });
-    },
-  );
+  await page.addInitScript(() => {
+    window.desktopModels.streamProviderChat = async (request, onChunk) => {
+      window.codingRequest = request;
+      onChunk('```file:snake.py\nprint("ready")\n```');
+    };
+  });
   await page.goto(
     "file://" +
       path.resolve("index.html").replaceAll(String.fromCharCode(92), "/"),
   );
   await page.locator("#prompt").fill("create snake.py");
   await page.locator("#send").click();
+  const request = await page.evaluate(() => window.codingRequest);
+  expect(request.messages[0].content).toContain("Existing project context");
+  expect(request.messages[0].content).toContain("file:relative/path.ext");
   await expect(page.locator(".assistant")).toContainText(
     "1 file(s) saved in Demo",
   );
@@ -727,24 +711,15 @@ test("ChatBot answers with relevant excerpts from selected local project knowled
       }),
     };
   });
-  await page.route("**/v1/chat/completions", async (route) => {
-    const payload = route.request().postDataJSON();
-    expect(payload.messages[0].content).toContain("npm run serve");
-    expect(payload.messages[0].content).toContain("README.md");
-    expect(payload.messages.at(-1).content).toBe("How do I start the server?");
-    await route.fulfill({
-      status: 200,
-      contentType: "text/event-stream",
-      body:
-        "data: " +
-        JSON.stringify({ choices: [{ delta: { content: "Run npm run serve." } }] }) +
-        "\n\ndata: [DONE]\n\n",
-    });
-  });
+  await page.addInitScript(() => { window.desktopModels.getProviderSecretStatus = async () => ({ saved: false, secureStorage: false }); window.desktopModels.streamProviderChat = async (request, onChunk) => { window.knowledgeRequest = request; onChunk("Run npm run serve."); }; });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("How do I start the server?");
   await page.locator("#send").click();
   await expect(page.locator(".assistant")).toContainText("Run npm run serve.");
+  const payload = await page.evaluate(() => window.knowledgeRequest);
+  expect(payload.messages[0].content).toContain("npm run serve");
+  expect(payload.messages[0].content).toContain("README.md");
+  expect(payload.messages.at(-1).content).toBe("How do I start the server?");
 });
 test("workspace writes only authorized relative files and reads project text", async () => {
   const dir = await fs.mkdtemp(
@@ -784,25 +759,7 @@ test("workspace writes only authorized relative files and reads project text", a
 test("conversation renders sanitized Markdown and copyable offline code blocks", async ({
   page,
 }) => {
-  await page.route("**/v1/chat/completions", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "text/event-stream",
-      body:
-        "data: " +
-        JSON.stringify({
-          choices: [
-            {
-              delta: {
-                content:
-                  '### Build notes\n\n```python\nprint("hello")\n```\n\n<img src=x onerror=alert(1)>',
-              },
-            },
-          ],
-        }) +
-        "\n\ndata: [DONE]\n\n",
-    }),
-  );
+  await page.addInitScript(() => { window.desktopModels = { streamProviderChat: async (_request, onChunk) => onChunk('### Build notes\n\n```python\nprint("hello")\n```\n\n<img src=x onerror=alert(1)>'), getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }), cancelProviderChat: () => {} }; });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("show code");
   await page.locator("#send").click();
@@ -816,48 +773,52 @@ test("conversation renders sanitized Markdown and copyable offline code blocks",
 test("a typed follow-up queues during generation and sends automatically when ready", async ({
   page,
 }) => {
-  let releaseFirst;
-  const firstHeld = new Promise((resolve) => {
-    releaseFirst = resolve;
-  });
   const requests = [];
-  await page.route("**/v1/chat/completions", async (route) => {
-    const request = route.request().postDataJSON();
-    requests.push(request);
-    if (requests.length === 1) {
-      await firstHeld;
-      await route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        body:
-          "data: " +
-          JSON.stringify({ choices: [{ delta: { content: "First reply" } }] }) +
-          "\n\ndata: [DONE]\n\n",
-      });
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "text/event-stream",
-      body:
-        "data: " +
-        JSON.stringify({ choices: [{ delta: { content: "Second reply" } }] }) +
-        "\n\ndata: [DONE]\n\n",
-    });
+  let finishFirst;
+  await page.addInitScript(() => {
+    window.desktopModels = { streamProviderChat: (request, onChunk) => new Promise((resolve) => {
+      window.providerRequests.push(request);
+      if (window.providerRequests.length === 1) window.finishFirstProviderRequest = () => { onChunk("First reply"); resolve(); };
+      else { onChunk("Second reply"); resolve(); }
+    }), getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }), cancelProviderChat: () => {} };
+    window.providerRequests = [];
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("first question");
   await page.locator("#send").click();
-  await expect.poll(() => requests.length).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.providerRequests.length)).toBe(1);
   await page.locator("#prompt").fill("second question");
   await page.locator("#prompt").press("Enter");
   await expect(page.locator("#queueHint")).toBeVisible();
   await expect(page.locator("#queueHint")).toHaveText("1 queued");
-  releaseFirst();
+  await page.evaluate(() => window.finishFirstProviderRequest());
   await expect(page.locator(".assistant")).toHaveCount(2);
   await expect(page.locator(".assistant").last()).toContainText("Second reply");
-  expect(requests[1].messages.at(-1).content).toBe("second question");
+  const providerRequests = await page.evaluate(() => window.providerRequests);
+  expect(providerRequests[1].messages.at(-1).content).toBe("second question");
   await expect(page.locator("#queueHint")).toBeHidden();
+});
+test("conversation response alternatives can be selected and forked without losing the first answer", async ({ page }) => {
+  let reply = "First answer";
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({ chats: [], projects: [], settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "test", theme: "dark" } }));
+    window.desktopModels = { streamProviderChat: async (_request, onChunk) => { onChunk(window.replyForTest); }, cancelProviderChat: () => {} };
+    window.replyForTest = "First answer";
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#prompt").fill("Compare options");
+  await page.locator("#send").click();
+  await expect(page.locator(".assistant").last()).toContainText("First answer");
+  await page.locator(".assistant .regenerate").last().click();
+  await expect(page.locator(".assistant").last()).toContainText("First answer");
+  await page.evaluate(() => { window.replyForTest = "Alternative answer"; });
+  await page.locator(".assistant .regenerate").last().click();
+  await expect(page.locator(".assistant").last()).toContainText("Alternative answer");
+  await expect(page.locator("#branchBar")).toBeVisible();
+  await page.locator("#branchBar button[title='Previous response']").click();
+  await expect(page.locator(".assistant").last()).toContainText("First answer");
+  await page.locator("#branchBar").getByRole("button", { name: "Fork from here" }).click();
+  await expect(page.locator("#crumb")).toContainText("(fork)");
 });
 test("agent mode menu dismisses when clicking outside", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
@@ -886,19 +847,11 @@ test("Hugging Face image-to-image sends the attached source image and renders th
       }),
     ),
   );
-  await page.route(
-    /router\.huggingface\.co\/hf-inference\/models\//,
-    async (route) => {
-      const payload = route.request().postDataJSON();
-      expect(payload.inputs).toBe(image.toString("base64"));
-      expect(payload.parameters.prompt).toBe("Turn this into blue watercolor");
-      await route.fulfill({
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-        body: image,
-      });
-    },
-  );
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      runHuggingFaceTask: async () => ({ kind: "image", mime: "image/png", data: "iVBORw0KGgo=" }),
+    };
+  });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page
     .locator("#file")
@@ -939,15 +892,12 @@ test("local Hugging Face image-to-image output remains visible after the turn is
       }),
     );
     window.desktopModels = {
-      generate: async (model, task, prompt, id, onChunk, imageData) => {
-        if (
-          model !== "org/local-editor" ||
-          task !== "image-to-image" ||
-          !imageData.startsWith("data:image/png;base64,")
-        )
-          throw Error("unexpected local image inputs");
-        return { imageData: image };
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }),
+      runHuggingFaceTask: async (task, model, prompt, mediaData) => {
+        if (model !== "org/local-editor" || task !== "image-to-image" || !mediaData.startsWith("data:image/png;base64,")) throw Error("unexpected local image inputs");
+        return { kind: "image", mime: "image/png", data: image.split(",")[1] };
       },
+      generate: async () => ({ imageData: image }),
     };
   }, image);
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
@@ -1077,18 +1027,14 @@ test("hosted Hugging Face classification uses the task inference endpoint", asyn
       }),
     ),
   );
-  await page.route(
-    /router\.huggingface\.co\/hf-inference\/models\//,
-    async (route) => {
-      const payload = route.request().postDataJSON();
-      expect(payload.inputs).toBe("I love this app");
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([{ label: "positive", score: 0.99 }]),
-      });
-    },
-  );
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      runHuggingFaceTask: async (task, model, prompt) => {
+        if (task !== "text-classification" || model !== "org/sentiment" || prompt !== "I love this app") throw Error("unexpected classification inputs");
+        return { result: "positive" };
+      },
+    };
+  });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("I love this app");
   await page.locator("#send").click();

@@ -75,11 +75,18 @@
       "uninstallDisplayName": "Server Rock: AI",
       "deleteAppDataOnUninstall": false
     },
-    "npmRebuild": false
+    "npmRebuild": false,
+    "publish": {
+      "provider": "github",
+      "owner": "WowLolCoolMan",
+      "repo": "Server-Rock-Ai",
+      "releaseType": "release"
+    }
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
     "dompurify": "^3.4.17",
+    "electron-updater": "^6.8.11",
     "jose": "^6.2.15",
     "marked": "^18.1.3"
   }

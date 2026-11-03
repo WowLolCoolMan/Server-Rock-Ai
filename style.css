@@ -352,6 +352,57 @@ dialog::backdrop {
 .setting-row[hidden] {
   display: none;
 }
+.github-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+  min-width: 0;
+}
+.update-controls {
+  display: flex;
+  gap: 7px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.github-controls input {
+  flex: 1 1 190px;
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#githubSync {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#githubDialog {
+  width: min(560px, calc(100vw - 40px));
+}
+#githubRepoSearch,
+#githubRepoList {
+  width: 100%;
+  margin: 8px 0;
+  background: #202020;
+  color: #ededed;
+  border: 1px solid #414141;
+  border-radius: 8px;
+  padding: 9px;
+}
+#githubRepoList option {
+  padding: 8px;
+}
+.github-device-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.github-device-code span {
+  flex: 1;
+}
 .settings-group {
   margin: 8px 0;
   border: 1px solid #34352f;
@@ -393,6 +444,15 @@ dialog::backdrop {
   padding: 9px;
   font-size: 12px;
   min-width: 0;
+}
+.key-entry {
+  display: flex;
+  min-width: 0;
+  gap: 8px;
+  align-items: center;
+}
+.key-entry input {
+  flex: 1;
 }
 .modal-note {
   background: #24261f;
@@ -1675,6 +1735,123 @@ dialog {
 .activity-item {
   border-bottom-color: #353535;
 }
+.library-label {
+  margin-top: 18px;
+}
+.library-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  color: #c6c6c6;
+}
+.project-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  width: 100%;
+}
+.project-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-item small {
+  padding-left: 22px;
+  color: #8f8f8f;
+  font-size: 11px;
+}
+.top-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.project-context-badge {
+  border: 1px solid #465443;
+  color: #c5d5b3;
+  background: #273025;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+.branch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #2e2e2e;
+  color: #aaa;
+  font-size: 12px;
+}
+.branch-bar button {
+  color: #d8d8d8;
+  border: 1px solid #444;
+  border-radius: 7px;
+  padding: 4px 9px;
+}
+.branch-bar button:disabled { opacity: .4; cursor: default; }
+.branch-bar button:hover:not(:disabled) { background: #333; }
+.message-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.message-actions button {
+  border: 1px solid #3d3d3d;
+  color: #aaa;
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 11px;
+}
+.message-actions button:hover { background: #303030; color: #eee; }
+.advanced-menu {
+  position: relative;
+  margin-left: 6px;
+  color: #aaa;
+  font-size: 11px;
+}
+.advanced-menu summary {
+  cursor: pointer;
+  list-style: none;
+  border: 1px solid #393939;
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+.advanced-menu summary::-webkit-details-marker { display: none; }
+.advanced-popover {
+  position: absolute;
+  right: 0;
+  bottom: 30px;
+  z-index: 10;
+  width: 270px;
+  padding: 15px;
+  border: 1px solid #454545;
+  border-radius: 12px;
+  background: #242424;
+  box-shadow: 0 12px 32px #0008;
+  color: #ddd;
+}
+.advanced-popover label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+.advanced-popover input { min-width: 0; flex: 1; }
+.advanced-popover output { width: 28px; text-align: right; }
+.advanced-popover p { color: #999; line-height: 1.5; margin: 12px 0 0; }
+.advanced-menu summary:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #a9c18b;
+  outline-offset: 2px;
+}
 @media (max-width: 900px) {
   .sidebar {
     width: 250px;
@@ -1692,6 +1869,7 @@ dialog {
   .image-page {
     padding: 25px 18px 110px;
   }
+  .advanced-menu { display: none; }
 }
 
 /* Offline-rendered assistant content: readable Markdown and copyable code. */
@@ -1826,5 +2004,38 @@ dialog {
   border: 1px solid #3d5a7f;
   padding: 5px 8px;
   border-radius: 8px;
+  white-space: nowrap;
+}
+.generated-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+.generated-gallery[hidden] {
+  display: none;
+}
+.generated-artifact {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+}
+.generated-artifact img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #222;
+}
+.generated-artifact span {
+  display: block;
+  padding: 10px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }

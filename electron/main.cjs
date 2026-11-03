@@ -9,15 +9,23 @@ const {
   shell,
   safeStorage,
 } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const http = require("node:http");
 const crypto = require("node:crypto");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+const execFileAsync = promisify(execFile);
 const { createWorkspace } = require("./workspace.cjs");
+const { createProviderBridge, validateEndpoint } = require("./provider-bridge.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
+const activeProviderRequests = new Map();
+const githubDeviceRequests = new Map();
+let updateState = { status: "idle", version: app.getVersion(), downloaded: false };
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -35,6 +43,48 @@ function chatGPTEncryptionReady() {
   } catch {
     return false;
   }
+}
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = false;
+  const notify = (status, extra = {}) => {
+    updateState = { ...updateState, status, ...extra };
+    for (const win of BrowserWindow.getAllWindows())
+      win.webContents.send("updates:state", updateState);
+  };
+  autoUpdater.on("checking-for-update", () => notify("checking"));
+  autoUpdater.on("update-available", (info) =>
+    notify("available", { version: info.version, releaseDate: info.releaseDate }),
+  );
+  autoUpdater.on("update-not-available", (info) =>
+    notify("current", { version: info.version }),
+  );
+  autoUpdater.on("download-progress", (progress) =>
+    notify("downloading", { percent: Math.round(progress.percent) }),
+  );
+  autoUpdater.on("update-downloaded", (info) =>
+    notify("downloaded", { version: info.version, downloaded: true }),
+  );
+  autoUpdater.on("error", (error) =>
+    notify("error", { message: String(error.message || error) }),
+  );
+  ipcMain.handle("updates:state", () => updateState);
+  ipcMain.handle("updates:check", async () => {
+    if (!app.isPackaged) return { ...updateState, status: "dev" };
+    await autoUpdater.checkForUpdates();
+    return updateState;
+  });
+  ipcMain.handle("updates:download", async () => {
+    if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
+    await autoUpdater.downloadUpdate();
+    return updateState;
+  });
+  ipcMain.handle("updates:install", () => {
+    if (!updateState.downloaded) throw Error("Download an update first.");
+    autoUpdater.quitAndInstall(false, true);
+    return { status: "installing" };
+  });
 }
 async function readChatGPTState() {
   try {
@@ -534,6 +584,7 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "..", "index.html"));
 }
 app.whenReady().then(() => {
+  setupAutoUpdater();
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
   ipcMain.handle("projects:read-files", (_event, folders) =>
@@ -554,28 +605,439 @@ app.whenReady().then(() => {
     activeChatGPTRequests.get(requestId)?.abort(),
   );
   ipcMain.handle("models:scan-hosts", () => scanModelHosts());
-  ipcMain.handle("secrets:get", async (_event, provider) => {
-    if (!chatGPTEncryptionReady())
-      throw Error("Secure OS credential storage is unavailable.");
+  const readSecureProviderSecret = async (provider) => {
     const secrets = await readProviderSecrets();
     return secrets[provider] || "";
+  };
+  const readGithubClientId = async () => {
+    if (typeof process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID === "string" &&
+        /^[A-Za-z0-9_]{10,80}$/.test(process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID))
+      return process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID;
+    try {
+      const config = JSON.parse(await fs.readFile(path.join(__dirname, "github-app.json"), "utf8"));
+      return typeof config.clientId === "string" && /^[A-Za-z0-9_]{10,80}$/.test(config.clientId)
+        ? config.clientId
+        : "";
+    } catch {
+      return "";
+    }
+  };
+  const githubFetch = async (apiPath, options = {}) => {
+    const token = await getGithubAccessToken();
+    if (!token) throw Error("Connect your GitHub account in Settings first.");
+    const response = await net.fetch("https://api.github.com" + apiPath, {
+      ...options,
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: "Bearer " + token,
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      redirect: "manual",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    if (response.status >= 300 && response.status < 400)
+      throw Error("GitHub redirected the request; redirects are blocked.");
+    if (!response.ok)
+      throw Error("GitHub request failed (" + response.status + "): " + (await response.text()).slice(0, 300));
+    return response;
+  };
+  const githubAuthHeaders = (token) => ({
+    GIT_CONFIG_COUNT: "2",
+    GIT_CONFIG_KEY_0: "core.hooksPath",
+    GIT_CONFIG_VALUE_0: path.join(app.getPath("userData"), "git-hooks-disabled"),
+    GIT_CONFIG_KEY_1: "http.extraheader",
+    GIT_CONFIG_VALUE_1: "AUTHORIZATION: basic " + Buffer.from("x-access-token:" + token).toString("base64"),
+    GCM_INTERACTIVE: "never",
   });
+  const readGithubCredential = async () => {
+    const value = await readSecureProviderSecret("GitHub");
+    if (!value) return null;
+    try {
+      const credential = JSON.parse(value);
+      if (credential && typeof credential.accessToken === "string") return credential;
+    } catch {}
+    return { accessToken: value, expiresAt: 0, refreshToken: "" };
+  };
+  const saveGithubCredential = (credential) =>
+    writeProviderSecret("GitHub", JSON.stringify(credential));
+  let githubRefreshPromise = null;
+  const getGithubAccessToken = async () => {
+    const credential = await readGithubCredential();
+    if (!credential) throw Error("Connect your GitHub account in Settings first.");
+    if (!credential.expiresAt || credential.expiresAt > Date.now() + 60_000)
+      return credential.accessToken;
+    if (!credential.refreshToken || !credential.clientId)
+      throw Error("Your GitHub session expired. Connect GitHub again in Settings.");
+    if (credential.refreshExpiresAt && credential.refreshExpiresAt <= Date.now())
+      throw Error("Your GitHub refresh session expired. Connect GitHub again in Settings.");
+    if (!githubRefreshPromise) {
+      githubRefreshPromise = (async () => {
+        const response = await net.fetch("https://github.com/login/oauth/access_token", {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: credential.clientId,
+            grant_type: "refresh_token",
+            refresh_token: credential.refreshToken,
+          }).toString(),
+          redirect: "manual", credentials: "omit", cache: "no-store",
+        });
+        const body = await response.json();
+        if (!response.ok || !body.access_token)
+          throw Error(body.error_description || body.error || "GitHub session refresh failed. Reconnect your account.");
+        const updated = {
+          clientId: credential.clientId,
+          accessToken: body.access_token,
+          refreshToken: body.refresh_token || credential.refreshToken,
+          expiresAt: Date.now() + Number(body.expires_in || 0) * 1000,
+          refreshExpiresAt: Date.now() + Number(body.refresh_token_expires_in || 0) * 1000,
+        };
+        await saveGithubCredential(updated);
+        return updated.accessToken;
+      })().finally(() => {
+        githubRefreshPromise = null;
+      });
+    }
+    return githubRefreshPromise;
+  };
+  const runGit = async (args, cwd, token) => {
+    const result = await execFileAsync("git", args, {
+      cwd,
+      windowsHide: true,
+      timeout: 120000,
+      maxBuffer: 2 * 1024 * 1024,
+      env: {
+        ...process.env,
+        GIT_CONFIG_COUNT: token ? "2" : "1",
+        GIT_CONFIG_KEY_0: "core.hooksPath",
+        GIT_CONFIG_VALUE_0: path.join(app.getPath("userData"), "git-hooks-disabled"),
+        ...(token ? {
+          GIT_CONFIG_KEY_1: "http.extraheader",
+          GIT_CONFIG_VALUE_1: githubAuthHeaders(token).GIT_CONFIG_VALUE_1,
+          GCM_INTERACTIVE: "never",
+        } : {}),
+      },
+    });
+    return { stdout: result.stdout.trim(), stderr: result.stderr.trim() };
+  };
+  const githubRepoName = (repo) => {
+    if (!repo || typeof repo !== "object" || typeof repo.full_name !== "string" ||
+        !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo.full_name))
+      throw Error("Choose a valid GitHub repository.");
+    if (typeof repo.name !== "string" || repo.name !== repo.full_name.split("/")[1] ||
+        repo.name === "." || repo.name === ".." || path.basename(repo.name) !== repo.name)
+      throw Error("The repository name is invalid.");
+    return repo.full_name;
+  };
+  const githubRepoUrl = (repo) => "https://github.com/" + githubRepoName(repo) + ".git";
+  const getGitRoot = async (folders) => {
+    const { roots } = await workspace.readFiles(folders);
+    if (!roots.length) throw Error("Select an authorized project folder first.");
+    const root = roots[0];
+    const result = await runGit(["rev-parse", "--show-toplevel"], root);
+    const canonical = await fs.realpath(result.stdout);
+    if (canonical !== root) throw Error("The selected folder must be the repository root.");
+    return root;
+  };
+  const streamProviderChat = createProviderBridge({
+    net,
+    getProviderSecret: readSecureProviderSecret,
+  });
+  ipcMain.handle("secrets:status", async (_event, provider) => ({
+    saved: Boolean(await readSecureProviderSecret(provider)),
+    secureStorage: chatGPTEncryptionReady(),
+  }));
   ipcMain.handle("secrets:set", (_event, provider, secret) =>
     writeProviderSecret(provider, secret),
   );
+  ipcMain.handle("github:default-client-id", () => readGithubClientId());
+  ipcMain.handle("github:begin-signin", async (_event, clientId) => {
+    if (typeof clientId !== "string" || !/^[A-Za-z0-9_]{10,80}$/.test(clientId))
+      throw Error("Add a valid GitHub OAuth App client ID in Settings.");
+    const response = await net.fetch("https://github.com/login/device/code", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: clientId, scope: "offline_access" }).toString(),
+      redirect: "manual",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    const body = await response.json();
+    if (!response.ok || !body.device_code || !body.user_code)
+      throw Error(body.error_description || body.error || "GitHub device authorization could not start.");
+    const id = crypto.randomUUID();
+    githubDeviceRequests.set(id, {
+      clientId,
+      deviceCode: body.device_code,
+      interval: Math.max(5, Number(body.interval) || 5),
+      expiresAt: Date.now() + Math.min(900, Number(body.expires_in) || 900) * 1000,
+      nextPollAt: Date.now(),
+    });
+    await shell.openExternal(body.verification_uri || "https://github.com/login/device");
+    return { id, userCode: body.user_code, verificationUri: body.verification_uri || "https://github.com/login/device", interval: Math.max(5, Number(body.interval) || 5) };
+  });
+  ipcMain.handle("github:poll-signin", async (_event, id) => {
+    const flow = githubDeviceRequests.get(id);
+    if (!flow) throw Error("GitHub sign-in expired. Start again.");
+    if (Date.now() > flow.expiresAt) {
+      githubDeviceRequests.delete(id);
+      throw Error("GitHub sign-in code expired. Start again.");
+    }
+    if (Date.now() < flow.nextPollAt) return { pending: true };
+    const response = await net.fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: flow.clientId, device_code: flow.deviceCode, grant_type: "urn:ietf:params:oauth:grant-type:device_code" }).toString(),
+      redirect: "manual",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    const body = await response.json();
+    if (body.error === "authorization_pending") return { pending: true };
+    if (body.error === "slow_down") {
+      flow.interval += 5;
+      flow.nextPollAt = Date.now() + flow.interval * 1000;
+      return { pending: true, interval: flow.interval };
+    }
+    if (!response.ok || !body.access_token) {
+      githubDeviceRequests.delete(id);
+      throw Error(body.error_description || body.error || "GitHub authorization failed.");
+    }
+    await saveGithubCredential({
+      clientId: flow.clientId,
+      accessToken: body.access_token,
+      refreshToken: body.refresh_token || "",
+      expiresAt: Date.now() + Number(body.expires_in || 0) * 1000,
+      refreshExpiresAt: Date.now() + Number(body.refresh_token_expires_in || 0) * 1000,
+    });
+    githubDeviceRequests.delete(id);
+    const user = await (await githubFetch("/user")).json();
+    return { connected: true, login: user.login, name: user.name || user.login, avatarUrl: user.avatar_url || "" };
+  });
+  ipcMain.on("github:cancel-signin", (_event, id) => {
+    if (typeof id === "string") githubDeviceRequests.delete(id);
+  });
+  ipcMain.handle("github:status", async () => {
+    if (!(await readGithubCredential()))
+      return { connected: false, secureStorage: chatGPTEncryptionReady() };
+    const user = await (await githubFetch("/user")).json();
+    return { connected: true, secureStorage: chatGPTEncryptionReady(), login: user.login, name: user.name || user.login, avatarUrl: user.avatar_url || "" };
+  });
+  ipcMain.handle("github:disconnect", () => writeProviderSecret("GitHub", ""));
+  ipcMain.handle("github:repos", async () => {
+    const repos = [];
+    for (let page = 1; page <= 10; page++) {
+      const response = await githubFetch(
+        "/user/repos?sort=updated&per_page=100&page=" + page +
+        "&affiliation=owner,collaborator,organization_member",
+      );
+      const rows = await response.json();
+      repos.push(...rows);
+      if (rows.length < 100) break;
+    }
+    return repos.map((repo) => ({
+      id: repo.id,
+      fullName: repo.full_name,
+      name: repo.name,
+      private: repo.private,
+      defaultBranch: repo.default_branch,
+      description: repo.description || "",
+      updatedAt: repo.updated_at,
+      cloneUrl: repo.clone_url,
+    }));
+  });
+  ipcMain.handle("github:clone", async (_event, repo) => {
+    const fullName = githubRepoName(repo);
+    const parent = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+      title: "Choose where to clone " + fullName,
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (parent.canceled || !parent.filePaths[0]) return null;
+    const destination = path.join(parent.filePaths[0], repo.name);
+    if (await fs.stat(destination).then(() => true).catch(() => false))
+      throw Error("A folder named " + repo.name + " already exists there.");
+    const token = await getGithubAccessToken();
+    if (!token) throw Error("Connect GitHub before cloning a repository.");
+    await runGit(["clone", "--", githubRepoUrl(repo), destination], parent.filePaths[0], token);
+    const folder = await workspace.approveFolder(destination);
+    return { folder, repo: { fullName, name: repo.name, defaultBranch: repo.defaultBranch } };
+  });
+  ipcMain.handle("github:status-project", async (_event, folders) => {
+    const root = await getGitRoot(folders);
+    const [{ stdout: branch }, { stdout: changes }, { stdout: ahead }, { stdout: remoteUrl }] = await Promise.all([
+      runGit(["branch", "--show-current"], root),
+      runGit(["status", "--porcelain"], root),
+      runGit(["rev-list", "--count", "@{upstream}..HEAD"], root).catch(() => ({ stdout: "0" })),
+      runGit(["remote", "get-url", "origin"], root).catch(() => ({ stdout: "" })),
+    ]);
+    return { branch, changedFiles: changes ? changes.split(/\r?\n/).length : 0, ahead: Number(ahead) || 0, remoteUrl };
+  });
+  ipcMain.handle("github:push-project", async (_event, folders, message, expectedFullName) => {
+    const root = await getGitRoot(folders);
+    const token = await getGithubAccessToken();
+    if (!token) throw Error("Connect GitHub before pushing changes.");
+    const { stdout: remote } = await runGit(["remote", "get-url", "origin"], root).catch(() => ({ stdout: "" }));
+    if (!remote || !/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+(?:\.git)?$/i.test(remote))
+      throw Error("This project does not have a GitHub origin. Choose or clone a GitHub repository first.");
+    const remoteName = remote.replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/\/$/, "");
+    if (typeof expectedFullName === "string" && expectedFullName && remoteName.toLowerCase() !== expectedFullName.toLowerCase())
+      throw Error("The GitHub origin is " + remoteName + ", but this project is attached to " + expectedFullName + ".");
+    const { stdout: changes } = await runGit(["status", "--porcelain"], root);
+    let commit = "";
+    if (changes) {
+      await runGit(["add", "--all"], root);
+      const commitMessage = typeof message === "string" && message.trim()
+        ? message.trim().slice(0, 160)
+        : "Update from Server Rock: AI";
+      await runGit(["-c", "user.name=Server Rock AI", "-c", "user.email=server-rock-ai@users.noreply.github.com", "commit", "-m", commitMessage], root);
+      commit = (await runGit(["rev-parse", "--short", "HEAD"], root)).stdout;
+    }
+    const { stdout: branch } = await runGit(["branch", "--show-current"], root);
+    await runGit(["push", "origin", branch || "HEAD"], root, token);
+    return { pushed: true, branch, commit, changedFiles: changes ? changes.split(/\r?\n/).length : 0 };
+  });
+  ipcMain.handle("hf:search", async (_event, query, task) => {
+    if (typeof query !== "string" || query.length > 200)
+      throw Error("Hugging Face search text must be under 200 characters.");
+    if (typeof task !== "string" || !/^[a-z0-9-]{1,64}$/.test(task))
+      throw Error("Choose a valid Hugging Face task.");
+    const url = new URL("https://huggingface.co/api/models");
+    url.searchParams.set("search", query.trim());
+    url.searchParams.set("pipeline_tag", task);
+    url.searchParams.set("sort", "downloads");
+    url.searchParams.set("limit", "30");
+    url.searchParams.set("full", "true");
+    url.searchParams.append("expand[]", "siblings");
+    const token = await readSecureProviderSecret("Hugging Face");
+    const response = await net.fetch(url.href, {
+      headers: token ? { Authorization: "Bearer " + token } : {},
+      redirect: "manual",
+      credentials: "omit",
+      cache: "no-store",
+    });
+    if (!response.ok) throw Error("Hub search failed: " + response.status);
+    return (await response.json()).map((model) => ({
+      id: model.id,
+      cardData: model.cardData || {},
+      pipeline_tag: model.pipeline_tag,
+      siblings: (model.siblings || []).map((file) => ({ rfilename: file.rfilename })),
+    }));
+  });
+  ipcMain.handle("hf:inference", async (_event, task, model, prompt, mediaData) => {
+    const supportedTasks = [
+      "text-to-image", "image-to-image", "image-to-text", "image-classification",
+      "zero-shot-image-classification", "image-segmentation", "object-detection",
+      "depth-estimation", "background-removal", "image-feature-extraction",
+      "document-question-answering", "visual-question-answering", "automatic-speech-recognition",
+      "audio-classification", "zero-shot-audio-classification", "text2text-generation",
+      "summarization", "translation", "text-classification", "token-classification",
+      "zero-shot-classification", "question-answering", "fill-mask", "feature-extraction",
+    ];
+    if (!supportedTasks.includes(task)) throw Error("Unsupported hosted Hugging Face task.");
+    if (typeof model !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(model) || model.length > 200)
+      throw Error("Enter a valid Hugging Face repository ID.");
+    if (typeof prompt !== "string" || prompt.length > 100000)
+      throw Error("Prompt is too long for hosted inference.");
+    const token = await readSecureProviderSecret("Hugging Face");
+    if (!token) throw Error("Save a Hugging Face token with Inference Providers permission in Settings.");
+    const isImageOutput = ["text-to-image", "image-to-image"].includes(task);
+    const needsMedia = [
+      "image-to-image", "image-to-text", "image-classification", "zero-shot-image-classification",
+      "image-segmentation", "object-detection", "depth-estimation", "background-removal",
+      "image-feature-extraction", "document-question-answering", "visual-question-answering",
+      "automatic-speech-recognition", "audio-classification", "zero-shot-audio-classification",
+    ].includes(task);
+    if (needsMedia && !mediaData) throw Error("Attach a source image or audio file for this task.");
+    let inputs = prompt, parameters = {};
+    if (mediaData) {
+      const match = /^data:([^;,]+)(?:;[^,]*)?;base64,([A-Za-z0-9+/=]+)$/.exec(mediaData);
+      if (!match || match[2].length > 34_000_000) throw Error("The attached media is invalid or exceeds 25 MB.");
+      const mime = match[1];
+      if (mime.startsWith("image/")) {
+        inputs = match[2];
+        if (["visual-question-answering", "document-question-answering"].includes(task))
+          parameters.question = prompt;
+        if (task === "image-to-image") parameters.prompt = prompt;
+      } else if (mime.startsWith("audio/")) {
+        const response = await net.fetch(
+          "https://router.huggingface.co/hf-inference/models/" + encodeURIComponent(model),
+          {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token, "Content-Type": mime, Accept: "application/json" },
+            body: Buffer.from(match[2], "base64"),
+            redirect: "manual", credentials: "omit", cache: "no-store",
+          },
+        );
+        if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await response.text()).slice(0, 300));
+        const contentType = response.headers.get("content-type") || "application/json";
+        if (contentType.startsWith("audio/")) {
+          const data = Buffer.from(await response.arrayBuffer());
+          if (data.length > 50 * 1024 * 1024) throw Error("Generated media exceeds the 50 MB response limit.");
+          return { kind: "audio", mime: contentType, data: data.toString("base64") };
+        }
+        return { kind: "json", result: JSON.stringify(await response.json(), null, 2).slice(0, 16000) };
+      } else throw Error("This hosted task accepts image or audio attachments only.");
+    } else {
+      try {
+        const structured = JSON.parse(prompt);
+        if (structured && typeof structured === "object") inputs = structured;
+      } catch {}
+    }
+    const response = await net.fetch(
+      "https://router.huggingface.co/hf-inference/models/" + encodeURIComponent(model),
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+          Accept: isImageOutput ? "image/*" : "application/json, image/*, audio/*",
+        },
+        body: JSON.stringify({ inputs, parameters }),
+        redirect: "manual", credentials: "omit", cache: "no-store",
+      },
+    );
+    if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await response.text()).slice(0, 300));
+    const mime = response.headers.get("content-type") || "application/json";
+    if (mime.startsWith("image/") || mime.startsWith("audio/")) {
+      const data = Buffer.from(await response.arrayBuffer());
+      if (data.length > 50 * 1024 * 1024) throw Error("Generated media exceeds the 50 MB response limit.");
+      return { kind: mime.startsWith("image/") ? "image" : "audio", mime, data: data.toString("base64") };
+    }
+    return { kind: "json", result: JSON.stringify(await response.json(), null, 2).slice(0, 16000) };
+  });
+  ipcMain.handle("provider:stream", async (event, request) => {
+    if (!request || typeof request.requestId !== "string" || request.requestId.length > 100)
+      throw Error("Invalid provider request ID.");
+    const controller = new AbortController();
+    activeProviderRequests.set(request.requestId, controller);
+    try {
+      const protocol = request.provider === "Anthropic API" ? "anthropic" : "openai";
+      const result = await streamProviderChat({
+        provider: request.provider,
+        protocol,
+        endpoint: request.endpoint,
+        model: request.model,
+        messages: request.messages,
+        temperature: request.temperature,
+        maxTokens: request.maxTokens,
+        signal: controller.signal,
+        onChunk: (text) => event.sender.send("provider:chunk", { requestId: request.requestId, text }),
+      });
+      return result;
+    } finally {
+      activeProviderRequests.delete(request.requestId);
+    }
+  });
+  ipcMain.on("provider:cancel", (_event, requestId) =>
+    activeProviderRequests.get(requestId)?.abort(),
+  );
   ipcMain.handle(
     "models:scan-provider",
-    async (_event, provider, endpoint, apiKey) => {
-      if (typeof endpoint !== "string" || endpoint.length > 2048)
-        throw Error("Enter a valid provider endpoint.");
-      let url;
-      try {
-        url = new URL(endpoint);
-      } catch {
-        throw Error("Enter a valid provider endpoint.");
-      }
-      if (!["http:", "https:"].includes(url.protocol))
-        throw Error("Provider endpoint must use HTTP or HTTPS.");
+    async (_event, provider, endpoint) => {
+      const url = validateEndpoint(endpoint);
       url.pathname = url.pathname.replace(
         /\/(chat\/completions|messages)\/?$/,
         "/models",
@@ -584,6 +1046,7 @@ app.whenReady().then(() => {
         url.pathname = url.pathname.replace(/\/$/, "") + "/models";
       url.search = "";
       const headers = { Accept: "application/json" };
+      const apiKey = await readSecureProviderSecret(provider);
       if (apiKey) {
         if (provider === "Anthropic API") {
           headers["x-api-key"] = apiKey;
@@ -618,9 +1081,12 @@ app.whenReady().then(() => {
       }
     },
   );
-  ipcMain.handle("models:download", async (_event, repoId, token) => {
+  ipcMain.handle("models:download", async (_event, repoId) => {
+    if (typeof repoId !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(repoId) || repoId.length > 200)
+      throw Error("Enter a valid Hugging Face repository ID.");
     const base = modelDirectory(repoId);
     await fs.mkdir(base, { recursive: true });
+    const token = await readSecureProviderSecret("Hugging Face");
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const info = await net.fetch(
       "https://huggingface.co/api/models/" + repoId + "?expand[]=siblings",

@@ -8,9 +8,13 @@ state.settings ??= {
   endpoint: "http://localhost:11434/v1/chat/completions",
   model: "llama3.2",
   theme: "dark",
+  temperature: 0.7,
 };
+state.settings.temperature ??= 0.7;
 state.settingsByProvider ??= {};
 let providerSecretsReady = false;
+let editingProjectId = null;
+let pendingBranchBase = null;
 let active = null;
 const localHfTasks = [
   "text-generation",
@@ -73,50 +77,69 @@ const defaults = {
     "https://api.anthropic.com/v1/messages",
     "claude-3-5-haiku-latest",
   ],
+  OpenRouter: [
+    "https://openrouter.ai/api/v1/chat/completions",
+    "openai/gpt-oss-20b",
+  ],
+  Groq: [
+    "https://api.groq.com/openai/v1/chat/completions",
+    "openai/gpt-oss-20b",
+  ],
+  DeepSeek: ["https://api.deepseek.com/chat/completions", "deepseek-flash"],
+  Mistral: [
+    "https://api.mistral.ai/v1/chat/completions",
+    "mistral-small-latest",
+  ],
 };
+const catalogProviders = [
+  "OpenAI API",
+  "Anthropic API",
+  "OpenRouter",
+  "Groq",
+  "DeepSeek",
+  "Mistral",
+  "OpenAI compatible",
+  "GPT4All",
+  "LM Studio",
+];
 function persist() {
   const snapshot = JSON.parse(JSON.stringify(state));
-  if (providerSecretsReady) {
-    if (snapshot.settings) delete snapshot.settings.apiKey;
-    for (const settings of Object.values(snapshot.settingsByProvider || {}))
-      delete settings.apiKey;
-  }
+  if (snapshot.settings) delete snapshot.settings.apiKey;
+  for (const settings of Object.values(snapshot.settingsByProvider || {}))
+    delete settings.apiKey;
   localStorage.setItem(KEY, JSON.stringify(snapshot));
 }
-async function loadProviderSecret(provider) {
+async function getProviderSecretStatus(provider) {
   try {
-    if (!window.desktopModels?.getProviderSecret) throw Error("Desktop bridge unavailable");
-    const secret = await window.desktopModels.getProviderSecret(provider);
-    providerSecretsReady = true;
-    state.settingsByProvider[provider] ??= {};
-    state.settingsByProvider[provider].apiKey = secret || "";
-    if (state.settings.provider === provider) state.settings.apiKey = secret || "";
-    persist();
-    return secret || "";
+    const status = await window.desktopModels?.getProviderSecretStatus?.(provider);
+    providerSecretsReady = Boolean(status?.secureStorage);
+    return status || { saved: false, secureStorage: false };
   } catch (error) {
     providerSecretsReady = false;
-    return state.settingsByProvider[provider]?.apiKey || "";
+    return { saved: false, secureStorage: false, error: error.message };
   }
 }
 async function migrateAndLoadProviderSecrets() {
   const providers = new Set(Object.keys(state.settingsByProvider || {}));
-  let allSecure = true;
   if (state.settings?.provider) providers.add(state.settings.provider);
   for (const provider of providers) {
     const legacy = state.settingsByProvider[provider]?.apiKey ||
       (state.settings.provider === provider ? state.settings.apiKey : "");
+    let migrated = !legacy;
     try {
-      if (legacy) await window.desktopModels.setProviderSecret(provider, legacy);
-      const secret = await window.desktopModels.getProviderSecret(provider);
-      state.settingsByProvider[provider] ??= {};
-      state.settingsByProvider[provider].apiKey = secret || "";
-      if (state.settings.provider === provider) state.settings.apiKey = secret || "";
-    } catch {
-      allSecure = false;
+      const status = await getProviderSecretStatus(provider);
+      if (legacy && !status.saved) {
+        await window.desktopModels.setProviderSecret(provider, legacy);
+        migrated = true;
+      } else migrated = true;
+    } catch (error) {
+      console.warn("Could not migrate a legacy provider key to secure storage:", error.message);
     }
+    if (migrated && state.settingsByProvider[provider]) delete state.settingsByProvider[provider].apiKey;
+    if (migrated && state.settings.provider === provider) delete state.settings.apiKey;
   }
-  providerSecretsReady = allSecure;
-  if (providerSecretsReady) persist();
+  providerSecretsReady = Boolean((await getProviderSecretStatus(state.settings.provider)).secureStorage);
+  persist();
   settingLoad();
 }
 let recognition = null,
@@ -124,10 +147,14 @@ let recognition = null,
   voiceReply = false,
   activeRequest = null,
   activeLocalRequestId = null,
+  activeProviderRequestId = null,
   pendingImageData = null,
   pendingImageName = null,
   pendingProjectFolders = [],
   messageQueue = [];
+let githubRepos = [],
+  githubAuthFlow = false,
+  githubAuthFlowId = null;
 function updateQueueHint() {
   const hint = $("#queueHint");
   if (!hint) return;
@@ -142,26 +169,45 @@ function renderProjects() {
     b.className =
       "project project-item" +
       (state.activeProjectId === project.id ? " selected" : "");
-    b.innerHTML =
-      "<span>▱　" +
-      project.name +
-      "</span><small>" +
-      project.folders.length +
-      " source folder" +
-      (project.folders.length === 1 ? "" : "s") +
-      "</small>";
+    const title = document.createElement("span");
+    title.className = "project-title";
+    title.textContent = "▱　" + project.name;
+    const meta = document.createElement("small");
+    meta.textContent = `${project.folders.length} local source ${project.folders.length === 1 ? "folder" : "folders"}`;
+    b.append(title, meta);
     b.onclick = () => {
       state.activeProjectId = project.id;
       persist();
       renderProjects();
       $("#crumb").textContent = project.name;
+      $("#projectContextBadge").hidden = false;
+      setPage("chat");
     };
+    b.ondblclick = () => openProjectEditor(project.id);
+    b.title = "Select project · double-click to manage";
     list.append(b);
   }
+  refreshGitHubProjectAction();
+}
+function openProjectEditor(id) {
+  const project = state.projects.find((item) => item.id === id);
+  if (!project) return;
+  editingProjectId = id;
+  pendingProjectFolders = [...(project.folders || [])];
+  $("#projectName").value = project.name;
+  $("#projectInstructions").value = project.instructions || "";
+  $("#editProject").hidden = false;
+  document.querySelector("#projectForm .save").textContent = "Save changes";
+  paintProjectFolders();
+  $("#projectDialog").showModal();
 }
 function showProjectDialog() {
+  editingProjectId = null;
   pendingProjectFolders = [];
   $("#projectName").value = "";
+  $("#projectInstructions").value = "";
+  $("#editProject").hidden = true;
+  document.querySelector("#projectForm .save").textContent = "Create project";
   $("#projectSources").innerHTML =
     '<span class="muted">No folders added yet</span>';
   $("#projectDialog").showModal();
@@ -198,9 +244,82 @@ function openChat(id) {
   active = state.chats.find((c) => c.id === id);
   if (active) {
     $("#crumb").textContent = active.title;
+    state.activeProjectId = active.projectId || null;
+    renderProjects();
+    $("#projectContextBadge").hidden = !state.activeProjectId;
     $("#welcome").hidden = true;
     renderMessages();
+    renderBranchBar();
   }
+}
+function renderBranchBar() {
+  const bar = $("#branchBar");
+  bar.replaceChildren();
+  const hasBranches = Boolean(active?.branches?.length && active.branchIndex > 0);
+  bar.hidden = !hasBranches;
+  if (!hasBranches) return;
+  const label = document.createElement("span");
+  label.textContent = `${active.branchIndex} / ${active.branches.length}`;
+  const previous = document.createElement("button");
+  previous.textContent = "‹";
+  previous.title = "Previous response";
+  previous.disabled = active.branchIndex <= 1;
+  previous.onclick = () => selectBranch(active.branchIndex - 1);
+  const next = document.createElement("button");
+  next.textContent = "›";
+  next.title = "Next response";
+  next.disabled = active.branchIndex >= active.branches.length;
+  next.onclick = () => selectBranch(active.branchIndex + 1);
+  const fork = document.createElement("button");
+  fork.textContent = "Fork from here";
+  fork.onclick = forkConversation;
+  bar.append(previous, label, next, fork);
+}
+function selectBranch(index) {
+  if (!active) return;
+  active.branchIndex = index;
+  active.messages = JSON.parse(JSON.stringify(active.branches[index - 1]));
+  persist();
+  renderMessages();
+  renderBranchBar();
+}
+function regenerateLastTurn() {
+  if (!active || activeRequest) return;
+  const userIndex = active.messages.map((m) => m.role).lastIndexOf("user");
+  if (userIndex < 0) return;
+  const history = JSON.parse(JSON.stringify(active.messages.slice(0, userIndex + 1)));
+  pendingBranchBase = JSON.parse(JSON.stringify(history));
+  if (!active.branches?.length) active.branches = [];
+  const priorAnswer = active.messages[userIndex + 1];
+  if (priorAnswer?.role === "assistant") {
+    if (!active.branches.length)
+      active.branches.push(JSON.parse(JSON.stringify(history.concat([priorAnswer]))));
+    else
+      active.branches.push(JSON.parse(JSON.stringify(history.concat([priorAnswer]))));
+  }
+  active.baseMessages = history.concat([{ role: "assistant", content: "" }]);
+  active.branchIndex = active.branches.length;
+  active.messages = JSON.parse(JSON.stringify(active.baseMessages));
+  persist();
+  renderMessages();
+  const prompt = history[userIndex].content.replace(/\s*\[Image attached: [^\]]+\]/g, "");
+  $("#prompt").value = prompt;
+  send();
+}
+function forkConversation() {
+  if (!active) return;
+  const source = state.chats.find((chat) => chat.id === active.id);
+  const fork = {
+    id: crypto.randomUUID(),
+    title: `${active.title} (fork)`,
+    projectId: active.projectId || null,
+    messages: JSON.parse(JSON.stringify(active.messages)),
+    forkedFrom: active.id,
+  };
+  state.chats.push(fork);
+  persist();
+  renderHistory();
+  openChat(fork.id);
 }
 function renderMessages() {
   const box = $("#messages");
@@ -252,19 +371,56 @@ function renderMessages() {
         audio.src = m.audioData;
         el.append(audio);
       }
+      if (m.role === "assistant") {
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+        const retry = document.createElement("button");
+        retry.className = "regenerate";
+        retry.type = "button";
+        retry.textContent = "Regenerate";
+        retry.onclick = regenerateLastTurn;
+        actions.append(retry);
+        el.append(actions);
+      }
       box.append(el);
     }
   box.scrollTop = box.scrollHeight;
+  renderBranchBar();
 }
 function newChat() {
   active = null;
+  renderProjects();
   $("#crumb").textContent = "New chat";
+  $("#projectContextBadge").hidden = true;
   $("#welcome").hidden = false;
   $("#messages").replaceChildren();
+  $("#branchBar").hidden = true;
   $("#prompt").focus();
+}
+function showLocalReply(content) {
+  if (!active) {
+    active = {
+      id: crypto.randomUUID(),
+      title: String(content).slice(0, 42) || "Local action",
+      projectId: state.activeProjectId || null,
+      messages: [],
+    };
+    state.chats.push(active);
+  }
+  active.messages.push({ role: "assistant", content: String(content) });
+  $("#welcome").hidden = true;
+  $("#projectContextBadge").hidden = !active.projectId;
+  persist();
+  renderHistory();
+  renderMessages();
 }
 function settingLoad() {
   let s = state.settings;
+  if ($("#temperatureControl")) {
+    $("#temperatureControl").value = s.temperature;
+    $("#temperatureValue").value = s.temperature;
+    $("#temperatureValue").textContent = s.temperature;
+  }
   $("#providerLabel").textContent = s.provider;
   const localEndpoint = /(localhost|127\.0\.0\.1)/i.test(s.endpoint || "");
   const isLocal =
@@ -283,14 +439,14 @@ function settingLoad() {
   $("#localModelId").value = s.localModelId || "";
   $("#taskSelect").value = s.hfTask || "text-generation";
   $("#fastModelInput").value = s.fastModel || "";
-  $("#apiKey").value = s.apiKey || "";
-  $("#providerSecretStatus").textContent = providerSecretsReady
-    ? "Saved with the operating system's secure credential storage."
-    : "Secure credential storage is unavailable; keys cannot be saved safely on this system.";
+  $("#apiKey").value = "";
+  refreshProviderSecretStatus(s.provider);
+  $("#githubClientId").value = s.githubClientId || "";
   $("#imageWorkflow").value = s.imageWorkflow || "";
   $("#theme").value = s.theme || "dark";
   syncProviderFields();
   refreshChatGPTStatus();
+  refreshGitHubStatus();
 }
 function syncProviderFields() {
   const provider = $("#providerSelect").value,
@@ -301,6 +457,79 @@ function syncProviderFields() {
   $("#providerSecretSettingRow").hidden = isChatGPT;
   $("#taskSettingRow").hidden = !isHuggingFace;
   $("#hfDownloads").open = isHuggingFace;
+  const keyHelp = {
+    "OpenAI API": "Create a project key in the OpenAI API dashboard.",
+    "Anthropic API": "Use an Anthropic Console API key; Claude.ai subscriptions do not include API access.",
+    OpenRouter: "Use an OpenRouter key; model access and billing follow your OpenRouter account.",
+    Groq: "Use an API key from GroqCloud; the model catalog is fetched from Groq.",
+    DeepSeek: "Use an API key from the DeepSeek API platform.",
+    Mistral: "Use an API key from Mistral AI Studio.",
+    "Hugging Face": "Optional Hugging Face token for gated models and Hub downloads.",
+    "OpenAI compatible": "Optional bearer token for this compatible endpoint.",
+    "LM Studio": "Usually no key is needed for a local LM Studio server.",
+    GPT4All: "Usually no key is needed for the local GPT4All server.",
+    Ollama: "Usually no key is needed for a local Ollama server.",
+  };
+  $("#providerKeyHelp").textContent = keyHelp[provider] || "Use an API key issued by this provider.";
+}
+async function refreshProviderSecretStatus(provider) {
+  const status = await getProviderSecretStatus(provider);
+  $("#providerSecretStatus").textContent = status.secureStorage
+    ? status.saved
+      ? "Key saved in the operating system's secure credential storage."
+      : "No key saved. Enter one here to store it securely on this device."
+    : "Secure credential storage is unavailable; keys cannot be saved safely on this system.";
+}
+async function refreshGitHubStatus() {
+  try {
+    const status = await window.desktopModels?.githubStatus?.();
+    $("#githubConnectionStatus").textContent = status?.connected
+      ? "Signed in as @" + status.login + ". Repository access stays on this device."
+      : "Connect to browse your repositories and push project changes.";
+    return status || { connected: false };
+  } catch (error) {
+    $("#githubConnectionStatus").textContent = "GitHub status unavailable: " + error.message;
+    return { connected: false };
+  }
+}
+async function refreshGitHubProjectAction() {
+  const project = state.projects.find((item) => item.id === (state.activeProjectId || active?.projectId));
+  const button = $("#githubSync");
+  button.hidden = !project?.github || !project.folders?.length;
+  if (project?.github) {
+    button.textContent = "Push to " + project.github.fullName;
+    try {
+      const status = await window.desktopModels.githubProjectStatus(project.folders);
+      button.title = status.branch + " · " + status.changedFiles + " uncommitted files" +
+        (status.ahead ? " · " + status.ahead + " commits ahead" : "");
+      if (status.changedFiles) button.textContent += " · " + status.changedFiles;
+    } catch (error) {
+      button.title = "Repository status unavailable: " + error.message;
+    }
+  }
+}
+async function pushProjectChanges(message = "", confirmPush = true) {
+  const project = state.projects.find((item) => item.id === (state.activeProjectId || active?.projectId));
+  if (!project?.github || !project.folders?.length) {
+    alert("Open a GitHub repository project first.");
+    return;
+  }
+  let commitMessage = message.trim();
+  if (confirmPush) {
+    if (!confirm("Commit the current project changes and push them to " + project.github.fullName + "?")) return;
+    commitMessage = prompt("Commit message", "Update from Server Rock: AI") || "";
+  }
+  try {
+    const result = await window.desktopModels.githubPushProject(project.folders, commitMessage, project.github.fullName);
+    const summary = result.commit
+      ? "Committed " + result.commit + " and pushed " + result.branch + " to " + project.github.fullName + "."
+      : "Pushed " + result.branch + " to " + project.github.fullName + "; there were no new local changes.";
+    $("#runtimeStatus").textContent = "GitHub push complete";
+    refreshGitHubProjectAction();
+    showLocalReply(summary);
+  } catch (error) {
+    alert("GitHub push failed: " + error.message);
+  }
 }
 async function refreshChatGPTStatus() {
   try {
@@ -396,18 +625,24 @@ function renderModelChoices() {
           ? "Local"
           : "Remote";
     b.append(left, badge);
-    b.onclick = () => {
+    b.onclick = async () => {
+      const providerSettings = state.settingsByProvider[item.provider] || {};
+      const { apiKey: _discardedSecret, ...safeProviderSettings } = providerSettings;
       state.settingsByProvider[item.provider] = {
-        ...(state.settingsByProvider[item.provider] || {}),
+        ...safeProviderSettings,
         endpoint: item.endpoint,
         model: item.model,
       };
       state.settings = {
-        ...state.settings,
-        ...state.settingsByProvider[item.provider],
+        theme: state.settings.theme,
+        imageWorkflow: state.settings.imageWorkflow,
+        temperature: state.settings.temperature,
+        ...safeProviderSettings,
         provider: item.provider,
         endpoint: item.endpoint,
         model: item.model,
+        ...(item.localModelId ? { localModelId: item.localModelId } : {}),
+        ...(item.hfTask ? { hfTask: item.hfTask } : {}),
       };
       persist();
       settingLoad();
@@ -440,21 +675,52 @@ function toggleModelPicker() {
 }
 async function scanModels() {
   const status = $("#modelHostStatus");
-  status.textContent = "Scanning local providers…";
+  status.textContent = "Checking local hosts and configured providers…";
   try {
     const result = await window.desktopModels?.scanHosts();
-    discoveredModels = result?.models || [];
-    if (
-      state.settings.provider === "OpenAI compatible" &&
-      state.settings.endpoint &&
-      state.settings.model
-    )
-      discoveredModels.unshift({
-        provider: "OpenAI compatible",
-        model: state.settings.model,
-        endpoint: state.settings.endpoint,
-        local: false,
-      });
+    discoveredModels = [...(result?.models || [])];
+    const addModel = (row) => {
+      if (!row?.model || !row.provider) return;
+      const key = [row.provider, row.model].join("::");
+      if (!discoveredModels.some((item) => [item.provider, item.model].join("::") === key))
+        discoveredModels.push(row);
+    };
+    const scans = [];
+    for (const provider of catalogProviders) {
+      const config = provider === state.settings.provider
+        ? state.settings
+        : state.settingsByProvider[provider] || {};
+      const [endpoint, fallbackModel] = defaults[provider];
+      const target = config.endpoint || endpoint;
+      const local = /localhost|127\.0\.0\.1|\[::1\]/i.test(target);
+      const secretStatus = await getProviderSecretStatus(provider);
+      const configured = Boolean(config.endpoint || config.model || secretStatus.saved);
+      if (configured && config.model)
+        addModel({ provider, model: config.model, endpoint: target, local });
+      if (!configured || (!local && !secretStatus.saved))
+        continue;
+      scans.push({ provider, endpoint: target, local });
+    }
+    const scanned = await Promise.allSettled(
+      scans.map((scan) =>
+        window.desktopModels?.scanProvider(
+          scan.provider,
+          scan.endpoint,
+        ),
+      ),
+    );
+    for (let i = 0; i < scanned.length; i++) {
+      const response = scanned[i];
+      if (response.status !== "fulfilled") continue;
+      for (const item of response.value?.models || [])
+        addModel({
+          provider: scans[i].provider,
+          model: item.id,
+          endpoint: scans[i].endpoint,
+          local: scans[i].local,
+          size: item.size,
+        });
+    }
     const hf =
       state.settings.provider === "Hugging Face"
         ? state.settings
@@ -502,40 +768,12 @@ async function scanModels() {
         endpoint: "https://api.openai.com/v1/responses",
         local: false,
       });
-    if (
-      [
-        "OpenAI API",
-        "Anthropic API",
-        "OpenAI compatible",
-        "GPT4All",
-        "LM Studio",
-      ].includes(state.settings.provider)
-    ) {
-      try {
-        const cloud = await window.desktopModels?.scanProvider(
-          state.settings.provider,
-          state.settings.endpoint,
-          state.settings.apiKey || "",
-        );
-        for (const item of cloud?.models || [])
-          discoveredModels.unshift({
-            provider: state.settings.provider,
-            model: item.id,
-            endpoint: state.settings.endpoint,
-            local: /localhost|127\.0\.0\.1/.test(state.settings.endpoint),
-            size: item.size,
-          });
-      } catch (error) {
-        status.textContent =
-          "Local scan completed; configured endpoint could not list models: " +
-          error.message;
-      }
-    }
-    status.innerHTML = result?.hosts?.length
-      ? 'Available here: <span class="host-chip">' +
-        result.hosts.join(" · ") +
-        "</span>"
-      : "No local host answered. Check that its server is running.";
+    const localHosts = result?.hosts || [];
+    const connectedProviders = [...new Set(discoveredModels.map((m) => m.provider))];
+    status.textContent = [
+      localHosts.length ? "Local: " + localHosts.join(" · ") : "No local host found",
+      connectedProviders.length ? "Models: " + connectedProviders.join(" · ") : "No configured provider models",
+    ].join("  |  ");
     renderModelChoices();
   } catch (e) {
     status.textContent = "Host scan failed: " + e.message;
@@ -559,11 +797,10 @@ async function saveSettings() {
   let p = $("#providerSelect").value;
   const apiKey = $("#apiKey").value;
   try {
-    if (apiKey && !window.desktopModels?.setProviderSecret)
-      throw Error("Secure credential storage is available only in the desktop app.");
-    if (window.desktopModels?.setProviderSecret) {
+    if (apiKey.trim()) {
+      if (!window.desktopModels?.setProviderSecret)
+        throw Error("Secure credential storage is available only in the desktop app.");
       await window.desktopModels.setProviderSecret(p, apiKey);
-      providerSecretsReady = true;
     }
   } catch (error) {
     $("#providerSecretStatus").textContent = error.message;
@@ -575,7 +812,7 @@ async function saveSettings() {
     hfTask: $("#taskSelect").value,
     localModelId: $("#localModelId").value.trim(),
     fastModel: $("#fastModelInput").value.trim(),
-    apiKey,
+    temperature: Number(state.settings.temperature ?? 0.7),
   };
   state.settings = {
     ...state.settings,
@@ -584,8 +821,12 @@ async function saveSettings() {
     localModelId: $("#localModelId").value.trim(),
     theme: $("#theme").value,
     imageWorkflow: $("#imageWorkflow").value,
+    githubClientId: $("#githubClientId").value.trim(),
+    temperature: Number(state.settings.temperature ?? 0.7),
   };
   persist();
+  $("#apiKey").value = "";
+  await refreshProviderSecretStatus(p);
   settingLoad();
   $("#settingsDialog").close();
 }
@@ -603,6 +844,19 @@ $("#addProjectFolder").onclick = async () => {
 };
 $("#closeProject").onclick = $("#cancelProject").onclick = () =>
   $("#projectDialog").close();
+$("#editProject").onclick = () => {
+  const project = state.projects.find((item) => item.id === editingProjectId);
+  if (!project) return;
+  project.name = $("#projectName").value.trim() || project.name;
+  project.instructions = $("#projectInstructions").value.trim();
+  project.folders = [...pendingProjectFolders];
+  state.activeProjectId = project.id;
+  if (active?.projectId === project.id) active.title = project.name;
+  persist();
+  renderProjects();
+  $("#crumb").textContent = project.name;
+  $("#projectDialog").close();
+};
 $("#projectForm").onsubmit = (e) => {
   e.preventDefault();
   const name = $("#projectName").value.trim();
@@ -611,12 +865,18 @@ $("#projectForm").onsubmit = (e) => {
     id: crypto.randomUUID(),
     name,
     folders: [...pendingProjectFolders],
+    instructions: $("#projectInstructions").value.trim(),
   };
   state.projects.push(project);
   state.activeProjectId = project.id;
   persist();
   renderProjects();
+  active = { id: null, title: name, projectId: project.id, messages: [] };
   $("#crumb").textContent = name;
+  $("#projectContextBadge").hidden = false;
+  $("#welcome").hidden = false;
+  $("#messages").replaceChildren();
+  setPage("chat");
   $("#projectDialog").close();
 };
 const updateAgentModeLabel = () => {
@@ -651,6 +911,181 @@ document.querySelectorAll("[data-agent-mode]").forEach(
 updateAgentModeLabel();
 $("#settings").onclick = () => $("#settingsDialog").showModal();
 $(".close").onclick = () => $("#settingsDialog").close();
+function renderUpdateState(update) {
+  const status = $("#updateStatus");
+  if (!status || !update) return;
+  const download = $("#downloadUpdate");
+  const install = $("#installUpdate");
+  download.hidden = update.status !== "available";
+  install.hidden = update.status !== "downloaded";
+  if (update.status === "checking") status.textContent = "Checking GitHub releases…";
+  else if (update.status === "available") status.textContent = "Version " + update.version + " is available.";
+  else if (update.status === "downloading") status.textContent = "Downloading update… " + (update.percent || 0) + "%";
+  else if (update.status === "downloaded") status.textContent = "Version " + update.version + " is ready to install.";
+  else if (update.status === "current") status.textContent = "You are up to date (" + update.version + ").";
+  else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
+  else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
+}
+$("#checkUpdates").onclick = async () => {
+  try { renderUpdateState(await window.desktopModels.checkForUpdates()); }
+  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
+};
+$("#downloadUpdate").onclick = async () => {
+  try { renderUpdateState(await window.desktopModels.downloadUpdate()); }
+  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
+};
+$("#installUpdate").onclick = () => window.desktopModels.installUpdate();
+window.desktopModels?.updateState?.().then(renderUpdateState);
+window.desktopModels?.onUpdateState?.(renderUpdateState);
+$("#githubConnect").onclick = async () => {
+  if (githubAuthFlow) return;
+  const clientId = $("#githubClientId").value.trim();
+  if (!clientId) {
+    $("#githubConnectionStatus").textContent = "Enter a GitHub OAuth App client ID, then connect.";
+    return;
+  }
+  githubAuthFlow = true;
+  $("#githubConnect").disabled = true;
+  $("#githubDeviceCode").hidden = true;
+  try {
+    const flow = await window.desktopModels.githubBeginSignIn(clientId);
+    githubAuthFlowId = flow.id;
+    state.settings.githubClientId = clientId;
+    persist();
+    $("#githubDeviceCode").hidden = false;
+    $("#githubDeviceCodeText").textContent =
+      "In the browser, enter this one-time code: " + flow.userCode +
+      " · GitHub sign-in opened in your browser. Waiting for approval…";
+    $("#githubConnectionStatus").textContent = "Waiting for GitHub approval…";
+    let pollInterval = flow.interval;
+    while (githubAuthFlow) {
+      await new Promise((resolve) => setTimeout(resolve, pollInterval * 1000));
+      const result = await window.desktopModels.githubPollSignIn(flow.id);
+      if (result.connected) {
+        githubAuthFlowId = null;
+        $("#githubDeviceCode").hidden = true;
+        $("#githubConnectionStatus").textContent = "Signed in as @" + result.login + ".";
+        await refreshGitHubStatus();
+        break;
+      }
+      if (result.interval) pollInterval = result.interval;
+    }
+  } catch (error) {
+    $("#githubDeviceCode").hidden = false;
+    $("#githubDeviceCodeText").textContent = error.message;
+    $("#githubConnectionStatus").textContent = "GitHub sign-in did not complete.";
+  } finally {
+    githubAuthFlow = false;
+    githubAuthFlowId = null;
+    $("#githubConnect").disabled = false;
+  }
+};
+$("#githubCancelAuth").onclick = () => {
+  githubAuthFlow = false;
+  if (githubAuthFlowId)
+    window.desktopModels.githubCancelSignIn(githubAuthFlowId);
+  githubAuthFlowId = null;
+  $("#githubDeviceCode").hidden = true;
+  $("#githubConnect").disabled = false;
+  $("#githubConnectionStatus").textContent = "GitHub sign-in canceled.";
+};
+async function loadGitHubRepos() {
+  const status = await window.desktopModels.githubStatus();
+  if (!status.connected) {
+    $("#githubDialogStatus").textContent = "Connect GitHub in Settings to browse repositories.";
+    githubRepos = [];
+    renderGitHubRepos();
+    return;
+  }
+  $("#githubDialogStatus").textContent = "Loading repositories for @" + status.login + "…";
+  try {
+    githubRepos = await window.desktopModels.githubRepos();
+    $("#githubDialogStatus").textContent = githubRepos.length
+      ? githubRepos.length + " repositories available. Select one to clone into a local project."
+      : "No repositories found for this account.";
+    renderGitHubRepos();
+  } catch (error) {
+    $("#githubDialogStatus").textContent = "Could not load repositories: " + error.message;
+  }
+}
+function renderGitHubRepos() {
+  const select = $("#githubRepoList"),
+    query = $("#githubRepoSearch").value.trim().toLowerCase(),
+    selected = select.value;
+  select.replaceChildren();
+  for (const repo of githubRepos.filter((item) =>
+    (item.fullName + " " + item.description).toLowerCase().includes(query),
+  )) {
+    const option = document.createElement("option");
+    option.value = String(githubRepos.indexOf(repo));
+    option.textContent = repo.fullName + (repo.private ? " · Private" : " · Public") +
+      (repo.description ? " — " + repo.description : "");
+    option.selected = option.value === selected;
+    select.append(option);
+  }
+}
+async function openGitHubDialog() {
+  const status = await refreshGitHubStatus();
+  if (!status.connected) {
+    $("#settingsDialog").showModal();
+    return;
+  }
+  $("#githubRepoSearch").value = "";
+  $("#githubDialog").showModal();
+  await loadGitHubRepos();
+}
+$("#githubOpenRepos").onclick = openGitHubDialog;
+$("#githubRefresh").onclick = loadGitHubRepos;
+$("#githubRepoSearch").oninput = renderGitHubRepos;
+$("#openGitHub").onclick = openGitHubDialog;
+$("#githubClone").onclick = async () => {
+  const repo = githubRepos[Number($("#githubRepoList").value)];
+  if (!repo) {
+    $("#githubDialogStatus").textContent = "Choose a repository first.";
+    return;
+  }
+  $("#githubClone").disabled = true;
+  $("#githubDialogStatus").textContent = "Choose a parent folder, then Server Rock: AI will clone the repository there.";
+  try {
+    const result = await window.desktopModels.githubClone(repo);
+    if (!result) return;
+    const project = {
+      id: crypto.randomUUID(),
+      name: repo.name,
+      folders: [result.folder],
+      instructions: "",
+      github: result.repo,
+    };
+    state.projects.push(project);
+    state.activeProjectId = project.id;
+    state.agentMode = "code";
+    active = { id: null, title: project.name, projectId: project.id, messages: [] };
+    persist();
+    renderProjects();
+    updateAgentModeLabel();
+    $("#crumb").textContent = project.name;
+    $("#projectContextBadge").hidden = false;
+    $("#welcome").hidden = false;
+    $("#messages").replaceChildren();
+    setPage("chat");
+    $("#githubDialog").close();
+  } catch (error) {
+    $("#githubDialogStatus").textContent = "Clone failed: " + error.message;
+  } finally {
+    $("#githubClone").disabled = false;
+  }
+};
+$("#githubDisconnect").onclick = async () => {
+  if (!confirm("Remove the GitHub credential saved on this device?")) return;
+  try {
+    await window.desktopModels.githubDisconnect();
+    $("#githubDialog").close();
+    await refreshGitHubStatus();
+  } catch (error) {
+    $("#githubDialogStatus").textContent = error.message;
+  }
+};
+$("#githubSync").onclick = () => pushProjectChanges("", true);
 $("#saveSettings").onclick = saveSettings;
 $("#providerSelect").onchange = async () => {
   let p = $("#providerSelect").value,
@@ -659,7 +1094,18 @@ $("#providerSelect").onchange = async () => {
   $("#endpoint").value = v.endpoint || d[0];
   $("#modelInput").value = v.model || d[1];
   syncProviderFields();
-  $("#apiKey").value = await loadProviderSecret(p);
+  $("#apiKey").value = "";
+  await refreshProviderSecretStatus(p);
+};
+$("#forgetProviderKey").onclick = async () => {
+  const provider = $("#providerSelect").value;
+  try {
+    await window.desktopModels.setProviderSecret(provider, "");
+    $("#apiKey").value = "";
+    await refreshProviderSecretStatus(provider);
+  } catch (error) {
+    $("#providerSecretStatus").textContent = error.message;
+  }
 };
 $("#newChat").onclick = $("#newTop").onclick = newChat;
 $("#clear").onclick = () => {
@@ -706,12 +1152,6 @@ $("#file").onchange = (e) => {
     $("#prompt").placeholder = "Ask about " + f.name;
   };
   reader.readAsDataURL(f);
-};
-$("#mode").onclick = () => {
-  let a = ["Chat", "Imagine", "Analyze image", "Code"];
-  $("#mode").textContent =
-    "▣　" +
-    a[(a.indexOf($("#mode").textContent.replace("▣　", "")) + 1) % a.length];
 };
 document.querySelectorAll(".suggestions button").forEach(
   (b) =>
@@ -771,7 +1211,7 @@ $("#downloadModel").onclick = async () => {
       throw Error(
         "Desktop model bridge unavailable. Reinstall/update the app.",
       );
-    const result = await window.desktopModels.download(id, $("#apiKey").value);
+    const result = await window.desktopModels.download(id);
     state.settings.localModelId = id;
     persist();
     $("#modelDownloadStatus").textContent =
@@ -781,217 +1221,69 @@ $("#downloadModel").onclick = async () => {
   }
 };
 async function generateHfImage(s, prompt, out, signal, imageData) {
-  if (!s.apiKey)
-    throw Error(
-      "Add a Hugging Face token with Inference Providers permission in Settings.",
-    );
-  const model = encodeURIComponent(s.model),
-    imageToImage = s.hfTask === "image-to-image";
-  if (imageToImage && !imageData)
-    throw Error("Attach a source image for image-to-image.");
-  const payload = imageToImage
-    ? { inputs: imageData.split(",")[1], parameters: { prompt } }
-    : { inputs: prompt, parameters: {} };
-  const r = await fetch(
-    "https://router.huggingface.co/hf-inference/models/" + model,
-    {
-      method: "POST",
-      signal,
-      headers: {
-        Authorization: "Bearer " + s.apiKey,
-        "Content-Type": "application/json",
-        Accept: "image/*",
-      },
-      body: JSON.stringify(payload),
-    },
-  );
-  if (!r.ok)
-    throw Error(
-      "Hugging Face " +
-        (imageToImage ? "image-to-image" : "text-to-image") +
-        " request failed: " +
-        r.status +
-        " " +
-        (await r.text()).slice(0, 240),
-    );
-  const blob = await r.blob();
-  if (!blob.type.startsWith("image/"))
-    throw Error(
-      "Hugging Face returned " +
-        (blob.type || "an unsupported response") +
-        " instead of an image.",
-    );
-  out.content = imageToImage
-    ? "Image transformation complete"
-    : "Generated image";
-  out.imageData = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(Error("Could not read generated image."));
-    reader.readAsDataURL(blob);
-  });
-  renderMessages();
+  return generateHostedHfTask(s, s.hfTask || "text-to-image", prompt, out, signal, imageData);
 }
 async function generateHostedHfTask(s, task, prompt, out, signal, mediaData) {
-  if (!s.apiKey)
-    throw Error(
-      "Add a Hugging Face token with Inference Providers permission in Settings.",
-    );
-  const model = encodeURIComponent(s.model),
-    mediaTask = mediaHfTasks.includes(task);
-  if (mediaTask && !mediaData)
-    throw Error("Attach an image or audio file for this task.");
-  let body,
-    headers = {
-      Authorization: "Bearer " + s.apiKey,
-      Accept: "application/json, image/*, audio/*",
-    };
-  if (task === "image-to-image")
-    return generateHfImage(s, prompt, out, signal, mediaData);
-  if (task === "text-to-image") return generateHfImage(s, prompt, out, signal);
-  if (mediaTask && mediaData) {
-    const parts = mediaData.match(
-      /^data:([^;,]+)(?:;[^,]*)?;base64,([A-Za-z0-9+/=]+)$/,
-    );
-    if (!parts) throw Error("The attached media is not a supported data URL.");
-    const mime = parts[1],
-      bytes = Uint8Array.from(atob(parts[2]), (c) => c.charCodeAt(0));
-    if (mime.startsWith("image/")) {
-      headers["Content-Type"] = "application/json";
-      let parameters = {};
-      if (
-        ["visual-question-answering", "document-question-answering"].includes(
-          task,
-        )
-      )
-        parameters.question = prompt;
-      body = JSON.stringify({ inputs: parts[2], parameters });
-    } else {
-      headers["Content-Type"] = mime;
-      body = bytes;
-    }
-  } else {
-    headers["Content-Type"] = "application/json";
-    let inputs = prompt,
-      parameters = {};
-    try {
-      const structured = JSON.parse(prompt);
-      if (structured && typeof structured === "object") inputs = structured;
-    } catch {}
-    body = JSON.stringify({ inputs, parameters });
-  }
-  const response = await fetch(
-    "https://router.huggingface.co/hf-inference/models/" + model,
-    { method: "POST", signal, headers, body },
-  );
-  if (!response.ok)
-    throw Error(
-      "Hugging Face " +
-        task +
-        " request failed: " +
-        response.status +
-        " " +
-        (await response.text()).slice(0, 240),
-    );
-  const contentType = response.headers.get("content-type") || "";
-  if (contentType.startsWith("image/") || contentType.startsWith("audio/")) {
-    const blob = await response.blob(),
-      data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(Error("Could not read model output."));
-        reader.readAsDataURL(blob);
-      });
-    if (contentType.startsWith("image/")) out.imageData = data;
-    else out.audioData = data;
-    out.content = contentType.startsWith("image/")
-      ? "Image output"
-      : "Audio output";
-  } else {
-    const payload = await response.json();
-    out.content =
-      typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
-  }
+  if (signal?.aborted) throw new DOMException("Stopped", "AbortError");
+  const result = await window.desktopModels.runHuggingFaceTask(task, s.model, prompt, mediaData);
+  if (result.kind === "image") {
+    out.imageData = "data:" + result.mime + ";base64," + result.data;
+    out.content = task === "image-to-image" ? "Image transformation complete" : "Generated image";
+  } else if (result.kind === "audio") {
+    out.audioData = "data:" + result.mime + ";base64," + result.data;
+    out.content = "Audio output";
+  } else out.content = result.result || "The model returned no output.";
   renderMessages();
 }
 async function streamChat(s, messages, out, signal) {
   if (s.provider === "ChatGPT plan") {
     const started = performance.now();
     let first = null;
-    await window.desktopModels.chatgptStream(
-      messages,
-      s.model,
-      s.requestId,
-      (text) => {
-        if (first === null) first = performance.now() - started;
-        out.content += text;
-        renderMessages();
-      },
-    );
+    const cancelChatGPTRequest = () =>
+      window.desktopModels.cancelChatGPT(s.requestId);
+    activeProviderRequestId = s.requestId;
+    signal.addEventListener("abort", cancelChatGPTRequest, { once: true });
+    try {
+      await window.desktopModels.chatgptStream(
+        messages,
+        s.model,
+        s.requestId,
+        (text) => {
+          if (first === null) first = performance.now() - started;
+          out.content += text;
+          renderMessages();
+        },
+      );
+    } finally {
+      signal.removeEventListener("abort", cancelChatGPTRequest);
+      activeProviderRequestId = null;
+    }
     recordModelPerformance(s, started, out.content, first);
     return;
   }
   const started = performance.now();
   let firstTokenMs = null;
-  const headers = { "Content-Type": "application/json" };
-  if (s.apiKey) headers.Authorization = "Bearer " + s.apiKey;
-  let body = { model: s.model, messages, stream: true };
-  if (s.provider === "Anthropic API") {
-    headers["x-api-key"] = s.apiKey;
-    headers["anthropic-version"] = "2023-06-01";
-    headers["anthropic-dangerous-direct-browser-access"] = "true";
-    delete headers.Authorization;
-    body = {
-      model: s.model,
-      max_tokens: 4096,
-      messages: messages.filter((m) => m.role !== "system"),
-      stream: true,
-    };
-    const sys = messages.find((m) => m.role === "system");
-    if (sys) body.system = sys.content;
-  }
-  const r = await fetch(s.endpoint, {
-    method: "POST",
-    signal,
-    headers,
-    body: JSON.stringify(body),
-  });
-  if (!r.ok)
-    throw Error(
-      r.status + " " + r.statusText + ": " + (await r.text()).slice(0, 200),
-    );
-  const reader = r.body.getReader(),
-    decoder = new TextDecoder();
-  let carry = "";
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    carry += decoder.decode(value, { stream: true });
-    const lines = carry.split("\n");
-    carry = lines.pop();
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t.startsWith("data:")) continue;
-      const data = t.slice(5).trim();
-      if (data === "[DONE]") continue;
-      let obj;
-      try {
-        obj = JSON.parse(data);
-      } catch {
-        continue;
-      }
-      const delta =
-        obj.choices?.[0]?.delta?.content ??
-        obj.choices?.[0]?.message?.content ??
-        obj.delta?.text ??
-        obj.content_block?.text ??
-        "";
-      if (typeof delta === "string" && delta) {
-        if (firstTokenMs === null) firstTokenMs = performance.now() - started;
-        out.content += delta;
-      }
-      renderMessages();
-    }
+  const cancelProviderRequest = () =>
+    window.desktopModels.cancelProviderChat(s.requestId);
+  activeProviderRequestId = s.requestId;
+  signal.addEventListener("abort", cancelProviderRequest, { once: true });
+  try {
+    await window.desktopModels.streamProviderChat({
+    requestId: s.requestId,
+    provider: s.provider,
+    endpoint: s.endpoint,
+    model: s.model,
+    messages,
+    temperature: Number(s.temperature ?? 0.7),
+    maxTokens: 4096,
+  }, (text) => {
+    if (firstTokenMs === null) firstTokenMs = performance.now() - started;
+    out.content += text;
+    renderMessages();
+    });
+  } finally {
+    signal.removeEventListener("abort", cancelProviderRequest);
+    activeProviderRequestId = null;
   }
   recordModelPerformance(s, started, out.content, firstTokenMs);
 }
@@ -1033,7 +1325,8 @@ async function generateImage(s, prompt, out, signal) {
               "&type=" +
               encodeURIComponent(im.type || "output"),
           );
-      out.content = "Image generation complete.\n" + urls.join("\n");
+      out.content = "Image generation complete.\n\n" +
+        urls.map((url, index) => "![Generated image " + (index + 1) + "](<" + url + ">)").join("\n\n");
       return;
     }
   }
@@ -1042,19 +1335,7 @@ async function generateImage(s, prompt, out, signal) {
 async function searchHub() {
   const query = $("#hfSearch").value.trim(),
     task = $("#taskSelect").value;
-  const u = new URL("https://huggingface.co/api/models");
-  u.searchParams.set("search", query);
-  u.searchParams.set("pipeline_tag", task);
-  u.searchParams.set("sort", "downloads");
-  u.searchParams.set("limit", "30");
-  u.searchParams.set("full", "true");
-  u.searchParams.append("expand[]", "siblings");
-  const headers = {};
-  if (state.settings.apiKey)
-    headers.Authorization = "Bearer " + state.settings.apiKey;
-  const r = await fetch(u, { headers });
-  if (!r.ok) throw Error("Hub search failed: " + r.status);
-  const models = await r.json(),
+  const models = await window.desktopModels.searchHuggingFace(query, task),
     sel = $("#hfResults");
   sel.replaceChildren();
   for (const m of models) {
@@ -1168,6 +1449,10 @@ async function send() {
       window.desktopModels?.cancel(activeLocalRequestId);
       window.desktopModels?.cancelChatGPT(activeLocalRequestId);
     }
+    if (activeProviderRequestId) {
+      window.desktopModels?.cancelProviderChat(activeProviderRequestId);
+      window.desktopModels?.cancelChatGPT(activeProviderRequestId);
+    }
     $("#runtimeStatus").textContent = "Stopping…";
     return;
   }
@@ -1205,7 +1490,7 @@ async function send() {
   }
   if (cmd.help) {
     showLocalReply(
-      "Commands: /fast, /plan, /goal, /status, /imagegen, /review, /summarize, /explain, /translate, /models, /clear, /help.",
+      "Commands: /fast, /plan, /goal, /status, /imagegen, /review, /summarize, /explain, /translate, /models, /push, /clear, /help.",
     );
     return;
   }
@@ -1213,11 +1498,21 @@ async function send() {
     discoverModels();
     return;
   }
+  if (cmd.push) {
+    pushProjectChanges(cmd.text || "Update from Server Rock: AI", true);
+    return;
+  }
+  if (cmd.status) {
+    const project = state.projects.find((item) => item.id === active?.projectId || item.id === state.activeProjectId);
+    showLocalReply(`Provider: ${state.settings.provider}\nModel: ${state.settings.model}\nConnection: ${$("#connectionModeLabel").textContent}\nProject: ${project?.name || "None"}\nConversation history: stored on this device.`);
+    return;
+  }
   $("#welcome").hidden = true;
   if (!active) {
     active = {
       id: crypto.randomUUID(),
       title: (text || raw).slice(0, 42) || "New chat",
+      projectId: state.activeProjectId || null,
       messages: [],
     };
     state.chats.push(active);
@@ -1226,11 +1521,13 @@ async function send() {
     role: "user",
     content: raw + (imageName ? " [Image attached: " + imageName + "]" : ""),
   });
+  $("#projectContextBadge").hidden = !active.projectId;
   persist();
   renderHistory();
   renderMessages();
   const out = { role: "assistant", content: "" };
   active.messages.push(out);
+  const assistantIndex = active.messages.length - 1;
   renderMessages();
   const request = new AbortController(),
     requestId = crypto.randomUUID();
@@ -1239,6 +1536,10 @@ async function send() {
   $("#send").title = "Stop generation";
   try {
     const s = { ...state.settings, requestId };
+    if (state.activeProjectId) {
+      active.projectId = state.activeProjectId;
+      $("#projectContextBadge").hidden = false;
+    }
     if (cmd.fast) s.model = s.fastModel || s.model;
     const prior = active.messages
       .slice(0, -1)
@@ -1265,6 +1566,9 @@ async function send() {
           workspaceContext = "Workspace read unavailable: " + error.message;
       }
     }
+    const projectInstruction = codingProject?.instructions
+      ? `Project instructions for ${codingProject.name}:\n${codingProject.instructions}`
+      : "";
     if (state.agentMode === "code") {
       const projectFiles = Array.isArray(workspaceContext)
         ? workspaceContext
@@ -1281,6 +1585,7 @@ async function send() {
       messages.unshift({
         role: "system",
         content:
+          (projectInstruction ? projectInstruction + "\n\n" : "") +
           "You are the Coding Agent in Server Rock: AI. Project: " +
           (codingProject?.name || "not selected") +
           ". Selected folders: " +
@@ -1300,6 +1605,8 @@ async function send() {
             retrieved,
         });
     }
+    if (projectInstruction && state.agentMode !== "code")
+      messages.unshift({ role: "system", content: projectInstruction });
     let instruction = "";
     if (cmd.plan || cmd.goal)
       instruction =
@@ -1405,6 +1712,17 @@ async function send() {
         ? "Local model ready"
         : "⌖　This device";
     }
+    if (active?.id && active.messages[assistantIndex] === out && out.content) {
+      const chat = state.chats.find((item) => item.id === active.id);
+      if (chat && pendingBranchBase) {
+        chat.baseMessages = pendingBranchBase;
+        chat.branches = [...(chat.branches || []), JSON.parse(JSON.stringify(chat.messages))];
+        chat.branchIndex = chat.branches.length;
+        active = chat;
+      }
+    }
+    refreshGitHubProjectAction();
+    pendingBranchBase = null;
     persist();
     renderMessages();
     if (voiceReply && out.content && !request.signal.aborted)
@@ -1453,6 +1771,7 @@ function setPage(name) {
     : activity
       ? "Activity"
       : active?.title || "New chat";
+  if (!image && !activity) $("#projectContextBadge").hidden = !state.activeProjectId;
   document
     .querySelectorAll(".rail [data-page]")
     .forEach((b) => b.classList.toggle("selected", b.dataset.page === name));
@@ -1495,14 +1814,69 @@ $("#navLibrary").onclick = () => {
   renderModelChoices();
   scanModels();
 };
+$("#openModelLibrary").onclick = () => $("#navLibrary").click();
+$("#openConnections").onclick = () => $("#settings").click();
+$("#temperatureControl").oninput = (event) => {
+  const value = Number(event.target.value);
+  state.settings.temperature = value;
+  $("#temperatureValue").value = value;
+  $("#temperatureValue").textContent = value;
+  persist();
+};
 $("#imageTrending").onclick = () => {
   $("#imageTrending").classList.add("active");
   $("#imageTemplates").classList.remove("active");
+  $(".template-grid").hidden = false;
+  $("#generatedGallery").hidden = true;
 };
 $("#imageTemplates").onclick = () => {
   $("#imageTemplates").classList.add("active");
   $("#imageTrending").classList.remove("active");
+  $(".template-grid").hidden = true;
+  $("#generatedGallery").hidden = false;
+  renderImageGallery();
 };
+function renderImageGallery() {
+  const gallery = $("#generatedGallery");
+  gallery.replaceChildren();
+  const artifacts = [];
+  for (const chat of state.chats) {
+    for (const [index, message] of (chat.messages || []).entries()) {
+      if (message.role !== "assistant") continue;
+      const prompt = [...chat.messages.slice(0, index)]
+        .reverse()
+        .find((item) => item.role === "user")?.content || "Generated image";
+      if (message.imageData)
+        artifacts.push({ chatId: chat.id, prompt, src: message.imageData });
+      for (const match of String(message.content || "").matchAll(
+        /!\[[^\]]*\]\((?:<)?([^\s)>]+)(?:>)?\)/g,
+      ))
+        artifacts.push({ chatId: chat.id, prompt, src: match[1] });
+    }
+  }
+  for (const item of artifacts.slice(-40).reverse()) {
+    const button = document.createElement("button"),
+      image = document.createElement("img"),
+      caption = document.createElement("span");
+    button.type = "button";
+    button.className = "generated-artifact";
+    image.src = item.src;
+    image.alt = item.prompt;
+    caption.textContent = item.prompt;
+    button.append(image, caption);
+    button.onclick = () => {
+      openChat(item.chatId);
+      setPage("chat");
+    };
+    gallery.append(button);
+  }
+  if (!artifacts.length) {
+    const empty = document.createElement("p");
+    empty.className = "model-host-status";
+    empty.textContent = "Images you create will appear here on this device.";
+    gallery.append(empty);
+  }
+}
 document.querySelectorAll(".template-card").forEach(
   (card) =>
     (card.onclick = () => {
@@ -1525,6 +1899,13 @@ $("#imagePrompt").onkeydown = (e) => {
   }
 };
 settingLoad();
+window.desktopModels?.githubDefaultClientId?.().then((clientId) => {
+  if (clientId && !state.settings.githubClientId) {
+    state.settings.githubClientId = clientId;
+    $("#githubClientId").value = clientId;
+    persist();
+  }
+});
 migrateAndLoadProviderSecrets();
 renderProjects();
 renderHistory();
