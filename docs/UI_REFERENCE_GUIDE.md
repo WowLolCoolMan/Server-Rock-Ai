@@ -45,6 +45,7 @@ The numbered files in [`ui-references/`](ui-references/) are the original user-p
 | `reference-18.png` | Plugins and integrations | Integrations should be grouped, searchable, and clearly enabled/disabled, with setup details one level deeper. |
 | `reference-19.png` | Git settings | Expose branch, merge, push, review, and commit guidance in focused Git settings. |
 | `reference-20.png` | Worktrees settings | Show worktree location, cleanup policy, and managed worktrees with safe defaults and visible safeguards. |
+| `reference-21.png` | Comparison table of Open WebUI, LobeChat, LibreChat, Jan, GPT4All, AnythingLLM, Khoj, text-generation-webui, LocalAI, NextChat, and HuggingChat | Use the categories as a landscape map: full-featured chat, offline desktop, document/knowledge workflows, developer tooling, and lightweight clients. Compare capabilities and usability patterns against the live products before choosing architecture. The star counts and short descriptions are snapshot claims from the supplied image, not current measurements or verified product facts. |
 
 ## How to use these references
 
