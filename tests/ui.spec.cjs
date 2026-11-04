@@ -79,6 +79,25 @@ test("connection labels reflect local and hosted providers and the rail settings
   await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
   await expect(page.locator("#connectionDot")).not.toHaveClass(/remote/);
 });
+test("optional GitHub sign-in prompt is hidden when idle and visible only during authorization", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      githubStatus: async () => ({ connected: false }),
+      githubBeginSignIn: async () => ({ id: "test-flow", userCode: "ABCD-EFGH", verificationUri: "https://github.com/login/device", interval: 60 }),
+      githubPollSignIn: async () => ({ pending: true }),
+      githubCancelSignIn: () => {},
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+  await page.locator("#githubClientId").fill("test-client-id");
+  await page.locator("#githubConnect").click();
+  await expect(page.locator("#githubDeviceCode")).toBeVisible();
+  await expect(page.locator("#githubDeviceCodeText")).toContainText("ABCD-EFGH");
+  await page.locator("#githubCancelAuth").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+});
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
 }) => {
