@@ -67,6 +67,7 @@ test("Core updates are account-free and expose stable check, download and recove
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
   await page.locator("#coreUpdates summary").click();
   await expect(page.locator("#coreUpdateNotice")).toContainText("No account or paid entitlement is required");
   await expect(page.locator("#coreAccountAction")).toHaveCount(0);
@@ -78,6 +79,25 @@ test("Core updates are account-free and expose stable check, download and recove
   await expect(page.locator("#coreUpdateStatus")).toContainText("Complete the operating-system install");
   await page.locator("#coreUpdateRollback").click();
   await expect(page.locator("#coreUpdateStatus")).toContainText("verified recovery installer 0.1.2");
+});
+test("optional GitHub sign-in prompt is hidden when idle and visible only during authorization", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      githubStatus: async () => ({ connected: false }),
+      githubBeginSignIn: async () => ({ id: "test-flow", userCode: "ABCD-EFGH", verificationUri: "https://github.com/login/device", interval: 60 }),
+      githubPollSignIn: async () => ({ pending: true }),
+      githubCancelSignIn: () => {},
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+  await page.locator("#githubClientId").fill("test-client-id");
+  await page.locator("#githubConnect").click();
+  await expect(page.locator("#githubDeviceCode")).toBeVisible();
+  await expect(page.locator("#githubDeviceCodeText")).toContainText("ABCD-EFGH");
+  await page.locator("#githubCancelAuth").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
 });
 test("Core update actions stay disabled when this build has no pinned distribution configuration", async ({ page }) => {
   await page.addInitScript(() => {

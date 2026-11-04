@@ -400,6 +400,9 @@ dialog::backdrop {
   align-items: center;
   gap: 12px;
 }
+.github-device-code[hidden] {
+  display: none;
+}
 .github-device-code span {
   flex: 1;
 }
