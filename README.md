@@ -31,6 +31,7 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 - Optional API keys use Electron's OS secure credential storage when available; credentials are never sent to Server Rock services. If secure storage is unavailable, the app refuses to save a key.
 - Light and dark themes, attachment picker, and workspace chat history.
 - Choose ChatBot or Coding Agent from the Codex-style mode switch. Project source folders are selected with the native folder picker; ChatBot can retrieve relevant local text passages from the selected project, and Coding Agent can inspect project files and save generated files back into that folder.
+- Activity includes a terminal that starts in an authorized project folder. Commands run with the user's normal account permissions; live output, bounded input, cancellation, and resumable session snapshots stay in the desktop process, and secret-shaped environment variables are removed.
 - Live response streaming with a Stop control for active provider, image, and local text-generation requests.
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
 - Voice turn-taking with microphone speech recognition and spoken replies; click the mic again to interrupt audio and stop listening. Speech recognition availability and whether transcription is offline depend on the installed Electron/OS speech service.

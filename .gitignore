@@ -12,3 +12,4 @@ native/**/obj/
 *.log
 test-results/
 playwright-report/
+.ui-shots/

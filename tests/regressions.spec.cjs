@@ -2,13 +2,16 @@ const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const os = require("node:os");
+const { EventEmitter } = require("node:events");
+const { PassThrough } = require("node:stream");
 const { pathToFileURL } = require("node:url");
-const { createWorkspace } = require("../electron/workspace.cjs");
+const { createWorkspace, isProtectedPath } = require("../electron/workspace.cjs");
 const { createProviderBridge } = require("../electron/provider-bridge.cjs");
 const { createSafeChildEnvironment } = require("../electron/child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("../electron/model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("../electron/ipc-validation.cjs");
 const { MAX_ENCRYPTED_STATE_BYTES, readTextFileLimited } = require("../electron/bounded-file.cjs");
+const { createTerminalManager, MAX_OUTPUT_BYTES, MAX_INPUT_BYTES } = require("../electron/terminal-sessions.cjs");
 const {
   MAX_JSON_BODY_BYTES,
   MAX_TEXT_BODY_BYTES,
@@ -239,4 +242,57 @@ test("encrypted state files are bounded before reading", async () => {
   } finally {
     await fs.rm(path.dirname(filePath), { recursive: true, force: true });
   }
+});
+
+test("terminal sessions stay inside authorized roots and replay bounded output", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "server-rock-terminal-"));
+  const children = [];
+  try {
+    const manager = createTerminalManager({
+      resolveRoots: async () => [root],
+      platform: "linux",
+      environment: { SHELL: "/bin/sh", PATH: process.env.PATH, API_KEY: "must-not-leak" },
+      now: () => 123,
+      spawn: (_shell, _args, options) => {
+        const child = new EventEmitter();
+        child.stdout = new PassThrough();
+        child.stderr = new PassThrough();
+        child.stdin = new PassThrough();
+        child.kill = () => child.emit("exit", null, "SIGTERM");
+        child.spawnOptions = options;
+        children.push(child);
+        return child;
+      },
+    });
+    const events = [];
+    const session = await manager.start({ folders: [root], cwd: root, command: "printf hello", timeoutMs: 5000 }, (event) => events.push(event));
+    expect(session.status).toBe("running");
+    expect(children[0].spawnOptions.cwd).toBe(root);
+    expect(children[0].spawnOptions.env.API_KEY).toBeUndefined();
+    children[0].stdout.write("hello");
+    children[0].emit("exit", 0, null);
+    expect(manager.snapshot(session.id)).toMatchObject({ status: "exited", output: "hello" });
+    let replay;
+    manager.attach(session.id, (event) => { if (event.type === "snapshot") replay = event; });
+    expect(replay).toMatchObject({ output: "hello", status: "exited" });
+    await expect(manager.start({ folders: [root], cwd: path.dirname(root), command: "pwd" }, () => {})).rejects.toThrow("authorized project folder");
+
+    const bounded = await manager.start({ folders: [root], cwd: root, command: "yes", timeoutMs: 5000 }, () => {});
+    children[1].stdout.write(Buffer.alloc(MAX_OUTPUT_BYTES + 1, "x"));
+    expect(manager.snapshot(bounded.id).truncated).toBe(true);
+    const inputSession = await manager.start({ folders: [root], cwd: root, command: "cat", timeoutMs: 5000 }, () => {});
+    expect(() => manager.write(inputSession.id, "x".repeat(MAX_INPUT_BYTES + 1))).toThrow("invalid or too large");
+    manager.dispose();
+    expect(events.some((event) => event.type === "exit")).toBe(true);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GitHub push protection recognizes secret-shaped changed paths", () => {
+  expect(isProtectedPath(".env")).toBe(true);
+  expect(isProtectedPath("config/.env.production")).toBe(true);
+  expect(isProtectedPath(".git/config")).toBe(true);
+  expect(isProtectedPath(".github/workflows/release.yml")).toBe(false);
+  expect(isProtectedPath("src/index.js")).toBe(false);
 });

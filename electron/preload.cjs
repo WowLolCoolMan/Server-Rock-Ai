@@ -21,6 +21,17 @@ contextBridge.exposeInMainWorld("desktopModels", {
     ipcRenderer.invoke("projects:read-files", folders),
   writeProjectFile: (folders, relativePath, content) =>
     ipcRenderer.invoke("projects:write-file", folders, relativePath, content),
+  terminalStart: (options) => ipcRenderer.invoke("terminal:start", options),
+  terminalWrite: (id, input) => ipcRenderer.invoke("terminal:write", id, input),
+  terminalStop: (id, reason) => ipcRenderer.invoke("terminal:stop", id, reason),
+  terminalList: () => ipcRenderer.invoke("terminal:list"),
+  terminalSnapshot: (id) => ipcRenderer.invoke("terminal:snapshot", id),
+  terminalAttach: (id) => ipcRenderer.invoke("terminal:attach", id),
+  terminalOnEvent: (onEvent) => {
+    const handler = (_event, data) => onEvent(data);
+    ipcRenderer.on("terminal:event", handler);
+    return () => ipcRenderer.removeListener("terminal:event", handler);
+  },
   scanHosts: () => ipcRenderer.invoke("models:scan-hosts"),
   getProviderSecretStatus: (provider) =>
     ipcRenderer.invoke("secrets:status", provider),

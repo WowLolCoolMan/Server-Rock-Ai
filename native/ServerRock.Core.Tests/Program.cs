@@ -382,6 +382,10 @@ Check(GitHubApiClient.ParseRepositoryReference("https://github.com/owner/project
 var parsedGitStatus = GitHubWorkspaceService.ParseStatus("# branch.oid 0123456789abcdef\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +2 -1\n1 .M N... 100644 100644 100644 00000000 11111111 path with spaces.txt\n? new file.md\n", "owner/project");
 Check(parsedGitStatus.Branch == "main" && parsedGitStatus.CommitsAhead == 2 && parsedGitStatus.CommitsBehind == 1, "GitHub workspace parses branch status and ahead/behind counts");
 Check(parsedGitStatus.Changes.Count == 2 && parsedGitStatus.Changes[0].Path == "path with spaces.txt" && parsedGitStatus.Changes[1].Status == "??", "GitHub workspace preserves modified and untracked paths for review");
+var parsedRenameStatus = GitHubWorkspaceService.ParseStatus("# branch.head main\n2 R. N... 100644 100644 100644 00000000 11111111 R100 safe.txt\t.env.production\n", "owner/project");
+Check(parsedRenameStatus.Changes.Count == 1 && parsedRenameStatus.Changes[0].Path == "safe.txt" && parsedRenameStatus.Changes[0].OriginalPath == ".env.production", "GitHub workspace preserves both sides of a rename for review");
+var unsafeRenamePaths = GitHubWorkspaceService.FindUnsafeChangePaths(parsedRenameStatus.Changes);
+Check(unsafeRenamePaths.Contains(".env.production"), "GitHub commit safety checks the source path of renames");
 foreach (var unsafeReference in new[] { "https://evil.example/owner/project", "https://user:pass@github.com/owner/project", "owner/../settings", "owner/project?tab=code" })
 {
     try

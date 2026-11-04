@@ -370,7 +370,8 @@ public sealed partial class MainPage
             statusLine.Text = $"Branch {status.Branch} · {status.Changes.Count} changed file(s) · {status.CommitsAhead} commit(s) to push";
             changedFiles.Text = status.Changes.Count == 0
                 ? "No uncommitted file changes."
-                : string.Join(Environment.NewLine, status.Changes.Select(change => $"{change.Status,-3} {change.Path}"));
+                : string.Join(Environment.NewLine, status.Changes.Select(change =>
+                    $"{change.Status,-3} {change.Path}{(change.OriginalPath is null ? string.Empty : $" (from {change.OriginalPath})")}"));
             changedFiles.Visibility = status.Changes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
             commitMessage.Visibility = status.Changes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             action.Content = status.Changes.Count > 0 ? "Commit all listed files and push" : $"Push {status.CommitsAhead} local commit(s)";
@@ -378,7 +379,9 @@ public sealed partial class MainPage
             if (status.CommitsBehind > 0) actionStatus.Text = $"GitHub has {status.CommitsBehind} newer commit(s). Fetch and review remote changes before pushing.";
             else actionStatus.Text = "The action stages every listed change, creates a local commit, then pushes it to GitHub. A failed push keeps the local commit for retry.";
             if (status.CommitsBehind > 0) action.IsEnabled = false;
-            if (status.Changes.Any(change => change.Path.Split('/').Any(segment => segment is ".github")) && status.Changes.Count > 0)
+            if (status.Changes.Any(change =>
+                    change.Path.Split('/').Any(segment => segment is ".github") ||
+                    change.OriginalPath?.Split('/').Any(segment => segment is ".github") == true) && status.Changes.Count > 0)
                 actionStatus.Text += " Changes under .github may require the GitHub App’s Workflows permission.";
         }
         Render(initialStatus);

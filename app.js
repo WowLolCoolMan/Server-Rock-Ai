@@ -34,12 +34,16 @@ state.settings ??= {
 };
 state.settings.temperature ??= 0.7;
 state.settingsByProvider ??= {};
+state.activePage = ["chat", "images", "activity"].includes(state.activePage)
+  ? state.activePage
+  : "chat";
 let providerSecretsReady = false;
 let editingProjectId = null;
 let pendingBranchBase = null;
 let githubPushReview = null;
 let githubPushRunning = false;
 let active = null;
+const terminalState = { sessions: new Map(), activeId: null, unsubscribe: null };
 const localHfTasks = [
   "text-generation",
   "text2text-generation",
@@ -313,11 +317,15 @@ function renderHistory() {
     const b = document.createElement("button");
     b.className = "chat-item";
     b.textContent = c.title;
-    b.onclick = () => openChat(c.id);
+    b.onclick = () => {
+      openChat(c.id);
+      setPage("chat");
+    };
     h.append(b);
   }
 }
 function openChat(id) {
+  setMobileSidebar(false);
   active = state.chats.find((c) => c.id === id);
   if (active) {
     $("#crumb").textContent = active.title;
@@ -502,12 +510,8 @@ function settingLoad() {
   const isLocal = providerUsesLocalInference(s);
   $("#connectionModeLabel").textContent = isLocal ? "Local" : "Cloud";
   $("#privacyLabel").textContent = isLocal
-    ? "● Prompt stays on this device"
-    : "● Prompt sent to " + s.provider;
-  $("#sidebarConnectionLabel").textContent = isLocal
-    ? "Local model · on this device"
-    : s.provider + " · prompts leave this device";
-  $("#connectionDot").classList.toggle("remote", !isLocal);
+    ? "Prompts stay on this device"
+    : "Prompts sent to " + s.provider;
   $("#model").textContent = s.model + "　⌄";
   $("#model").title = s.model + " · " + s.provider;
   document.documentElement.classList.toggle("light", s.theme === "light");
@@ -627,7 +631,7 @@ async function pushProjectChanges(message = "") {
   $("#githubPushDialog").showModal();
   try {
     const review = await window.desktopModels.githubProjectStatus(project.folders);
-    githubPushReview = { projectId: project.id, folders: [...project.folders], fullName: project.github.fullName, changeToken: review.changeToken };
+    githubPushReview = { projectId: project.id, folders: [...project.folders], fullName: project.github.fullName, changeToken: review.changeToken, protectedPaths: review.protectedPaths || [] };
     for (const change of (review.changes || []).slice(0, 500)) {
       const item = document.createElement("li");
       item.textContent = change;
@@ -640,11 +644,14 @@ async function pushProjectChanges(message = "") {
     }
     const changeCount = Number(review.changedFiles) || 0,
       ahead = Number(review.ahead) || 0;
-    statusLabel.textContent = review.branch
+    const protectedPaths = review.protectedPaths || [];
+    statusLabel.textContent = protectedPaths.length
+      ? "Push blocked: remove protected files first (" + protectedPaths.slice(0, 3).join(", ") + (protectedPaths.length > 3 ? " …" : "") + ")."
+      : review.branch
       ? "Branch " + review.branch + " · " + changeCount + " uncommitted file(s) · " + ahead + " commit(s) ahead"
       : "This repository is in detached HEAD state. Check out a named branch before pushing.";
     confirmButton.textContent = changeCount ? "Commit and push" : "Push commits";
-    confirmButton.disabled = !review.branch || (!changeCount && !ahead);
+    confirmButton.disabled = protectedPaths.length > 0 || !review.branch || (!changeCount && !ahead);
     if (!review.branch) confirmButton.title = "A named branch is required to push safely.";
     else if (!changeCount && !ahead) confirmButton.title = "There are no changes or commits to push.";
     else confirmButton.title = "Commit and push the changes listed above.";
@@ -1036,7 +1043,10 @@ async function saveSettings() {
   settingLoad();
   $("#settingsDialog").close();
 }
-$("#newProject").onclick = showProjectDialog;
+$("#newProject").onclick = () => {
+  setMobileSidebar(false);
+  showProjectDialog();
+};
 $("#addProjectFolder").onclick = async () => {
   try {
     const folder = await window.desktopModels?.pickFolder();
@@ -1115,8 +1125,18 @@ document.querySelectorAll("[data-agent-mode]").forEach(
     }),
 );
 updateAgentModeLabel();
-$("#settings").onclick = $("#railSettings").onclick = () =>
+$("#settings").onclick = () => {
+  setMobileSidebar(false);
   $("#settingsDialog").showModal();
+};
+function setMobileSidebar(open) {
+  $(".sidebar").classList.toggle("mobile-open", open);
+  $("#sidebarBackdrop").hidden = !open;
+  $("#mobileMenu").setAttribute("aria-expanded", String(open));
+  $("#mobileMenu").setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+}
+$("#mobileMenu").onclick = () => setMobileSidebar(!$(".sidebar").classList.contains("mobile-open"));
+$("#sidebarBackdrop").onclick = () => setMobileSidebar(false);
 $(".close").onclick = () => $("#settingsDialog").close();
 let checkedCoreUpdate = null;
 async function refreshCoreUpdateStatus() {
@@ -1257,6 +1277,7 @@ function renderGitHubRepos() {
   }
 }
 async function openGitHubDialog() {
+  setMobileSidebar(false);
   const status = await refreshGitHubStatus();
   if (!status.connected) {
     $("#settingsDialog").showModal();
@@ -1365,7 +1386,10 @@ $("#forgetProviderKey").onclick = async () => {
     $("#providerSecretStatus").textContent = error.message;
   }
 };
-$("#newChat").onclick = $("#newTop").onclick = newChat;
+$("#newChat").onclick = () => {
+  setMobileSidebar(false);
+  newChat();
+};
 $("#clear").onclick = () => {
   state.chats = [];
   persist();
@@ -1377,10 +1401,12 @@ $("#model").onclick = () => toggleModelPicker();
 $("#scanModels").onclick = () => scanModels();
 $("#modelSearch").oninput = () => renderModelChoices();
 document.addEventListener("click", (e) => {
+  if (!e.target.closest("#slashMenu") && !e.target.closest("#slashHelp"))
+    closeSlashMenu();
   if (
     !e.target.closest("#modelPicker") &&
     !e.target.closest("#model") &&
-    !e.target.closest("#navLibrary")
+    !e.target.closest("#openModelLibrary")
   )
     closeModelPicker();
   if (
@@ -1984,7 +2010,76 @@ async function send() {
     }
   }
 }
+const slashCommandDescriptions = {
+  fast: "Use the configured fast model",
+  plan: "Ask for a structured plan",
+  goal: "Create a focused work goal",
+  status: "Show provider, model, and project status",
+  imagegen: "Generate an image from a prompt",
+  imagine: "Generate an image from a prompt",
+  review: "Review the current project context",
+  summarize: "Summarize the provided content",
+  explain: "Explain the provided content",
+  translate: "Translate the provided text",
+  help: "Show all available commands",
+  models: "Discover available local models",
+  push: "Review and push project changes",
+  clear: "Clear local conversation history",
+};
+function closeSlashMenu() {
+  $("#slashMenu").hidden = true;
+  $("#slashHelp").setAttribute("aria-expanded", "false");
+}
+function renderSlashMenu(filter = "") {
+  const menu = $("#slashMenu");
+  menu.replaceChildren();
+  for (const command of COMMANDS.filter((name) => name.startsWith(filter.toLowerCase()))) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "slash-option";
+    button.setAttribute("role", "menuitem");
+    const name = document.createElement("span");
+    const description = document.createElement("small");
+    name.textContent = `/${command}`;
+    description.textContent = slashCommandDescriptions[command] || "Run a command";
+    button.append(name, description);
+    button.onclick = () => {
+      $("#prompt").value = `/${command} `;
+      $("#prompt").focus();
+      $("#prompt").dispatchEvent(new Event("input", { bubbles: true }));
+      closeSlashMenu();
+    };
+    menu.append(button);
+  }
+  if (!menu.children.length) {
+    const empty = document.createElement("div");
+    empty.className = "slash-empty";
+    empty.textContent = "No matching command";
+    menu.append(empty);
+  }
+}
+function openSlashMenu(filter = "") {
+  renderSlashMenu(filter);
+  $("#slashMenu").hidden = false;
+  $("#slashHelp").setAttribute("aria-expanded", "true");
+}
+$("#slashHelp").onclick = () => {
+  if ($("#slashMenu").hidden) openSlashMenu();
+  else closeSlashMenu();
+};
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (!$("#slashMenu").hidden) {
+      closeSlashMenu();
+      $("#slashHelp").focus();
+    }
+    if ($(".sidebar").classList.contains("mobile-open")) setMobileSidebar(false);
+  }
+});
 $("#prompt").addEventListener("input", () => {
+  const slashMatch = $("#prompt").value.match(/^\/([a-z]*)$/i);
+  if (slashMatch) openSlashMenu(slashMatch[1]);
+  else if (!$("#slashMenu").hidden) closeSlashMenu();
   let m = $("#prompt").value.match(/^\/(fast|imagegen|imagine)\b/i),
     h = $("#commandHint");
   h.hidden = !m;
@@ -2022,8 +2117,16 @@ $("#prompt").onkeydown = (e) => {
   }
 };
 function setPage(name) {
-  const image = name === "images",
-    activity = name === "activity";
+  setMobileSidebar(false);
+  const nextPage = ["chat", "images", "activity"].includes(name)
+    ? name
+    : "chat";
+  if (state.activePage !== nextPage) {
+    state.activePage = nextPage;
+    persist();
+  }
+  const image = nextPage === "images",
+    activity = nextPage === "activity";
   $("#imagePage").hidden = !image;
   $("#activityPage").hidden = !activity;
   const chat = !image && !activity;
@@ -2038,8 +2141,13 @@ function setPage(name) {
   if (!image && !activity) $("#projectContextBadge").hidden = !state.activeProjectId;
   document
     .querySelectorAll(".rail [data-page]")
-    .forEach((b) => b.classList.toggle("selected", b.dataset.page === name));
-  if (activity) renderActivity();
+    .forEach((b) => b.classList.toggle("selected", b.dataset.page === nextPage));
+  if (activity) {
+    renderActivity();
+    ensureTerminalEvents();
+    renderTerminalProjects();
+    refreshTerminalSessions();
+  }
 }
 function renderActivity() {
   const list = $("#activityList");
@@ -2067,19 +2175,186 @@ function renderActivity() {
     list.append(empty);
   }
 }
+function terminalBridgeAvailable() {
+  return Boolean(window.desktopModels?.terminalStart && window.desktopModels?.terminalList);
+}
+function terminalProject() {
+  return state.projects.find((project) => project.id === $("#terminalProject").value) ||
+    state.projects.find((project) => project.id === state.activeProjectId) ||
+    state.projects.find((project) => project.folders?.length);
+}
+function renderTerminalProjects() {
+  const projectSelect = $("#terminalProject"), cwdSelect = $("#terminalCwd");
+  if (!projectSelect || !cwdSelect) return;
+  const projects = state.projects.filter((project) => Array.isArray(project.folders) && project.folders.length);
+  const selected = terminalProject()?.id || "";
+  projectSelect.replaceChildren();
+  if (!projects.length) {
+    projectSelect.append(new Option("Create a project with an authorized folder", ""));
+    projectSelect.disabled = true;
+    cwdSelect.replaceChildren(new Option("No authorized folders", ""));
+    cwdSelect.disabled = true;
+    $("#terminalRun").disabled = true;
+    $("#terminalStatus").textContent = terminalBridgeAvailable()
+      ? "Create a project and add a folder before using the terminal."
+      : "Open the packaged desktop app to use the project terminal.";
+    return;
+  }
+  for (const project of projects) projectSelect.append(new Option(project.name, project.id));
+  projectSelect.disabled = false;
+  projectSelect.value = projects.some((project) => project.id === selected) ? selected : projects[0].id;
+  cwdSelect.replaceChildren();
+  const project = projects.find((item) => item.id === projectSelect.value) || projects[0];
+  for (const folder of project.folders) cwdSelect.append(new Option(folder, folder));
+  cwdSelect.disabled = false;
+  $("#terminalRun").disabled = !terminalBridgeAvailable();
+}
+function renderTerminalSessions() {
+  const list = $("#terminalSessions");
+  if (!list) return;
+  list.replaceChildren();
+  for (const session of terminalState.sessions.values()) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "terminal-session" + (session.id === terminalState.activeId ? " selected" : "");
+    button.textContent = `${session.status === "running" ? "●" : "○"} ${session.command}`;
+    button.title = `${session.cwd} · ${session.status}`;
+    button.onclick = async () => {
+      terminalState.activeId = session.id;
+      renderTerminalSessions();
+      renderTerminalOutput();
+      if (terminalBridgeAvailable() && window.desktopModels.terminalAttach) {
+        try { await window.desktopModels.terminalAttach(session.id); } catch (error) { setTerminalStatus(error.message); }
+      }
+    };
+    list.append(button);
+  }
+  if (!list.children.length) {
+    const empty = document.createElement("span");
+    empty.className = "muted";
+    empty.textContent = "No terminal sessions yet.";
+    list.append(empty);
+  }
+  const activeSession = terminalState.sessions.get(terminalState.activeId);
+  $("#terminalStop").disabled = !activeSession || activeSession.status !== "running";
+  $("#terminalSend").disabled = !activeSession || activeSession.status !== "running";
+}
+function renderTerminalOutput() {
+  const output = $("#terminalOutput");
+  if (!output) return;
+  const session = terminalState.sessions.get(terminalState.activeId);
+  output.textContent = session?.output || (session ? "Waiting for terminal output…" : "Select a project to start a terminal session.");
+  output.scrollTop = output.scrollHeight;
+}
+function setTerminalStatus(message) {
+  const status = $("#terminalStatus");
+  if (status) status.textContent = message;
+}
+function handleTerminalEvent(event) {
+  if (!event?.id || !event.type) return;
+  let session = terminalState.sessions.get(event.id);
+  if (!session) {
+    session = { id: event.id, status: "running", command: event.command || "Terminal", cwd: event.cwd || "", output: "" };
+    terminalState.sessions.set(event.id, session);
+  }
+  if (event.type === "snapshot") {
+    Object.assign(session, { status: event.status, command: event.command, cwd: event.cwd, output: event.output || "", code: event.code, signal: event.signal, truncated: event.truncated });
+  } else if (event.type === "started") {
+    Object.assign(session, { status: "running", command: event.command, cwd: event.cwd });
+    setTerminalStatus(`Running in ${event.cwd}`);
+  } else if (event.type === "data") {
+    session.output = (session.output || "") + (event.text || "");
+    if (event.truncated) session.truncated = true;
+  } else if (event.type === "status") {
+    setTerminalStatus(event.message || "Terminal status updated.");
+  } else if (event.type === "error") {
+    setTerminalStatus(event.message || "Terminal failed.");
+  } else if (event.type === "exit") {
+    session.status = "exited";
+    session.code = event.code;
+    session.signal = event.signal;
+    const codeText = event.code === null || event.code === undefined ? "" : ` with code ${event.code}`;
+    setTerminalStatus(event.reason === "timeout" ? "Terminal timed out." : `Terminal exited${codeText}.`);
+  }
+  if (!terminalState.activeId) terminalState.activeId = event.id;
+  renderTerminalSessions();
+  renderTerminalOutput();
+}
+function ensureTerminalEvents() {
+  if (terminalState.unsubscribe || !window.desktopModels?.terminalOnEvent) return;
+  terminalState.unsubscribe = window.desktopModels.terminalOnEvent(handleTerminalEvent);
+}
+async function refreshTerminalSessions() {
+  renderTerminalProjects();
+  if (!terminalBridgeAvailable()) {
+    setTerminalStatus("Open the packaged desktop app to use the project terminal.");
+    renderTerminalSessions();
+    renderTerminalOutput();
+    return;
+  }
+  try {
+    const sessions = await window.desktopModels.terminalList();
+    terminalState.sessions.clear();
+    for (const session of sessions || []) terminalState.sessions.set(session.id, { ...session, output: "" });
+    if (!terminalState.sessions.has(terminalState.activeId)) terminalState.activeId = sessions?.[0]?.id || null;
+    if (terminalState.activeId && window.desktopModels.terminalAttach) await window.desktopModels.terminalAttach(terminalState.activeId);
+    renderTerminalSessions();
+    renderTerminalOutput();
+  } catch (error) {
+    setTerminalStatus(`Terminal unavailable: ${error.message}`);
+  }
+}
+async function startTerminalSession() {
+  if (!terminalBridgeAvailable()) return setTerminalStatus("Open the packaged desktop app to use the project terminal.");
+  const project = terminalProject(), command = $("#terminalCommand").value.trim(), cwd = $("#terminalCwd").value;
+  if (!project?.folders?.length) return setTerminalStatus("Create a project with an authorized folder first.");
+  if (!command) return setTerminalStatus("Enter a terminal command first.");
+  $("#terminalRun").disabled = true;
+  try {
+    const session = await window.desktopModels.terminalStart({ folders: project.folders, cwd, command });
+    terminalState.sessions.set(session.id, { ...session, output: "" });
+    terminalState.activeId = session.id;
+    await window.desktopModels.terminalAttach?.(session.id);
+    $("#terminalCommand").value = "";
+    setTerminalStatus(`Running in ${session.cwd}`);
+    renderTerminalSessions();
+    renderTerminalOutput();
+  } catch (error) {
+    setTerminalStatus(error.message);
+  } finally {
+    $("#terminalRun").disabled = false;
+  }
+}
+$("#terminalProject").onchange = renderTerminalProjects;
+$("#terminalRun").onclick = startTerminalSession;
+$("#terminalRefresh").onclick = refreshTerminalSessions;
+$("#terminalStop").onclick = async () => {
+  if (!terminalState.activeId || !window.desktopModels?.terminalStop) return;
+  try { await window.desktopModels.terminalStop(terminalState.activeId, "user"); } catch (error) { setTerminalStatus(error.message); }
+};
+$("#terminalSend").onclick = async () => {
+  const input = $("#terminalInput").value;
+  if (!input || !terminalState.activeId || !window.desktopModels?.terminalWrite) return;
+  try { await window.desktopModels.terminalWrite(terminalState.activeId, input + "\n"); $("#terminalInput").value = ""; } catch (error) { setTerminalStatus(error.message); }
+};
+$("#terminalInput").onkeydown = (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    $("#terminalSend").click();
+  }
+};
 $("#navChats").onclick = () => setPage("chat");
 $("#navImages").onclick = () => setPage("images");
 $("#navActivity").onclick = () => setPage("activity");
-$("#navLibrary").onclick = () => {
+function openModelLibrary() {
   setPage("chat");
   const picker = $("#modelPicker");
   picker.hidden = false;
   $("#model").setAttribute("aria-expanded", "true");
   renderModelChoices();
   scanModels();
-};
-$("#openModelLibrary").onclick = () => $("#navLibrary").click();
-$("#openConnections").onclick = () => $("#settings").click();
+}
+$("#openModelLibrary").onclick = openModelLibrary;
 $("#temperatureControl").oninput = (event) => {
   const value = Number(event.target.value);
   state.settings.temperature = value;
@@ -2173,6 +2448,7 @@ window.desktopModels?.githubDefaultClientId?.().then((clientId) => {
 migrateAndLoadProviderSecrets();
 renderProjects();
 renderHistory();
+setPage(state.activePage);
 
 function speakReply(text) {
   if (!("speechSynthesis" in window)) return;

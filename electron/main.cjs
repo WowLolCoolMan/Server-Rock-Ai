@@ -18,7 +18,7 @@ const crypto = require("node:crypto");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const execFileAsync = promisify(execFile);
-const { createWorkspace, readUtf8Limited } = require("./workspace.cjs");
+const { createWorkspace, isProtectedPath, readUtf8Limited } = require("./workspace.cjs");
 const { createProviderBridge, validateEndpoint } = require("./provider-bridge.cjs");
 const {
   readJsonBodyLimited,
@@ -31,6 +31,7 @@ const { createSafeChildEnvironment } = require("./child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
+const { createTerminalManager } = require("./terminal-sessions.cjs");
 const { compareVersions, downloadVerifiedPackage, fetchManifest } = require("./updates.cjs");
 let coreUpdateConfig = { origin: "", publicKeyB64: "" };
 try { coreUpdateConfig = require("./update-config.generated.cjs"); } catch { /* Local builds can run without the optional Core updater config. */ }
@@ -40,6 +41,7 @@ const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
 const githubDeviceRequests = new Map();
+let terminalManager = null;
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -646,6 +648,7 @@ function createWindow() {
 app.whenReady().then(() => {
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
+  terminalManager = createTerminalManager({ resolveRoots: (folders) => workspace.getRoots(folders) });
   ipcMain.handle("projects:read-files", (_event, folders) =>
     workspace.readFiles(folders),
   );
@@ -654,6 +657,18 @@ app.whenReady().then(() => {
     (_event, folders, relativePath, content) =>
       workspace.writeFile(folders, relativePath, content),
   );
+  ipcMain.handle("terminal:start", (event, options) =>
+    terminalManager.start(options, (data) => event.sender.send("terminal:event", data)),
+  );
+  ipcMain.handle("terminal:write", (_event, id, input) => terminalManager.write(id, input));
+  ipcMain.handle("terminal:stop", (_event, id, reason) => terminalManager.stop(id, reason));
+  ipcMain.handle("terminal:list", () => terminalManager.list());
+  ipcMain.handle("terminal:snapshot", (_event, id) => terminalManager.snapshot(id));
+  ipcMain.handle("terminal:attach", (event, id) => {
+    const unsubscribe = terminalManager.attach(id, (data) => event.sender.send("terminal:event", data));
+    event.sender.once("destroyed", unsubscribe);
+    return terminalManager.snapshot(id);
+  });
   ipcMain.handle("chatgpt:status", () => chatGPTStatus());
   ipcMain.handle("chatgpt:signin", () => chatGPTSignIn());
   ipcMain.handle("chatgpt:models", () => chatGPTModels());
@@ -867,6 +882,7 @@ app.whenReady().then(() => {
       if (entry.length >= 3 && entry[2] === " ") paths.add(entry.slice(3));
       else paths.add(entry);
     }
+    const protectedPaths = [...paths].filter((relativePath) => isProtectedPath(relativePath.replaceAll("\\", "/")));
     const snapshot = crypto.createHash("sha256").update(porcelain || "");
     for (const relativePath of paths) {
       const absolutePath = path.resolve(root, relativePath);
@@ -895,7 +911,7 @@ app.whenReady().then(() => {
         snapshot.update("deleted");
       }
     }
-    return { changes, changeToken: snapshot.digest("hex") };
+    return { changes, protectedPaths, changeToken: snapshot.digest("hex") };
   };
   const streamProviderChat = createProviderBridge({
     net,
@@ -1033,6 +1049,7 @@ app.whenReady().then(() => {
       branch,
       changedFiles: snapshot.changes.length,
       changes: snapshot.changes,
+      protectedPaths: snapshot.protectedPaths,
       changeToken: snapshot.changeToken,
       ahead: Number(ahead) || 0,
       remoteUrl,
@@ -1055,6 +1072,8 @@ app.whenReady().then(() => {
     const snapshot = await githubChangeSnapshot(root);
     if (snapshot.changeToken !== expectedChangeToken)
       throw Error("Repository files changed after your review. Close this dialog and review the updated changes before pushing.");
+    if (snapshot.protectedPaths.length)
+      throw Error("Remove protected files before pushing: " + snapshot.protectedPaths.slice(0, 5).join(", ") + (snapshot.protectedPaths.length > 5 ? " …" : ""));
     let commit = "";
     if (snapshot.changes.length) {
       await runGit(["add", "--all"], root);
@@ -1717,5 +1736,9 @@ app.whenReady().then(() => {
   });
 });
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    terminalManager?.dispose();
+    app.quit();
+  }
 });
+app.on("before-quit", () => terminalManager?.dispose());

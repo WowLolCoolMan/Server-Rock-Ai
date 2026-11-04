@@ -50,34 +50,83 @@ test("workspace boots, shows command help, and opens preferences", async ({
 test("workspace exposes model and tool entry points and advanced temperature controls", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await expect(page.locator("#openModelLibrary")).toBeVisible();
-  await page.locator("#openConnections").click();
+  await page.locator("#settings").click();
   await expect(page.locator("#settingsDialog")).toBeVisible();
   await page.locator("#settingsDialog .close").click();
+  await page.locator("#openModelLibrary").click();
+  await expect(page.locator("#modelPicker")).toBeVisible();
   await page.locator(".advanced-menu summary").click();
   await page.locator("#temperatureControl").fill("1.2");
   await expect(page.locator("#temperatureValue")).toHaveText("1.2");
 });
-test("connection labels reflect local and hosted providers and the rail settings button works", async ({ page }) => {
+test("connection labels reflect local and hosted providers and the single settings button works", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   expect(await page.evaluate(() => ({
     local: providerUsesLocalInference({ provider: "OpenAI compatible", endpoint: "http://localhost:9000/v1/chat/completions" }),
     ipv6Loopback: providerUsesLocalInference({ provider: "Ollama", endpoint: "http://[::1]:11434/v1/chat/completions" }),
     lookalikeHost: providerUsesLocalInference({ provider: "OpenAI compatible", endpoint: "https://localhost.example.com/v1/chat/completions" }),
   }))).toEqual({ local: true, ipv6Loopback: true, lookalikeHost: false });
-  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
-  await expect(page.locator("#privacyLabel")).toHaveText("● Prompt stays on this device");
-  await page.locator("#railSettings").click();
+  await expect(page.locator("#connectionModeLabel")).toHaveText("Local");
+  await expect(page.locator("#privacyLabel")).toHaveText("Prompts stay on this device");
+  await page.locator("#settings").click();
   await expect(page.locator("#settingsDialog")).toBeVisible();
   await page.locator("#providerSelect").selectOption("OpenAI API");
   await page.locator("#saveSettings").click();
-  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("OpenAI API · prompts leave this device");
-  await expect(page.locator("#privacyLabel")).toHaveText("● Prompt sent to OpenAI API");
-  await expect(page.locator("#connectionDot")).toHaveClass(/remote/);
+  await expect(page.locator("#connectionModeLabel")).toHaveText("Cloud");
+  await expect(page.locator("#privacyLabel")).toHaveText("Prompts sent to OpenAI API");
   await page.locator("#settings").click();
   await page.locator("#providerSelect").selectOption("Ollama");
   await page.locator("#saveSettings").click();
-  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
-  await expect(page.locator("#connectionDot")).not.toHaveClass(/remote/);
+  await expect(page.locator("#connectionModeLabel")).toHaveText("Local");
+  await expect(page.locator("#privacyLabel")).toHaveText("Prompts stay on this device");
+});
+test("slash command menu inserts commands and filters as the user types", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#slashHelp").click();
+  await expect(page.locator("#slashMenu")).toBeVisible();
+  await page.getByRole("menuitem", { name: /\/plan/ }).click();
+  await expect(page.locator("#prompt")).toHaveValue("/plan ");
+  await expect(page.locator("#slashMenu")).toBeHidden();
+  await page.locator("#prompt").fill("/ima");
+  await expect(page.locator("#slashMenu")).toBeVisible();
+  await expect(page.locator("#slashMenu")).toContainText("/imagegen");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#slashMenu")).toBeHidden();
+});
+test("responsive navigation opens and closes with a labelled drawer control", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await expect(page.locator("#mobileMenu")).toBeVisible();
+  await page.locator("#mobileMenu").click();
+  await expect(page.locator(".sidebar")).toHaveClass(/mobile-open/);
+  await expect(page.locator("#mobileMenu")).toHaveAttribute("aria-expanded", "true");
+  await page.locator("#openGitHub").click();
+  await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
+});
+test("last workspace page persists across reloads", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#navActivity").click();
+  await expect(page.locator("#activityPage")).toBeVisible();
+  await page.reload();
+  await expect(page.locator("#activityPage")).toBeVisible();
+  await expect(page.locator("#navActivity")).toHaveClass(/selected/);
+});
+test("activity page exposes a project terminal workspace", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#navActivity").click();
+  await expect(page.locator(".terminal-panel")).toBeVisible();
+  await expect(page.locator("#terminalCommand")).toHaveAttribute("placeholder", "git status");
+  await expect(page.locator("#terminalStatus")).toHaveText(/project|desktop app/i);
+});
+test("light theme uses readable foregrounds and light surfaces", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("details.settings-group").last().locator("summary").click();
+  await page.locator("#theme").selectOption("light");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("main")).toHaveCSS("background-color", "rgb(246, 248, 251)");
+  await expect(page.locator(".welcome h1")).toHaveCSS("color", "rgb(32, 42, 54)");
+  await expect(page.locator(".suggestions button").first()).toHaveCSS("color", "rgb(32, 42, 54)");
 });
 test("Core updates are account-free and expose stable check, download and recovery states", async ({ page }) => {
   await page.addInitScript(() => {
@@ -755,7 +804,7 @@ test("Codex-style rail navigates Chat, Images, Activity, and model library", asy
   await expect(page.locator("#activityList")).toContainText(
     "A saved conversation",
   );
-  await page.locator("#navLibrary").click();
+  await page.locator("#openModelLibrary").click();
   await expect(page.locator("#modelPicker")).toBeVisible();
   await page.locator("#navChats").click();
   await expect(page.locator("#imagePage")).toBeHidden();

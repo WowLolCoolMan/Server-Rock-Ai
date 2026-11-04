@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace ServerRock.Core.Services;
 
-public sealed record GitWorkspaceFileChange(string Status, string Path);
+public sealed record GitWorkspaceFileChange(string Status, string Path, string? OriginalPath = null);
 public sealed record GitWorkspaceStatus(string Branch, IReadOnlyList<GitWorkspaceFileChange> Changes, int CommitsAhead, int CommitsBehind, string Repository);
 
 /// <summary>Runs local Git operations for GitHub repositories without putting OAuth tokens in command arguments or remotes.</summary>
@@ -108,7 +108,11 @@ public sealed class GitHubWorkspaceService
             else if (trimmed.StartsWith("2 ", StringComparison.Ordinal))
             {
                 var fields = trimmed.Split(' ', 10, StringSplitOptions.None);
-                if (fields.Length == 10) changes.Add(new(fields[1], fields[9].Split('\t')[0]));
+                if (fields.Length == 10)
+                {
+                    var paths = fields[9].Split('\t', 2, StringSplitOptions.None);
+                    changes.Add(new(fields[1], paths[0], paths.Length == 2 ? paths[1] : null));
+                }
             }
             else if (trimmed.StartsWith("u ", StringComparison.Ordinal))
             {
@@ -121,7 +125,9 @@ public sealed class GitHubWorkspaceService
 
     public static IReadOnlyList<string> FindUnsafeChangePaths(IEnumerable<GitWorkspaceFileChange> changes) =>
         changes
-            .Select(change => change.Path.Replace('\\', '/'))
+            .SelectMany(change => new[] { change.Path, change.OriginalPath })
+            .Where(path => path is not null)
+            .Select(path => path!.Replace('\\', '/'))
             .Where(IsUnsafeChangePath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();

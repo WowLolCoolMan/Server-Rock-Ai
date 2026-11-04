@@ -1,14 +1,18 @@
 # UI audit: Server Rock: AI (before redesign)
 
 Captured with `node scripts/ui-shots.cjs before` at 1440×900, 1100×750 and 800×700.
-Screenshots live in `.ui-shots/before/` (git-excluded). No styles changed yet.
+Screenshot PNGs are git-ignored and are not included in the repository, so regenerate
+them locally to review the visual evidence. The audit below records the pre-redesign
+observations; it is a qualitative review of that capture environment, not a cross-OS
+accessibility certification. The harness now fails if a requested state cannot be
+opened or interacted with, and it closes browser resources on errors.
 
 ## 1. The stylesheet is three themes stacked on top of each other
 
 - `style.css` has **3 `:root` blocks and 2 `:root.light` blocks** (lines 1, 934, 1522 and 562, 1180).
   Each later layer re-declares most of the earlier selectors: a sage-green theme,
   then a "Codex/ChatGPT" neutral-grey and blue layer, then a "compact desktop" layer.
-- **396 hard-coded hex colors (239 unique) vs 28 `var()` uses.** Later layers hard-code dark
+- **400 hard-coded hex colors (242 unique) vs 28 `var()` uses** in the merged stylesheet. Later layers hard-code dark
   greys (`#191919`, `#242424`, `#2a2a2a`, `#333`, `#444`, `#4a4a4a`…). None of them are
   theme-scoped, so they break the light theme (see §3).
 - The greys don't share a ramp: the sidebar alone uses `#171815`, `#1b1b1b`, `#20211d`,
