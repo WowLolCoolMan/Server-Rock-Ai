@@ -240,3 +240,47 @@ test("encrypted state files are bounded before reading", async () => {
     await fs.rm(path.dirname(filePath), { recursive: true, force: true });
   }
 });
+
+// Smoke-test item 1: saving an edited project must update it, not add a copy.
+test("editing a project updates it instead of creating a duplicate", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [],
+      projects: [{ id: "p1", name: "Alpha", folders: [], instructions: "Old notes" }],
+      settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.2", theme: "dark", temperature: 0.7 },
+    }));
+  });
+  await page.goto(appUrl);
+
+  await page.locator("#projectList .project-item").dblclick();
+  await expect(page.locator("#projectDialog")).toBeVisible();
+  await expect(page.locator("#projectDialog h2")).toHaveText("Edit project");
+  await expect(page.locator("#editProject")).toBeHidden();
+  await expect(page.locator("#projectForm .save")).toHaveText("Save changes");
+
+  await page.locator("#projectName").fill("Alpha renamed");
+  await page.locator("#projectInstructions").fill("New notes");
+  await page.locator("#projectForm .save").click();
+
+  await expect(page.locator("#projectDialog")).toBeHidden();
+  await expect(page.locator("#projectList .project-item")).toHaveCount(1);
+  await expect(page.locator("#projectList")).toContainText("Alpha renamed");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("local-studio-v1")).projects);
+  expect(saved).toEqual([expect.objectContaining({ id: "p1", name: "Alpha renamed", instructions: "New notes" })]);
+
+  // Pressing Enter in the name field while editing also updates in place.
+  await page.locator("#projectList .project-item").dblclick();
+  await page.locator("#projectName").fill("Alpha final");
+  await page.locator("#projectName").press("Enter");
+  await expect(page.locator("#projectList .project-item")).toHaveCount(1);
+  await expect(page.locator("#projectList")).toContainText("Alpha final");
+
+  // Creating afterwards still creates a new project with the create heading.
+  await page.locator("#newProject").click();
+  await expect(page.locator("#projectDialog h2")).toHaveText("Create project");
+  await page.locator("#projectName").fill("Beta");
+  await page.locator("#projectForm .save").click();
+  await expect(page.locator("#projectList .project-item")).toHaveCount(2);
+});

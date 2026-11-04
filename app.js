@@ -273,7 +273,10 @@ function openProjectEditor(id) {
   pendingProjectFolders = [...(project.folders || [])];
   $("#projectName").value = project.name;
   $("#projectInstructions").value = project.instructions || "";
-  $("#editProject").hidden = false;
+  // Editing uses the form's own submit button ("Save changes"), so the separate
+  // "Save project" button stays hidden; showing both offered two save buttons.
+  $("#editProject").hidden = true;
+  setProjectDialogHeading("Edit project");
   document.querySelector("#projectForm .save").textContent = "Save changes";
   paintProjectFolders();
   $("#projectDialog").showModal();
@@ -284,6 +287,7 @@ function showProjectDialog() {
   $("#projectName").value = "";
   $("#projectInstructions").value = "";
   $("#editProject").hidden = true;
+  setProjectDialogHeading("Create project");
   document.querySelector("#projectForm .save").textContent = "Create project";
   $("#projectSources").innerHTML =
     '<span class="muted">No folders added yet</span>';
@@ -1050,7 +1054,15 @@ $("#addProjectFolder").onclick = async () => {
 };
 $("#closeProject").onclick = $("#cancelProject").onclick = () =>
   $("#projectDialog").close();
-$("#editProject").onclick = () => {
+// The project dialog is shared by "create" and "edit". The heading is looked up
+// loosely so a markup redesign of the dialog header can't break the editor.
+function setProjectDialogHeading(text) {
+  const heading = document.querySelector("#projectDialog h2");
+  if (heading) heading.textContent = text;
+}
+// Saves the project currently open in the editor. Used by the form's submit
+// button and by the (normally hidden) #editProject button.
+function saveProjectEdits() {
   const project = state.projects.find((item) => item.id === editingProjectId);
   if (!project) return;
   project.name = $("#projectName").value.trim() || project.name;
@@ -1062,9 +1074,17 @@ $("#editProject").onclick = () => {
   renderProjects();
   $("#crumb").textContent = project.name;
   $("#projectDialog").close();
-};
+}
+$("#editProject").onclick = saveProjectEdits;
 $("#projectForm").onsubmit = (e) => {
   e.preventDefault();
+  // When the dialog was opened to edit a project, submitting ("Save changes"
+  // or Enter) updates that project. Previously it always created a new one,
+  // which duplicated the project being edited.
+  if (editingProjectId) {
+    saveProjectEdits();
+    return;
+  }
   const name = $("#projectName").value.trim();
   if (!name) return;
   const project = {
