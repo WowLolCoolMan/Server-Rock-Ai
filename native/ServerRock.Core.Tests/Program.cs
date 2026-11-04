@@ -763,6 +763,12 @@ try
     File.WriteAllText(corruptSettingsPath, "{broken");
     var recoveredSettings = new JsonSettingsStore(corruptSettingsPath).Load();
     Check(recoveredSettings is not null && Directory.EnumerateFiles(settingsDirectory, "corrupt-settings.json.corrupt-*").Any(), "corrupt settings are preserved for recovery");
+    var nullableSettingsPath = Path.Combine(settingsDirectory, "nullable-settings.json");
+    File.WriteAllText(nullableSettingsPath, "{\"endpoint\":null,\"model\":null,\"modelProvider\":null,\"visionApiFormat\":null,\"comfyEndpoint\":null,\"imageWorkflow\":null,\"gitHubAppClientId\":null,\"pinnedModels\":null,\"pinnedModelConnections\":null,\"localModelPerformance\":null,\"chatFolders\":null}");
+    var normalizedSettings = new JsonSettingsStore(nullableSettingsPath).Load();
+    Check(normalizedSettings.Endpoint == "http://localhost:11434/v1" && normalizedSettings.Model == "llama3.2" && normalizedSettings.ModelProvider == "Ollama" &&
+          normalizedSettings.PinnedModels is not null && normalizedSettings.PinnedModelConnections is not null && normalizedSettings.LocalModelPerformance is not null && normalizedSettings.ChatFolders is not null,
+        "nullable settings fields recover to usable native defaults");
 
     var conversationsPath = Path.Combine(settingsDirectory, "conversations.json");
     var conversationStore = new ConversationStore(conversationsPath);
