@@ -362,3 +362,50 @@ test("/models opens the model picker instead of using window.prompt", async ({ p
   expect(await page.evaluate(() => window.hostScans)).toBeGreaterThanOrEqual(2);
   expect(dialogs).toEqual([]);
 });
+
+// Smoke-test item 4: the in-app updater needs its metadata on the release,
+// asset names it can find, and an honest message where updates can't install.
+test("release uploads updater metadata and installer names have no spaces", async () => {
+  const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8"));
+  const names = [pkg.build.artifactName, pkg.build.nsis.artifactName, pkg.build.portable.artifactName];
+  // GitHub turns spaces in asset names into dots, while latest*.yml uses
+  // dashes, so a name with spaces makes the updater's download 404.
+  for (const name of names) expect(name).not.toMatch(/\s/);
+  expect(new Set(names).size).toBe(3);
+  expect(pkg.build.artifactName).toContain("${arch}");
+
+  const workflow = await fs.readFile(path.resolve(__dirname, "..", ".github", "workflows", "release.yml"), "utf8");
+  const uploads = workflow.slice(workflow.indexOf("path: |"), workflow.indexOf("if-no-files-found"));
+  for (const pattern of ["dist/latest.yml", "dist/latest-linux*.yml", "dist/*.blockmap"])
+    expect(uploads).toContain(pattern);
+  expect(uploads).not.toContain("latest-mac");
+});
+
+test("builds that can't update in place report a manual update", async () => {
+  const { manualUpdateReason } = require("../electron/update-support.cjs");
+  const none = () => false;
+  expect(manualUpdateReason({ platform: "darwin", env: {}, resourcesPath: "/r", fileExists: none })).toContain("isn't code-signed");
+  expect(manualUpdateReason({ platform: "win32", env: { PORTABLE_EXECUTABLE_DIR: "C:\\x" }, resourcesPath: "C:\\r", fileExists: none })).toContain("portable app");
+  expect(manualUpdateReason({ platform: "win32", env: {}, resourcesPath: "C:\\r", fileExists: none })).toBe("");
+  expect(manualUpdateReason({ platform: "linux", env: {}, resourcesPath: "/r", fileExists: none })).toContain("tar.gz");
+  expect(manualUpdateReason({ platform: "linux", env: { APPIMAGE: "/a.AppImage" }, resourcesPath: "/r", fileExists: none })).toBe("");
+  expect(manualUpdateReason({ platform: "linux", env: {}, resourcesPath: "/r", fileExists: (p) => p === path.join("/r", "package-type") })).toBe("");
+});
+
+test("Settings shows how to update when this build can't update itself", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      updateState: async () => ({ status: "idle", version: "0.1.2" }),
+      onUpdateState: () => () => {},
+      checkForUpdates: async () => ({ status: "manual", version: "0.1.2", message: "The portable app can't update itself. Download the new version from GitHub Releases instead." }),
+    };
+  });
+  await page.goto(appUrl);
+  await page.locator("#settings").click();
+  await page.locator("#settingsDialog details.settings-group:not(#hfDownloads) summary").click();
+  await page.locator("#checkUpdates").click();
+  await expect(page.locator("#updateStatus")).toHaveText(/portable app can't update itself.*GitHub Releases/);
+  await expect(page.locator("#downloadUpdate")).toBeHidden();
+  await expect(page.locator("#installUpdate")).toBeHidden();
+});

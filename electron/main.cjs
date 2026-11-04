@@ -31,6 +31,7 @@ const { createSafeChildEnvironment } = require("./child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
+const { manualUpdateReason: manualUpdateReasonFor } = require("./update-support.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
@@ -81,6 +82,15 @@ async function quarantineUnreadableFile(filePath) {
     // Missing or inaccessible files cannot be quarantined; callers still get a clean state.
   }
 }
+// Unsigned macOS, portable Windows, and Linux tar.gz builds can't update in
+// place (see update-support.cjs). Those builds report a "manual" update state.
+const manualUpdateReason = () =>
+  manualUpdateReasonFor({
+    platform: process.platform,
+    env: process.env,
+    resourcesPath: process.resourcesPath,
+    fileExists: fsSync.existsSync,
+  });
 function setupAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -109,6 +119,8 @@ function setupAutoUpdater() {
   ipcMain.handle("updates:state", () => updateState);
   ipcMain.handle("updates:check", async () => {
     if (!app.isPackaged) return { ...updateState, status: "dev" };
+    const manualReason = manualUpdateReason();
+    if (manualReason) return { ...updateState, status: "manual", message: manualReason };
     updateCheckPromise ??= autoUpdater.checkForUpdates().finally(() => {
       updateCheckPromise = null;
     });
@@ -117,6 +129,8 @@ function setupAutoUpdater() {
   });
   ipcMain.handle("updates:download", async () => {
     if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
+    const manualReason = manualUpdateReason();
+    if (manualReason) throw Error(manualReason);
     updateDownloadPromise ??= autoUpdater.downloadUpdate().finally(() => {
       updateDownloadPromise = null;
     });

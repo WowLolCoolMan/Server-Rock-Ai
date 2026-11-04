@@ -78,6 +78,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Server-Rock-AI-${{ matrix.platform }}-${{ matrix.arch }}
+          # Besides the installers, upload the in-app updater metadata:
+          # electron-updater reads latest.yml (Windows) and latest-linux*.yml
+          # (Linux) from the release and uses blockmaps for smaller downloads.
+          # latest-mac.yml is left out on purpose: the x64 and arm64 jobs both
+          # write that name, and unsigned macOS builds can't update in place,
+          # so the app sends macOS users to GitHub Releases instead.
           path: |
             dist/*.exe
             dist/*.dmg
@@ -85,6 +91,9 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/*.tar.gz
+            dist/latest.yml
+            dist/latest-linux*.yml
+            dist/*.blockmap
           if-no-files-found: error
           retention-days: 14
 

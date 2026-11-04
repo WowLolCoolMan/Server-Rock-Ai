@@ -1163,6 +1163,9 @@ function renderUpdateState(update) {
   else if (update.status === "downloaded") status.textContent = "Version " + update.version + " is ready to install.";
   else if (update.status === "current") status.textContent = "You are up to date (" + update.version + ").";
   else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
+  // Builds that can't update in place (unsigned macOS, portable Windows,
+  // Linux tar.gz) explain how to update instead of failing mid-check.
+  else if (update.status === "manual") status.textContent = update.message;
   else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
 }
 $("#checkUpdates").onclick = async () => {

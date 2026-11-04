@@ -8,7 +8,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "check:syntax": "node --check app.js && node --check commands.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/provider-bridge.cjs && node --check electron/workspace.cjs && node --check electron/ipc-validation.cjs && node --check electron/bounded-file.cjs",
+    "check:syntax": "node --check app.js && node --check commands.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/provider-bridge.cjs && node --check electron/workspace.cjs && node --check electron/ipc-validation.cjs && node --check electron/bounded-file.cjs && node --check electron/update-support.cjs",
     "check:hygiene": "node scripts/check-repo-hygiene.cjs",
     "test": "playwright test",
     "build": "electron-builder --publish never",
@@ -25,6 +25,7 @@
     "appId": "com.server-rock.ai",
     "productName": "Server Rock: AI",
     "compression": "normal",
+    "artifactName": "Server-Rock-AI-${version}-${arch}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -75,7 +76,11 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Server Rock: AI",
       "uninstallDisplayName": "Server Rock: AI",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Server-Rock-AI-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Server-Rock-AI-${version}-portable.${ext}"
     },
     "npmRebuild": false,
     "publish": {
