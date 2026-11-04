@@ -3362,8 +3362,8 @@ public sealed partial class MainPage : Page
             ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
             : _settings.WebSearchEnabled
                 ? $"Search query goes to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model server."
-                : local ? $"Your prompt{(projectFiles ? " and selected project files" : "")} go to the on-device model. Web search is off."
-                    : $"Your prompt{(projectFiles ? " and selected project files" : "")} go to the configured remote model server. Web search is off.";
+                : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
+                    : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
     }
 
     private void CancelRequest() => _requestCancellation?.Cancel();
