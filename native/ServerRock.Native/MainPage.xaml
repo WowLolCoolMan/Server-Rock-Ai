@@ -114,6 +114,7 @@
           <Button x:Name="TemporaryButton" Grid.Column="2" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" />
           <Button x:Name="ProjectFilesButton" Grid.Column="3" Content="▤　Project files off" Click="ProjectFilesClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Toggle project files in Chat" />
           <Button x:Name="CancelEditButton" Grid.Column="4" Content="Cancel edit" Click="CancelEditClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Cancel editing this message" />
+          <Button Grid.Column="5" Content="Images" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
           <Button Grid.Column="6" Content="Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" AutomationProperties.Name="Open advanced generation controls" />
         </Grid>
         <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="#ffffff" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">

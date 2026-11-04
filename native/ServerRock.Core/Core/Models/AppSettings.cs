@@ -11,6 +11,8 @@ public sealed class AppSettings
     public string VisionApiFormat { get; set; } = "auto";
     public double Temperature { get; set; } = 0.7;
     public bool WebSearchEnabled { get; set; }
+    public string ComfyEndpoint { get; set; } = "http://127.0.0.1:8188";
+    public string ImageWorkflow { get; set; } = "";
     public string GitHubAppClientId { get; set; } = "";
     public List<string> ChatFolders { get; set; } = [];
     public string? ProjectPath { get; set; }
