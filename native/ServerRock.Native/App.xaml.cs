@@ -15,13 +15,16 @@ public partial class App : Application
         this.InitializeComponent();
     }
 
-    protected Window? MainWindow { get; private set; }
+    public Window? MainWindow { get; private set; }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainWindow = new Window();
 #if DEBUG
-        MainWindow.UseStudio();
+        // Keep the shipped interface clean and avoid starting the optional HotDesign
+        // accessibility overlay unless a developer explicitly opts in.
+        if (Environment.GetEnvironmentVariable("SERVERROCK_ENABLE_UNO_STUDIO") == "1")
+            MainWindow.UseStudio();
 #endif
 
 

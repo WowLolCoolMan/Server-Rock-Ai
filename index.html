@@ -40,8 +40,8 @@
         ▤
       </button>
       <div class="spacer"></div>
-      <button>⚙</button>
-      <div class="avatar">LS</div>
+      <button id="railSettings" aria-label="Settings" title="Settings">⚙</button>
+      <div class="avatar" title="Server Rock: AI on this device" aria-label="Server Rock: AI">SR</div>
     </aside>
     <aside class="sidebar">
       <header>
@@ -75,8 +75,8 @@
       <div class="section">RECENTS <button id="clear">Clear</button></div>
       <div id="history"></div>
       <div class="sidebottom">
-        <span class="green"></span> Local mode
-        <span class="muted">· private</span>
+        <span class="green" id="connectionDot"></span>
+        <span id="sidebarConnectionLabel">Local model · on this device</span>
       </div>
     </aside>
     <main>
@@ -122,7 +122,7 @@
             </div>
           </div>
           <span id="activeMode" class="active-mode" hidden></span
-          ><span class="context-right" id="runtimeStatus">⌖　This device</span><details class="advanced-menu"><summary title="Advanced settings">Advanced</summary><div class="advanced-popover"><b>Generation controls</b><label for="temperatureControl">Temperature <input id="temperatureControl" aria-label="Temperature" type="range" min="0" max="2" step="0.1" value="0.7"><output id="temperatureValue">0.7</output></label><p>These controls are saved on this device. Provider support varies.</p></div></details>
+          ><span class="context-right" id="runtimeStatus" role="status" aria-live="polite" aria-atomic="true">⌖　This device</span><details class="advanced-menu"><summary title="Advanced settings">Advanced</summary><div class="advanced-popover"><b>Generation controls</b><label for="temperatureControl">Temperature <input id="temperatureControl" aria-label="Temperature" type="range" min="0" max="2" step="0.1" value="0.7"><output id="temperatureValue">0.7</output></label><p>These controls are saved on this device. Provider support varies.</p></div></details>
         </div>
         <div class="composer">
           <textarea
@@ -138,11 +138,12 @@
               accept="image/*,audio/*"
               hidden
             /><span id="commandHint" class="command-hint" hidden></span
-            ><span id="queueHint" class="queue-hint" hidden></span
+            ><span id="queueHint" class="queue-hint" role="status" aria-live="polite" hidden></span
             ><button id="voice" title="Start voice conversation">🎙</button
             ><button id="slashHelp" title="Slash commands">/</button
-            ><span class="grow"></span><span class="privacy">● Offline</span
-            ><button class="send" id="send">↑</button>
+            ><span class="grow"></span><span class="privacy" id="privacyLabel">● Prompt stays on this device</span
+            ><button class="stop-generation" id="stopGeneration" type="button" title="Stop generation" aria-label="Stop generation" hidden>Stop</button>
+            <button class="send" id="send" type="button" title="Send message" aria-label="Send message">↑</button>
           </div>
         </div>
         <div class="foot">
@@ -471,11 +472,36 @@
         <p id="githubDialogStatus" class="model-host-status">Sign in to list repositories you can access.</p>
         <input id="githubRepoSearch" type="search" placeholder="Filter repositories" />
         <select id="githubRepoList" size="10" aria-label="GitHub repositories"></select>
+        <div class="github-repo-manual">
+          <label for="githubRepoReference">Or enter a repository</label>
+          <div class="github-repo-manual-controls"><input id="githubRepoReference" placeholder="owner/repository or GitHub URL" autocomplete="url" /><button type="button" id="githubResolveRepo">Check repository</button></div>
+        </div>
         <div class="modal-actions">
           <button type="button" id="githubDisconnect">Disconnect</button>
           <span class="grow"></span>
           <button type="button" id="githubRefresh">Refresh</button>
           <button type="button" class="save" id="githubClone">Clone and open</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="githubPushDialog">
+      <form method="dialog">
+        <div class="modal-head">
+          <div><span class="eyebrow">REVIEW BEFORE PUSH</span><h2 id="githubPushTitle">Commit and push</h2></div>
+          <button type="button" class="close" id="githubPushClose" aria-label="Close push review">×</button>
+        </div>
+        <p id="githubPushStatus" class="model-host-status"></p>
+        <div class="github-push-list-wrap">
+          <p class="github-push-label">Changes that will be included</p>
+          <ul id="githubPushFiles" class="github-push-files"></ul>
+        </div>
+        <label class="github-commit-label" for="githubCommitMessage">Commit message</label>
+        <input id="githubCommitMessage" maxlength="160" autocomplete="off" />
+        <p class="github-push-note">The app will stage the reviewed repository changes, create a commit when needed, and push the current branch to the GitHub repository shown above.</p>
+        <div class="modal-actions">
+          <button type="button" id="githubPushCancel">Cancel</button>
+          <span class="grow"></span>
+          <button type="button" class="save" id="githubPushConfirm">Commit and push</button>
         </div>
       </form>
     </dialog>

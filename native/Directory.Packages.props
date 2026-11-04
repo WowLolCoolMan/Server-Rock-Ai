@@ -7,4 +7,11 @@
   -->
   <ItemGroup>
   </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Markdig" Version="1.4.0" />
+    <PackageVersion Include="PdfPig" Version="0.1.16" />
+    <PackageVersion Include="Porta.Pty" Version="2.2.3" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+    <PackageVersion Include="XTerm.NET" Version="3.0.0" />
+  </ItemGroup>
 </Project>

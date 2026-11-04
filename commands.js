@@ -24,6 +24,7 @@ function parseSlashCommands(raw) {
     review = false,
     summarize = false,
     explain = false,
+    translate = false,
     help = false,
     models = false,
     push = false,
@@ -42,6 +43,7 @@ function parseSlashCommands(raw) {
     review ||= cmd === "review";
     summarize ||= cmd === "summarize";
     explain ||= cmd === "explain";
+    translate ||= cmd === "translate";
     help ||= cmd === "help";
     models ||= cmd === "models";
     push ||= cmd === "push";
@@ -58,6 +60,7 @@ function parseSlashCommands(raw) {
     review,
     summarize,
     explain,
+    translate,
     help,
     models,
     push,

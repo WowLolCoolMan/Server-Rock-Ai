@@ -12,13 +12,25 @@ const {
 const { autoUpdater } = require("electron-updater");
 const path = require("node:path");
 const fs = require("node:fs/promises");
+const fsSync = require("node:fs");
 const http = require("node:http");
 const crypto = require("node:crypto");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const execFileAsync = promisify(execFile);
-const { createWorkspace } = require("./workspace.cjs");
+const { createWorkspace, readUtf8Limited } = require("./workspace.cjs");
 const { createProviderBridge, validateEndpoint } = require("./provider-bridge.cjs");
+const {
+  readJsonBodyLimited,
+  readTextBodyLimited,
+  readBinaryBodyLimited,
+  MAX_STREAM_TEXT_LENGTH,
+  MAX_STREAM_BUFFER_LENGTH,
+} = require("./response-limits.cjs");
+const { createSafeChildEnvironment } = require("./child-environment.cjs");
+const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
+const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
+const { readTextFileLimited } = require("./bounded-file.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
@@ -26,6 +38,8 @@ const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
 const githubDeviceRequests = new Map();
 let updateState = { status: "idle", version: app.getVersion(), downloaded: false };
+let updateCheckPromise = null;
+let updateDownloadPromise = null;
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -42,6 +56,29 @@ function chatGPTEncryptionReady() {
     );
   } catch {
     return false;
+  }
+}
+async function writeProtectedFile(destination, content) {
+  await fs.mkdir(path.dirname(destination), { recursive: true });
+  const temp = path.join(
+    path.dirname(destination),
+    `.${path.basename(destination)}-${crypto.randomUUID()}.tmp`,
+  );
+  try {
+    await fs.writeFile(temp, content, { encoding: "utf8", mode: 0o600, flag: "wx" });
+    await fs.rename(temp, destination);
+  } finally {
+    await fs.rm(temp, { force: true }).catch(() => {});
+  }
+}
+async function quarantineUnreadableFile(filePath) {
+  try {
+    await fs.access(filePath);
+    const recoveryPath = `${filePath}.corrupt-${crypto.randomUUID()}`;
+    await fs.rename(filePath, recoveryPath);
+    console.warn(`Preserved unreadable credential data at ${recoveryPath}`);
+  } catch {
+    // Missing or inaccessible files cannot be quarantined; callers still get a clean state.
   }
 }
 function setupAutoUpdater() {
@@ -72,12 +109,18 @@ function setupAutoUpdater() {
   ipcMain.handle("updates:state", () => updateState);
   ipcMain.handle("updates:check", async () => {
     if (!app.isPackaged) return { ...updateState, status: "dev" };
-    await autoUpdater.checkForUpdates();
+    updateCheckPromise ??= autoUpdater.checkForUpdates().finally(() => {
+      updateCheckPromise = null;
+    });
+    await updateCheckPromise;
     return updateState;
   });
   ipcMain.handle("updates:download", async () => {
     if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
-    await autoUpdater.downloadUpdate();
+    updateDownloadPromise ??= autoUpdater.downloadUpdate().finally(() => {
+      updateDownloadPromise = null;
+    });
+    await updateDownloadPromise;
     return updateState;
   });
   ipcMain.handle("updates:install", () => {
@@ -90,11 +133,12 @@ async function readChatGPTState() {
   try {
     if (!chatGPTEncryptionReady())
       return { profiles: [], hostId: "urn:uuid:" + crypto.randomUUID() };
-    const encoded = await fs.readFile(chatGPTStorePath(), "utf8");
+    const encoded = await readTextFileLimited(chatGPTStorePath(), undefined, "ChatGPT credential store");
     return JSON.parse(
       safeStorage.decryptString(Buffer.from(encoded, "base64")),
     );
-  } catch {
+  } catch (error) {
+    if (error?.code !== "ENOENT") await quarantineUnreadableFile(chatGPTStorePath());
     return { profiles: [], hostId: "urn:uuid:" + crypto.randomUUID() };
   }
 }
@@ -106,20 +150,18 @@ async function saveChatGPTState(data) {
   const output = safeStorage
       .encryptString(JSON.stringify(data))
       .toString("base64"),
-    dest = chatGPTStorePath(),
-    temp = dest + ".tmp";
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await fs.writeFile(temp, output, { mode: 0o600 });
-  await fs.rename(temp, dest);
+    dest = chatGPTStorePath();
+  await writeProtectedFile(dest, output);
 }
 async function readProviderSecrets() {
   if (!chatGPTEncryptionReady()) return {};
   try {
-    const encoded = await fs.readFile(providerSecretsPath(), "utf8");
+    const encoded = await readTextFileLimited(providerSecretsPath(), undefined, "Provider credential store");
     return JSON.parse(
       safeStorage.decryptString(Buffer.from(encoded, "base64")),
     );
-  } catch {
+  } catch (error) {
+    if (error?.code !== "ENOENT") await quarantineUnreadableFile(providerSecretsPath());
     return {};
   }
 }
@@ -134,13 +176,10 @@ async function writeProviderSecret(provider, secret) {
   if (secret.trim()) secrets[provider] = secret.trim();
   else delete secrets[provider];
   const dest = providerSecretsPath(),
-    temp = dest + ".tmp",
     encoded = safeStorage
       .encryptString(JSON.stringify(secrets))
       .toString("base64");
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await fs.writeFile(temp, encoded, { mode: 0o600 });
-  await fs.rename(temp, dest);
+  await writeProtectedFile(dest, encoded);
   return { saved: Boolean(secret.trim()) };
 }
 async function getChatGPTProfile() {
@@ -279,7 +318,7 @@ async function chatGPTSignIn() {
           " " +
           (await tokenResponse.text()).slice(0, 240),
       );
-    const tokens = await tokenResponse.json();
+    const tokens = await readJsonBodyLimited(tokenResponse, "ChatGPT sign-in token");
     if (!tokens.id_token || !tokens.access_token)
       throw Error("ChatGPT returned an incomplete sign-in response.");
     const discoveryResponse = await net.fetch(
@@ -287,7 +326,7 @@ async function chatGPTSignIn() {
     );
     if (!discoveryResponse.ok)
       throw Error("Could not verify ChatGPT identity metadata.");
-    const metadata = await discoveryResponse.json();
+    const metadata = await readJsonBodyLimited(discoveryResponse, "ChatGPT sign-in metadata");
     if (!metadata.jwks_uri)
       throw Error(
         "ChatGPT identity metadata did not include a signing-key URL.",
@@ -358,7 +397,7 @@ async function getChatGPTAccessToken() {
   });
   if (!response.ok)
     throw Error("ChatGPT session expired. Reconnect your account in Settings.");
-  const tokens = await response.json();
+  const tokens = await readJsonBodyLimited(response, "ChatGPT token");
   const updated = {
     ...profile,
     accessToken: tokens.access_token,
@@ -380,10 +419,11 @@ async function chatGPTModels() {
     });
   if (!response.ok)
     throw Error("Could not list ChatGPT plan models: " + response.status);
-  const result = await response.json();
+  const result = await readJsonBodyLimited(response, "ChatGPT model list");
   return (result.data || []).map((x) => x.id).filter(Boolean);
 }
 async function chatGPTStream(event, messages, model, requestId) {
+  validateChatGPTRequest(messages, model, requestId);
   const profile = await getChatGPTAccessToken(),
     controller = new AbortController();
   activeChatGPTRequests.set(requestId, controller);
@@ -407,17 +447,20 @@ async function chatGPTStream(event, messages, model, requestId) {
         "ChatGPT request failed: " +
           response.status +
           " " +
-          (await response.text()).slice(0, 300),
+          (await readTextBodyLimited(response, "ChatGPT" )).slice(0, 300),
       );
     const reader = response.body.getReader(),
       decoder = new TextDecoder();
     let carry = "";
+    let streamTextLength = 0;
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       carry += decoder.decode(value, { stream: true });
       const lines = carry.split("\n");
       carry = lines.pop();
+      if (carry.length > MAX_STREAM_BUFFER_LENGTH)
+        throw Error("ChatGPT response stream frame exceeded the 256 KB limit.");
       for (const line of lines) {
         if (!line.startsWith("data:")) continue;
         const raw = line.slice(5).trim();
@@ -431,8 +474,12 @@ async function chatGPTStream(event, messages, model, requestId) {
         if (
           item.type === "response.output_text.delta" &&
           typeof item.delta === "string"
-        )
+        ) {
+          streamTextLength += item.delta.length;
+          if (streamTextLength > MAX_STREAM_TEXT_LENGTH)
+            throw Error("ChatGPT response exceeded the 2 MB stream limit.");
           event.sender.send("chatgpt:chunk", { requestId, text: item.delta });
+        }
         if (item.type === "error" || item.type === "response.failed")
           throw Error(
             item.error?.message ||
@@ -535,7 +582,7 @@ async function scanModelHosts() {
           signal: controller.signal,
         });
         if (!response.ok) return;
-        const data = await response.json();
+        const data = await readJsonBodyLimited(response, `${target.name} model list`);
         const rows =
           target.kind === "ollama" ? data.models || [] : data.data || [];
         return { target, rows };
@@ -606,16 +653,17 @@ app.whenReady().then(() => {
   );
   ipcMain.handle("models:scan-hosts", () => scanModelHosts());
   const readSecureProviderSecret = async (provider) => {
+    validateProviderName(provider);
     const secrets = await readProviderSecrets();
     return secrets[provider] || "";
   };
   const readGithubClientId = async () => {
     if (typeof process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID === "string" &&
-        /^[A-Za-z0-9_]{10,80}$/.test(process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID))
+        /^[A-Za-z0-9._-]{10,80}$/.test(process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID))
       return process.env.SERVER_ROCK_GITHUB_APP_CLIENT_ID;
     try {
-      const config = JSON.parse(await fs.readFile(path.join(__dirname, "github-app.json"), "utf8"));
-      return typeof config.clientId === "string" && /^[A-Za-z0-9_]{10,80}$/.test(config.clientId)
+      const config = JSON.parse(await readUtf8Limited(path.join(__dirname, "github-app.json"), 16 * 1024));
+      return typeof config.clientId === "string" && /^[A-Za-z0-9._-]{10,80}$/.test(config.clientId)
         ? config.clientId
         : "";
     } catch {
@@ -641,7 +689,7 @@ app.whenReady().then(() => {
     if (response.status >= 300 && response.status < 400)
       throw Error("GitHub redirected the request; redirects are blocked.");
     if (!response.ok)
-      throw Error("GitHub request failed (" + response.status + "): " + (await response.text()).slice(0, 300));
+      throw Error("GitHub request failed (" + response.status + "): " + (await readTextBodyLimited(response, "GitHub")).slice(0, 300));
     return response;
   };
   const githubAuthHeaders = (token) => ({
@@ -685,15 +733,15 @@ app.whenReady().then(() => {
           }).toString(),
           redirect: "manual", credentials: "omit", cache: "no-store",
         });
-        const body = await response.json();
+        const body = await readJsonBodyLimited(response, "GitHub token refresh");
         if (!response.ok || !body.access_token)
           throw Error(body.error_description || body.error || "GitHub session refresh failed. Reconnect your account.");
         const updated = {
           clientId: credential.clientId,
           accessToken: body.access_token,
           refreshToken: body.refresh_token || credential.refreshToken,
-          expiresAt: Date.now() + Number(body.expires_in || 0) * 1000,
-          refreshExpiresAt: Date.now() + Number(body.refresh_token_expires_in || 0) * 1000,
+          expiresAt: Number(body.expires_in) > 0 ? Date.now() + Number(body.expires_in) * 1000 : 0,
+          refreshExpiresAt: Number(body.refresh_token_expires_in) > 0 ? Date.now() + Number(body.refresh_token_expires_in) * 1000 : 0,
         };
         await saveGithubCredential(updated);
         return updated.accessToken;
@@ -703,14 +751,14 @@ app.whenReady().then(() => {
     }
     return githubRefreshPromise;
   };
-  const runGit = async (args, cwd, token) => {
+  const runGit = async (args, cwd, token, options = {}) => {
     const result = await execFileAsync("git", args, {
       cwd,
       windowsHide: true,
       timeout: 120000,
       maxBuffer: 2 * 1024 * 1024,
       env: {
-        ...process.env,
+        ...createSafeChildEnvironment(),
         GIT_CONFIG_COUNT: token ? "2" : "1",
         GIT_CONFIG_KEY_0: "core.hooksPath",
         GIT_CONFIG_VALUE_0: path.join(app.getPath("userData"), "git-hooks-disabled"),
@@ -721,11 +769,31 @@ app.whenReady().then(() => {
         } : {}),
       },
     });
-    return { stdout: result.stdout.trim(), stderr: result.stderr.trim() };
+    return {
+      stdout: options.preserveStdout ? result.stdout : result.stdout.trim(),
+      stderr: result.stderr.trim(),
+    };
+  };
+  const githubRepoFullName = (value) => {
+    if (typeof value !== "string" || value.length > 300)
+      throw Error("Enter a repository as owner/name or a github.com repository URL.");
+    let fullName = value.trim();
+    const isUrl = /^https?:\/\//i.test(fullName);
+    if (isUrl) {
+      let url;
+      try { url = new URL(fullName); } catch { throw Error("Enter a valid GitHub repository URL."); }
+      if (url.hostname.toLowerCase() !== "github.com" || url.username || url.password || url.port)
+        throw Error("Only github.com repository URLs are supported.");
+      fullName = url.pathname.replace(/^\/+|\/+$/g, "");
+    }
+    if (isUrl) fullName = fullName.replace(/\.git$/i, "");
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(fullName))
+      throw Error("Enter a repository as owner/name or a github.com repository URL.");
+    return fullName;
   };
   const githubRepoName = (repo) => {
     if (!repo || typeof repo !== "object" || typeof repo.full_name !== "string" ||
-        !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo.full_name))
+        githubRepoFullName(repo.full_name) !== repo.full_name)
       throw Error("Choose a valid GitHub repository.");
     if (typeof repo.name !== "string" || repo.name !== repo.full_name.split("/")[1] ||
         repo.name === "." || repo.name === ".." || path.basename(repo.name) !== repo.name)
@@ -733,6 +801,27 @@ app.whenReady().then(() => {
     return repo.full_name;
   };
   const githubRepoUrl = (repo) => "https://github.com/" + githubRepoName(repo) + ".git";
+  const normalizeGithubRepository = (repo) => {
+    if (!repo || typeof repo !== "object") throw Error("GitHub returned an invalid repository.");
+    const fullName = githubRepoFullName(repo.full_name);
+    const name = typeof repo.name === "string" && repo.name === fullName.split("/")[1] ? repo.name : "";
+    if (!name) throw Error("GitHub returned an inconsistent repository name.");
+    const defaultBranch = typeof repo.default_branch === "string" && /^[^\u0000-\u001f\u007f]{1,256}$/.test(repo.default_branch)
+      ? repo.default_branch
+      : "main";
+    const description = typeof repo.description === "string" ? repo.description.slice(0, 1000) : "";
+    const updatedAt = typeof repo.updated_at === "string" ? repo.updated_at.slice(0, 64) : "";
+    return {
+      id: Number.isSafeInteger(repo.id) ? repo.id : 0,
+      fullName,
+      name,
+      private: repo.private === true,
+      defaultBranch,
+      description,
+      updatedAt,
+      cloneUrl: githubRepoUrl({ full_name: fullName, name }),
+    };
+  };
   const getGitRoot = async (folders) => {
     const { roots } = await workspace.readFiles(folders);
     if (!roots.length) throw Error("Select an authorized project folder first.");
@@ -741,6 +830,49 @@ app.whenReady().then(() => {
     const canonical = await fs.realpath(result.stdout);
     if (canonical !== root) throw Error("The selected folder must be the repository root.");
     return root;
+  };
+  const githubChangeSnapshot = async (root) => {
+    const { stdout: porcelain } = await runGit(
+      ["status", "--porcelain=v1", "--untracked-files=all", "-z"],
+      root,
+      undefined,
+      { preserveStdout: true },
+    );
+    const changes = porcelain ? porcelain.split("\0").filter(Boolean) : [];
+    const paths = new Set();
+    for (const entry of changes) {
+      if (entry.length >= 3 && entry[2] === " ") paths.add(entry.slice(3));
+      else paths.add(entry);
+    }
+    const snapshot = crypto.createHash("sha256").update(porcelain || "");
+    for (const relativePath of paths) {
+      const absolutePath = path.resolve(root, relativePath);
+      const relativeFromRoot = path.relative(root, absolutePath);
+      if (!relativeFromRoot || relativeFromRoot === ".." || relativeFromRoot.startsWith(".." + path.sep) || path.isAbsolute(relativeFromRoot))
+        throw Error("Git reported a changed path outside this repository.");
+      snapshot.update("\0" + relativePath + "\0");
+      try {
+        const stat = await fs.lstat(absolutePath);
+        snapshot.update(String(stat.mode & 0o7777) + "\0");
+        if (stat.isSymbolicLink()) {
+          snapshot.update("symlink\0" + await fs.readlink(absolutePath));
+        } else if (stat.isFile()) {
+          const noFollow = fsSync.constants.O_NOFOLLOW || 0;
+          const handle = await fs.open(absolutePath, fsSync.constants.O_RDONLY | noFollow);
+          try {
+            for await (const chunk of handle.createReadStream({ autoClose: false })) snapshot.update(chunk);
+          } finally {
+            await handle.close();
+          }
+        } else {
+          snapshot.update(stat.isDirectory() ? "directory" : "other");
+        }
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+        snapshot.update("deleted");
+      }
+    }
+    return { changes, changeToken: snapshot.digest("hex") };
   };
   const streamProviderChat = createProviderBridge({
     net,
@@ -751,12 +883,12 @@ app.whenReady().then(() => {
     secureStorage: chatGPTEncryptionReady(),
   }));
   ipcMain.handle("secrets:set", (_event, provider, secret) =>
-    writeProviderSecret(provider, secret),
+    (validateProviderName(provider), writeProviderSecret(provider, secret)),
   );
   ipcMain.handle("github:default-client-id", () => readGithubClientId());
   ipcMain.handle("github:begin-signin", async (_event, clientId) => {
-    if (typeof clientId !== "string" || !/^[A-Za-z0-9_]{10,80}$/.test(clientId))
-      throw Error("Add a valid GitHub OAuth App client ID in Settings.");
+    if (typeof clientId !== "string" || !/^[A-Za-z0-9._-]{10,80}$/.test(clientId))
+      throw Error("Add a valid GitHub App client ID in Settings.");
     const response = await net.fetch("https://github.com/login/device/code", {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
@@ -765,7 +897,7 @@ app.whenReady().then(() => {
       credentials: "omit",
       cache: "no-store",
     });
-    const body = await response.json();
+    const body = await readJsonBodyLimited(response, "GitHub device authorization");
     if (!response.ok || !body.device_code || !body.user_code)
       throw Error(body.error_description || body.error || "GitHub device authorization could not start.");
     const id = crypto.randomUUID();
@@ -774,10 +906,10 @@ app.whenReady().then(() => {
       deviceCode: body.device_code,
       interval: Math.max(5, Number(body.interval) || 5),
       expiresAt: Date.now() + Math.min(900, Number(body.expires_in) || 900) * 1000,
-      nextPollAt: Date.now(),
+      nextPollAt: Date.now() + Math.max(5, Number(body.interval) || 5) * 1000,
     });
-    await shell.openExternal(body.verification_uri || "https://github.com/login/device");
-    return { id, userCode: body.user_code, verificationUri: body.verification_uri || "https://github.com/login/device", interval: Math.max(5, Number(body.interval) || 5) };
+    await shell.openExternal("https://github.com/login/device");
+    return { id, userCode: body.user_code, verificationUri: "https://github.com/login/device", interval: Math.max(5, Number(body.interval) || 5) };
   });
   ipcMain.handle("github:poll-signin", async (_event, id) => {
     const flow = githubDeviceRequests.get(id);
@@ -795,8 +927,11 @@ app.whenReady().then(() => {
       credentials: "omit",
       cache: "no-store",
     });
-    const body = await response.json();
-    if (body.error === "authorization_pending") return { pending: true };
+    const body = await readJsonBodyLimited(response, "GitHub device token");
+    if (body.error === "authorization_pending") {
+      flow.nextPollAt = Date.now() + flow.interval * 1000;
+      return { pending: true, interval: flow.interval };
+    }
     if (body.error === "slow_down") {
       flow.interval += 5;
       flow.nextPollAt = Date.now() + flow.interval * 1000;
@@ -810,11 +945,11 @@ app.whenReady().then(() => {
       clientId: flow.clientId,
       accessToken: body.access_token,
       refreshToken: body.refresh_token || "",
-      expiresAt: Date.now() + Number(body.expires_in || 0) * 1000,
-      refreshExpiresAt: Date.now() + Number(body.refresh_token_expires_in || 0) * 1000,
+      expiresAt: Number(body.expires_in) > 0 ? Date.now() + Number(body.expires_in) * 1000 : 0,
+      refreshExpiresAt: Number(body.refresh_token_expires_in) > 0 ? Date.now() + Number(body.refresh_token_expires_in) * 1000 : 0,
     });
     githubDeviceRequests.delete(id);
-    const user = await (await githubFetch("/user")).json();
+    const user = await readJsonBodyLimited(await githubFetch("/user"), "GitHub user profile");
     return { connected: true, login: user.login, name: user.name || user.login, avatarUrl: user.avatar_url || "" };
   });
   ipcMain.on("github:cancel-signin", (_event, id) => {
@@ -823,7 +958,7 @@ app.whenReady().then(() => {
   ipcMain.handle("github:status", async () => {
     if (!(await readGithubCredential()))
       return { connected: false, secureStorage: chatGPTEncryptionReady() };
-    const user = await (await githubFetch("/user")).json();
+    const user = await readJsonBodyLimited(await githubFetch("/user"), "GitHub user profile");
     return { connected: true, secureStorage: chatGPTEncryptionReady(), login: user.login, name: user.name || user.login, avatarUrl: user.avatar_url || "" };
   });
   ipcMain.handle("github:disconnect", () => writeProviderSecret("GitHub", ""));
@@ -834,20 +969,18 @@ app.whenReady().then(() => {
         "/user/repos?sort=updated&per_page=100&page=" + page +
         "&affiliation=owner,collaborator,organization_member",
       );
-      const rows = await response.json();
-      repos.push(...rows);
+      const rows = await readJsonBodyLimited(response, "GitHub repository list");
+      if (!Array.isArray(rows)) throw Error("GitHub returned an invalid repository list.");
+      repos.push(...rows.slice(0, 100));
       if (rows.length < 100) break;
     }
-    return repos.map((repo) => ({
-      id: repo.id,
-      fullName: repo.full_name,
-      name: repo.name,
-      private: repo.private,
-      defaultBranch: repo.default_branch,
-      description: repo.description || "",
-      updatedAt: repo.updated_at,
-      cloneUrl: repo.clone_url,
-    }));
+    return repos.map(normalizeGithubRepository);
+  });
+  ipcMain.handle("github:resolve-repo", async (_event, value) => {
+    const fullName = githubRepoFullName(value);
+    const [owner, name] = fullName.split("/");
+    const repo = await readJsonBodyLimited(await githubFetch("/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(name)), "GitHub repository");
+    return normalizeGithubRepository(repo);
   });
   ipcMain.handle("github:clone", async (_event, repo) => {
     const fullName = githubRepoName(repo);
@@ -867,15 +1000,22 @@ app.whenReady().then(() => {
   });
   ipcMain.handle("github:status-project", async (_event, folders) => {
     const root = await getGitRoot(folders);
-    const [{ stdout: branch }, { stdout: changes }, { stdout: ahead }, { stdout: remoteUrl }] = await Promise.all([
+    const [{ stdout: branch }, snapshot, { stdout: ahead }, { stdout: remoteUrl }] = await Promise.all([
       runGit(["branch", "--show-current"], root),
-      runGit(["status", "--porcelain"], root),
+      githubChangeSnapshot(root),
       runGit(["rev-list", "--count", "@{upstream}..HEAD"], root).catch(() => ({ stdout: "0" })),
       runGit(["remote", "get-url", "origin"], root).catch(() => ({ stdout: "" })),
     ]);
-    return { branch, changedFiles: changes ? changes.split(/\r?\n/).length : 0, ahead: Number(ahead) || 0, remoteUrl };
+    return {
+      branch,
+      changedFiles: snapshot.changes.length,
+      changes: snapshot.changes,
+      changeToken: snapshot.changeToken,
+      ahead: Number(ahead) || 0,
+      remoteUrl,
+    };
   });
-  ipcMain.handle("github:push-project", async (_event, folders, message, expectedFullName) => {
+  ipcMain.handle("github:push-project", async (_event, folders, message, expectedFullName, expectedChangeToken) => {
     const root = await getGitRoot(folders);
     const token = await getGithubAccessToken();
     if (!token) throw Error("Connect GitHub before pushing changes.");
@@ -885,9 +1025,15 @@ app.whenReady().then(() => {
     const remoteName = remote.replace(/^https:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/\/$/, "");
     if (typeof expectedFullName === "string" && expectedFullName && remoteName.toLowerCase() !== expectedFullName.toLowerCase())
       throw Error("The GitHub origin is " + remoteName + ", but this project is attached to " + expectedFullName + ".");
-    const { stdout: changes } = await runGit(["status", "--porcelain"], root);
+    if (typeof expectedChangeToken !== "string" || !/^[a-f0-9]{64}$/.test(expectedChangeToken))
+      throw Error("Review the current repository changes in the app before pushing.");
+    const { stdout: branch } = await runGit(["branch", "--show-current"], root);
+    if (!branch) throw Error("This repository is in a detached HEAD state. Check out a named branch before pushing.");
+    const snapshot = await githubChangeSnapshot(root);
+    if (snapshot.changeToken !== expectedChangeToken)
+      throw Error("Repository files changed after your review. Close this dialog and review the updated changes before pushing.");
     let commit = "";
-    if (changes) {
+    if (snapshot.changes.length) {
       await runGit(["add", "--all"], root);
       const commitMessage = typeof message === "string" && message.trim()
         ? message.trim().slice(0, 160)
@@ -895,9 +1041,8 @@ app.whenReady().then(() => {
       await runGit(["-c", "user.name=Server Rock AI", "-c", "user.email=server-rock-ai@users.noreply.github.com", "commit", "-m", commitMessage], root);
       commit = (await runGit(["rev-parse", "--short", "HEAD"], root)).stdout;
     }
-    const { stdout: branch } = await runGit(["branch", "--show-current"], root);
-    await runGit(["push", "origin", branch || "HEAD"], root, token);
-    return { pushed: true, branch, commit, changedFiles: changes ? changes.split(/\r?\n/).length : 0 };
+    await runGit(["push", "origin", branch], root, token);
+    return { pushed: true, branch, commit, changedFiles: snapshot.changes.length };
   });
   ipcMain.handle("hf:search", async (_event, query, task) => {
     if (typeof query !== "string" || query.length > 200)
@@ -919,12 +1064,16 @@ app.whenReady().then(() => {
       cache: "no-store",
     });
     if (!response.ok) throw Error("Hub search failed: " + response.status);
-    return (await response.json()).map((model) => ({
-      id: model.id,
-      cardData: model.cardData || {},
-      pipeline_tag: model.pipeline_tag,
-      siblings: (model.siblings || []).map((file) => ({ rfilename: file.rfilename })),
-    }));
+    const rows = await readJsonBodyLimited(response, "Hugging Face model catalog");
+    if (!Array.isArray(rows)) throw Error("Hugging Face returned an invalid model catalog.");
+    return rows.slice(0, 30).map((model) => ({
+      id: typeof model?.id === "string" && /^[\w.-]+\/[\w.-]+$/.test(model.id) && model.id.length <= 200 ? model.id : "",
+      cardData: model?.cardData && typeof model.cardData === "object" ? model.cardData : {},
+      pipeline_tag: typeof model?.pipeline_tag === "string" && model.pipeline_tag.length <= 64 ? model.pipeline_tag : "",
+      siblings: Array.isArray(model?.siblings)
+        ? model.siblings.slice(0, 300).filter((file) => typeof file?.rfilename === "string" && file.rfilename.length <= 512).map((file) => ({ rfilename: file.rfilename }))
+        : [],
+    })).filter((model) => model.id);
   });
   ipcMain.handle("hf:inference", async (_event, task, model, prompt, mediaData) => {
     const supportedTasks = [
@@ -971,14 +1120,13 @@ app.whenReady().then(() => {
             redirect: "manual", credentials: "omit", cache: "no-store",
           },
         );
-        if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await response.text()).slice(0, 300));
+        if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await readTextBodyLimited(response, "Hugging Face")).slice(0, 300));
         const contentType = response.headers.get("content-type") || "application/json";
         if (contentType.startsWith("audio/")) {
-          const data = Buffer.from(await response.arrayBuffer());
-          if (data.length > 50 * 1024 * 1024) throw Error("Generated media exceeds the 50 MB response limit.");
+          const data = await readBinaryBodyLimited(response, 50 * 1024 * 1024, "Generated media");
           return { kind: "audio", mime: contentType, data: data.toString("base64") };
         }
-        return { kind: "json", result: JSON.stringify(await response.json(), null, 2).slice(0, 16000) };
+        return { kind: "json", result: JSON.stringify(await readJsonBodyLimited(response, "Hugging Face inference"), null, 2).slice(0, 16000) };
       } else throw Error("This hosted task accepts image or audio attachments only.");
     } else {
       try {
@@ -999,18 +1147,17 @@ app.whenReady().then(() => {
         redirect: "manual", credentials: "omit", cache: "no-store",
       },
     );
-    if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await response.text()).slice(0, 300));
+    if (!response.ok) throw Error("Hugging Face inference failed: " + response.status + " " + (await readTextBodyLimited(response, "Hugging Face")).slice(0, 300));
     const mime = response.headers.get("content-type") || "application/json";
     if (mime.startsWith("image/") || mime.startsWith("audio/")) {
-      const data = Buffer.from(await response.arrayBuffer());
-      if (data.length > 50 * 1024 * 1024) throw Error("Generated media exceeds the 50 MB response limit.");
+      const data = await readBinaryBodyLimited(response, 50 * 1024 * 1024, "Generated media");
       return { kind: mime.startsWith("image/") ? "image" : "audio", mime, data: data.toString("base64") };
     }
-    return { kind: "json", result: JSON.stringify(await response.json(), null, 2).slice(0, 16000) };
+    return { kind: "json", result: JSON.stringify(await readJsonBodyLimited(response, "Hugging Face inference"), null, 2).slice(0, 16000) };
   });
   ipcMain.handle("provider:stream", async (event, request) => {
-    if (!request || typeof request.requestId !== "string" || request.requestId.length > 100)
-      throw Error("Invalid provider request ID.");
+    if (!request || typeof request !== "object") throw Error("Invalid provider request.");
+    validateRequestId(request.requestId, "provider request ID");
     const controller = new AbortController();
     activeProviderRequests.set(request.requestId, controller);
     try {
@@ -1037,6 +1184,7 @@ app.whenReady().then(() => {
   ipcMain.handle(
     "models:scan-provider",
     async (_event, provider, endpoint) => {
+      validateProviderName(provider);
       const url = validateEndpoint(endpoint);
       url.pathname = url.pathname.replace(
         /\/(chat\/completions|messages)\/?$/,
@@ -1062,15 +1210,17 @@ app.whenReady().then(() => {
         });
         if (!response.ok)
           throw Error("Provider model-list request failed: " + response.status);
-        const body = await response.json();
+        const body = await readJsonBodyLimited(response, "Provider model list");
+        const rows = body.data || body.models || [];
+        if (!Array.isArray(rows)) throw Error("Provider returned an invalid model list.");
         return {
-          models: (body.data || body.models || [])
+          models: rows.slice(0, 500)
             .map((row) => ({
-              id: row.id || row.name,
-              owned_by: row.owned_by || row.publisher,
+              id: typeof row?.id === "string" ? row.id : typeof row?.name === "string" ? row.name : "",
+              owned_by: typeof row?.owned_by === "string" ? row.owned_by.slice(0, 128) : typeof row?.publisher === "string" ? row.publisher.slice(0, 128) : "",
               size: row.size || row.parameter_size || null,
             }))
-            .filter((row) => row.id),
+            .filter((row) => row.id && row.id.length <= 512 && !/[\u0000-\u001f\u007f]/.test(row.id)),
           endpoint:
             provider === "Anthropic API"
               ? endpoint.replace(/\/messages\/?$/, "/messages")
@@ -1093,7 +1243,7 @@ app.whenReady().then(() => {
       { headers },
     );
     if (!info.ok) throw Error("Hub metadata request failed: " + info.status);
-    const meta = await info.json(),
+    const meta = await readJsonBodyLimited(info, "Hugging Face model metadata"),
       files = (meta.siblings || [])
         .map((f) => f.rfilename)
         .filter((f) => f && !f.split("/").some((p) => p === ".."));
@@ -1111,10 +1261,9 @@ app.whenReady().then(() => {
     let done = 0,
       total = 0;
     for (const f of wanted) {
-      const dest = path.resolve(base, f);
-      if (!dest.startsWith(path.resolve(base) + path.sep))
-        throw Error("Invalid file path in model repository.");
+      const dest = resolveModelFilePath(base, f);
       await fs.mkdir(path.dirname(dest), { recursive: true });
+      await ensureNoSymlinkComponents(base, path.dirname(dest), fs);
       const res = await net.fetch(
         "https://huggingface.co/" + repoId + "/resolve/main/" + f,
         { headers },
@@ -1125,9 +1274,12 @@ app.whenReady().then(() => {
         throw Error(
           "Model download exceeds the 10 GB app limit. Use another local runtime.",
         );
-      const output = await fs.open(dest, "w");
+      const temporaryPath = `${dest}.${crypto.randomUUID()}.download`;
+      let output;
+      let reader;
       try {
-        const reader = res.body?.getReader();
+        output = await fs.open(temporaryPath, "wx");
+        reader = res.body?.getReader();
         if (!reader) throw Error("Empty download response for " + f);
         let size = 0;
         while (true) {
@@ -1139,13 +1291,17 @@ app.whenReady().then(() => {
             throw Error("Model download exceeds the 10 GB app limit.");
           await output.write(value);
         }
+        await reader.cancel().catch(() => {});
+        await output.close();
+        output = null;
+        await fs.rename(temporaryPath, dest);
         done++;
       } catch (error) {
-        await output.close();
-        await fs.rm(dest, { force: true });
+        if (reader) await reader.cancel().catch(() => {});
+        if (output) await output.close().catch(() => {});
+        await fs.rm(temporaryPath, { force: true });
         throw error;
       }
-      await output.close();
     }
     return { repoId, downloaded: done, path: base };
   });
@@ -1207,8 +1363,7 @@ app.whenReady().then(() => {
         );
       if (typeof prompt !== "string" || prompt.length > 100000)
         throw Error("Prompt is empty or too long.");
-      if (typeof requestId !== "string" || requestId.length > 100)
-        throw Error("Invalid generation ID.");
+      validateRequestId(requestId, "generation ID");
       if (
         (imageTasks.includes(task) || audioTasks.includes(task)) &&
         !mediaData

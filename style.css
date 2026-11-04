@@ -133,6 +133,10 @@ button {
   padding: 16px 4px 0;
   color: #c1c2b9;
   font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 .green {
   display: inline-block;
@@ -140,7 +144,16 @@ button {
   height: 7px;
   background: #a6c779;
   border-radius: 50%;
-  margin-right: 5px;
+  margin-right: 0;
+  flex: 0 0 7px;
+}
+.green.remote {
+  background: #d7a45d;
+}
+.sidebottom #sidebarConnectionLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .muted {
   color: var(--muted);
@@ -382,6 +395,52 @@ dialog::backdrop {
 #githubDialog {
   width: min(560px, calc(100vw - 40px));
 }
+#githubPushDialog {
+  width: min(640px, calc(100vw - 40px));
+}
+#githubPushDialog[open] {
+  max-height: min(86vh, 760px);
+  overflow: auto;
+}
+.github-push-list-wrap {
+  border: 1px solid #34362f;
+  border-radius: 10px;
+  background: #151612;
+  padding: 11px 12px;
+}
+.github-push-label,
+.github-commit-label {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+.github-push-files {
+  max-height: 210px;
+  overflow: auto;
+  margin: 0;
+  padding-left: 19px;
+  color: var(--text);
+  font: 11px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+.github-push-files:empty::after {
+  content: "No uncommitted changes";
+  color: var(--muted);
+  font-family: inherit;
+}
+.github-commit-label {
+  margin-top: 15px;
+}
+#githubCommitMessage {
+  width: 100%;
+}
+.github-push-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
 #githubRepoSearch,
 #githubRepoList {
   width: 100%;
@@ -395,10 +454,38 @@ dialog::backdrop {
 #githubRepoList option {
   padding: 8px;
 }
+.github-repo-manual {
+  margin-top: 13px;
+  border-top: 1px solid #34352f;
+  padding-top: 12px;
+}
+.github-repo-manual label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+.github-repo-manual-controls {
+  display: flex;
+  gap: 8px;
+}
+.github-repo-manual-controls input {
+  flex: 1;
+  min-width: 0;
+  background: #202020;
+  color: #ededed;
+  border: 1px solid #414141;
+  border-radius: 8px;
+  padding: 9px;
+}
 .github-device-code {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.github-device-code[hidden] {
+  display: none;
 }
 .github-device-code span {
   flex: 1;
@@ -811,6 +898,13 @@ dialog::backdrop {
 .model-option-name {
   font-size: 12px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.model-option > span:first-child {
+  flex: 1;
+  min-width: 0;
 }
 .model-option-meta {
   font-size: 10px;
@@ -988,6 +1082,13 @@ h1 {
 }
 .context button {
   color: #dedede;
+}
+#model {
+  min-width: 0;
+  max-width: min(34vw, 320px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .composer {
   background: #303030;
@@ -1649,6 +1750,29 @@ textarea::placeholder {
   border-radius: 50%;
   width: 32px;
   height: 32px;
+}
+.send.queue-action {
+  width: auto;
+  min-width: 56px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 11px !important;
+}
+.stop-generation {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #694444;
+  border-radius: 9px;
+  color: #f0b5ad;
+  background: #382626;
+  font-size: 11px;
+}
+.stop-generation:hover:not(:disabled) {
+  background: #4a2d2b;
+}
+.stop-generation:disabled {
+  opacity: .65;
+  cursor: default;
 }
 .foot {
   color: #858585;

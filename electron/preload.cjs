@@ -47,11 +47,12 @@ contextBridge.exposeInMainWorld("desktopModels", {
   githubStatus: () => ipcRenderer.invoke("github:status"),
   githubDisconnect: () => ipcRenderer.invoke("github:disconnect"),
   githubRepos: () => ipcRenderer.invoke("github:repos"),
+  githubResolveRepo: (value) => ipcRenderer.invoke("github:resolve-repo", value),
   githubClone: (repo) => ipcRenderer.invoke("github:clone", repo),
   githubProjectStatus: (folders) =>
     ipcRenderer.invoke("github:status-project", folders),
-  githubPushProject: (folders, message, expectedFullName) =>
-    ipcRenderer.invoke("github:push-project", folders, message, expectedFullName),
+  githubPushProject: (folders, message, expectedFullName, expectedChangeToken) =>
+    ipcRenderer.invoke("github:push-project", folders, message, expectedFullName, expectedChangeToken),
   updateState: () => ipcRenderer.invoke("updates:state"),
   checkForUpdates: () => ipcRenderer.invoke("updates:check"),
   downloadUpdate: () => ipcRenderer.invoke("updates:download"),

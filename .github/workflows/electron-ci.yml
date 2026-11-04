@@ -1,0 +1,43 @@
+name: Electron app CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: electron-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Electron checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Check JavaScript syntax
+        run: npm run check:syntax
+
+      - name: Check repository hygiene
+        run: npm run check:hygiene
+
+      - name: Verify hygiene check entry point
+        run: node --check scripts/check-repo-hygiene.cjs
+
+      - name: Run UI checks
+        run: npm test

@@ -1,6 +1,13 @@
 const MAX_ENDPOINT_LENGTH = 2048;
 const MAX_SECRET_LENGTH = 4096;
 const MAX_ERROR_BODY_LENGTH = 4096;
+const MAX_ERROR_BODY_BYTES = 16 * 1024;
+const {
+  readJsonBodyLimited,
+  MAX_STREAM_TEXT_LENGTH,
+  MAX_STREAM_BUFFER_LENGTH,
+} = require("./response-limits.cjs");
+const { validateMessagePayload, MAX_PROVIDER_CHAT_PAYLOAD_LENGTH } = require("./ipc-validation.cjs");
 
 function validateEndpoint(endpoint) {
   if (typeof endpoint !== "string" || endpoint.length > MAX_ENDPOINT_LENGTH)
@@ -33,16 +40,11 @@ function validateEndpoint(endpoint) {
 }
 
 function validateMessages(messages, protocol) {
-  if (!Array.isArray(messages) || messages.length < 1 || messages.length > 500)
-    throw new Error("A chat request must contain between 1 and 500 messages.");
+  validateMessagePayload(messages, "chat", MAX_PROVIDER_CHAT_PAYLOAD_LENGTH);
 
   for (const message of messages) {
-    if (!message || typeof message !== "object" || Array.isArray(message))
-      throw new Error("Every chat message must be an object.");
     if (typeof message.role !== "string" || !message.role.trim())
       throw new Error("Every chat message must have a role.");
-    if (!(typeof message.content === "string" || Array.isArray(message.content)))
-      throw new Error("Every chat message must contain text or content parts.");
   }
 
   if (protocol === "anthropic") {
@@ -111,6 +113,8 @@ function createSseReader(response, { protocol, signal, onChunk, secret }) {
 
   const emit = (text) => {
     if (!text) return;
+    if (content.length + text.length > MAX_STREAM_TEXT_LENGTH)
+      throw new Error("Provider response exceeded the 2 MB stream limit.");
     content += text;
     onChunk?.(text);
   };
@@ -195,6 +199,8 @@ function createSseReader(response, { protocol, signal, onChunk, secret }) {
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         drainFrames();
+        if (buffer.length > MAX_STREAM_BUFFER_LENGTH)
+          throw new Error("Provider response stream frame exceeded the 256 KB limit.");
       }
       if (!ended) {
         buffer += decoder.decode();
@@ -216,12 +222,17 @@ async function readErrorBody(response, secret) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let body = "";
+  let bytesRead = 0;
   try {
-    while (body.length < MAX_ERROR_BODY_LENGTH) {
+    while (bytesRead < MAX_ERROR_BODY_BYTES && body.length < MAX_ERROR_BODY_LENGTH) {
       const { value, done } = await reader.read();
       if (done) break;
-      body += decoder.decode(value, { stream: true });
+      const remaining = MAX_ERROR_BODY_BYTES - bytesRead;
+      const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
+      bytesRead += chunk.byteLength;
+      body += decoder.decode(chunk, { stream: true });
     }
+    body += decoder.decode();
   } finally {
     await reader.cancel().catch(() => {});
   }
@@ -332,8 +343,9 @@ function makeAnthropicBody({ messages, model, temperature, maxTokens }) {
 async function readJsonResponse(response, { protocol, onChunk, secret }) {
   let payload;
   try {
-    payload = await response.json();
-  } catch {
+    payload = await readJsonBodyLimited(response, "Provider");
+  } catch (error) {
+    if (error?.message?.includes("response exceeds the 8 MB JSON limit")) throw error;
     throw new Error("Provider returned a successful response that was not valid JSON or an SSE stream.");
   }
   if (payload.error) {

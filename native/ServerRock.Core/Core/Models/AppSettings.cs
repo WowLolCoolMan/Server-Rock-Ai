@@ -4,7 +4,18 @@ public sealed class AppSettings
 {
     public string Endpoint { get; set; } = "http://localhost:11434/v1";
     public string Model { get; set; } = "llama3.2";
+    public string ModelProvider { get; set; } = "Ollama";
+    public List<string> PinnedModels { get; set; } = [];
+    public List<PinnedModelConnection> PinnedModelConnections { get; set; } = [];
+    public Dictionary<string, LocalModelPerformance> LocalModelPerformance { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public string VisionApiFormat { get; set; } = "auto";
     public double Temperature { get; set; } = 0.7;
+    public bool WebSearchEnabled { get; set; }
+    public string GitHubAppClientId { get; set; } = "";
+    public List<string> ChatFolders { get; set; } = [];
     public string? ProjectPath { get; set; }
     public string? ProjectInstructions { get; set; }
 }
+
+public sealed record LocalModelPerformance(int Samples, double EstimatedTokensPerSecond, long TimeToFirstTokenMilliseconds, DateTimeOffset LastMeasuredAt);
+public sealed record PinnedModelConnection(string Provider, string Model, string Endpoint);

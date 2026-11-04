@@ -20,9 +20,10 @@ public sealed class JsonSettingsStore
     {
         try
         {
-            if (File.Exists(_path)) return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path), Options) ?? new AppSettings();
+            if (File.Exists(_path)) return JsonSerializer.Deserialize<AppSettings>(BoundedFileReader.ReadText(_path), Options) ?? new AppSettings();
         }
-        catch (JsonException) { }
+        catch (JsonException) { PreserveCorruptSettings(); }
+        catch (InvalidDataException) { PreserveCorruptSettings(); }
         catch (IOException) { }
         return new AppSettings();
     }
@@ -30,9 +31,18 @@ public sealed class JsonSettingsStore
     public void Save(AppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-        var temporaryPath = _path + ".tmp";
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, Options));
-        File.Move(temporaryPath, _path, overwrite: true);
+        var json = BoundedFileReader.EnsureTextSize(JsonSerializer.Serialize(settings, Options), "saved settings");
+        AtomicFileWriter.WriteText(_path, json);
+    }
+
+    private void PreserveCorruptSettings()
+    {
+        try
+        {
+            var recoveryPath = Path.GetFullPath(_path) + ".corrupt-" + Guid.NewGuid().ToString("N");
+            File.Move(_path, recoveryPath);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }

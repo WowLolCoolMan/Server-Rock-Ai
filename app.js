@@ -1,6 +1,28 @@
 const $ = (s) => document.querySelector(s),
-  KEY = "local-studio-v1";
-let state = JSON.parse(localStorage.getItem(KEY) || "{}");
+  KEY = "local-studio-v1",
+  MAX_STATE_CHARACTERS = 4_000_000;
+function loadState() {
+  const raw = localStorage.getItem(KEY);
+  if (!raw) return {};
+  if (raw.length > MAX_STATE_CHARACTERS) {
+    try { localStorage.setItem(`${KEY}-corrupt`, raw.slice(0, 1_000_000)); } catch {}
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    try {
+      localStorage.setItem(`${KEY}-corrupt`, raw.slice(0, 1_000_000));
+    } catch {
+      // Storage may be unavailable or full; clean defaults still let the app open.
+    }
+    return {};
+  }
+}
+let state = loadState();
 state.chats ??= [];
 state.projects ??= [];
 state.settings ??= {
@@ -15,6 +37,8 @@ state.settingsByProvider ??= {};
 let providerSecretsReady = false;
 let editingProjectId = null;
 let pendingBranchBase = null;
+let githubPushReview = null;
+let githubPushRunning = false;
 let active = null;
 const localHfTasks = [
   "text-generation",
@@ -107,7 +131,35 @@ function persist() {
   if (snapshot.settings) delete snapshot.settings.apiKey;
   for (const settings of Object.values(snapshot.settingsByProvider || {}))
     delete settings.apiKey;
-  localStorage.setItem(KEY, JSON.stringify(snapshot));
+  try {
+    const serialized = JSON.stringify(snapshot);
+    if (serialized.length > MAX_STATE_CHARACTERS) throw Error("state-too-large");
+    localStorage.setItem(KEY, serialized);
+    return true;
+  } catch (error) {
+    const quotaExceeded = error?.name === "QuotaExceededError" || error?.code === 22 || error?.message === "state-too-large";
+    if (quotaExceeded) {
+      const compact = JSON.parse(JSON.stringify(snapshot));
+      for (const chat of compact.chats || [])
+        for (const message of chat.messages || []) {
+          delete message.imageData;
+          delete message.audioData;
+        }
+      try {
+        const compactSerialized = JSON.stringify(compact);
+        if (compactSerialized.length > MAX_STATE_CHARACTERS) throw Error("state-too-large");
+        localStorage.setItem(KEY, compactSerialized);
+        const status = $("#runtimeStatus");
+        if (status) status.textContent = "History saved without generated media because local storage is full.";
+        return false;
+      } catch {
+        // Keep the current session in memory when even the compact history cannot fit.
+      }
+    }
+    const status = $("#runtimeStatus");
+    if (status) status.textContent = "History could not be saved locally.";
+    return false;
+  }
 }
 async function getProviderSecretStatus(provider) {
   try {
@@ -160,6 +212,31 @@ function updateQueueHint() {
   if (!hint) return;
   hint.hidden = messageQueue.length === 0;
   hint.textContent = messageQueue.length ? messageQueue.length + " queued" : "";
+}
+function updateSendControl() {
+  const button = $("#send"),
+    stop = $("#stopGeneration"),
+    running = Boolean(activeRequest),
+    stopping = Boolean(activeRequest?.signal.aborted),
+    hasDraft = Boolean($("#prompt").value.trim());
+  button.classList.toggle("queue-action", running);
+  button.textContent = running ? "Queue" : "↑";
+  button.disabled = running && (!hasDraft || stopping);
+  button.title = running
+    ? "Queue this message after the current response"
+    : "Send message";
+  button.setAttribute(
+    "aria-label",
+    running ? "Queue message" : "Send message",
+  );
+  stop.hidden = !running;
+  stop.disabled = stopping;
+  stop.textContent = stopping ? "Stopping…" : "Stop";
+  stop.setAttribute(
+    "aria-label",
+    stopping ? "Stopping generation" : "Stop generation",
+  );
+  stop.title = stopping ? "Stopping generation" : "Stop generation";
 }
 function renderProjects() {
   const list = $("#projectList");
@@ -422,16 +499,17 @@ function settingLoad() {
     $("#temperatureValue").textContent = s.temperature;
   }
   $("#providerLabel").textContent = s.provider;
-  const localEndpoint = /(localhost|127\.0\.0\.1)/i.test(s.endpoint || "");
-  const isLocal =
-    (s.provider === "Hugging Face" && Boolean(s.localModelId)) ||
-    (["Ollama", "GPT4All", "LM Studio", "OpenAI compatible"].includes(
-      s.provider,
-    ) &&
-      localEndpoint);
+  const isLocal = providerUsesLocalInference(s);
   $("#connectionModeLabel").textContent = isLocal ? "Local" : "Cloud";
-  $(".privacy").textContent = isLocal ? "● Offline" : "● Cloud request";
+  $("#privacyLabel").textContent = isLocal
+    ? "● Prompt stays on this device"
+    : "● Prompt sent to " + s.provider;
+  $("#sidebarConnectionLabel").textContent = isLocal
+    ? "Local model · on this device"
+    : s.provider + " · prompts leave this device";
+  $("#connectionDot").classList.toggle("remote", !isLocal);
   $("#model").textContent = s.model + "　⌄";
+  $("#model").title = s.model + " · " + s.provider;
   document.documentElement.classList.toggle("light", s.theme === "light");
   $("#providerSelect").value = s.provider;
   $("#endpoint").value = s.endpoint;
@@ -447,6 +525,25 @@ function settingLoad() {
   syncProviderFields();
   refreshChatGPTStatus();
   refreshGitHubStatus();
+}
+function providerUsesLocalInference(settings) {
+  let localEndpoint = false;
+  try {
+    const hostname = new URL(settings.endpoint).hostname.toLowerCase();
+    localEndpoint =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]";
+  } catch {
+    localEndpoint = false;
+  }
+  return (
+    (settings.provider === "Hugging Face" && Boolean(settings.localModelId)) ||
+    (["Ollama", "GPT4All", "LM Studio", "OpenAI compatible"].includes(
+      settings.provider,
+    ) &&
+      localEndpoint)
+  );
 }
 function syncProviderFields() {
   const provider = $("#providerSelect").value,
@@ -508,29 +605,100 @@ async function refreshGitHubProjectAction() {
     }
   }
 }
-async function pushProjectChanges(message = "", confirmPush = true) {
+async function pushProjectChanges(message = "") {
+  if (githubPushRunning) return;
   const project = state.projects.find((item) => item.id === (state.activeProjectId || active?.projectId));
   if (!project?.github || !project.folders?.length) {
     alert("Open a GitHub repository project first.");
     return;
   }
-  let commitMessage = message.trim();
-  if (confirmPush) {
-    if (!confirm("Commit the current project changes and push them to " + project.github.fullName + "?")) return;
-    commitMessage = prompt("Commit message", "Update from Server Rock: AI") || "";
-  }
+  githubPushRunning = true;
+  githubPushReview = null;
+  const title = $("#githubPushTitle"),
+    statusLabel = $("#githubPushStatus"),
+    fileList = $("#githubPushFiles"),
+    confirmButton = $("#githubPushConfirm");
+  title.textContent = "Commit and push to " + project.github.fullName;
+  statusLabel.textContent = "Reading the current branch and workspace changes…";
+  fileList.replaceChildren();
+  $("#githubCommitMessage").value = message.trim().slice(0, 160) || "Update from Server Rock: AI";
+  confirmButton.disabled = true;
+  confirmButton.textContent = "Checking repository…";
+  $("#githubPushDialog").showModal();
   try {
-    const result = await window.desktopModels.githubPushProject(project.folders, commitMessage, project.github.fullName);
+    const review = await window.desktopModels.githubProjectStatus(project.folders);
+    githubPushReview = { projectId: project.id, folders: [...project.folders], fullName: project.github.fullName, changeToken: review.changeToken };
+    for (const change of (review.changes || []).slice(0, 500)) {
+      const item = document.createElement("li");
+      item.textContent = change;
+      fileList.append(item);
+    }
+    if ((review.changes || []).length > 500) {
+      const more = document.createElement("li");
+      more.textContent = "…and " + (review.changes.length - 500) + " more files";
+      fileList.append(more);
+    }
+    const changeCount = Number(review.changedFiles) || 0,
+      ahead = Number(review.ahead) || 0;
+    statusLabel.textContent = review.branch
+      ? "Branch " + review.branch + " · " + changeCount + " uncommitted file(s) · " + ahead + " commit(s) ahead"
+      : "This repository is in detached HEAD state. Check out a named branch before pushing.";
+    confirmButton.textContent = changeCount ? "Commit and push" : "Push commits";
+    confirmButton.disabled = !review.branch || (!changeCount && !ahead);
+    if (!review.branch) confirmButton.title = "A named branch is required to push safely.";
+    else if (!changeCount && !ahead) confirmButton.title = "There are no changes or commits to push.";
+    else confirmButton.title = "Commit and push the changes listed above.";
+  } catch (error) {
+    statusLabel.textContent = "Could not prepare the push review: " + error.message;
+    confirmButton.textContent = "Push unavailable";
+    confirmButton.disabled = true;
+  } finally {
+    githubPushRunning = false;
+  }
+}
+$("#githubPushClose").onclick = () => $("#githubPushDialog").close();
+$("#githubPushCancel").onclick = () => $("#githubPushDialog").close();
+$("#githubPushConfirm").onclick = async () => {
+  const review = githubPushReview,
+    commitMessage = $("#githubCommitMessage").value.trim().slice(0, 160),
+    confirmButton = $("#githubPushConfirm"),
+    statusLabel = $("#githubPushStatus");
+  if (!review || !commitMessage || githubPushRunning) {
+    statusLabel.textContent = !commitMessage ? "Enter a commit message before pushing." : "Refresh the review before pushing.";
+    return;
+  }
+  const project = state.projects.find((item) => item.id === review.projectId);
+  if (!project?.github || project.github.fullName !== review.fullName) {
+    statusLabel.textContent = "The active GitHub project changed. Close this dialog and review the intended repository again.";
+    return;
+  }
+  githubPushRunning = true;
+  confirmButton.disabled = true;
+  confirmButton.textContent = "Pushing…";
+  statusLabel.textContent = "Verifying the reviewed files, then pushing to " + review.fullName + "…";
+  try {
+    const result = await window.desktopModels.githubPushProject(
+      review.folders,
+      commitMessage,
+      review.fullName,
+      review.changeToken,
+    );
     const summary = result.commit
-      ? "Committed " + result.commit + " and pushed " + result.branch + " to " + project.github.fullName + "."
-      : "Pushed " + result.branch + " to " + project.github.fullName + "; there were no new local changes.";
+      ? "Committed " + result.commit + " and pushed " + result.branch + " to " + review.fullName + "."
+      : "Pushed " + result.branch + " to " + review.fullName + "; there were no new local changes.";
+    $("#githubPushDialog").close();
     $("#runtimeStatus").textContent = "GitHub push complete";
     refreshGitHubProjectAction();
     showLocalReply(summary);
   } catch (error) {
-    alert("GitHub push failed: " + error.message);
+    statusLabel.textContent = "Push stopped: " + error.message;
+    confirmButton.textContent = "Close and review again";
+    confirmButton.disabled = true;
+    githubPushReview = null;
+  } finally {
+    githubPushRunning = false;
   }
-}
+};
 async function refreshChatGPTStatus() {
   try {
     const s = await window.desktopModels?.chatgptStatus?.();
@@ -608,6 +776,11 @@ function renderModelChoices() {
         item.provider,
         item.local ? "On this device" : "Cloud",
         formatSize(item.size),
+        item.available
+          ? "Available"
+          : item.configured
+            ? "Configured · connection not verified"
+            : "Availability not verified",
       ];
     if (perf)
       parts.push(
@@ -678,12 +851,31 @@ async function scanModels() {
   status.textContent = "Checking local hosts and configured providers…";
   try {
     const result = await window.desktopModels?.scanHosts();
-    discoveredModels = [...(result?.models || [])];
+    discoveredModels = (result?.models || []).map((model) => ({
+      ...model,
+      available: true,
+    }));
+    const respondingProviders = new Set(
+        discoveredModels.map((model) => model.provider),
+      ),
+      failedProviders = new Set();
     const addModel = (row) => {
       if (!row?.model || !row.provider) return;
       const key = [row.provider, row.model].join("::");
-      if (!discoveredModels.some((item) => [item.provider, item.model].join("::") === key))
+      const existingIndex = discoveredModels.findIndex(
+        (item) => [item.provider, item.model].join("::") === key,
+      );
+      if (existingIndex < 0) {
         discoveredModels.push(row);
+      } else {
+        const existing = discoveredModels[existingIndex];
+        discoveredModels[existingIndex] = {
+          ...existing,
+          ...row,
+          available: Boolean(existing.available || row.available),
+          configured: Boolean(existing.configured || row.configured),
+        };
+      }
     };
     const scans = [];
     for (const provider of catalogProviders) {
@@ -692,11 +884,11 @@ async function scanModels() {
         : state.settingsByProvider[provider] || {};
       const [endpoint, fallbackModel] = defaults[provider];
       const target = config.endpoint || endpoint;
-      const local = /localhost|127\.0\.0\.1|\[::1\]/i.test(target);
+      const local = providerUsesLocalInference({ provider, endpoint: target });
       const secretStatus = await getProviderSecretStatus(provider);
       const configured = Boolean(config.endpoint || config.model || secretStatus.saved);
       if (configured && config.model)
-        addModel({ provider, model: config.model, endpoint: target, local });
+        addModel({ provider, model: config.model, endpoint: target, local, configured: true });
       if (!configured || (!local && !secretStatus.saved))
         continue;
       scans.push({ provider, endpoint: target, local });
@@ -711,7 +903,14 @@ async function scanModels() {
     );
     for (let i = 0; i < scanned.length; i++) {
       const response = scanned[i];
-      if (response.status !== "fulfilled") continue;
+      if (
+        response.status !== "fulfilled" ||
+        !Array.isArray(response.value?.models)
+      ) {
+        failedProviders.add(scans[i].provider);
+        continue;
+      }
+      respondingProviders.add(scans[i].provider);
       for (const item of response.value?.models || [])
         addModel({
           provider: scans[i].provider,
@@ -719,6 +918,7 @@ async function scanModels() {
           endpoint: scans[i].endpoint,
           local: scans[i].local,
           size: item.size,
+          available: true,
         });
     }
     const hf =
@@ -731,6 +931,8 @@ async function scanModels() {
         model: hf.model,
         endpoint: hf.endpoint || defaults["Hugging Face"][0],
         local: true,
+        configured: true,
+        available: true,
         localModelId: hf.localModelId,
         hfTask: hf.hfTask || "text-generation",
       });
@@ -740,6 +942,7 @@ async function scanModels() {
         model: state.settings.model,
         endpoint: state.settings.endpoint,
         local: false,
+        configured: true,
       });
     const account = await window.desktopModels?.chatgptStatus?.();
     if (account?.sharing) {
@@ -750,9 +953,10 @@ async function scanModels() {
             model,
             endpoint: "https://api.openai.com/v1/responses",
             local: false,
+            available: true,
           });
-      } catch (e) {
-        status.textContent = "ChatGPT model list unavailable: " + e.message;
+      } catch {
+        failedProviders.add("ChatGPT plan");
       }
     }
     if (
@@ -767,12 +971,14 @@ async function scanModels() {
         model: state.settings.model,
         endpoint: "https://api.openai.com/v1/responses",
         local: false,
+        configured: true,
       });
     const localHosts = result?.hosts || [];
-    const connectedProviders = [...new Set(discoveredModels.map((m) => m.provider))];
     status.textContent = [
-      localHosts.length ? "Local: " + localHosts.join(" · ") : "No local host found",
-      connectedProviders.length ? "Models: " + connectedProviders.join(" · ") : "No configured provider models",
+      "Local hosts: " + (localHosts.length ? localHosts.join(" · ") : "none found"),
+      "Providers responding: " + ([...respondingProviders].join(" · ") || "none verified"),
+      failedProviders.size ? "Connection check failed: " + [...failedProviders].join(" · ") : "",
+      "Saved models without a successful check stay listed as unverified.",
     ].join("  |  ");
     renderModelChoices();
   } catch (e) {
@@ -909,7 +1115,8 @@ document.querySelectorAll("[data-agent-mode]").forEach(
     }),
 );
 updateAgentModeLabel();
-$("#settings").onclick = () => $("#settingsDialog").showModal();
+$("#settings").onclick = $("#railSettings").onclick = () =>
+  $("#settingsDialog").showModal();
 $(".close").onclick = () => $("#settingsDialog").close();
 function renderUpdateState(update) {
   const status = $("#updateStatus");
@@ -960,6 +1167,7 @@ $("#githubConnect").onclick = async () => {
     let pollInterval = flow.interval;
     while (githubAuthFlow) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval * 1000));
+      if (!githubAuthFlow) break;
       const result = await window.desktopModels.githubPollSignIn(flow.id);
       if (result.connected) {
         githubAuthFlowId = null;
@@ -1037,6 +1245,32 @@ async function openGitHubDialog() {
 $("#githubOpenRepos").onclick = openGitHubDialog;
 $("#githubRefresh").onclick = loadGitHubRepos;
 $("#githubRepoSearch").oninput = renderGitHubRepos;
+$("#githubResolveRepo").onclick = async () => {
+  const button = $("#githubResolveRepo"),
+    reference = $("#githubRepoReference").value.trim();
+  if (!reference) {
+    $("#githubDialogStatus").textContent = "Enter owner/repository or a GitHub repository URL.";
+    return;
+  }
+  button.disabled = true;
+  button.textContent = "Checking…";
+  $("#githubDialogStatus").textContent = "Checking repository access…";
+  try {
+    const repo = await window.desktopModels.githubResolveRepo(reference);
+    const existing = githubRepos.findIndex((item) => item.fullName.toLowerCase() === repo.fullName.toLowerCase());
+    if (existing >= 0) githubRepos[existing] = repo;
+    else githubRepos.push(repo);
+    $("#githubRepoSearch").value = "";
+    renderGitHubRepos();
+    $("#githubRepoList").value = String(existing >= 0 ? existing : githubRepos.length - 1);
+    $("#githubDialogStatus").textContent = "Confirmed access to " + repo.fullName + ". Choose Clone and open to make it a local project.";
+  } catch (error) {
+    $("#githubDialogStatus").textContent = "Could not open that repository: " + error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = "Check repository";
+  }
+};
 $("#openGitHub").onclick = openGitHubDialog;
 $("#githubClone").onclick = async () => {
   const repo = githubRepos[Number($("#githubRepoList").value)];
@@ -1085,7 +1319,7 @@ $("#githubDisconnect").onclick = async () => {
     $("#githubDialogStatus").textContent = error.message;
   }
 };
-$("#githubSync").onclick = () => pushProjectChanges("", true);
+$("#githubSync").onclick = () => pushProjectChanges();
 $("#saveSettings").onclick = saveSettings;
 $("#providerSelect").onchange = async () => {
   let p = $("#providerSelect").value,
@@ -1441,19 +1675,9 @@ async function send() {
       messageQueue.push(queuedText);
       $("#prompt").value = "";
       updateQueueHint();
+      updateSendControl();
       $("#runtimeStatus").textContent = "Message queued";
-      return;
     }
-    activeRequest.abort();
-    if (activeLocalRequestId) {
-      window.desktopModels?.cancel(activeLocalRequestId);
-      window.desktopModels?.cancelChatGPT(activeLocalRequestId);
-    }
-    if (activeProviderRequestId) {
-      window.desktopModels?.cancelProviderChat(activeProviderRequestId);
-      window.desktopModels?.cancelChatGPT(activeProviderRequestId);
-    }
-    $("#runtimeStatus").textContent = "Stopping…";
     return;
   }
   let raw = $("#prompt").value.trim();
@@ -1499,7 +1723,7 @@ async function send() {
     return;
   }
   if (cmd.push) {
-    pushProjectChanges(cmd.text || "Update from Server Rock: AI", true);
+    pushProjectChanges(cmd.text || "Update from Server Rock: AI");
     return;
   }
   if (cmd.status) {
@@ -1532,8 +1756,8 @@ async function send() {
   const request = new AbortController(),
     requestId = crypto.randomUUID();
   activeRequest = request;
-  $("#send").textContent = "■";
-  $("#send").title = "Stop generation";
+  updateSendControl();
+  $("#runtimeStatus").textContent = "Generating response…";
   try {
     const s = { ...state.settings, requestId };
     if (state.activeProjectId) {
@@ -1706,11 +1930,12 @@ async function send() {
       activeRequest = null;
       const finishedLocal = Boolean(activeLocalRequestId);
       activeLocalRequestId = null;
-      $("#send").textContent = "↑";
-      $("#send").title = "Send";
-      $("#runtimeStatus").textContent = finishedLocal
-        ? "Local model ready"
-        : "⌖　This device";
+      updateSendControl();
+      $("#runtimeStatus").textContent = request.signal.aborted
+        ? "Generation stopped"
+        : finishedLocal
+          ? "Local model ready"
+          : "Response complete";
     }
     if (active?.id && active.messages[assistantIndex] === out && out.content) {
       const chat = state.chats.find((item) => item.id === active.id);
@@ -1749,8 +1974,23 @@ $("#prompt").addEventListener("input", () => {
           : "";
     if (!h.textContent) h.hidden = true;
   }
+  updateSendControl();
 });
 $("#send").onclick = send;
+$("#stopGeneration").onclick = () => {
+  if (!activeRequest || activeRequest.signal.aborted) return;
+  activeRequest.abort();
+  if (activeLocalRequestId) {
+    window.desktopModels?.cancel?.(activeLocalRequestId);
+    window.desktopModels?.cancelChatGPT?.(activeLocalRequestId);
+  }
+  if (activeProviderRequestId) {
+    window.desktopModels?.cancelProviderChat?.(activeProviderRequestId);
+    window.desktopModels?.cancelChatGPT?.(activeProviderRequestId);
+  }
+  $("#runtimeStatus").textContent = "Stopping current response…";
+  updateSendControl();
+};
 $("#prompt").onkeydown = (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();

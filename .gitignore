@@ -2,7 +2,12 @@ node_modules/
 dist/
 release/
 release-check*/
+native/**/artifacts/
+native/**/bin/
+native/**/obj/
 .env
+.env.*
+!.env.example
 *.log
 test-results/
 playwright-report/

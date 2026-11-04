@@ -57,6 +57,28 @@ test("workspace exposes model and tool entry points and advanced temperature con
   await page.locator("#temperatureControl").fill("1.2");
   await expect(page.locator("#temperatureValue")).toHaveText("1.2");
 });
+test("connection labels reflect local and hosted providers and the rail settings button works", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  expect(await page.evaluate(() => ({
+    local: providerUsesLocalInference({ provider: "OpenAI compatible", endpoint: "http://localhost:9000/v1/chat/completions" }),
+    ipv6Loopback: providerUsesLocalInference({ provider: "Ollama", endpoint: "http://[::1]:11434/v1/chat/completions" }),
+    lookalikeHost: providerUsesLocalInference({ provider: "OpenAI compatible", endpoint: "https://localhost.example.com/v1/chat/completions" }),
+  }))).toEqual({ local: true, ipv6Loopback: true, lookalikeHost: false });
+  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
+  await expect(page.locator("#privacyLabel")).toHaveText("● Prompt stays on this device");
+  await page.locator("#railSettings").click();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await page.locator("#providerSelect").selectOption("OpenAI API");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("OpenAI API · prompts leave this device");
+  await expect(page.locator("#privacyLabel")).toHaveText("● Prompt sent to OpenAI API");
+  await expect(page.locator("#connectionDot")).toHaveClass(/remote/);
+  await page.locator("#settings").click();
+  await page.locator("#providerSelect").selectOption("Ollama");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
+  await expect(page.locator("#connectionDot")).not.toHaveClass(/remote/);
+});
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
 }) => {
@@ -351,14 +373,21 @@ test("a running provider request can be stopped from the composer", async ({
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#prompt").fill("wait forever");
   await page.locator("#send").click();
-  await expect(page.locator("#send")).toHaveText("■");
+  await expect(page.locator("#send")).toHaveText("Queue");
+  await expect(page.locator("#send")).toBeDisabled();
+  await expect(page.locator("#stopGeneration")).toBeVisible();
+  await expect(page.locator("#runtimeStatus")).toHaveText("Generating response…");
   await expect.poll(() => page.evaluate(() => window.streamStarted)).toBe(true);
-  await page.locator("#send").click();
+  await page.locator("#stopGeneration").click();
   await expect.poll(() => page.evaluate(() => window.cancelWasCalled)).toBe(true);
-  await expect(page.locator("#send")).toHaveText("■");
+  await expect(page.locator("#stopGeneration")).toHaveText("Stopping…");
+  await expect(page.locator("#stopGeneration")).toBeDisabled();
   await page.evaluate(() => window.finishSlowRequest?.());
   await expect(page.locator(".assistant")).toContainText("Done");
   await expect(page.locator("#send")).toHaveText("↑");
+  await expect(page.locator("#send")).toHaveAttribute("aria-label", "Send message");
+  await expect(page.locator("#stopGeneration")).toBeHidden();
+  await expect(page.locator("#runtimeStatus")).toHaveText("Generation stopped");
 });
 
 test("top-left mode switch opens coding agent setup and creates a sourced project", async ({
@@ -456,6 +485,36 @@ test("model picker scans local hosts, displays measured performance, and switche
     .click();
   await expect(page.locator("#model")).toContainText("Qwen-abliterated");
   await expect(page.locator("#providerLabel")).toHaveText("Ollama");
+  await expect(page.locator("#model")).toHaveAttribute(
+    "title",
+    "hf.co/example/Qwen-abliterated:Q4_K_M · Ollama",
+  );
+});
+test("model picker marks a configured model unverified when its provider cannot be reached", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [],
+      projects: [],
+      settings: {
+        provider: "OpenAI API",
+        endpoint: "https://api.openai.com/v1/chat/completions",
+        model: "gpt-4.1-mini",
+        theme: "dark",
+      },
+    }));
+    window.desktopModels = {
+      getProviderSecretStatus: async (provider) => ({ saved: provider === "OpenAI API", secureStorage: true }),
+      scanHosts: async () => ({ hosts: [], models: [] }),
+      scanProvider: async () => { throw Error("offline"); },
+      chatgptStatus: async () => ({ connected: false, sharing: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#model").click();
+  await expect(page.locator("#modelHostStatus")).toContainText("Connection check failed: OpenAI API");
+  const model = page.locator(".model-option").filter({ hasText: "gpt-4.1-mini" });
+  await expect(model).toContainText("Configured · connection not verified");
+  await expect(model).toContainText("Selected");
 });
 test("ChatGPT connection is bridged through desktop credentials and status stays in settings", async ({
   page,
@@ -539,6 +598,75 @@ test("ChatGPT plan model streams through the protected desktop bridge", async ({
   await page.locator("#send").click();
   await expect(page.locator(".assistant")).toContainText("Created a game plan");
 });
+test("GitHub connects, opens a repository project, and reviews changes before pushing", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({ chats: [], projects: [], settings: { provider: "Ollama", endpoint: "http://127.0.0.1:11434/v1/chat/completions", model: "llama3.2", theme: "dark" } }));
+    window.githubConnectedForTest = false;
+    window.githubCurrentChangeToken = "a".repeat(64);
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      githubDefaultClientId: async () => "",
+      githubBeginSignIn: async (clientId) => {
+        if (clientId !== "Iv1.8a61f9b3a7aba766") throw Error("client ID punctuation was rejected");
+        return { id: "flow-1", userCode: "ABCD-EFGH", verificationUri: "https://github.com/login/device", interval: 0 };
+      },
+      githubPollSignIn: async () => {
+        window.githubConnectedForTest = true;
+        return { connected: true, login: "octocat" };
+      },
+      githubStatus: async () => window.githubConnectedForTest ? { connected: true, login: "octocat" } : { connected: false },
+      githubRepos: async () => [{ id: 1, fullName: "octocat/hello-world", name: "hello-world", private: true, defaultBranch: "main", description: "A sample project" }],
+      githubResolveRepo: async (reference) => {
+        if (reference !== "octocat/manual-project") throw Error("unexpected repository reference");
+        return { id: 2, fullName: "octocat/manual-project", name: "manual-project", private: false, defaultBranch: "main", description: "Entered directly" };
+      },
+      githubClone: async (repo) => ({ folder: "C:\\Projects\\manual-project", repo: { fullName: repo.fullName, name: repo.name, defaultBranch: repo.defaultBranch } }),
+      githubProjectStatus: async () => ({ branch: "main", changedFiles: 2, changes: [" M README.md", "?? notes.txt"], ahead: 0, changeToken: window.githubCurrentChangeToken }),
+      githubPushProject: async (folders, message, fullName, token) => {
+        if (token !== window.githubCurrentChangeToken) throw Error("Repository files changed after your review.");
+        window.githubPushRequest = { folders, message, fullName, token };
+        return { pushed: true, branch: "main", commit: "abc1234", changedFiles: 2 };
+      },
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#githubClientId").fill("Iv1.8a61f9b3a7aba766");
+  await page.locator("#githubConnect").click();
+  await expect(page.locator("#githubConnectionStatus")).toContainText("Signed in as @octocat");
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+  await page.locator("#settingsDialog").locator(".close").click();
+  await page.locator("#openGitHub").click();
+  await expect(page.locator("#githubRepoList option")).toContainText("octocat/hello-world");
+  await page.locator("#githubRepoList").selectOption("0");
+  await page.locator("#githubRepoReference").fill("octocat/manual-project");
+  await page.locator("#githubResolveRepo").click();
+  await expect(page.locator("#githubDialogStatus")).toContainText("Confirmed access to octocat/manual-project");
+  await expect(page.locator("#githubRepoList")).toHaveValue("1");
+  await page.locator("#githubClone").click();
+  await expect(page.locator("#githubSync")).toBeVisible();
+  await expect(page.locator("#githubSync")).toContainText("manual-project");
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushDialog")).toBeVisible();
+  await expect(page.locator("#githubPushStatus")).toContainText("Branch main");
+  await expect(page.locator("#githubPushFiles")).toContainText("README.md");
+  await expect(page.locator("#githubPushFiles")).toContainText("notes.txt");
+  await page.locator("#githubCommitMessage").fill("Improve project docs");
+  await page.evaluate(() => { window.githubCurrentChangeToken = "b".repeat(64); });
+  await page.locator("#githubPushConfirm").click();
+  await expect(page.locator("#githubPushStatus")).toContainText("Repository files changed after your review");
+  await expect(page.locator("#githubPushConfirm")).toBeDisabled();
+  await page.locator("#githubPushCancel").click();
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushStatus")).toContainText("Branch main");
+  await page.locator("#githubCommitMessage").fill("Improve project docs");
+  await page.locator("#githubPushConfirm").click();
+  await expect(page.locator("#githubPushDialog")).toBeHidden();
+  const pushed = await page.evaluate(() => window.githubPushRequest);
+  expect(pushed).toEqual({ folders: ["C:\\Projects\\manual-project"], message: "Improve project docs", fullName: "octocat/manual-project", token: "b".repeat(64) });
+  await expect(page.locator(".assistant")).toContainText("Committed abc1234 and pushed main");
+});
+
 test("Codex-style rail navigates Chat, Images, Activity, and model library", async ({
   page,
 }) => {
@@ -788,9 +916,14 @@ test("a typed follow-up queues during generation and sends automatically when re
   await page.locator("#send").click();
   await expect.poll(() => page.evaluate(() => window.providerRequests.length)).toBe(1);
   await page.locator("#prompt").fill("second question");
-  await page.locator("#prompt").press("Enter");
+  await expect(page.locator("#send")).toHaveText("Queue");
+  await expect(page.locator("#send")).toHaveAttribute("aria-label", "Queue message");
+  await expect(page.locator("#stopGeneration")).toBeVisible();
+  await page.locator("#send").click();
   await expect(page.locator("#queueHint")).toBeVisible();
   await expect(page.locator("#queueHint")).toHaveText("1 queued");
+  await expect(page.locator("#send")).toBeDisabled();
+  await expect(page.locator("#runtimeStatus")).toHaveText("Message queued");
   await page.evaluate(() => window.finishFirstProviderRequest());
   await expect(page.locator(".assistant")).toHaveCount(2);
   await expect(page.locator(".assistant").last()).toContainText("Second reply");
