@@ -1,4 +1,5 @@
 node_modules/
+electron/update-config.generated.cjs
 dist/
 release/
 release-check*/

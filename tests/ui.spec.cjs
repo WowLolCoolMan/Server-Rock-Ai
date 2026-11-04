@@ -79,6 +79,59 @@ test("connection labels reflect local and hosted providers and the rail settings
   await expect(page.locator("#sidebarConnectionLabel")).toHaveText("Local model · on this device");
   await expect(page.locator("#connectionDot")).not.toHaveClass(/remote/);
 });
+test("Core updates are account-free and expose stable check, download and recovery states", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      aiUpdateStatus: async () => ({ configured: true, currentVersion: "0.1.2" }),
+      aiUpdateCheck: async (ring) => ({ version: ring === "stable" ? "0.1.3" : "0.1.4-beta.1", currentVersion: "0.1.2", rollbackVersion: "0.1.2", available: true }),
+      aiUpdateDownload: async (_ring, version) => ({ opened: true, version: version || "0.1.3" }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+  await page.locator("#coreUpdates summary").click();
+  await expect(page.locator("#coreUpdateNotice")).toContainText("No account or paid entitlement is required");
+  await expect(page.locator("#coreAccountAction")).toHaveCount(0);
+  await page.locator("#coreUpdateCheck").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("Version 0.1.3 is ready");
+  await expect(page.locator("#coreUpdateDownload")).toBeEnabled();
+  await expect(page.locator("#coreUpdateRollback")).toBeEnabled();
+  await page.locator("#coreUpdateDownload").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("Complete the operating-system install");
+  await page.locator("#coreUpdateRollback").click();
+  await expect(page.locator("#coreUpdateStatus")).toContainText("verified recovery installer 0.1.2");
+});
+test("optional GitHub sign-in prompt is hidden when idle and visible only during authorization", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      githubStatus: async () => ({ connected: false }),
+      githubBeginSignIn: async () => ({ id: "test-flow", userCode: "ABCD-EFGH", verificationUri: "https://github.com/login/device", interval: 60 }),
+      githubPollSignIn: async () => ({ pending: true }),
+      githubCancelSignIn: () => {},
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+  await page.locator("#githubClientId").fill("test-client-id");
+  await page.locator("#githubConnect").click();
+  await expect(page.locator("#githubDeviceCode")).toBeVisible();
+  await expect(page.locator("#githubDeviceCodeText")).toContainText("ABCD-EFGH");
+  await page.locator("#githubCancelAuth").click();
+  await expect(page.locator("#githubDeviceCode")).toBeHidden();
+});
+test("Core update actions stay disabled when this build has no pinned distribution configuration", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = { aiUpdateStatus: async () => ({ configured: false, currentVersion: "0.1.2" }) };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#coreUpdates summary").click();
+  await expect(page.locator("#coreUpdateNotice")).toHaveText(/No account is required/);
+  await expect(page.locator("#coreAccountAction")).toHaveCount(0);
+  await expect(page.locator("#coreUpdateCheck")).toBeDisabled();
+});
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
 }) => {

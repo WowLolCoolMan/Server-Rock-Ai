@@ -9,10 +9,10 @@ const {
   shell,
   safeStorage,
 } = require("electron");
-const { autoUpdater } = require("electron-updater");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
+const { spawn } = require("node:child_process");
 const http = require("node:http");
 const crypto = require("node:crypto");
 const { execFile } = require("node:child_process");
@@ -31,15 +31,15 @@ const { createSafeChildEnvironment } = require("./child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
+const { compareVersions, downloadVerifiedPackage, fetchManifest } = require("./updates.cjs");
+let coreUpdateConfig = { origin: "", publicKeyB64: "" };
+try { coreUpdateConfig = require("./update-config.generated.cjs"); } catch { /* Local builds can run without the optional Core updater config. */ }
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
 const githubDeviceRequests = new Map();
-let updateState = { status: "idle", version: app.getVersion(), downloaded: false };
-let updateCheckPromise = null;
-let updateDownloadPromise = null;
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -47,6 +47,7 @@ const chatGPTStorePath = () =>
   path.join(app.getPath("userData"), "chatgpt-plan.enc");
 const providerSecretsPath = () =>
   path.join(app.getPath("userData"), "provider-secrets.enc");
+const updatePackageDirectory = () => path.join(app.getPath("userData"), "updates");
 function chatGPTEncryptionReady() {
   try {
     if (!safeStorage.isEncryptionAvailable()) return false;
@@ -80,54 +81,6 @@ async function quarantineUnreadableFile(filePath) {
   } catch {
     // Missing or inaccessible files cannot be quarantined; callers still get a clean state.
   }
-}
-function setupAutoUpdater() {
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.allowPrerelease = false;
-  const notify = (status, extra = {}) => {
-    updateState = { ...updateState, status, ...extra };
-    for (const win of BrowserWindow.getAllWindows())
-      win.webContents.send("updates:state", updateState);
-  };
-  autoUpdater.on("checking-for-update", () => notify("checking"));
-  autoUpdater.on("update-available", (info) =>
-    notify("available", { version: info.version, releaseDate: info.releaseDate }),
-  );
-  autoUpdater.on("update-not-available", (info) =>
-    notify("current", { version: info.version }),
-  );
-  autoUpdater.on("download-progress", (progress) =>
-    notify("downloading", { percent: Math.round(progress.percent) }),
-  );
-  autoUpdater.on("update-downloaded", (info) =>
-    notify("downloaded", { version: info.version, downloaded: true }),
-  );
-  autoUpdater.on("error", (error) =>
-    notify("error", { message: String(error.message || error) }),
-  );
-  ipcMain.handle("updates:state", () => updateState);
-  ipcMain.handle("updates:check", async () => {
-    if (!app.isPackaged) return { ...updateState, status: "dev" };
-    updateCheckPromise ??= autoUpdater.checkForUpdates().finally(() => {
-      updateCheckPromise = null;
-    });
-    await updateCheckPromise;
-    return updateState;
-  });
-  ipcMain.handle("updates:download", async () => {
-    if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
-    updateDownloadPromise ??= autoUpdater.downloadUpdate().finally(() => {
-      updateDownloadPromise = null;
-    });
-    await updateDownloadPromise;
-    return updateState;
-  });
-  ipcMain.handle("updates:install", () => {
-    if (!updateState.downloaded) throw Error("Download an update first.");
-    autoUpdater.quitAndInstall(false, true);
-    return { status: "installing" };
-  });
 }
 async function readChatGPTState() {
   try {
@@ -181,6 +134,66 @@ async function writeProviderSecret(provider, secret) {
       .toString("base64");
   await writeProtectedFile(dest, encoded);
   return { saved: Boolean(secret.trim()) };
+}
+
+function getUpdateRing(value) {
+  if (value !== "stable" && value !== "beta") throw Error("Choose the stable or beta update channel.");
+  return value;
+}
+
+async function checkCoreUpdate(ring, version = "") {
+  const manifest = await fetchManifest({
+    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
+    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
+    version,
+  });
+  const current = app.getVersion();
+  return {
+    version: manifest.version,
+    currentVersion: current,
+    channel: manifest.channel,
+    publishedAt: manifest.published_at,
+    minimumVersion: manifest.minimum_version,
+    rollbackVersion: manifest.rollback_version,
+    available: compareVersions(current, manifest.version) < 0,
+    rollback: Boolean(version),
+  };
+}
+
+async function downloadAndOpenCoreUpdate(ring, version = "") {
+  const manifest = await fetchManifest({
+    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
+    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
+    version,
+  });
+  if (manifest.minimum_version && compareVersions(app.getVersion(), manifest.minimum_version) < 0)
+    throw Error(`This release requires version ${manifest.minimum_version} before updating.`);
+  const destination = await downloadVerifiedPackage(manifest, {
+    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
+    directory: updatePackageDirectory(),
+    fetchImpl: (url, options) => net.fetch(url, options),
+  });
+  const prompt = process.platform === "linux"
+    ? "Core verified the signed release manifest and package SHA-256. Open this AppImage now? To replace an existing AppImage, use the downloaded file in your normal install location."
+    : process.platform === "darwin"
+      ? "Core verified the signed release manifest and package SHA-256. Open the disk image and use the macOS installer flow to replace the app?"
+      : "Core verified the signed release manifest and package SHA-256. Open the Windows installer? It will keep your Server Rock: AI profile.";
+  const choice = await dialog.showMessageBox({
+    type: "info", buttons: ["Open verified installer", "Keep downloaded file"], defaultId: 0, cancelId: 1,
+    title: `Server Rock: AI ${version ? "recovery" : "update"} ${manifest.version}`,
+    message: `Verified Server Rock: AI ${manifest.version}`,
+    detail: `${prompt}\n\nThe current app and its profile remain available until you complete the operating-system install step.`,
+  });
+  if (choice.response !== 0) return { opened: false, version: manifest.version };
+  if (process.platform === "linux") {
+    const child = spawn(destination, [], { detached: true, stdio: "ignore" });
+    child.on("error", (error) => console.error("Verified AppImage launch failed:", error.message));
+    child.unref();
+  } else {
+    const error = await shell.openPath(destination);
+    if (error) throw Error(`Could not open the verified installer: ${error}`);
+  }
+  return { opened: true, version: manifest.version };
 }
 async function getChatGPTProfile() {
   const data = await readChatGPTState();
@@ -631,7 +644,6 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "..", "index.html"));
 }
 app.whenReady().then(() => {
-  setupAutoUpdater();
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
   ipcMain.handle("projects:read-files", (_event, folders) =>
@@ -645,6 +657,17 @@ app.whenReady().then(() => {
   ipcMain.handle("chatgpt:status", () => chatGPTStatus());
   ipcMain.handle("chatgpt:signin", () => chatGPTSignIn());
   ipcMain.handle("chatgpt:models", () => chatGPTModels());
+  ipcMain.handle("ai-updates:status", () => ({
+    configured: Boolean(coreUpdateConfig.origin && coreUpdateConfig.publicKeyB64),
+    currentVersion: app.getVersion(),
+  }));
+  ipcMain.handle("ai-updates:check", (_event, ring) => checkCoreUpdate(ring));
+  ipcMain.handle("ai-updates:rollback", async (_event, ring) => {
+    const latest = await checkCoreUpdate(ring);
+    if (!latest.rollbackVersion) throw Error("Core has not declared a previous release for this channel.");
+    return checkCoreUpdate(ring, latest.rollbackVersion);
+  });
+  ipcMain.handle("ai-updates:download", (_event, ring, version = "") => downloadAndOpenCoreUpdate(ring, version));
   ipcMain.handle("chatgpt:stream", (event, messages, model, requestId) =>
     chatGPTStream(event, messages, model, requestId),
   );

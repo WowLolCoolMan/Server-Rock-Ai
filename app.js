@@ -1118,32 +1118,56 @@ updateAgentModeLabel();
 $("#settings").onclick = $("#railSettings").onclick = () =>
   $("#settingsDialog").showModal();
 $(".close").onclick = () => $("#settingsDialog").close();
-function renderUpdateState(update) {
-  const status = $("#updateStatus");
-  if (!status || !update) return;
-  const download = $("#downloadUpdate");
-  const install = $("#installUpdate");
-  download.hidden = update.status !== "available";
-  install.hidden = update.status !== "downloaded";
-  if (update.status === "checking") status.textContent = "Checking GitHub releases…";
-  else if (update.status === "available") status.textContent = "Version " + update.version + " is available.";
-  else if (update.status === "downloading") status.textContent = "Downloading update… " + (update.percent || 0) + "%";
-  else if (update.status === "downloaded") status.textContent = "Version " + update.version + " is ready to install.";
-  else if (update.status === "current") status.textContent = "You are up to date (" + update.version + ").";
-  else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
-  else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
+let checkedCoreUpdate = null;
+async function refreshCoreUpdateStatus() {
+  const status = await window.desktopModels.aiUpdateStatus();
+  $("#coreUpdateCheck").disabled = !status.configured;
+  $("#coreUpdateNotice").textContent = !status.configured
+    ? "No account is required. Core's signed update channel is not configured in this build yet."
+    : "No account or paid entitlement is required. Core signs each update manifest; the app verifies the signature and downloaded package before offering it.";
+  return status;
 }
-$("#checkUpdates").onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.checkForUpdates()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
+$("#coreUpdateCheck").onclick = async () => {
+  const button = $("#coreUpdateCheck");
+  button.disabled = true;
+  try {
+    checkedCoreUpdate = await window.desktopModels.aiUpdateCheck($("#coreUpdateRing").value);
+    const updateAvailable = checkedCoreUpdate.available;
+    $("#coreUpdateStatus").textContent = updateAvailable
+      ? `Version ${checkedCoreUpdate.version} is ready (you have ${checkedCoreUpdate.currentVersion}).`
+      : `You have ${checkedCoreUpdate.currentVersion}; Core reports ${checkedCoreUpdate.version} as current.`;
+    $("#coreUpdateDownload").disabled = !updateAvailable;
+    $("#coreUpdateRollback").disabled = !checkedCoreUpdate.rollbackVersion;
+  } catch (error) {
+    checkedCoreUpdate = null;
+    $("#coreUpdateStatus").textContent = error.message;
+    $("#coreUpdateDownload").disabled = true;
+    $("#coreUpdateRollback").disabled = true;
+  } finally { button.disabled = false; }
 };
-$("#downloadUpdate").onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.downloadUpdate()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
+$("#coreUpdateDownload").onclick = async () => {
+  if (!checkedCoreUpdate?.available) return;
+  const button = $("#coreUpdateDownload");
+  button.disabled = true;
+  try {
+    const result = await window.desktopModels.aiUpdateDownload($("#coreUpdateRing").value);
+    $("#coreUpdateStatus").textContent = result.opened ? `Opened verified installer ${result.version}. Complete the operating-system install to update.` : `Verified ${result.version}; downloaded package kept for later.`;
+  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
+  finally { button.disabled = !checkedCoreUpdate?.available; }
 };
-$("#installUpdate").onclick = () => window.desktopModels.installUpdate();
-window.desktopModels?.updateState?.().then(renderUpdateState);
-window.desktopModels?.onUpdateState?.(renderUpdateState);
+$("#coreUpdateRollback").onclick = async () => {
+  if (!checkedCoreUpdate?.rollbackVersion) return;
+  const button = $("#coreUpdateRollback");
+  button.disabled = true;
+  try {
+    const result = await window.desktopModels.aiUpdateDownload($("#coreUpdateRing").value, checkedCoreUpdate.rollbackVersion);
+    $("#coreUpdateStatus").textContent = result.opened ? `Opened verified recovery installer ${result.version}. Complete the operating-system install to recover.` : `Verified ${result.version}; recovery package kept for later.`;
+  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
+  finally { button.disabled = !checkedCoreUpdate?.rollbackVersion; }
+};
+$("#coreUpdateRing").onchange = () => { checkedCoreUpdate = null; $("#coreUpdateDownload").disabled = true; $("#coreUpdateRollback").disabled = true; $("#coreUpdateStatus").textContent = "Check for a signed release for this computer."; };
+$("#coreUpdates").addEventListener("toggle", () => { if ($("#coreUpdates").open) refreshCoreUpdateStatus().catch((error) => { $("#coreUpdateNotice").textContent = error.message; }); });
+$(".close").onclick = () => $("#settingsDialog").close();
 $("#githubConnect").onclick = async () => {
   if (githubAuthFlow) return;
   const clientId = $("#githubClientId").value.trim();

@@ -511,6 +511,36 @@ dialog::backdrop {
 .settings-group .setting-row {
   padding: 12px 14px;
 }
+.core-update-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.core-update-actions button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #41443b;
+  border-radius: 8px;
+  background: #2a2c27;
+  color: #e8e9e4;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.core-update-actions button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+.core-update-actions select {
+  min-width: 96px;
+}
+.settings-group > p.muted {
+  margin: 12px 14px;
+  color: #aaa;
+  font-size: 11px;
+  line-height: 1.55;
+}
 .settings-group .modal-note {
   margin: 10px 14px 14px;
 }

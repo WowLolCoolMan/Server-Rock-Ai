@@ -53,15 +53,6 @@ contextBridge.exposeInMainWorld("desktopModels", {
     ipcRenderer.invoke("github:status-project", folders),
   githubPushProject: (folders, message, expectedFullName, expectedChangeToken) =>
     ipcRenderer.invoke("github:push-project", folders, message, expectedFullName, expectedChangeToken),
-  updateState: () => ipcRenderer.invoke("updates:state"),
-  checkForUpdates: () => ipcRenderer.invoke("updates:check"),
-  downloadUpdate: () => ipcRenderer.invoke("updates:download"),
-  installUpdate: () => ipcRenderer.invoke("updates:install"),
-  onUpdateState: (handler) => {
-    const listener = (_event, state) => handler(state);
-    ipcRenderer.on("updates:state", listener);
-    return () => ipcRenderer.removeListener("updates:state", listener);
-  },
   chatgptStatus: () => ipcRenderer.invoke("chatgpt:status"),
   chatgptSignIn: () => ipcRenderer.invoke("chatgpt:signin"),
   chatgptModels: () => ipcRenderer.invoke("chatgpt:models"),
@@ -75,4 +66,8 @@ contextBridge.exposeInMainWorld("desktopModels", {
       .finally(() => ipcRenderer.removeListener("chatgpt:chunk", h));
   },
   cancelChatGPT: (id) => ipcRenderer.send("chatgpt:cancel", id),
+  aiUpdateStatus: () => ipcRenderer.invoke("ai-updates:status"),
+  aiUpdateCheck: (ring) => ipcRenderer.invoke("ai-updates:check", ring),
+  aiUpdateRollback: (ring) => ipcRenderer.invoke("ai-updates:rollback", ring),
+  aiUpdateDownload: (ring, version) => ipcRenderer.invoke("ai-updates:download", ring, version),
 });
