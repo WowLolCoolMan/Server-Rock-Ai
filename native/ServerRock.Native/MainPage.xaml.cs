@@ -3218,12 +3218,8 @@ public sealed partial class MainPage : Page
         TemporaryButton.Content = _isTemporaryChat ? "◉　Temporary on" : "◌　Temporary off";
         TemporaryBadge.Visibility = _isTemporaryChat ? Visibility.Visible : Visibility.Collapsed;
         UpdateEditingControls();
-        AutomationProperties.SetHelpText(TemporaryButton, _isTemporaryChat
-            ? "Temporary mode is on. Messages are kept in memory only and are not written to Recents or local history. Click to clear and end this temporary chat."
-            : "Start a temporary chat. Messages stay in memory and are not written to Recents or local history.");
         ChatFolderBadge.Visibility = string.IsNullOrWhiteSpace(_activeChatFolder) || _isTemporaryChat ? Visibility.Collapsed : Visibility.Visible;
         ChatFolderBadgeText.Text = _activeChatFolder is null ? string.Empty : $"▱　{_activeChatFolder}";
-        AutomationProperties.SetHelpText(ChatFolderBadge, _activeChatFolder is null ? string.Empty : $"This conversation is filed in {_activeChatFolder}.");
     }
 
     private void UpdateEditingControls() => CancelEditButton.Visibility = _editingMessageIndex is null ? Visibility.Collapsed : Visibility.Visible;

@@ -56,7 +56,7 @@
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
           <TextBlock x:Name="PageTitle" Text="New chat" FontSize="14" FontWeight="SemiBold" Foreground="#26373d" />
           <Border x:Name="ProjectBadge" Visibility="Collapsed" Background="#e8f5f6" BorderBrush="#d5e9eb" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ProjectBadgeText" Text="Project instructions on" FontSize="11" Foreground="#46666c" /></Border>
-          <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
+          <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3" AutomationProperties.Name="Conversation folder"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
           <Border x:Name="TemporaryBadge" Visibility="Collapsed" Background="#fff5e6" BorderBrush="#f1dfc2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock Text="Temporary · not saved" FontSize="11" Foreground="#805d2c" /></Border>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -111,7 +111,7 @@
         <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" Margin="0,0,0,8">
           <Button x:Name="ModelButton" Content="◉　Ollama　·　llama3.2　⌄" Click="ModelHotswapClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="Switch pinned model" AutomationProperties.HelpText="Choose a pinned model for this chat. Use Manage models to pin or unpin models." />
           <Button x:Name="WebSearchButton" Grid.Column="1" Content="⌕　Web off" Click="WebSearchClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle web search" />
-          <Button x:Name="TemporaryButton" Grid.Column="2" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" />
+          <Button x:Name="TemporaryButton" Grid.Column="2" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" AutomationProperties.HelpText="Start or end a temporary chat. Temporary messages are kept only in memory and are not written to Recents or local history." />
           <Button x:Name="ProjectFilesButton" Grid.Column="3" Content="▤　Project files off" Click="ProjectFilesClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Toggle project files in Chat" />
           <Button x:Name="CancelEditButton" Grid.Column="4" Content="Cancel edit" Click="CancelEditClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Cancel editing this message" />
           <Button Grid.Column="5" Content="Images" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
