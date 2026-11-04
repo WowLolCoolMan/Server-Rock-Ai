@@ -913,28 +913,12 @@ $("#settings").onclick = () => $("#settingsDialog").showModal();
 let checkedCoreUpdate = null;
 async function refreshCoreUpdateStatus() {
   const status = await window.desktopModels.aiUpdateStatus();
-  $("#coreAccountAction").disabled = !status.configured;
   $("#coreUpdateCheck").disabled = !status.configured;
-  $("#coreAccountStatus").textContent = !status.configured
-    ? "Core updates are not configured in this build."
-    : status.signedIn ? "Signed in. Free downloads do not require a paid entitlement." : "Sign in to access free downloads and updates.";
-  $("#coreAccountAction").textContent = status.signedIn ? "Sign out" : "Sign in with Server Rock";
+  $("#coreUpdateNotice").textContent = !status.configured
+    ? "No account is required. Core's signed update channel is not configured in this build yet."
+    : "No account or paid entitlement is required. Core signs each update manifest; the app verifies the signature and downloaded package before offering it.";
   return status;
 }
-$("#coreAccountAction").onclick = async () => {
-  const button = $("#coreAccountAction");
-  button.disabled = true;
-  try {
-    const status = await window.desktopModels.aiUpdateStatus();
-    if (status.signedIn) await window.desktopModels.aiUpdateSignOut();
-    else await window.desktopModels.aiUpdateSignIn();
-    checkedCoreUpdate = null;
-    $("#coreUpdateDownload").disabled = true;
-    $("#coreUpdateRollback").disabled = true;
-    await refreshCoreUpdateStatus();
-  } catch (error) { $("#coreUpdateStatus").textContent = error.message; }
-  finally { button.disabled = false; }
-};
 $("#coreUpdateCheck").onclick = async () => {
   const button = $("#coreUpdateCheck");
   button.disabled = true;
@@ -974,37 +958,8 @@ $("#coreUpdateRollback").onclick = async () => {
   finally { button.disabled = !checkedCoreUpdate?.rollbackVersion; }
 };
 $("#coreUpdateRing").onchange = () => { checkedCoreUpdate = null; $("#coreUpdateDownload").disabled = true; $("#coreUpdateRollback").disabled = true; $("#coreUpdateStatus").textContent = "Check for a signed release for this computer."; };
-$("#coreUpdates").addEventListener("toggle", () => { if ($("#coreUpdates").open) refreshCoreUpdateStatus().catch((error) => { $("#coreAccountStatus").textContent = error.message; }); });
+$("#coreUpdates").addEventListener("toggle", () => { if ($("#coreUpdates").open) refreshCoreUpdateStatus().catch((error) => { $("#coreUpdateNotice").textContent = error.message; }); });
 $(".close").onclick = () => $("#settingsDialog").close();
-function renderUpdateState(update) {
-  const status = $("#updateStatus");
-  if (!status || !update) return;
-  const download = $("#downloadUpdate");
-  const install = $("#installUpdate");
-  download.hidden = update.status !== "available";
-  install.hidden = update.status !== "downloaded";
-  if (update.status === "checking") status.textContent = "Checking GitHub releases…";
-  else if (update.status === "available") status.textContent = "Version " + update.version + " is available.";
-  else if (update.status === "downloading") status.textContent = "Downloading update… " + (update.percent || 0) + "%";
-  else if (update.status === "downloaded") status.textContent = "Version " + update.version + " is ready to install.";
-  else if (update.status === "current") status.textContent = "You are up to date (" + update.version + ").";
-  else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
-  else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
-}
-const checkUpdatesButton = $("#checkUpdates");
-if (checkUpdatesButton) checkUpdatesButton.onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.checkForUpdates()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
-};
-const downloadUpdateButton = $("#downloadUpdate");
-if (downloadUpdateButton) downloadUpdateButton.onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.downloadUpdate()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
-};
-const installUpdateButton = $("#installUpdate");
-if (installUpdateButton) installUpdateButton.onclick = () => window.desktopModels.installUpdate();
-window.desktopModels?.updateState?.().then(renderUpdateState);
-window.desktopModels?.onUpdateState?.(renderUpdateState);
 $("#githubConnect").onclick = async () => {
   if (githubAuthFlow) return;
   const clientId = $("#githubClientId").value.trim();

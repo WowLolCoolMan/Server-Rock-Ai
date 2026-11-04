@@ -78,29 +78,29 @@ test("package download writes only a SHA-256 verified file and removes tampered 
   });
   try {
     const destination = await downloadVerifiedPackage(manifest, {
-      origin: "https://www.server-rock.com", publicKeyB64, sessionToken: "signed-core-session",
+      origin: "https://www.server-rock.com", publicKeyB64,
       directory, fetchImpl: async (url, options) => {
         assert.equal(String(url), manifest.artifact_url);
         assert.equal(options.redirect, "error");
-        assert.equal(options.headers.Authorization, "Bearer signed-core-session");
+        assert.equal(options.headers.Authorization, undefined);
         return responseFor(artifact);
       },
     });
     assert.deepEqual(await fs.readFile(destination), artifact);
     await fs.rm(destination);
     await assert.rejects(downloadVerifiedPackage(manifest, {
-      origin: "https://www.server-rock.com", publicKeyB64, sessionToken: "signed-core-session",
+      origin: "https://www.server-rock.com", publicKeyB64,
       directory, fetchImpl: async () => responseFor(Buffer.from("tampered")),
     }), /does not match/);
     assert.deepEqual(await fs.readdir(directory), []);
   } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });
 
-test("manifest fetch uses only the signed-in Core bearer session and refuses redirects", async () => {
+test("manifest fetch is anonymous by default and refuses redirects", async () => {
   const { manifest, publicKeyB64 } = signedManifest();
   let seen;
   const loaded = await fetchManifest({
-    origin: "https://www.server-rock.com", publicKeyB64, sessionToken: "verified-session",
+    origin: "https://www.server-rock.com", publicKeyB64,
     platform: "linux-x64", fetchImpl: async (url, options) => {
       seen = { url: String(url), options };
       return Response.json(manifest);
@@ -108,7 +108,19 @@ test("manifest fetch uses only the signed-in Core bearer session and refuses red
   });
   assert.equal(loaded.version, manifest.version);
   assert.equal(seen.url, "https://www.server-rock.com/updates/ai-stable-linux-x64/manifest");
-  assert.equal(seen.options.headers.Authorization, "Bearer verified-session");
+  assert.equal(seen.options.headers.Authorization, undefined);
   assert.equal(seen.options.redirect, "error");
-  await assert.rejects(fetchManifest({ origin: "https://www.server-rock.com", publicKeyB64, sessionToken: "", platform: "linux-x64" }), /Sign in/);
+});
+
+test("the public update client never sends an account authorization token", async () => {
+  const { manifest, publicKeyB64 } = signedManifest();
+  let seen;
+  await fetchManifest({
+    origin: "https://www.server-rock.com", publicKeyB64,
+    platform: "linux-x64", fetchImpl: async (_url, options) => {
+      seen = options;
+      return Response.json(manifest);
+    },
+  });
+  assert.equal(seen.headers.Authorization, undefined);
 });

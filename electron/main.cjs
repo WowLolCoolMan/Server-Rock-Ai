@@ -9,7 +9,6 @@ const {
   shell,
   safeStorage,
 } = require("electron");
-const { autoUpdater } = require("electron-updater");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const { spawn } = require("node:child_process");
@@ -29,7 +28,6 @@ const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
 const githubDeviceRequests = new Map();
-let updateState = { status: "idle", version: app.getVersion(), downloaded: false };
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -37,7 +35,6 @@ const chatGPTStorePath = () =>
   path.join(app.getPath("userData"), "chatgpt-plan.enc");
 const providerSecretsPath = () =>
   path.join(app.getPath("userData"), "provider-secrets.enc");
-const coreSessionPath = () => path.join(app.getPath("userData"), "server-rock-core-session.enc");
 const updatePackageDirectory = () => path.join(app.getPath("userData"), "updates");
 function chatGPTEncryptionReady() {
   try {
@@ -49,51 +46,6 @@ function chatGPTEncryptionReady() {
   } catch {
     return false;
   }
-}
-function setupAutoUpdater() {
-  // Customer builds with the Core manifest pin use only Core's authenticated,
-  // signed update feed. Never fall back to a GitHub source-repository feed.
-  if (coreUpdateConfig.origin && coreUpdateConfig.publicKeyB64) return;
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.allowPrerelease = false;
-  const notify = (status, extra = {}) => {
-    updateState = { ...updateState, status, ...extra };
-    for (const win of BrowserWindow.getAllWindows())
-      win.webContents.send("updates:state", updateState);
-  };
-  autoUpdater.on("checking-for-update", () => notify("checking"));
-  autoUpdater.on("update-available", (info) =>
-    notify("available", { version: info.version, releaseDate: info.releaseDate }),
-  );
-  autoUpdater.on("update-not-available", (info) =>
-    notify("current", { version: info.version }),
-  );
-  autoUpdater.on("download-progress", (progress) =>
-    notify("downloading", { percent: Math.round(progress.percent) }),
-  );
-  autoUpdater.on("update-downloaded", (info) =>
-    notify("downloaded", { version: info.version, downloaded: true }),
-  );
-  autoUpdater.on("error", (error) =>
-    notify("error", { message: String(error.message || error) }),
-  );
-  ipcMain.handle("updates:state", () => updateState);
-  ipcMain.handle("updates:check", async () => {
-    if (!app.isPackaged) return { ...updateState, status: "dev" };
-    await autoUpdater.checkForUpdates();
-    return updateState;
-  });
-  ipcMain.handle("updates:download", async () => {
-    if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
-    await autoUpdater.downloadUpdate();
-    return updateState;
-  });
-  ipcMain.handle("updates:install", () => {
-    if (!updateState.downloaded) throw Error("Download an update first.");
-    autoUpdater.quitAndInstall(false, true);
-    return { status: "installing" };
-  });
 }
 async function readChatGPTState() {
   try {
@@ -153,75 +105,15 @@ async function writeProviderSecret(provider, secret) {
   return { saved: Boolean(secret.trim()) };
 }
 
-async function readCoreSession() {
-  if (!chatGPTEncryptionReady()) return "";
-  const file = coreSessionPath();
-  try {
-    const info = await fs.lstat(file);
-    if (!info.isFile() || info.isSymbolicLink() || info.size > 16_384) return "";
-    return safeStorage.decryptString(Buffer.from(await fs.readFile(file, "utf8"), "base64"));
-  } catch { return ""; }
-}
-
-async function writeCoreSession(token) {
-  if (!chatGPTEncryptionReady()) throw Error("Secure OS credential storage is unavailable. Configure a system keychain and try again.");
-  if (typeof token !== "string" || token.length < 64 || token.length > 4096) throw Error("Core returned an invalid sign-in session.");
-  const destination = coreSessionPath();
-  await fs.mkdir(path.dirname(destination), { recursive: true });
-  const temporary = `${destination}.${crypto.randomUUID()}.tmp`;
-  const encoded = safeStorage.encryptString(token).toString("base64");
-  const handle = await fs.open(temporary, "wx", 0o600);
-  try { await handle.writeFile(encoded, "utf8"); await handle.sync(); }
-  finally { await handle.close(); }
-  try { await fs.rename(temporary, destination); await fs.chmod(destination, 0o600); }
-  catch (error) { await fs.rm(temporary, { force: true }).catch(() => {}); throw error; }
-}
-
-async function coreSignIn() {
-  if (!coreUpdateConfig.origin || !coreUpdateConfig.publicKeyB64) throw Error("Free downloads and rolling updates are not configured in this build.");
-  if (!chatGPTEncryptionReady()) throw Error("Secure OS credential storage is unavailable. Configure a system keychain before signing in.");
-  const origin = new URL(coreUpdateConfig.origin).origin;
-  const started = await net.fetch(`${origin}/auth/desktop/start`, { method: "POST", headers: { Accept: "application/json" }, redirect: "error" });
-  const challenge = await started.json().catch(() => null);
-  if (!started.ok || typeof challenge?.challenge_id !== "string" || typeof challenge?.next !== "string")
-    throw Error(challenge?.detail || `Server Rock sign-in could not start (${started.status}).`);
-  const next = new URL(challenge.next, origin);
-  if (next.origin !== origin || next.pathname !== "/auth/desktop/complete"
-      || next.searchParams.get("challenge") !== challenge.challenge_id
-      || [...next.searchParams.keys()].some((key) => key !== "challenge"))
-    throw Error("Server Rock returned an invalid sign-in continuation.");
-  const signIn = new URL("/auth/google/start", origin);
-  signIn.searchParams.set("next", next.pathname + next.search);
-  await shell.openExternal(signIn.href);
-  const deadline = Date.now() + 10 * 60 * 1000;
-  while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const response = await net.fetch(`${origin}/auth/desktop/poll`, {
-      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ challenge_id: challenge.challenge_id }), redirect: "error",
-    });
-    const result = await response.json().catch(() => null);
-    if (response.status === 410 || response.status === 409) throw Error(result?.detail || "This sign-in expired. Start again.");
-    if (!response.ok) throw Error(result?.detail || `Server Rock sign-in failed (${response.status}).`);
-    if (result?.status === "authenticated" && typeof result.session_token === "string") {
-      await writeCoreSession(result.session_token);
-      return { signedIn: true };
-    }
-    if (result?.status !== "pending") throw Error("Server Rock returned an invalid sign-in response.");
-  }
-  throw Error("Sign-in timed out. Try again from Settings.");
-}
-
 function getUpdateRing(value) {
   if (value !== "stable" && value !== "beta") throw Error("Choose the stable or beta update channel.");
   return value;
 }
 
 async function checkCoreUpdate(ring, version = "") {
-  const token = await readCoreSession();
   const manifest = await fetchManifest({
     origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    sessionToken: token, ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
+    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
     version,
   });
   const current = app.getVersion();
@@ -238,17 +130,16 @@ async function checkCoreUpdate(ring, version = "") {
 }
 
 async function downloadAndOpenCoreUpdate(ring, version = "") {
-  const token = await readCoreSession();
   const manifest = await fetchManifest({
     origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    sessionToken: token, ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
+    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
     version,
   });
   if (manifest.minimum_version && compareVersions(app.getVersion(), manifest.minimum_version) < 0)
     throw Error(`This release requires version ${manifest.minimum_version} before updating.`);
   const destination = await downloadVerifiedPackage(manifest, {
     origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    sessionToken: token, directory: updatePackageDirectory(),
+    directory: updatePackageDirectory(),
     fetchImpl: (url, options) => net.fetch(url, options),
   });
   const prompt = process.platform === "linux"
@@ -714,7 +605,6 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "..", "index.html"));
 }
 app.whenReady().then(() => {
-  if (!coreUpdateConfig.origin || !coreUpdateConfig.publicKeyB64) setupAutoUpdater();
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
   ipcMain.handle("projects:read-files", (_event, folders) =>
@@ -728,16 +618,10 @@ app.whenReady().then(() => {
   ipcMain.handle("chatgpt:status", () => chatGPTStatus());
   ipcMain.handle("chatgpt:signin", () => chatGPTSignIn());
   ipcMain.handle("chatgpt:models", () => chatGPTModels());
-  ipcMain.handle("ai-updates:status", async () => ({
+  ipcMain.handle("ai-updates:status", () => ({
     configured: Boolean(coreUpdateConfig.origin && coreUpdateConfig.publicKeyB64),
-    signedIn: Boolean(await readCoreSession()),
     currentVersion: app.getVersion(),
   }));
-  ipcMain.handle("ai-updates:signin", () => coreSignIn());
-  ipcMain.handle("ai-updates:signout", async () => {
-    await fs.rm(coreSessionPath(), { force: true });
-    return { signedIn: false };
-  });
   ipcMain.handle("ai-updates:check", (_event, ring) => checkCoreUpdate(ring));
   ipcMain.handle("ai-updates:rollback", async (_event, ring) => {
     const latest = await checkCoreUpdate(ring);

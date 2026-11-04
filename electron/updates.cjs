@@ -97,9 +97,8 @@ function verifyManifest(manifest, { publicKeyB64, origin, channel }) {
   return manifest;
 }
 
-async function fetchManifest({ origin, publicKeyB64, sessionToken, ring = "stable", platform, version = "", fetchImpl = fetch }) {
+async function fetchManifest({ origin, publicKeyB64, ring = "stable", platform, version = "", fetchImpl = fetch }) {
   const base = coreOrigin(origin);
-  if (!sessionToken || typeof sessionToken !== "string" || sessionToken.length > 4096) throw new Error("Sign in to your Server Rock account to check for updates.");
   if (!new Set(["stable", "beta"]).has(ring)) throw new Error("Choose the stable or beta update channel.");
   const selectedPlatform = platform || platformFor();
   if (!PLATFORM_SUFFIX[selectedPlatform]) throw new Error("Updates are not published for this platform.");
@@ -107,7 +106,7 @@ async function fetchManifest({ origin, publicKeyB64, sessionToken, ring = "stabl
   const url = new URL(`/updates/${channel}/manifest`, base);
   if (version) url.searchParams.set("version", version);
   const response = await fetchImpl(url, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${sessionToken}` },
+    headers: { Accept: "application/json" },
     cache: "no-store", redirect: "error",
   });
   const payload = await response.json().catch(() => null);
@@ -115,13 +114,13 @@ async function fetchManifest({ origin, publicKeyB64, sessionToken, ring = "stabl
   return verifyManifest(payload, { publicKeyB64, origin: base, channel });
 }
 
-async function downloadVerifiedPackage(manifest, { origin, publicKeyB64, sessionToken, directory, fetchImpl = fetch }) {
+async function downloadVerifiedPackage(manifest, { origin, publicKeyB64, directory, fetchImpl = fetch }) {
   const verified = verifyManifest(manifest, { publicKeyB64, origin, channel: manifest.channel });
   const selectedPlatform = verified.channel.slice(verified.channel.indexOf("-", 3) + 1);
   const suffix = PLATFORM_SUFFIX[selectedPlatform];
   if (!suffix) throw new Error("The signed release package type is not supported.");
   const response = await fetchImpl(verified.artifact_url, {
-    headers: { Accept: "application/octet-stream", Authorization: `Bearer ${sessionToken}` },
+    headers: { Accept: "application/octet-stream" },
     cache: "no-store", redirect: "error",
   });
   if (!response.ok) {
