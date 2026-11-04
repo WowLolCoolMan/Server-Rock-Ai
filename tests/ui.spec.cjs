@@ -543,6 +543,61 @@ test("pet companion stays clear of primary controls across workspace pages and v
   await page.locator('.mobile-nav [data-page="activity"]').click();
   for (const selector of ["#terminalRefresh", ".terminal-controls", "#terminalInput"]) expect(await overlapsPet(selector), `mobile pet overlaps ${selector} on activity`).toBe(false);
 });
+test("pet can be repositioned by pointer or keyboard and keeps its place across reloads", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#accountMenuToggle").click();
+  await page.getByRole("menuitem", { name: "Show pet" }).click();
+
+  const pet = page.locator("#petMini");
+  const move = page.locator("#petMiniMove");
+  const original = await pet.boundingBox();
+  const handle = await move.boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2 - 140, handle.y + handle.height / 2 + 90, { steps: 5 });
+  await page.mouse.up();
+  const dragged = await pet.boundingBox();
+  expect(dragged.x).toBeLessThan(original.x - 100);
+  expect(dragged.y).toBeGreaterThan(original.y + 50);
+  await expect.poll(() => page.evaluate(({ x, y }) => {
+    const position = state.pet.position;
+    return Boolean(position && Math.abs(position.x - x) <= 4 && Math.abs(position.y - y) <= 4);
+  }, { x: Math.round(dragged.x), y: Math.round(dragged.y) })).toBe(true);
+
+  await page.reload();
+  await expect.poll(async () => {
+    const box = await pet.boundingBox();
+    return Boolean(box && Math.abs(box.x - dragged.x) <= 4 && Math.abs(box.y - dragged.y) <= 4);
+  }).toBe(true);
+  await move.focus();
+  await page.keyboard.press("Enter");
+  await expect(move).toHaveAttribute("aria-pressed", "true");
+  const beforeKeyboardMove = await page.evaluate(() => ({ ...state.pet.position }));
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  const afterKeyboardMove = await page.evaluate(() => ({ ...state.pet.position }));
+  expect(afterKeyboardMove.x).toBe(beforeKeyboardMove.x + 16);
+  expect(afterKeyboardMove.y).toBe(beforeKeyboardMove.y + 16);
+  await page.keyboard.press("Escape");
+  await expect(move).toHaveAttribute("aria-pressed", "false");
+
+  await page.locator("#accountMenuToggle").click();
+  await page.getByRole("menuitem", { name: "Customize pet" }).click();
+  await page.locator("#petResetPosition").click();
+  await expect.poll(() => page.evaluate(() => state.pet.position)).toBeNull();
+  await expect(pet).not.toHaveAttribute("style", /left:/);
+  await page.locator("#petDialogClose").click();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("#petMiniMove").focus();
+  await page.keyboard.press("Enter");
+  for (let index = 0; index < 20; index++) await page.keyboard.press("ArrowRight");
+  const mobilePet = await pet.boundingBox();
+  expect(mobilePet.x).toBeGreaterThanOrEqual(8);
+  expect(mobilePet.x + mobilePet.width).toBeLessThanOrEqual(382);
+  await expect(page.locator("#petMoveStatus")).toHaveText(/Use the arrow keys/);
+});
 test("mobile drawer keeps workspace navigation reachable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));

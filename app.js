@@ -600,9 +600,11 @@ const localPets = [
 function renderPet() {
   const pet = localPets.find((item) => item.id === state.pet.selected) || localPets[0];
   state.pet.selected = pet.id;
-  $("#petMini").hidden = !state.pet.visible;
-  $("#petMini .pet-mini-art").src = `./assets/pets/${pet.id}.svg`;
+  const mini = $("#petMini");
+  mini.hidden = !state.pet.visible;
+  mini.querySelector(".pet-mini-art").src = `./assets/pets/${pet.id}.svg`;
   $("#petMini .pet-mini-name").textContent = pet.name;
+  if (state.pet.position && state.pet.visible) setPetPosition(state.pet.position.x, state.pet.position.y, false);
   $("#petVisibleSetting").checked = Boolean(state.pet.visible);
   $("#petVisibilityToggle").textContent = state.pet.visible ? "Hide pet" : "Show pet";
   $("#mobilePetVisibilityToggle").textContent = state.pet.visible ? "Hide pet" : "Show pet";
@@ -632,8 +634,98 @@ function renderPet() {
     choices.append(button);
   }
 }
+const petMoveButton = $("#petMiniMove");
+const petMoveStatus = $("#petMoveStatus");
+let petPointerMove = null;
+let ignorePetDragClick = false;
+function clampPetPosition(left, top) {
+  const rect = $("#petMini").getBoundingClientRect();
+  const gap = 8;
+  return {
+    x: Math.round(Math.max(gap, Math.min(left, window.innerWidth - rect.width - gap))),
+    y: Math.round(Math.max(gap, Math.min(top, window.innerHeight - rect.height - gap))),
+  };
+}
+function setPetPosition(left, top, save = true) {
+  const position = clampPetPosition(Number(left) || 0, Number(top) || 0);
+  const mini = $("#petMini");
+  mini.style.left = `${position.x}px`;
+  mini.style.top = `${position.y}px`;
+  mini.style.right = "auto";
+  state.pet.position = position;
+  if (save) persist();
+}
+function resetPetPosition() {
+  state.pet.position = null;
+  const mini = $("#petMini");
+  mini.style.removeProperty("left");
+  mini.style.removeProperty("top");
+  mini.style.removeProperty("right");
+  persist();
+}
+function setPetMoveMode(enabled) {
+  const moving = Boolean(enabled && state.pet.visible);
+  petMoveButton.setAttribute("aria-pressed", String(moving));
+  petMoveButton.setAttribute("aria-label", moving ? "Finish moving pet companion" : "Move pet companion");
+  petMoveStatus.textContent = moving
+    ? "Pet move mode on. Use the arrow keys to move it; press Escape to finish."
+    : "Pet move mode off.";
+}
+function movePetBy(deltaX, deltaY) {
+  const rect = $("#petMini").getBoundingClientRect();
+  const current = state.pet.position || { x: rect.left, y: rect.top };
+  setPetPosition(current.x + deltaX, current.y + deltaY);
+}
+petMoveButton.addEventListener("click", () => {
+  if (ignorePetDragClick) {
+    ignorePetDragClick = false;
+    return;
+  }
+  setPetMoveMode(petMoveButton.getAttribute("aria-pressed") !== "true");
+});
+petMoveButton.addEventListener("keydown", (event) => {
+  const delta = event.shiftKey ? 48 : 16;
+  const movement = { ArrowLeft: [-delta, 0], ArrowRight: [delta, 0], ArrowUp: [0, -delta], ArrowDown: [0, delta] }[event.key];
+  if (movement && petMoveButton.getAttribute("aria-pressed") === "true") {
+    event.preventDefault();
+    movePetBy(...movement);
+  } else if (event.key === "Escape" && petMoveButton.getAttribute("aria-pressed") === "true") {
+    event.preventDefault();
+    setPetMoveMode(false);
+  }
+});
+petMoveButton.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  const rect = $("#petMini").getBoundingClientRect();
+  petPointerMove = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: rect.left, top: rect.top, moved: false };
+  petMoveButton.setPointerCapture(event.pointerId);
+});
+petMoveButton.addEventListener("pointermove", (event) => {
+  if (!petPointerMove || petPointerMove.pointerId !== event.pointerId) return;
+  const deltaX = event.clientX - petPointerMove.startX;
+  const deltaY = event.clientY - petPointerMove.startY;
+  if (!petPointerMove.moved && Math.hypot(deltaX, deltaY) < 5) return;
+  petPointerMove.moved = true;
+  setPetPosition(petPointerMove.left + deltaX, petPointerMove.top + deltaY, false);
+});
+function finishPetPointerMove(event) {
+  if (!petPointerMove || petPointerMove.pointerId !== event.pointerId) return;
+  if (petPointerMove.moved) {
+    const rect = $("#petMini").getBoundingClientRect();
+    setPetPosition(rect.left, rect.top);
+    ignorePetDragClick = true;
+  }
+  petPointerMove = null;
+}
+petMoveButton.addEventListener("pointerup", finishPetPointerMove);
+petMoveButton.addEventListener("pointercancel", finishPetPointerMove);
+window.addEventListener("resize", () => {
+  if (state.pet.position && state.pet.visible) setPetPosition(state.pet.position.x, state.pet.position.y);
+});
+$("#petResetPosition").onclick = resetPetPosition;
 function setPetVisible(visible) {
   state.pet.visible = Boolean(visible);
+  if (!state.pet.visible) setPetMoveMode(false);
   persist();
   renderPet();
 }
@@ -652,6 +744,7 @@ $("#petVisibilityToggle").onclick = () => {
 function openPetSettings() {
   $("#accountMenu").hidden = true;
   $("#accountMenuToggle").setAttribute("aria-expanded", "false");
+  setPetMoveMode(false);
   renderPet();
   $("#petDialog").showModal();
 }

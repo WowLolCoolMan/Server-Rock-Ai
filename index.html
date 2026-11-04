@@ -555,10 +555,13 @@
       </form>
     </dialog>
     <aside id="petMini" class="pet-mini" aria-label="Pet companion" hidden>
-      <img class="pet-mini-art" alt="" />
+      <button id="petMiniMove" class="pet-mini-move" type="button" aria-label="Move pet companion" aria-pressed="false" aria-describedby="petMoveStatus" title="Drag to move. Activate, then use arrow keys to move with the keyboard.">
+        <img class="pet-mini-art" alt="" />
+      </button>
       <span class="pet-mini-copy"><b class="pet-mini-name"></b><small>Your companion is on this device</small></span>
       <button id="petMiniHide" type="button" aria-label="Hide pet companion">×</button>
     </aside>
+    <span id="petMoveStatus" class="pet-move-status" role="status" aria-live="polite"></span>
     <dialog id="petDialog" class="pet-dialog">
       <form method="dialog">
         <div class="modal-head">
@@ -568,6 +571,7 @@
         <p class="muted">Choose a small local companion. Your choice stays on this device.</p>
         <label class="pet-visibility-setting"><input id="petVisibleSetting" type="checkbox" /> Show my pet in the app</label>
         <div id="petChoices" class="pet-choices" role="radiogroup" aria-label="Choose a pet"></div>
+        <div class="modal-actions"><span class="grow"></span><button id="petResetPosition" type="button">Reset pet position</button></div>
       </form>
     </dialog>
     <dialog id="githubPushDialog">

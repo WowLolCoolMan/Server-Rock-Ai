@@ -2420,10 +2420,28 @@ summary:focus-visible {
   box-shadow: 0 8px 30px #0004;
   animation: pet-arrive .2s ease-out;
 }
+.pet-mini-move {
+  display: grid;
+  flex: 0 0 42px;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.pet-mini-move:active { cursor: grabbing; }
+.pet-mini-move:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.pet-mini-move[aria-pressed="true"] { background: color-mix(in srgb, var(--focus) 12%, transparent); }
 .pet-mini-art { display: block; width: 42px; height: 42px; object-fit: contain; image-rendering: pixelated; animation: pet-idle 2.8s ease-in-out infinite; }
 .pet-mini-copy { display: grid; gap: 3px; min-width: 0; }
 .pet-mini-copy small { color: var(--muted); font-size: 11px; }
 .pet-mini > button { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 21px; }
+.pet-mini > .pet-mini-move { margin-left: 0; font-size: inherit; color: inherit; }
+.pet-move-status { position: fixed; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .pet-dialog { width: min(650px, calc(100vw - 32px)); }
 .pet-dialog form { padding: 22px; }
 .pet-dialog .modal-head { padding: 0 0 8px; }
@@ -2458,8 +2476,9 @@ summary:focus-visible {
   .pet-choices { grid-template-columns: 1fr; }
   .pet-choice { grid-template-columns: 48px 1fr; justify-items: start; min-height: auto; text-align: left; }
   .pet-choice-art { grid-row: span 2; }
-  .pet-mini { top: 62px; right: 10px; width: 52px; height: 52px; justify-content: center; gap: 0; padding: 0; border-radius: 50%; }
-  .pet-mini-copy, .pet-mini > button { display: none; }
+  .pet-mini { top: 62px; right: 10px; width: 52px; height: 52px; justify-content: center; gap: 0; padding: 4px; border-radius: 50%; }
+  .pet-mini-copy, #petMiniHide { display: none; }
+  .pet-mini-move { width: 42px; height: 42px; border-radius: 50%; }
 }
 @media (hover: none) {
   .chat-row .chat-item-actions { opacity: 1; }
