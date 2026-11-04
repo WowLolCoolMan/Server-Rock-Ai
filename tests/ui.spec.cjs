@@ -53,6 +53,45 @@ test("empty recent chats explain how to begin", async ({ page }) => {
     "No chats yet — start a new conversation.",
   );
 });
+test("legacy migration export contains chats but never connection settings or secrets", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [{ id: "legacy-chat-1", title: "Migration notes", messages: [{ role: "user", content: "Keep this local." }] }],
+      projects: [{ id: "project-1", name: "Do not export folder access", folders: ["C:\\private"] }],
+      settings: { provider: "OpenAI API", endpoint: "https://api.example.test", model: "example", apiKey: "must-not-leak" },
+      settingsByProvider: { "OpenAI API": { apiKey: "must-not-leak" } },
+    }));
+    window.desktopModels = {
+      exportNativeMigration: async (archive) => { window.nativeMigrationArchive = archive; return { canceled: false, fileName: "migration.json" }; },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#nativeMigration summary").click();
+  await page.locator("#exportNativeMigration").click();
+  await expect(page.locator("#nativeMigrationStatus")).toContainText("Saved 1 conversation");
+  const archive = JSON.parse(await page.evaluate(() => window.nativeMigrationArchive));
+  expect(archive.chats).toHaveLength(1);
+  expect(archive.chats[0].title).toBe("Migration notes");
+  expect(archive.settings).toBeUndefined();
+  expect(archive.settingsByProvider).toBeUndefined();
+  expect(JSON.stringify(archive)).not.toContain("must-not-leak");
+  expect(JSON.stringify(archive)).not.toContain("C:\\private");
+});
+test("legacy migration export explains that an empty history cannot be exported", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      exportNativeMigration: async () => { throw Error("The save dialog should not open for empty history."); },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#nativeMigration summary").click();
+  await page.locator("#exportNativeMigration").click();
+  await expect(page.locator("#nativeMigrationStatus")).toHaveText("There are no saved conversations to export yet.");
+});
 test("project and settings dialogs close independently", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#newProject").click();

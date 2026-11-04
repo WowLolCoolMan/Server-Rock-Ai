@@ -210,6 +210,36 @@ function persist() {
     return false;
   }
 }
+async function exportNativeMigration() {
+  const status = $("#nativeMigrationStatus");
+  const chats = Array.isArray(state.chats) ? state.chats : [];
+  if (!chats.length) {
+    status.textContent = "There are no saved conversations to export yet.";
+    return;
+  }
+  const archive = JSON.stringify({
+    format: "server-rock-electron-localstorage-v1",
+    exportedAt: new Date().toISOString(),
+    chats,
+  });
+  if (new TextEncoder().encode(archive).byteLength > 25 * 1024 * 1024) {
+    status.textContent = "This chat history is larger than the native app's 25 MB import limit. Remove unneeded chats and try again.";
+    return;
+  }
+  if (!window.desktopModels?.exportNativeMigration) {
+    status.textContent = "Migration export is available in the Server Rock desktop app.";
+    return;
+  }
+  try {
+    status.textContent = "Choose where to save the migration file…";
+    const result = await window.desktopModels.exportNativeMigration(archive);
+    status.textContent = result?.canceled
+      ? "Migration export canceled. Your chats remain unchanged."
+      : `Saved ${chats.length} conversation(s) to ${result?.fileName || "the selected file"}. Import this file in the native Server Rock app.`;
+  } catch (error) {
+    status.textContent = `Could not export migration file: ${error.message}`;
+  }
+}
 async function getProviderSecretStatus(provider) {
   try {
     const status = await window.desktopModels?.getProviderSecretStatus?.(provider);
@@ -1759,6 +1789,7 @@ $("#githubDisconnect").onclick = async () => {
 };
 $("#githubSync").onclick = () => pushProjectChanges();
 $("#saveSettings").onclick = saveSettings;
+$("#exportNativeMigration").onclick = exportNativeMigration;
 $("#providerSelect").onchange = async () => {
   clearSettingsValidation();
   let p = $("#providerSelect").value,

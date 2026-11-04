@@ -388,6 +388,17 @@
             <div class="core-update-actions"><button type="button" id="githubUpdateOpenRelease" disabled>Open release &amp; download</button></div>
           </div>
         </details>
+        <details class="settings-group" id="nativeMigration">
+          <summary><span><b>Move chats to the native app</b><small>Create a one-time, local migration file</small></span></summary>
+          <div class="setting-row">
+            <div>
+              <b>Export conversations</b>
+              <small>Creates a JSON file containing saved chats only. Provider settings, API keys, project folders, and account connections are never included.</small>
+            </div>
+            <button type="button" id="exportNativeMigration">Export for native app</button>
+          </div>
+          <p class="muted" id="nativeMigrationStatus" role="status" aria-live="polite">Open the native Server Rock app and choose Import saved chats to add this file. The source file stays unchanged.</p>
+        </details>
         <details class="settings-group" id="hfDownloads">
           <summary><span><b>Find &amp; download models</b><small>Browse Hugging Face and manage local models</small></span></summary>
         <div class="setting-row" id="taskSettingRow">

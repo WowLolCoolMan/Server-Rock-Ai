@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld("desktopModels", {
   },
   cancel: (requestId) => ipcRenderer.send("models:cancel", requestId),
   pickFolder: () => ipcRenderer.invoke("projects:pick-folder"),
+  exportNativeMigration: (archive) => ipcRenderer.invoke("history:export-native-migration", archive),
   readProjectFiles: (folders) =>
     ipcRenderer.invoke("projects:read-files", folders),
   writeProjectFile: (folders, relativePath, content) =>

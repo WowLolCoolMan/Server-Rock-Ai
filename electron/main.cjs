@@ -592,6 +592,23 @@ app.whenReady().then(() => {
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
   terminalManager = createTerminalManager({ resolveRoots: (folders) => workspace.getRoots(folders) });
+  ipcMain.handle("history:export-native-migration", async (_event, archive) => {
+    if (typeof archive !== "string" || archive.length === 0 || Buffer.byteLength(archive, "utf8") > 25 * 1024 * 1024)
+      throw Error("The migration archive must be a JSON file no larger than 25 MB.");
+    let parsed;
+    try { parsed = JSON.parse(archive); } catch { throw Error("The migration archive is not valid JSON."); }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Array.isArray(parsed.chats))
+      throw Error("The migration archive must contain a chat list.");
+    const result = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+      title: "Export chats for Server Rock native",
+      defaultPath: `server-rock-native-migration-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "Server Rock migration archive", extensions: ["json"] }],
+      properties: ["showOverwriteConfirmation", "createDirectory"],
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    await writeProtectedFile(result.filePath, archive);
+    return { canceled: false, fileName: path.basename(result.filePath) };
+  });
   ipcMain.handle("projects:read-files", (_event, folders) =>
     workspace.readFiles(folders),
   );
