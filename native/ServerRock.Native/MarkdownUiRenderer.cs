@@ -225,9 +225,13 @@ internal static class MarkdownUiRenderer
         {
             Content = body,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollMode = ScrollMode.Enabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            IsTabStop = true,
             MaxHeight = 520
         };
+        AutomationProperties.SetName(codeScroller, $"Scroll {language} code horizontally");
+        AutomationProperties.SetHelpText(codeScroller, "Use the horizontal scrollbar, mouse wheel, or keyboard to view long source lines.");
         var stack = new StackPanel { Spacing = 8, Children = { header, codeScroller } };
         parent.Children.Add(new Border
         {
