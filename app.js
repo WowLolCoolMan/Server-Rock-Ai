@@ -1644,27 +1644,6 @@ $("#hfResults").ondblclick = () => {
   $("#localModelId").value = state.settings.localModelId || "";
   $("#modelInput").focus();
 };
-async function discoverModels() {
-  let base = state.settings.endpoint.replace(/\/v1\/chat\/completions.*$/, "");
-  try {
-    let r = await fetch(base + "/api/tags"),
-      data = await r.json(),
-      names = (data.models || []).map((m) => m.name);
-    if (!names.length)
-      return alert("Ollama is running, but no models are installed.");
-    let name = prompt(
-      "Installed Ollama models:\n" + names.join("\n") + "\nEnter model name:",
-      names[0],
-    );
-    if (name) {
-      state.settings.model = name;
-      persist();
-      settingLoad();
-    }
-  } catch {
-    alert("Start Ollama and check " + base);
-  }
-}
 function retrieveProjectKnowledge(files, query, limit = 6) {
   const terms = [...new Set(
     (query.toLowerCase().match(/[\p{L}\p{N}_-]{3,}/gu) || []).filter(
@@ -1751,7 +1730,11 @@ async function send() {
     return;
   }
   if (cmd.models) {
-    discoverModels();
+    // /models opens the model picker (which scans every local host). It used
+    // window.prompt(), which Electron doesn't support, so it always fell back
+    // to a misleading "Start Ollama" alert. Deferred so the click that sent
+    // the command doesn't immediately close the picker again.
+    setTimeout(openModelLibrary, 0);
     return;
   }
   if (cmd.push) {
@@ -2078,14 +2061,17 @@ function renderActivity() {
 $("#navChats").onclick = () => setPage("chat");
 $("#navImages").onclick = () => setPage("images");
 $("#navActivity").onclick = () => setPage("activity");
-$("#navLibrary").onclick = () => {
+// Shows the chat page with the model picker open and starts a host scan.
+// Shared by the Model library rail button and the /models command.
+function openModelLibrary() {
   setPage("chat");
   const picker = $("#modelPicker");
   picker.hidden = false;
   $("#model").setAttribute("aria-expanded", "true");
   renderModelChoices();
   scanModels();
-};
+}
+$("#navLibrary").onclick = openModelLibrary;
 $("#openModelLibrary").onclick = () => $("#navLibrary").click();
 $("#openConnections").onclick = () => $("#settings").click();
 $("#temperatureControl").oninput = (event) => {

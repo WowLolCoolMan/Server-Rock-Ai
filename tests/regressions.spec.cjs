@@ -330,3 +330,35 @@ test("Enter in the push review commit message pushes instead of closing silently
   await expect(page.locator("#githubPushDialog")).toBeHidden();
   expect(await page.evaluate(() => window.pushRequest)).toEqual({ message: "Docs update", fullName: "octocat/repo" });
 });
+
+// Smoke-test item 3: /models must work in Electron, where window.prompt()
+// throws "prompt() is not supported".
+test("/models opens the model picker instead of using window.prompt", async ({ page }) => {
+  const dialogs = [];
+  page.on("dialog", async (dialog) => { dialogs.push(dialog.message()); await dialog.dismiss(); });
+  await page.addInitScript(() => {
+    window.prompt = () => { throw new Error("prompt() is not supported."); };
+    window.hostScans = 0;
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      scanHosts: async () => {
+        window.hostScans++;
+        return { models: [{ provider: "Ollama", model: "qwen3:4b", endpoint: "http://127.0.0.1:11434/v1/chat/completions", local: true }], hosts: ["Ollama"] };
+      },
+    };
+  });
+  await page.goto(appUrl);
+
+  for (const sendWith of ["click", "Enter"]) {
+    await page.locator("#prompt").fill("/models");
+    if (sendWith === "click") await page.locator("#send").click();
+    else await page.locator("#prompt").press("Enter");
+    await expect(page.locator("#modelPicker")).toBeVisible();
+    await expect(page.locator("#modelOptions")).toContainText("qwen3:4b");
+    await expect(page.locator("#prompt")).toHaveValue("");
+    await page.mouse.click(5, 5);
+    await expect(page.locator("#modelPicker")).toBeHidden();
+  }
+  expect(await page.evaluate(() => window.hostScans)).toBeGreaterThanOrEqual(2);
+  expect(dialogs).toEqual([]);
+});
