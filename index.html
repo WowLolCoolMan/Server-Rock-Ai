@@ -32,7 +32,12 @@
       >
         <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></button>
       <div class="spacer"></div>
-      <div class="avatar" title="Server Rock: AI on this device" aria-label="Server Rock: AI">SR</div>
+      <button id="accountMenuToggle" class="avatar account-menu-toggle" type="button" aria-label="Open account and companion menu" aria-haspopup="menu" aria-expanded="false">SR</button>
+      <div id="accountMenu" class="account-menu" role="menu" aria-label="Account and companion" hidden>
+        <button id="petVisibilityToggle" type="button" role="menuitem">Show pet</button>
+        <button id="openPetSettings" type="button" role="menuitem">Customize pet</button>
+        <button id="accountSettings" type="button" role="menuitem">Settings</button>
+      </div>
     </aside>
     <button id="sidebarBackdrop" class="sidebar-backdrop" aria-label="Close navigation" hidden></button>
     <aside id="sidebar" class="sidebar">
@@ -57,6 +62,11 @@
         </div>
       <span class="sidebar-brand">Server Rock <span>AI</span></span>
       </header>
+      <nav class="mobile-nav" aria-label="Workspace views">
+        <button type="button" data-page="chat">Chats</button>
+        <button type="button" data-page="images">Images</button>
+        <button type="button" data-page="activity">Activity</button>
+      </nav>
       <button class="new" id="newChat"><span class="icon-plus" aria-hidden="true">+</span>New chat</button>
       <div class="section">PROJECTS</div>
       <button class="project" id="newProject"><span class="icon-plus" aria-hidden="true">+</span>New project</button>
@@ -66,6 +76,10 @@
       <button class="project library-link" id="openGitHub"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="8" cy="6" r="2"/><circle cx="16" cy="18" r="2"/><circle cx="17" cy="6" r="2"/><path d="M8 8v3a4 4 0 0 0 4 4h2M17 8v8"/></svg>GitHub repositories <span>›</span></button>
       <div class="section">RECENTS <button id="clear">Clear</button></div>
       <div id="history"></div>
+      <div class="mobile-account-controls">
+        <button id="mobilePetVisibilityToggle" type="button">Show pet</button>
+        <button id="mobileOpenPetSettings" type="button">Mini &amp; Pets</button>
+      </div>
     </aside>
     <main>
       <header class="top">
@@ -84,6 +98,17 @@
         <div class="spark">✳</div>
         <h1>What are we building today?</h1>
         <p>Your workspace for local models, ideas, and making things.</p>
+        <div class="welcome-setup" aria-label="Get started">
+          <div>
+            <b>Start with a model</b>
+            <span>Browse offline-ready models or connect a provider you already use.</span>
+          </div>
+          <div class="welcome-actions">
+            <button id="welcomeMarketplace" type="button" class="save">Browse AI SuperMarket</button>
+            <button id="welcomeSettings" type="button" class="secondary-action">Connect a provider</button>
+          </div>
+        </div>
+        <span class="welcome-suggestions-label">Or try a prompt</span>
         <div class="suggestions">
           <button>Help me write a script</button
           ><button>Explain a codebase</button><button>Generate an image</button>
@@ -125,6 +150,7 @@
             <button id="attach" type="button" aria-label="Attach a file" title="Attach a file">＋</button
             ><input
               id="file"
+              aria-label="Attach files"
               type="file"
               accept="image/*,audio/*"
               hidden
@@ -207,6 +233,7 @@
         <div class="image-page-composer">
           <textarea
             id="imagePrompt"
+            aria-label="Image prompt"
             rows="2"
             placeholder="Describe an image to create"
           ></textarea>
@@ -217,6 +244,13 @@
             </button>
           </div>
         </div>
+      </section>
+      <section id="marketplacePage" class="marketplace-page" hidden aria-labelledby="marketplaceTitle">
+        <header class="marketplace-heading"><div><div class="eyebrow">MODEL LIBRARY</div><h1 id="marketplaceTitle">AI SuperMarket</h1><p>Discover models for chat, images, audio, and more. Install compatible ONNX models for offline use.</p></div><button id="marketplaceRefresh" class="secondary-action" type="button">Refresh catalog</button></header>
+        <div class="marketplace-controls"><label class="market-search-label" for="marketSearch">Search models</label><input id="marketSearch" type="search" placeholder="Search by name, task, or capability" autocomplete="off"><label class="market-filter-label" for="marketTask">Task</label><select id="marketTask"><option value="text-generation">Chat &amp; text</option><option value="summarization">Summarization</option><option value="image-to-text">Image understanding</option><option value="text-to-image">Image generation</option><option value="automatic-speech-recognition">Speech to text</option><option value="text-to-speech">Text to speech</option><option value="image-classification">Image classification</option><option value="feature-extraction">Embeddings</option><option value="all">All supported tasks</option></select><button id="marketSearchButton" class="save" type="button">Search Hub</button></div>
+        <div class="marketplace-status" id="marketStatus" role="status" aria-live="polite">Popular supported models · Downloaded models work offline on this device.</div>
+        <div class="marketplace-grid" id="marketGrid" aria-live="polite"></div>
+        <p class="marketplace-footnote">Downloads come from Hugging Face. Built-in offline installs require an ONNX export supported by Transformers.js, are limited to 10 GB, and may require accepting the model’s license. Other models can use a compatible external server or workflow.</p>
       </section>
       <section id="activityPage" class="activity-page" hidden>
         <div class="eyebrow">WORKSPACE</div>
@@ -231,12 +265,12 @@
           <div class="terminal-controls">
             <label>Project<select id="terminalProject" aria-label="Terminal project"></select></label>
             <label>Folder<select id="terminalCwd" aria-label="Terminal folder"></select></label>
-            <label class="terminal-command-label">Command<input id="terminalCommand" autocomplete="off" spellcheck="false" placeholder="git status" /></label>
+            <label class="terminal-command-label">Command<input id="terminalCommand" aria-label="Terminal command" autocomplete="off" spellcheck="false" placeholder="git status" /></label>
             <button type="button" id="terminalRun" class="save">Run</button>
           </div>
           <div class="terminal-session-row"><div id="terminalSessions" class="terminal-sessions" aria-label="Terminal sessions"></div><button type="button" id="terminalStop" class="secondary-action" disabled>Stop</button></div>
           <pre id="terminalOutput" class="terminal-output" aria-live="polite">Select a project to start a terminal session.</pre>
-          <div class="terminal-input-row"><input id="terminalInput" autocomplete="off" spellcheck="false" placeholder="Send input to the active session…" /><button type="button" id="terminalSend" class="secondary-action" disabled>Send</button></div>
+          <div class="terminal-input-row"><input id="terminalInput" aria-label="Terminal input" autocomplete="off" spellcheck="false" placeholder="Send input to the active session…" /><button type="button" id="terminalSend" class="secondary-action" disabled>Send</button></div>
           <p id="terminalStatus" class="model-host-status">Terminal access is available when a desktop project is authorized.</p>
         </section>
       </section>
@@ -271,19 +305,23 @@
       </form>
     </dialog>
     <dialog id="settingsDialog">
-      <form method="dialog">
+      <form method="dialog" class="settings-form">
         <div class="modal-head">
           <div>
             <span class="eyebrow">PREFERENCES</span>
             <h2>Settings</h2>
+            <p class="settings-intro">Choose how your assistant connects. You can set up accounts and models below.</p>
           </div>
-          <button class="close">×</button>
+          <button type="button" class="close" aria-label="Close settings">×</button>
         </div>
+        <div class="settings-content">
+          <section class="settings-basics" aria-labelledby="connectionSettingsTitle">
+        <div class="settings-section-title" id="connectionSettingsTitle">AI connection</div>
         <div class="setting-row">
           <div>
             <b>Provider</b><small>Choose a local or compatible endpoint</small>
           </div>
-          <select id="providerSelect">
+          <select id="providerSelect" aria-label="Provider">
             <option>Ollama</option>
             <option>GPT4All</option>
             <option>OpenAI compatible</option>
@@ -298,6 +336,26 @@
             <option>ChatGPT plan</option>
           </select>
         </div>
+        <div class="setting-row" id="endpointSettingRow">
+          <div><b>Endpoint</b><small>Local services work without an account</small></div>
+          <input id="endpoint" aria-label="Provider endpoint" value="http://localhost:11434/v1/chat/completions" />
+        </div>
+        <div class="setting-row">
+          <div><b>Model</b><small>Model name or repository ID</small></div>
+          <input id="modelInput" aria-label="Model" value="llama3.2" />
+        </div>
+          </section>
+          <details class="settings-group" id="providerCredentials">
+            <summary><span><b>Provider credentials</b><small>Optional API keys and access tokens</small></span></summary>
+        <div class="setting-row" id="providerSecretSettingRow">
+          <div>
+            <b id="providerKeyTitle">Provider API key</b><small id="providerKeyHelp">Use an API key issued by this provider.</small><small id="providerSecretStatus">Stored with the operating system's secure credential storage.</small>
+          </div>
+          <span class="key-entry"><input id="apiKey" aria-label="Provider API key" type="password" autocomplete="new-password" placeholder="Paste provider API key" /><button type="button" id="forgetProviderKey">Forget key</button></span>
+        </div>
+            </details>
+          <details class="settings-group" id="accountConnections">
+            <summary><span><b>Accounts &amp; connections</b><small>ChatGPT sign-in and GitHub repositories</small></span></summary>
         <div class="setting-row" id="chatgptSettingRow">
           <div>
             <b>ChatGPT account</b
@@ -314,37 +372,27 @@
           <div>
             <b>GitHub</b><small id="githubConnectionStatus">Connect to browse your repositories and push project changes.</small>
           </div>
-          <span class="github-controls"><input id="githubClientId" autocomplete="off" placeholder="GitHub App client ID" /><button type="button" id="githubConnect">Connect</button><button type="button" id="githubOpenRepos">Browse repositories</button></span>
+          <span class="github-controls"><input id="githubClientId" aria-label="GitHub App client ID" autocomplete="off" placeholder="GitHub App client ID" /><button type="button" id="githubConnect">Connect</button><button type="button" id="githubOpenRepos">Browse repositories</button></span>
         </div>
         <div id="githubDeviceCode" class="modal-note github-device-code" hidden><span id="githubDeviceCodeText"></span><button type="button" id="githubCancelAuth">Cancel sign-in</button></div>
-        <details class="settings-group" id="coreUpdates">
-          <summary>Server Rock Core downloads and updates</summary>
-          <p class="muted" id="coreUpdateNotice">Server Rock: AI is free to download and use without an account. Stable is recommended; beta receives prerelease builds. Core verifies each signed release manifest and package digest before offering an installer.</p>
+            </details>
+        <details class="settings-group" id="githubUpdates">
+          <summary><span><b>App updates</b><small>Check this app’s GitHub releases</small></span></summary>
+          <p class="muted" id="githubUpdateNotice">Check the app’s public GitHub releases. Choose Stable or Beta, review the compatible installer and its published SHA-256 digest, then open the release page to download it.</p>
           <div class="setting-row">
-            <div><b>Release channel</b><small id="coreUpdateStatus">Check for a signed release for this computer.</small></div>
-            <div class="core-update-actions"><select id="coreUpdateRing"><option value="stable">Stable</option><option value="beta">Beta</option></select><button type="button" id="coreUpdateCheck">Check for updates</button></div>
+            <div><b>Release channel</b><small id="githubUpdateStatus" role="status" aria-live="polite">Check for a stable release for this computer.</small></div>
+            <div class="core-update-actions"><select id="githubUpdateRing" aria-label="Release channel"><option value="stable">Stable</option><option value="beta">Beta</option></select><button type="button" id="githubUpdateCheck">Check for updates</button></div>
           </div>
           <div class="setting-row">
-            <div><b>Verified package</b><small>Review the operating-system installer prompt before opening.</small></div>
-            <div class="core-update-actions"><button type="button" id="coreUpdateDownload" disabled>Download update</button><button type="button" id="coreUpdateRollback" disabled>Download recovery version</button></div>
+            <div><b id="githubUpdateVersion">GitHub release</b><small id="githubUpdateSummary">Check releases to see compatible installers and published checksums.</small></div>
+            <div class="core-update-actions"><button type="button" id="githubUpdateOpenRelease" disabled>Open release &amp; download</button></div>
           </div>
         </details>
-        <div class="setting-row" id="endpointSettingRow">
-          <div>
-            <b>Endpoint</b><small>Local services work without an account</small>
-          </div>
-          <input
-            id="endpoint"
-            value="http://localhost:11434/v1/chat/completions"
-          />
-        </div>
-        <div class="setting-row">
-          <div><b>Model</b><small>Model name or repository ID</small></div>
-          <input id="modelInput" value="llama3.2" />
-        </div>
+        <details class="settings-group" id="hfDownloads">
+          <summary><span><b>Find &amp; download models</b><small>Browse Hugging Face and manage local models</small></span></summary>
         <div class="setting-row" id="taskSettingRow">
-          <div><b>Model task</b><small>Choose the Hugging Face pipeline</small></div>
-          <select id="taskSelect">
+          <div><b>Model task</b><small>Choose what you want the model to do</small></div>
+          <select id="taskSelect" aria-label="Model task">
             <optgroup label="Text">
               <option value="text-generation">Chat / text generation</option>
               <option value="text2text-generation">Text to text</option>
@@ -393,18 +441,13 @@
             </optgroup>
           </select>
         </div>
-        <details class="settings-group" id="hfDownloads">
-          <summary>Hugging Face models &amp; local downloads</summary>
         <div class="setting-row">
           <div>
-            <b>Local model runtime</b
-            ><small
-              >Download compatible ONNX models into the private app model
-              folder</small
-            >
+            <b>Download a model</b><small>Install compatible ONNX models for offline use</small>
           </div>
           <input
             id="localModelId"
+            aria-label="Local model ID"
             placeholder="onnx-community/model-name"
           /><button type="button" id="downloadModel">Download model</button
           ><span id="modelDownloadStatus"></span>
@@ -415,28 +458,17 @@
             ><small>Search models by task on Hugging Face</small>
           </div>
           <div class="model-search">
-            <input id="hfSearch" placeholder="Search model IDs" /><button
+            <input id="hfSearch" aria-label="Search Hugging Face models" placeholder="Search model IDs" /><button
               type="button"
               id="hfFind"
             >
               Search</button
-            ><select id="hfResults" size="4"></select>
+            ><select id="hfResults" aria-label="Hugging Face model results" size="4"></select>
           </div>
         </div>
         </details>
-        <div class="setting-row" id="providerSecretSettingRow">
-          <div>
-            <b id="providerKeyTitle">Provider API key</b><small id="providerKeyHelp">Use an API key issued by this provider.</small><small id="providerSecretStatus">Stored with the operating system's secure credential storage.</small>
-          </div>
-          <span class="key-entry"><input
-            id="apiKey"
-            type="password"
-            autocomplete="new-password"
-            placeholder="Paste provider API key"
-          /><button type="button" id="forgetProviderKey">Forget key</button></span>
-        </div>
         <details class="settings-group">
-          <summary>More options</summary>
+          <summary><span><b>Appearance &amp; advanced</b><small>Less-used settings and privacy details</small></span></summary>
         <div class="setting-row">
           <div>
             <b>Fast model</b
@@ -444,7 +476,7 @@
               >Optional model for /fast. Leave blank to use the selected model.</small
             >
           </div>
-          <input id="fastModelInput" placeholder="e.g. llama3.2:1b" />
+          <input id="fastModelInput" aria-label="Fast model" placeholder="e.g. llama3.2:1b" />
         </div>
         <div class="setting-row">
           <div>
@@ -453,19 +485,17 @@
           </div>
           <textarea
             id="imageWorkflow"
+            aria-label="Image workflow JSON"
             rows="3"
             placeholder="Paste workflow JSON"
           ></textarea>
         </div>
         <div class="setting-row">
           <div><b>Appearance</b><small>Interface theme</small></div>
-          <select id="theme">
+          <select id="theme" aria-label="Theme">
             <option value="dark">Midnight</option>
             <option value="light">Daylight</option>
           </select>
-        </div>
-        <div class="setting-row">
-          <div><b>Application updates</b><small>Use the signed Server Rock Core controls above. GitHub source releases are not the customer download or update channel.</small></div>
         </div>
         <div class="modal-note">
           Server Rock: AI makes no telemetry or analytics requests. Cloud
@@ -475,7 +505,8 @@
           receive prompts you send.
         </div>
         </details>
-        <button type="button" class="save" id="saveSettings">Save settings</button>
+        </div>
+        <div class="settings-footer"><div class="settings-footer-copy"><small>Changes apply when you save.</small><small id="settingsValidationStatus" class="settings-validation" role="alert" aria-live="polite"></small></div><button type="button" class="save" id="saveSettings">Save settings</button></div>
       </form>
     </dialog>
     <dialog id="githubDialog">
@@ -485,18 +516,47 @@
           <button class="close" id="githubClose">×</button>
         </div>
         <p id="githubDialogStatus" class="model-host-status">Sign in to list repositories you can access.</p>
-        <input id="githubRepoSearch" type="search" placeholder="Filter repositories" />
+        <input id="githubRepoSearch" aria-label="Filter GitHub repositories" type="search" placeholder="Filter repositories" />
         <select id="githubRepoList" size="10" aria-label="GitHub repositories"></select>
         <div class="github-repo-manual">
           <label for="githubRepoReference">Or enter a repository</label>
           <div class="github-repo-manual-controls"><input id="githubRepoReference" placeholder="owner/repository or GitHub URL" autocomplete="url" /><button type="button" id="githubResolveRepo">Check repository</button></div>
         </div>
         <div class="modal-actions">
+          <button type="button" id="githubDialogConnect" hidden>Connect GitHub</button>
           <button type="button" id="githubDisconnect">Disconnect</button>
           <span class="grow"></span>
           <button type="button" id="githubRefresh">Refresh</button>
           <button type="button" class="save" id="githubClone">Clone and open</button>
         </div>
+      </form>
+    </dialog>
+    <div id="chatContextMenu" class="chat-context-menu" role="menu" aria-label="Chat actions" hidden></div>
+    <dialog id="chatRenameDialog" class="chat-rename-dialog">
+      <form id="chatRenameForm">
+        <div class="modal-head">
+          <div><span class="eyebrow">CHAT</span><h2>Rename chat</h2></div>
+          <button type="button" class="close" id="chatRenameClose" aria-label="Close rename dialog">×</button>
+        </div>
+        <label for="chatRenameInput">Chat name</label>
+        <input id="chatRenameInput" maxlength="120" required autocomplete="off" />
+        <div class="modal-actions"><span class="grow"></span><button type="button" id="chatRenameCancel">Cancel</button><button type="submit" class="save">Save name</button></div>
+      </form>
+    </dialog>
+    <aside id="petMini" class="pet-mini" aria-label="Pet companion" hidden>
+      <img class="pet-mini-art" alt="" />
+      <span class="pet-mini-copy"><b class="pet-mini-name"></b><small>Your companion is on this device</small></span>
+      <button id="petMiniHide" type="button" aria-label="Hide pet companion">×</button>
+    </aside>
+    <dialog id="petDialog" class="pet-dialog">
+      <form method="dialog">
+        <div class="modal-head">
+          <div><span class="eyebrow">PERSONALIZATION</span><h2>Mini &amp; Pets</h2></div>
+          <button type="button" class="close" id="petDialogClose" aria-label="Close pet settings">×</button>
+        </div>
+        <p class="muted">Choose a small local companion. Your choice stays on this device.</p>
+        <label class="pet-visibility-setting"><input id="petVisibleSetting" type="checkbox" /> Show my pet in the app</label>
+        <div id="petChoices" class="pet-choices" role="radiogroup" aria-label="Choose a pet"></div>
       </form>
     </dialog>
     <dialog id="githubPushDialog">
@@ -509,6 +569,10 @@
         <div class="github-push-list-wrap">
           <p class="github-push-label">Changes that will be included</p>
           <ul id="githubPushFiles" class="github-push-files"></ul>
+        </div>
+        <div class="github-push-diff-wrap">
+          <p class="github-push-label">Patch preview</p>
+          <pre id="githubPushDiff" class="github-push-diff">No tracked textual diff is available for these changes.</pre>
         </div>
         <label class="github-commit-label" for="githubCommitMessage">Commit message</label>
         <input id="githubCommitMessage" maxlength="160" autocomplete="off" />

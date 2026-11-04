@@ -1,7 +1,6 @@
 const {
   app,
   BrowserWindow,
-  Menu,
   protocol,
   net,
   ipcMain,
@@ -32,10 +31,9 @@ const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-pat
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
 const { createTerminalManager } = require("./terminal-sessions.cjs");
-const { compareVersions, downloadVerifiedPackage, fetchManifest } = require("./updates.cjs");
-let coreUpdateConfig = { origin: "", publicKeyB64: "" };
-try { coreUpdateConfig = require("./update-config.generated.cjs"); } catch { /* Local builds can run without the optional Core updater config. */ }
+const { fetchReleaseStatus, releasePageUrl } = require("./github-updates.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
+const MAX_GITHUB_DIFF_BYTES = 256 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
@@ -49,7 +47,6 @@ const chatGPTStorePath = () =>
   path.join(app.getPath("userData"), "chatgpt-plan.enc");
 const providerSecretsPath = () =>
   path.join(app.getPath("userData"), "provider-secrets.enc");
-const updatePackageDirectory = () => path.join(app.getPath("userData"), "updates");
 function chatGPTEncryptionReady() {
   try {
     if (!safeStorage.isEncryptionAvailable()) return false;
@@ -138,64 +135,8 @@ async function writeProviderSecret(provider, secret) {
   return { saved: Boolean(secret.trim()) };
 }
 
-function getUpdateRing(value) {
-  if (value !== "stable" && value !== "beta") throw Error("Choose the stable or beta update channel.");
-  return value;
-}
-
-async function checkCoreUpdate(ring, version = "") {
-  const manifest = await fetchManifest({
-    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
-    version,
-  });
-  const current = app.getVersion();
-  return {
-    version: manifest.version,
-    currentVersion: current,
-    channel: manifest.channel,
-    publishedAt: manifest.published_at,
-    minimumVersion: manifest.minimum_version,
-    rollbackVersion: manifest.rollback_version,
-    available: compareVersions(current, manifest.version) < 0,
-    rollback: Boolean(version),
-  };
-}
-
-async function downloadAndOpenCoreUpdate(ring, version = "") {
-  const manifest = await fetchManifest({
-    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    ring: getUpdateRing(ring), fetchImpl: (url, options) => net.fetch(url, options),
-    version,
-  });
-  if (manifest.minimum_version && compareVersions(app.getVersion(), manifest.minimum_version) < 0)
-    throw Error(`This release requires version ${manifest.minimum_version} before updating.`);
-  const destination = await downloadVerifiedPackage(manifest, {
-    origin: coreUpdateConfig.origin, publicKeyB64: coreUpdateConfig.publicKeyB64,
-    directory: updatePackageDirectory(),
-    fetchImpl: (url, options) => net.fetch(url, options),
-  });
-  const prompt = process.platform === "linux"
-    ? "Core verified the signed release manifest and package SHA-256. Open this AppImage now? To replace an existing AppImage, use the downloaded file in your normal install location."
-    : process.platform === "darwin"
-      ? "Core verified the signed release manifest and package SHA-256. Open the disk image and use the macOS installer flow to replace the app?"
-      : "Core verified the signed release manifest and package SHA-256. Open the Windows installer? It will keep your Server Rock: AI profile.";
-  const choice = await dialog.showMessageBox({
-    type: "info", buttons: ["Open verified installer", "Keep downloaded file"], defaultId: 0, cancelId: 1,
-    title: `Server Rock: AI ${version ? "recovery" : "update"} ${manifest.version}`,
-    message: `Verified Server Rock: AI ${manifest.version}`,
-    detail: `${prompt}\n\nThe current app and its profile remain available until you complete the operating-system install step.`,
-  });
-  if (choice.response !== 0) return { opened: false, version: manifest.version };
-  if (process.platform === "linux") {
-    const child = spawn(destination, [], { detached: true, stdio: "ignore" });
-    child.on("error", (error) => console.error("Verified AppImage launch failed:", error.message));
-    child.unref();
-  } else {
-    const error = await shell.openPath(destination);
-    if (error) throw Error(`Could not open the verified installer: ${error}`);
-  }
-  return { opened: true, version: manifest.version };
+async function checkGitHubRelease(channel) {
+  return fetchReleaseStatus({ channel, currentVersion: app.getVersion(), platform: process.platform, arch: process.arch });
 }
 async function getChatGPTProfile() {
   const data = await readChatGPTState();
@@ -634,6 +575,7 @@ function createWindow() {
     height: 920,
     minWidth: 800,
     minHeight: 580,
+    autoHideMenuBar: true,
     backgroundColor: "#111210",
     title: "Server Rock: AI",
     webPreferences: {
@@ -643,6 +585,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
     },
   });
+  win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, "..", "index.html"));
 }
 app.whenReady().then(() => {
@@ -672,17 +615,12 @@ app.whenReady().then(() => {
   ipcMain.handle("chatgpt:status", () => chatGPTStatus());
   ipcMain.handle("chatgpt:signin", () => chatGPTSignIn());
   ipcMain.handle("chatgpt:models", () => chatGPTModels());
-  ipcMain.handle("ai-updates:status", () => ({
-    configured: Boolean(coreUpdateConfig.origin && coreUpdateConfig.publicKeyB64),
-    currentVersion: app.getVersion(),
-  }));
-  ipcMain.handle("ai-updates:check", (_event, ring) => checkCoreUpdate(ring));
-  ipcMain.handle("ai-updates:rollback", async (_event, ring) => {
-    const latest = await checkCoreUpdate(ring);
-    if (!latest.rollbackVersion) throw Error("Core has not declared a previous release for this channel.");
-    return checkCoreUpdate(ring, latest.rollbackVersion);
+  ipcMain.handle("github-updates:check", (_event, channel) => checkGitHubRelease(channel));
+  ipcMain.handle("github-updates:open-release", async (_event, tag) => {
+    const url = releasePageUrl(tag);
+    await shell.openExternal(url);
+    return { opened: true, url };
   });
-  ipcMain.handle("ai-updates:download", (_event, ring, version = "") => downloadAndOpenCoreUpdate(ring, version));
   ipcMain.handle("chatgpt:stream", (event, messages, model, requestId) =>
     chatGPTStream(event, messages, model, requestId),
   );
@@ -690,6 +628,13 @@ app.whenReady().then(() => {
     activeChatGPTRequests.get(requestId)?.abort(),
   );
   ipcMain.handle("models:scan-hosts", () => scanModelHosts());
+  ipcMain.handle("models:open-hub", async (_event, repoId) => {
+    if (typeof repoId !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(repoId) || repoId.length > 200)
+      throw Error("Enter a valid Hugging Face repository ID.");
+    const url = "https://huggingface.co/" + repoId;
+    await shell.openExternal(url);
+    return { opened: true, url };
+  });
   const readSecureProviderSecret = async (provider) => {
     validateProviderName(provider);
     const secrets = await readProviderSecrets();
@@ -883,6 +828,23 @@ app.whenReady().then(() => {
       else paths.add(entry);
     }
     const protectedPaths = [...paths].filter((relativePath) => isProtectedPath(relativePath.replaceAll("\\", "/")));
+    let diff = "";
+    if (!protectedPaths.length) {
+      try {
+        const result = await runGit(
+          ["diff", "HEAD", "--no-ext-diff", "--no-color", "--unified=3", "--"],
+          root,
+          undefined,
+          { preserveStdout: true },
+        );
+        const bytes = Buffer.from(result.stdout || "", "utf8");
+        diff = bytes.length > MAX_GITHUB_DIFF_BYTES
+          ? bytes.subarray(0, MAX_GITHUB_DIFF_BYTES).toString("utf8") + "\n[patch preview truncated]\n"
+          : result.stdout || "";
+      } catch {
+        diff = "";
+      }
+    }
     const snapshot = crypto.createHash("sha256").update(porcelain || "");
     for (const relativePath of paths) {
       const absolutePath = path.resolve(root, relativePath);
@@ -911,7 +873,7 @@ app.whenReady().then(() => {
         snapshot.update("deleted");
       }
     }
-    return { changes, protectedPaths, changeToken: snapshot.digest("hex") };
+    return { changes, protectedPaths, diff, changeToken: snapshot.digest("hex") };
   };
   const streamProviderChat = createProviderBridge({
     net,
@@ -1093,7 +1055,7 @@ app.whenReady().then(() => {
       throw Error("Choose a valid Hugging Face task.");
     const url = new URL("https://huggingface.co/api/models");
     url.searchParams.set("search", query.trim());
-    url.searchParams.set("pipeline_tag", task);
+    if (task !== "all") url.searchParams.set("pipeline_tag", task);
     url.searchParams.set("sort", "downloads");
     url.searchParams.set("limit", "30");
     url.searchParams.set("full", "true");
@@ -1676,60 +1638,6 @@ app.whenReady().then(() => {
     if (result.canceled || !result.filePaths[0]) return null;
     return workspace.approveFolder(result.filePaths[0]);
   });
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate([
-      {
-        label: "File",
-        submenu: [
-          {
-            label: "New chat",
-            accelerator: "CmdOrCtrl+N",
-            click: () => {
-              const w = BrowserWindow.getFocusedWindow();
-              w?.webContents.executeJavaScript(
-                "document.querySelector('#newChat').click()",
-              );
-            },
-          },
-          { type: "separator" },
-          { role: "quit" },
-        ],
-      },
-      {
-        label: "Edit",
-        submenu: [
-          { role: "undo" },
-          { role: "redo" },
-          { type: "separator" },
-          { role: "cut" },
-          { role: "copy" },
-          { role: "paste" },
-          { role: "selectAll" },
-        ],
-      },
-      {
-        label: "View",
-        submenu: [
-          { role: "reload" },
-          { role: "toggleDevTools" },
-          { type: "separator" },
-          { role: "togglefullscreen" },
-        ],
-      },
-      {
-        label: "Help",
-        submenu: [
-          {
-            label: "About Server Rock: AI",
-            click: () =>
-              BrowserWindow.getFocusedWindow()?.webContents.executeJavaScript(
-                "alert('Server Rock: AI · Local-first AI workspace')",
-              ),
-          },
-        ],
-      },
-    ]),
-  );
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

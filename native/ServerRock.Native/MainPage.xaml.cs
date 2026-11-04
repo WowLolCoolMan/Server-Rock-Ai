@@ -224,23 +224,30 @@ public sealed partial class MainPage : Page
             var file = await picker.PickSingleFileAsync();
             if (file is null) return;
             var properties = await file.GetBasicPropertiesAsync();
-            if (properties.Size > 100 * 1024 * 1024)
+            if (properties.Size > ConversationArchive.MaxArchiveBytes)
             {
-                RuntimeStatus.Text = "This archive is larger than the 100 MB file limit.";
+                RuntimeStatus.Text = "This archive is larger than the 25 MB import limit.";
                 return;
             }
-            var imported = ConversationArchive.Parse(await Windows.Storage.FileIO.ReadTextAsync(file));
-            if (imported.Count == 0)
+            await using var archiveStream = await file.OpenStreamForReadAsync();
+            var incoming = await ConversationArchive.ParseAsync(archiveStream);
+            if (incoming.Count == 0)
             {
                 RuntimeStatus.Text = "The selected archive contains no conversations.";
                 return;
             }
-            var knownIds = _sessions.Select(session => session.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var duplicateIds = imported.Count(session => !knownIds.Add(session.Id));
+            var plan = ConversationArchive.PlanImport(_sessions, incoming);
+            if (plan.Conversations.Count == 0)
+            {
+                RuntimeStatus.Text = $"No chats added. This file contains {plan.SkippedDuplicates} conversation(s) already in your history.";
+                return;
+            }
+            var previewTitles = string.Join("\n", plan.Conversations.Take(5).Select(session => $"• {session.Title}"));
+            if (plan.Conversations.Count > 5) previewTitles += $"\n• and {plan.Conversations.Count - 5} more";
             var dialog = new ContentDialog
             {
                 Title = "Import conversations?",
-                Content = $"Add {imported.Count} conversation(s) from {file.Name} to this device? Existing chats stay in place. {duplicateIds} ID collision(s) will be imported as new chats. Review imported content before sending it to a model or attaching it to a project.",
+                Content = $"File: {file.Name}\n\nChats to add: {plan.Conversations.Count}\nAlready present: {plan.SkippedDuplicates}\nID conflicts kept as separate chats: {plan.ReassignedIds}\n\nPreview:\n{previewTitles}\n\nImport accepts native chat archives and Electron localStorage JSON exports. It leaves existing history and the selected file unchanged. Electron exports retain chat titles and messages, but their project links, folder paths, provider settings, credentials, archive flags, and fork metadata are not imported. Native archives retain supported per-chat context. The app does not read an Electron browser profile automatically. Review the added chats before sending them to a model.",
                 PrimaryButtonText = "Import chats",
                 CloseButtonText = "Cancel",
                 XamlRoot = XamlRoot
@@ -248,23 +255,22 @@ public sealed partial class MainPage : Page
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             SaveCurrentSession();
             if (!_historyAvailable) return;
-            var ids = _sessions.Select(session => session.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (var session in imported)
+            // Re-plan after saving the active chat so the import remains idempotent even
+            // if the active conversation changed between preview and confirmation.
+            plan = ConversationArchive.PlanImport(_sessions, plan.Conversations);
+            if (plan.Conversations.Count == 0)
             {
-                if (!ids.Add(session.Id))
-                {
-                    session.Id = Guid.NewGuid().ToString("N");
-                    ids.Add(session.Id);
-                }
+                RuntimeStatus.Text = "No chats added. The selected conversations are already in your history.";
+                return;
             }
-            _sessions.AddRange(imported);
+            _sessions.AddRange(plan.Conversations);
             if (!PersistConversationEdits())
             {
-                _sessions.RemoveAll(session => imported.Contains(session));
+                _sessions.RemoveAll(session => plan.Conversations.Contains(session));
                 RenderRecent();
                 return;
             }
-            RuntimeStatus.Text = $"Imported {imported.Count} conversation(s) from {file.Name}.";
+            RuntimeStatus.Text = $"Imported {plan.Conversations.Count} conversation(s) from {file.Name}; skipped {plan.SkippedDuplicates} already present.";
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Could not import chats: {ex.Message}"; }
     }
@@ -288,6 +294,27 @@ public sealed partial class MainPage : Page
 
     private async void ChatModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("ChatBot"));
     private async void CodingModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("Coding Agent"));
+
+    private void AppKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var controlPressed = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        if (controlPressed && e.Key == Windows.System.VirtualKey.L)
+        {
+            e.Handled = true;
+            PromptBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        if (e.Key == Windows.System.VirtualKey.Escape && CommandHintPanel.Visibility == Visibility.Visible)
+        {
+            e.Handled = true;
+            CommandHintPanel.Visibility = Visibility.Collapsed;
+            _selectedSlashSuggestion = -1;
+            PromptBox.Focus(FocusState.Programmatic);
+        }
+    }
 
     private async Task SwitchModeAsync(string selected)
     {
@@ -2762,8 +2789,8 @@ public sealed partial class MainPage : Page
     private async Task ModelLibraryClickAsync()
     {
         var source = new ComboBox { MinWidth = 220 };
+        source.Items.Add("AI SuperMarket · Hugging Face GGUF");
         source.Items.Add("Installed models");
-        source.Items.Add("Hugging Face · GGUF");
         source.Items.Add("Ollama Library");
         source.Items.Add("ModelScope · GGUF");
         source.SelectedIndex = 0;
@@ -2771,7 +2798,7 @@ public sealed partial class MainPage : Page
         catalogMode.Items.Add("Regular models");
         catalogMode.Items.Add("Uncensored / abliterated");
         catalogMode.SelectedIndex = 0;
-        var query = new TextBox { PlaceholderText = "Search models or enter a model ID", MinWidth = 280 };
+        var query = new TextBox { PlaceholderText = "Search models by name or capability", MinWidth = 280 };
         var search = new Button { Content = "Search / refresh", MinWidth = 108 };
         var pin = new Button { Content = "Pin / unpin", MinWidth = 88 };
         var benchmark = new Button { Content = "Benchmark selected", MinWidth = 130 };
@@ -2782,7 +2809,7 @@ public sealed partial class MainPage : Page
         var actionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { query, search } };
         var dialog = new ContentDialog
         {
-            Title = "Model library",
+            Title = "AI SuperMarket",
             PrimaryButtonText = "Use selected",
             CloseButtonText = "Done",
             XamlRoot = XamlRoot,
@@ -2791,7 +2818,7 @@ public sealed partial class MainPage : Page
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = "All installed models stay here. Pin a few for quick switching beside the composer. Run the same short local prompt on a model to compare this PC’s speed.", TextWrapping = TextWrapping.Wrap },
+                    new TextBlock { Text = "Browse popular local models, search by capability, and download compatible GGUF models through a local runtime. Installed models can be pinned for quick switching and benchmarked on this PC.", TextWrapping = TextWrapping.Wrap },
                     source,
                     catalogMode,
                     actionRow,
@@ -2809,13 +2836,13 @@ public sealed partial class MainPage : Page
             catalogSearchCancellation = searchCancellation;
             previousSearch?.Cancel();
             var cancellationToken = searchCancellation.Token;
-            dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 0;
-            pin.IsEnabled = source.SelectedIndex == 0;
-            catalogMode.Visibility = source.SelectedIndex is 1 or 3 ? Visibility.Visible : Visibility.Collapsed;
+            dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
+            pin.IsEnabled = source.SelectedIndex == 1;
+            catalogMode.Visibility = source.SelectedIndex is 0 or 3 ? Visibility.Visible : Visibility.Collapsed;
             status.Text = source.SelectedIndex switch
             {
-                0 => "Checking installed models on local runtimes…",
-                1 => "Searching Hugging Face GGUF models…",
+                0 => "Loading popular Hugging Face GGUF models for local runtimes…",
+                1 => "Checking installed models on local runtimes…",
                 2 => "Enter an Ollama model ID, then choose Download selected.",
                 3 => "Searching ModelScope GGUF models…",
                 _ => ""
@@ -2827,7 +2854,7 @@ public sealed partial class MainPage : Page
             try
             {
                 var choice = source.SelectedIndex;
-                if (choice == 0)
+                if (choice == 1)
                 {
                     var models = await _modelLibrary.DiscoverLocalModelsAsync(_settings.Endpoint, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
@@ -2849,11 +2876,11 @@ public sealed partial class MainPage : Page
                     var hostCount = choices.Select(choice => choice.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).Count();
                     status.Text = $"{choices.Length} installed model(s) found across {hostCount} local runtime(s). Performance is measured from completed responses on this device; tokens/second is estimated from response length.";
                 }
-                else if (choice == 1)
+                else if (choice == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(query.Text)) { status.Text = "Enter a model name to search Hugging Face GGUF repositories."; return; }
+                    var searchText = string.IsNullOrWhiteSpace(query.Text) ? "instruct" : query.Text.Trim();
                     var uncensored = catalogMode.SelectedIndex == 1;
-                    var models = await _modelLibrary.SearchHuggingFaceAsync(query.Text, uncensored, cancellationToken);
+                    var models = await _modelLibrary.SearchHuggingFaceAsync(searchText, uncensored, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                     var choices = models.Select(model => new CatalogModelChoice(model,
                         $"{model.Id}   ·   {model.Downloads:N0} downloads" + (model.IsUncensored ? "   ·   Explicit uncensored / abliterated label" : ""))).ToArray();
@@ -2861,7 +2888,9 @@ public sealed partial class MainPage : Page
                     list.ItemsSource = choices;
                     status.Text = uncensored
                         ? $"Found {models.Count} GGUF repositories with explicit uncensored/abliterated labels. Labels come from repository IDs and tags and do not guarantee model behavior."
-                        : $"Found {models.Count} regular GGUF repositories; explicitly labeled uncensored/abliterated results are excluded. Hugging Face download uses the configured LM Studio server.";
+                        : string.IsNullOrWhiteSpace(query.Text)
+                            ? $"Showing {models.Count} popular chat-ready GGUF repositories. Search by name or capability to refine the catalog. Downloads use the configured LM Studio server."
+                            : $"Found {models.Count} regular GGUF repositories; explicitly labeled uncensored/abliterated results are excluded. Hugging Face download uses the configured LM Studio server.";
                 }
                 else if (choice == 3)
                 {
@@ -2899,7 +2928,7 @@ public sealed partial class MainPage : Page
         }
         search.Click += async (_, _) => await RefreshOrSearchAsync();
         source.SelectionChanged += async (_, _) => await RefreshOrSearchAsync();
-        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 1 or 3) await RefreshOrSearchAsync(); };
+        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 0 or 3) await RefreshOrSearchAsync(); };
         pin.Click += (_, _) =>
         {
             if (list.SelectedItem is not InstalledModelChoice selected) { status.Text = "Select an installed model first."; return; }
@@ -2930,7 +2959,7 @@ public sealed partial class MainPage : Page
         {
             var selected = list.SelectedItem as InstalledModelChoice;
             pin.Content = selected is not null && ((_settings.PinnedModelConnections ?? []).Any(model => model.Model.Equals(selected.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(selected.Endpoint, StringComparison.OrdinalIgnoreCase)) || (selected.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase) && (_settings.PinnedModels ?? []).Contains(selected.Model, StringComparer.OrdinalIgnoreCase))) ? "Unpin" : "Pin";
-            benchmark.IsEnabled = source.SelectedIndex == 0 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
+            benchmark.IsEnabled = source.SelectedIndex == 1 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
         };
         stopBenchmark.Click += (_, _) => _modelBenchmarkCancellation?.Cancel();
         benchmark.Click += async (_, _) =>
@@ -2993,11 +3022,11 @@ public sealed partial class MainPage : Page
                 cancellation.Dispose();
                 _modelBenchmarkCancellation = null;
                 stopBenchmark.IsEnabled = false;
-                benchmark.IsEnabled = source.SelectedIndex == 0 && list.SelectedItem is InstalledModelChoice finalChoice && IsLocalEndpoint(finalChoice.Endpoint);
+                benchmark.IsEnabled = source.SelectedIndex == 1 && list.SelectedItem is InstalledModelChoice finalChoice && IsLocalEndpoint(finalChoice.Endpoint);
                 source.IsEnabled = true;
                 search.IsEnabled = true;
-                pin.IsEnabled = source.SelectedIndex == 0;
-                dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 0;
+                pin.IsEnabled = source.SelectedIndex == 1;
+                dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
             }
         };
         dialog.Closed += (_, _) =>
@@ -3009,7 +3038,7 @@ public sealed partial class MainPage : Page
         while (true)
         {
             await RefreshOrSearchAsync();
-            if (source.SelectedIndex == 0)
+            if (source.SelectedIndex == 1)
                 list.SelectedItem = (list.ItemsSource as IEnumerable<InstalledModelChoice>)?.FirstOrDefault(item => item.Model.Equals(_settings.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase));
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
@@ -3024,7 +3053,7 @@ public sealed partial class MainPage : Page
             {
                 status.Text = "Starting model download… Keep the app open while the local runtime installs it.";
                 RuntimeStatus.Text = status.Text;
-                if (source.SelectedIndex == 1)
+                if (source.SelectedIndex == 0)
                 {
                     var endpoint = await GetRuntimeEndpointAsync("LM Studio");
                     await _modelLibrary.DownloadFromHuggingFaceAsync(endpoint, selectedId, onProgress: progress => RuntimeStatus.Text = progress);
@@ -3042,7 +3071,7 @@ public sealed partial class MainPage : Page
                 }
                 else { status.Text = "Select a supported model source and a downloadable model."; continue; }
                 if (source.SelectedIndex != 3) status.Text = $"Downloaded {selectedId}. Refresh Installed models to select and pin it.";
-                source.SelectedIndex = 0;
+                source.SelectedIndex = 1;
             }
             catch (Exception ex) { status.Text = $"Download failed: {ex.Message}"; }
         }

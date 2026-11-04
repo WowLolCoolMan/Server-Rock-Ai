@@ -1,15 +1,20 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Core.Services;
 
 public sealed record GitWorkspaceFileChange(string Status, string Path, string? OriginalPath = null);
 public sealed record GitWorkspaceStatus(string Branch, IReadOnlyList<GitWorkspaceFileChange> Changes, int CommitsAhead, int CommitsBehind, string Repository);
+public sealed record GitWorkspaceDiffPreview(string Text, int IncludedFiles, int RedactedFiles, bool IsTruncated);
 
 /// <summary>Runs local Git operations for GitHub repositories without putting OAuth tokens in command arguments or remotes.</summary>
 public sealed class GitHubWorkspaceService
 {
+    public const int MaxDiffPreviewCharacters = 256_000;
+    private const int MaxDiffFileCharacters = 64_000;
+    private const int MaxDiffFiles = 24;
     private static readonly Regex AheadBehindPattern = new("^# branch\\.ab \\+(\\d+) -(\\d+)$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
     private static readonly HashSet<string> ProtectedDirectories = new(StringComparer.OrdinalIgnoreCase) { ".git", ".ssh", ".aws", ".azure", ".gnupg" };
     private static readonly HashSet<string> ProtectedNames = new(StringComparer.OrdinalIgnoreCase) { "credentials.json", "secrets.json", "id_rsa", "id_ed25519" };
@@ -51,22 +56,164 @@ public sealed class GitHubWorkspaceService
 
     public async Task<string> CommitAllAsync(string repositoryPath, string message, string accessToken, CancellationToken cancellationToken = default)
     {
-        ValidateAccessToken(accessToken);
-        message = (message ?? "").Trim();
-        if (message.Length is < 1 or > 256 || message.Any(character => char.IsControl(character) && character is not '\n' and not '\r' and not '\t'))
-            throw new ArgumentException("Enter a commit message between 1 and 256 characters.", nameof(message));
-
         var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
         if (status.Changes.Count == 0) throw new InvalidOperationException("There are no file changes to commit.");
         var unsafePaths = FindUnsafeChangePaths(status.Changes);
         if (unsafePaths.Count > 0)
             throw new InvalidOperationException($"Refusing to stage secret-like files: {string.Join(", ", unsafePaths.Take(8))}{(unsafePaths.Count > 8 ? "…" : "")}");
+        return await CommitSelectedCoreAsync(repositoryPath, status.Changes, message, accessToken, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<string> CommitSelectedAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges, string message,
+        string accessToken, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(selectedChanges);
+        var selected = selectedChanges.Distinct().ToArray();
+        if (selected.Length == 0) throw new InvalidOperationException("Select at least one safe file to commit.");
+        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var currentByIdentity = status.Changes.ToDictionary(ChangeIdentity, StringComparer.Ordinal);
+        var currentSelection = new List<GitWorkspaceFileChange>(selected.Length);
+        foreach (var requested in selected)
+        {
+            var identity = ChangeIdentity(requested);
+            if (!currentByIdentity.TryGetValue(identity, out var current))
+                throw new InvalidOperationException($"The workspace changed since review. Reopen the GitHub review before committing {DisplayPath(requested)}.");
+            currentSelection.Add(current);
+        }
+        var unsafePaths = FindUnsafeChangePaths(currentSelection);
+        if (unsafePaths.Count > 0)
+            throw new InvalidOperationException($"Refusing to stage secret-like files: {string.Join(", ", unsafePaths.Take(8))}{(unsafePaths.Count > 8 ? "…" : "")}");
+        return await CommitSelectedCoreAsync(repositoryPath, currentSelection, message, accessToken, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<GitWorkspaceDiffPreview> GetDiffPreviewAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(selectedChanges);
+        var selected = selectedChanges.Distinct().ToArray();
+        if (selected.Length == 0) return new("No files selected for diff preview.", 0, 0, false);
+        if (selected.Length > MaxDiffFiles) throw new InvalidOperationException($"Select at most {MaxDiffFiles} files for a bounded diff preview.");
+        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var currentByIdentity = status.Changes.ToDictionary(ChangeIdentity, StringComparer.Ordinal);
+        var builder = new StringBuilder();
+        var included = 0;
+        var redacted = 0;
+        var truncated = false;
+        foreach (var requested in selected)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!currentByIdentity.TryGetValue(ChangeIdentity(requested), out var current))
+                throw new InvalidOperationException($"The workspace changed since review. Reopen the GitHub review before previewing {DisplayPath(requested)}.");
+            if (FindUnsafeChangePaths([current]).Count > 0)
+            {
+                redacted++;
+                AppendDiff(builder, $"# [protected path redacted; review locally before staging]\n# status {current.Status}\n", ref truncated);
+                continue;
+            }
+
+            var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+            var paths = new[] { current.Path, current.OriginalPath }
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.Ordinal)
+                .Cast<string>()
+                .ToArray();
+            var staged = await RunGitAsync(root, ["diff", "--cached", "--no-ext-diff", "--no-color", "--find-renames", "--unified=3", "--", .. paths], null,
+                TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+            EnsureSuccess(staged, "Git could not read the staged diff.");
+            var unstaged = await RunGitAsync(root, ["diff", "--no-ext-diff", "--no-color", "--find-renames", "--unified=3", "--", .. paths], null,
+                TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+            EnsureSuccess(unstaged, "Git could not read the workspace diff.");
+            var diff = (staged.StandardOutput + unstaged.StandardOutput).Trim();
+            if (diff.Length == 0 && current.Status == "??") diff = BuildUntrackedDiff(root, current.Path);
+            if (diff.Length == 0) diff = $"# {current.Status} {DisplayPath(current)}\n# No text diff is available (the file may be binary or unchanged in the selected index).\n";
+            included++;
+            AppendDiff(builder, diff + "\n", ref truncated);
+        }
+        if (builder.Length == 0) builder.Append("No diff preview is available for the selected files.\n");
+        return new(builder.ToString(), included, redacted, truncated);
+    }
+
+    private async Task<string> CommitSelectedCoreAsync(string repositoryPath, IReadOnlyCollection<GitWorkspaceFileChange> selectedChanges, string message,
+        string accessToken, CancellationToken cancellationToken)
+    {
+        ValidateAccessToken(accessToken);
+        message = (message ?? "").Trim();
+        if (message.Length is < 1 or > 256 || message.Any(character => char.IsControl(character) && character is not '\n' and not '\r' and not '\t'))
+            throw new ArgumentException("Enter a commit message between 1 and 256 characters.", nameof(message));
+
+        if (selectedChanges.Count == 0) throw new InvalidOperationException("There are no file changes to commit.");
         var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
-        var stage = await RunGitAsync(root, ["add", "--all"], null, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(stage, "Git could not stage the workspace changes.");
+        var paths = selectedChanges
+            .SelectMany(change => change.OriginalPath is not null && !change.Status.StartsWith("R", StringComparison.Ordinal)
+                ? new[] { change.Path, change.OriginalPath }
+                : new[] { change.Path })
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        foreach (var path in paths)
+        {
+            var target = Path.GetFullPath(Path.Combine(root, path));
+            var arguments = File.Exists(target) || Directory.Exists(target)
+                ? new[] { "add", "--", path }
+                : new[] { "add", "-u", "--", path };
+            var stage = await RunGitAsync(root, arguments, null, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
+            EnsureSuccess(stage, "Git could not stage the workspace changes.");
+        }
         var commit = await RunGitAsync(root, ["commit", "-m", message], null, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
         EnsureSuccess(commit, "Git could not create the commit. Check your Git author name and email in Git settings.");
         return commit.StandardOutput.Trim();
+    }
+
+    private static string ChangeIdentity(GitWorkspaceFileChange change) =>
+        $"{change.Status}\u001f{change.Path}\u001f{change.OriginalPath}";
+
+    private static string DisplayPath(GitWorkspaceFileChange change) =>
+        change.OriginalPath is null ? change.Path : $"{change.Path} (from {change.OriginalPath})";
+
+    private static void AppendDiff(StringBuilder builder, string text, ref bool truncated)
+    {
+        if (builder.Length >= MaxDiffPreviewCharacters)
+        {
+            truncated = true;
+            return;
+        }
+        var remaining = MaxDiffPreviewCharacters - builder.Length;
+        if (text.Length <= remaining)
+        {
+            builder.Append(text);
+            return;
+        }
+        builder.Append(text.AsSpan(0, Math.Max(0, remaining - 32)));
+        builder.Append("\n[… diff preview truncated …]\n");
+        truncated = true;
+    }
+
+    private static string BuildUntrackedDiff(string root, string relativePath)
+    {
+        var target = Path.GetFullPath(Path.Combine(root, relativePath));
+        var relative = Path.GetRelativePath(root, target);
+        if (Path.IsPathRooted(relative) || relative == ".." || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return "# [untracked path redacted; it leaves the repository root]\n";
+        if (!File.Exists(target)) return $"# ?? {relativePath}\n# The untracked file disappeared before preview.\n";
+        string text;
+        try { text = WorkspaceFileEditor.ReadTextBounded(target, MaxDiffFileCharacters * 4); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return $"# ?? {relativePath}\n# Binary or unreadable untracked file; content omitted.\n";
+        }
+        if (text.Contains('\0')) return $"# ?? {relativePath}\n# Binary untracked file; content omitted.\n";
+        var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
+        var builder = new StringBuilder();
+        builder.Append("diff --git a/").Append(relativePath).Append(" b/").Append(relativePath)
+            .Append("\nnew file mode 100644\n--- /dev/null\n+++ b/").Append(relativePath)
+            .Append("\n@@ -0,0 +1,").Append(Math.Max(1, lines.Length)).Append(" @@\n");
+        foreach (var line in lines)
+        {
+            if (builder.Length + line.Length + 2 > MaxDiffFileCharacters) { builder.Append("+[… file diff truncated …]\n"); break; }
+            builder.Append('+').Append(line).Append('\n');
+        }
+        return builder.ToString();
     }
 
     public async Task PushAsync(string repositoryPath, string accessToken, CancellationToken cancellationToken = default)

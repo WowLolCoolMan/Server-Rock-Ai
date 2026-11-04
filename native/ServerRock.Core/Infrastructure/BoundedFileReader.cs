@@ -35,6 +35,40 @@ public static class BoundedFileReader
         }
     }
 
+    public static async Task<string> ReadTextAsync(Stream source, int maxBytes, string label, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+        if (maxBytes < 1) throw new ArgumentOutOfRangeException(nameof(maxBytes));
+        var remainingLength = source.CanSeek ? source.Length - source.Position : 0;
+        if (remainingLength < 0) throw new InvalidDataException($"The {label} has an invalid stream position.");
+        if (remainingLength > maxBytes) throw new InvalidDataException($"The {label} exceeds the {maxBytes:N0}-byte limit.");
+
+        using var bytes = new MemoryStream((int)remainingLength);
+        var chunk = new byte[64 * 1024];
+        while (true)
+        {
+            var remaining = maxBytes - (int)bytes.Length;
+            var readSize = remaining < chunk.Length ? remaining + 1 : chunk.Length;
+            var read = await source.ReadAsync(chunk.AsMemory(0, readSize), cancellationToken).ConfigureAwait(false);
+            if (read == 0) break;
+            if (bytes.Length + read > maxBytes)
+                throw new InvalidDataException($"The {label} exceeds the {maxBytes:N0}-byte limit.");
+            await bytes.WriteAsync(chunk.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            bytes.Position = 0;
+            using var reader = new StreamReader(bytes, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), detectEncodingFromByteOrderMarks: true);
+            return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DecoderFallbackException error)
+        {
+            throw new InvalidDataException($"The {label} is not valid UTF-8 text.", error);
+        }
+    }
+
     public static string EnsureTextSize(string content, string label, int maxBytes = MaxJsonBytes)
     {
         ArgumentNullException.ThrowIfNull(content);

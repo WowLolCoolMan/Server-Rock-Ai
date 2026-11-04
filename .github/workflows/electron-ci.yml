@@ -41,3 +41,9 @@ jobs:
 
       - name: Run UI checks
         run: npm test
+
+      - name: Run responsive UI audit
+        run: npm run audit:ui
+
+      - name: Run Electron boundary audit
+        run: npm run audit:electron

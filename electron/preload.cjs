@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld("desktopModels", {
     ipcRenderer.invoke("models:download", repoId),
   searchHuggingFace: (query, task) =>
     ipcRenderer.invoke("hf:search", query, task),
+  openHuggingFaceModel: (repoId) =>
+    ipcRenderer.invoke("models:open-hub", repoId),
   runHuggingFaceTask: (task, model, prompt, mediaData) =>
     ipcRenderer.invoke("hf:inference", task, model, prompt, mediaData),
   generate: (repoId, task, prompt, requestId, onChunk, imageData) => {
@@ -77,8 +79,6 @@ contextBridge.exposeInMainWorld("desktopModels", {
       .finally(() => ipcRenderer.removeListener("chatgpt:chunk", h));
   },
   cancelChatGPT: (id) => ipcRenderer.send("chatgpt:cancel", id),
-  aiUpdateStatus: () => ipcRenderer.invoke("ai-updates:status"),
-  aiUpdateCheck: (ring) => ipcRenderer.invoke("ai-updates:check", ring),
-  aiUpdateRollback: (ring) => ipcRenderer.invoke("ai-updates:rollback", ring),
-  aiUpdateDownload: (ring, version) => ipcRenderer.invoke("ai-updates:download", ring, version),
+  githubUpdateCheck: (channel) => ipcRenderer.invoke("github-updates:check", channel),
+  githubUpdateOpenRelease: (tag) => ipcRenderer.invoke("github-updates:open-release", tag),
 });

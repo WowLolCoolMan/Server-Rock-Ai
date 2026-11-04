@@ -208,6 +208,20 @@ test("provider streams stop before unbounded text accumulation", async () => {
   })).rejects.toThrow("2 MB stream limit");
 });
 
+test("renderer local-runtime readers reject oversized JSON and text responses", async ({ page }) => {
+  await page.goto(appUrl);
+  const result = await page.evaluate(async () => {
+    let jsonError = "", textError = "";
+    try { await readJsonResponseLimited(new Response("x".repeat(4097)), "Test JSON", 4096); }
+    catch (error) { jsonError = error.message; }
+    try { await readTextResponseLimited(new Response("x".repeat(4097)), "Test text", 4096); }
+    catch (error) { textError = error.message; }
+    return { jsonError, textError };
+  });
+  expect(result.jsonError).toContain("4 KB limit");
+  expect(result.textError).toContain("4 KB limit");
+});
+
 test("Electron child environments omit secret-shaped variables", async () => {
   const safe = createSafeChildEnvironment({ PATH: "tools", API_KEY: "hidden", GITHUB_TOKEN: "hidden", SAFE_FLAG: "kept" });
   expect(safe).toEqual({ PATH: "tools", SAFE_FLAG: "kept" });

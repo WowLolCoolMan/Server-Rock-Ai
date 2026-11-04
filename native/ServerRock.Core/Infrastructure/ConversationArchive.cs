@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Infrastructure;
@@ -12,6 +13,8 @@ public static class ConversationArchive
     public const int MaxConversations = 2_000;
     public const int MaxMessagesPerConversation = 2_000;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 48 };
+
+    public sealed record ImportPlan(IReadOnlyList<ChatSession> Conversations, int SkippedDuplicates, int ReassignedIds);
 
     public static string Serialize(IEnumerable<ChatSession> sessions)
     {
@@ -29,7 +32,43 @@ public static class ConversationArchive
         if (json.Length > MaxArchiveCharacters) throw new InvalidDataException("This archive is larger than the 25 MB text limit.");
         EnsureArchiveSize(json);
         List<ChatSession> sessions;
-        try { sessions = JsonSerializer.Deserialize<List<ChatSession>>(json, Options) ?? throw new InvalidDataException("The archive contains no conversation list."); }
+        try
+        {
+            // The Electron client stored its history inside a localStorage object
+            // (`{ chats: [...], projects: [...] }`). Accept that shape during the
+            // migration window so users can export/hand off legacy data without a
+            // separate conversion utility. Native archives remain the canonical
+            // array format produced by Serialize.
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            var isElectronState = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("chats", out _);
+            var payload = isElectronState ? root.GetProperty("chats").GetRawText() : json;
+            sessions = JsonSerializer.Deserialize<List<ChatSession>>(payload, Options)
+                ?? throw new InvalidDataException("The archive contains no conversation list.");
+            var source = isElectronState ? "electron-localstorage" : "conversation-archive";
+            var sourceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var session in sessions)
+            {
+                if (session is null) continue;
+                var hasStableId = !string.IsNullOrWhiteSpace(session.Id) && session.Id.Length <= 128;
+                if (hasStableId && !sourceIds.Add(session.Id))
+                    throw new InvalidDataException("The archive contains duplicate conversation IDs and cannot be imported safely.");
+                // These internal markers are derived from the selected source, never trusted from the file.
+                session.ImportSource = source;
+                session.ImportSourceId = hasStableId ? session.Id : "content-" + GetContentFingerprint(session);
+                if (isElectronState)
+                {
+                    // Electron's project IDs and folder paths belong to a different
+                    // project store. Never attach imported chats to a coincidentally
+                    // matching native project or transfer filesystem permissions.
+                    session.ProjectId = null;
+                    session.ProjectName = null;
+                    session.ProjectInstructions = null;
+                    session.IncludeProjectFilesInChat = false;
+                    session.FolderName = null;
+                }
+            }
+        }
         catch (JsonException error) { throw new InvalidDataException("This file is not a valid conversation archive.", error); }
         if (sessions.Count > MaxConversations) throw new InvalidDataException($"An archive can contain at most {MaxConversations} conversations.");
         foreach (var session in sessions)
@@ -85,6 +124,71 @@ public static class ConversationArchive
             if (contentCharacters > 5_000_000) throw new InvalidDataException("A conversation's saved content exceeds the 5 MB limit.");
         }
         return sessions;
+    }
+
+    public static async Task<List<ChatSession>> ParseAsync(Stream source, CancellationToken cancellationToken = default)
+    {
+        var json = await BoundedFileReader.ReadTextAsync(source, MaxArchiveBytes, "conversation archive", cancellationToken).ConfigureAwait(false);
+        return Parse(json);
+    }
+
+    public static ImportPlan PlanImport(IEnumerable<ChatSession> existing, IEnumerable<ChatSession> incoming)
+    {
+        ArgumentNullException.ThrowIfNull(existing);
+        ArgumentNullException.ThrowIfNull(incoming);
+
+        var existingSessions = existing.ToArray();
+        var existingIds = existingSessions.Select(session => session.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourceKeys = existingSessions
+            .Where(session => !string.IsNullOrWhiteSpace(session.ImportSource) && !string.IsNullOrWhiteSpace(session.ImportSourceId))
+            .Select(GetSourceKey)
+            .ToHashSet(StringComparer.Ordinal);
+        var fingerprints = existingSessions.Select(GetContentFingerprint).ToHashSet(StringComparer.Ordinal);
+        var planned = new List<ChatSession>();
+        var skipped = 0;
+        var reassigned = 0;
+
+        foreach (var session in incoming)
+        {
+            if (session is null) throw new InvalidDataException("The import contains an empty conversation entry.");
+            session.ImportSource ??= "conversation-archive";
+            session.ImportSourceId ??= session.Id;
+            var fingerprint = GetContentFingerprint(session);
+            var sourceKey = GetSourceKey(session);
+            if (!sourceKeys.Add(sourceKey) || !fingerprints.Add(fingerprint))
+            {
+                skipped++;
+                continue;
+            }
+
+            if (!existingIds.Add(session.Id))
+            {
+                session.Id = Guid.NewGuid().ToString("N");
+                while (!existingIds.Add(session.Id)) session.Id = Guid.NewGuid().ToString("N");
+                reassigned++;
+            }
+            planned.Add(session);
+        }
+
+        return new ImportPlan(planned, skipped, reassigned);
+    }
+
+    private static string GetSourceKey(ChatSession session) => $"{session.ImportSource}\0{session.ImportSourceId}";
+
+    private static string GetContentFingerprint(ChatSession session)
+    {
+        var identity = new
+        {
+            session.Title,
+            session.UpdatedAt,
+            session.Messages,
+            session.ProjectName,
+            session.ProjectInstructions,
+            session.Mode,
+            session.IncludeProjectFilesInChat,
+            session.FolderName
+        };
+        return Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(identity, Options)));
     }
 
     private static void EnsureArchiveSize(string json)

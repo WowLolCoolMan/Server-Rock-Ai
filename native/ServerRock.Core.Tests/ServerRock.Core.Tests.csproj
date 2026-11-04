@@ -8,4 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ServerRock.Core\ServerRock.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

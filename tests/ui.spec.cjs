@@ -47,6 +47,44 @@ test("workspace boots, shows command help, and opens preferences", async ({
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("#providerSelect")).toHaveValue("Ollama");
 });
+test("empty recent chats explain how to begin", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await expect(page.locator("#history .history-empty")).toHaveText(
+    "No chats yet — start a new conversation.",
+  );
+});
+test("project and settings dialogs close independently", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#newProject").click();
+  await expect(page.locator("#projectDialog")).toBeVisible();
+  await page.locator("#closeProject").click();
+  await expect(page.locator("#projectDialog")).toBeHidden();
+  await page.locator("#settings").click();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await page.locator("#settingsDialog .close").click();
+  await expect(page.locator("#settingsDialog")).toBeHidden();
+});
+test("settings validation keeps focus on invalid provider fields", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").click();
+  await page.locator("#modelInput").fill("");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await expect(page.locator("#settingsValidationStatus")).toHaveText(
+    "Enter a model name before saving.",
+  );
+  await expect(page.locator("#modelInput")).toBeFocused();
+  await page.locator("#modelInput").fill("llama3.2");
+  await page.locator("#endpoint").fill("localhost:11434/v1/chat/completions");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("#settingsValidationStatus")).toHaveText(
+    "Enter a full http(s) provider endpoint before saving.",
+  );
+  await expect(page.locator("#endpoint")).toBeFocused();
+  await page.locator("#endpoint").fill("http://localhost:11434/v1/chat/completions");
+  await page.locator("#saveSettings").click();
+  await expect(page.locator("#settingsDialog")).toBeHidden();
+});
 test("workspace exposes model and tool entry points and advanced temperature controls", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await expect(page.locator("#openModelLibrary")).toBeVisible();
@@ -54,10 +92,243 @@ test("workspace exposes model and tool entry points and advanced temperature con
   await expect(page.locator("#settingsDialog")).toBeVisible();
   await page.locator("#settingsDialog .close").click();
   await page.locator("#openModelLibrary").click();
-  await expect(page.locator("#modelPicker")).toBeVisible();
+  await expect(page.locator("#marketplacePage")).toBeVisible();
+  await expect(page.locator("#marketplacePage h1")).toHaveText("AI SuperMarket");
+  await expect(page.locator(".market-card")).toHaveCount(5);
+  await expect(page.locator("#marketStatus")).toContainText("Featured offline-ready models remain available");
+  await page.locator("#navChats").click();
+  await expect(page.locator("#marketplacePage")).toBeHidden();
   await page.locator(".advanced-menu summary").click();
   await page.locator("#temperatureControl").fill("1.2");
   await expect(page.locator("#temperatureValue")).toHaveText("1.2");
+});
+test("first-run setup actions open the marketplace and provider connection", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await expect(page.getByText("Start with a model")).toBeVisible();
+  await page.getByRole("button", { name: "Browse AI SuperMarket" }).click();
+  await expect(page.locator("#marketplacePage")).toBeVisible();
+  await page.locator("#navChats").click();
+  await page.getByRole("button", { name: "Connect a provider" }).click();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+});
+test("first-run provider settings focus the connection field after mobile navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#marketplacePage")).toBeVisible();
+  await expect(page.locator("#mobileMenu")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await page.locator('.mobile-nav [data-page="chat"]').focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#marketplacePage")).toBeHidden();
+  await expect(page.locator("#mobileMenu")).toBeFocused();
+
+  await page.locator("#welcomeSettings").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await expect(page.locator("#providerSelect")).toBeFocused();
+  await page.locator("#settingsDialog .close").click();
+  await expect(page.locator("#settingsDialog")).toBeHidden();
+  await expect(page.locator("#welcomeSettings")).toBeFocused();
+});
+test("AI SuperMarket searches the complete supported catalog when All supported tasks is selected", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      searchHuggingFace: async (_query, task) => {
+        window.superMarketTask = task;
+        return [{
+          id: "onnx-community/catalog-model",
+          pipeline_tag: "image-to-text",
+          siblings: [{ rfilename: "onnx/model.onnx" }],
+          cardData: { license: "apache-2.0" },
+        }];
+      },
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#openModelLibrary").click();
+  await page.locator("#marketTask").selectOption("all");
+  await page.locator("#marketSearchButton").click();
+  await expect.poll(() => page.evaluate(() => window.superMarketTask)).toBe("all");
+  await expect(page.locator(".market-card-id", { hasText: "onnx-community/catalog-model" })).toHaveCount(1);
+});
+test("marketplace filters search tasks missing from featured models", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.marketplaceTasks = [];
+    window.desktopModels = {
+      searchHuggingFace: async (_query, task) => {
+        window.marketplaceTasks.push(task);
+        return task === "text-to-speech"
+          ? [{ id: "audio/voice-model", pipeline_tag: task, siblings: [{ rfilename: "onnx/model.onnx" }] }]
+          : [];
+      },
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await page.locator("#marketTask").selectOption("text-to-speech");
+  await expect.poll(() => page.evaluate(() => window.marketplaceTasks.includes("text-to-speech"))).toBe(true);
+  await expect(page.locator(".market-card-id", { hasText: "audio/voice-model" })).toHaveCount(1);
+});
+test("marketplace installs keep the selected model aligned with settings", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      searchHuggingFace: async () => [],
+      download: async (model) => {
+        window.downloadedMarketplaceModel = model;
+        return { downloaded: 3 };
+      },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      chatgptStatus: async () => ({ connected: false }),
+      githubStatus: async () => ({ connected: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#openModelLibrary").click();
+  const card = page.locator(".market-card").first();
+  const modelId = await card.locator(".market-card-id").textContent();
+  await card.getByRole("button", { name: "Download" }).click();
+  await expect(card.getByRole("button", { name: "Selected" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => ({
+    downloaded: window.downloadedMarketplaceModel,
+    provider: state.settings.provider,
+    model: state.settings.model,
+    localModelId: state.settings.localModelId,
+    providerModel: state.settingsByProvider["Hugging Face"]?.model,
+  }))).toEqual({
+    downloaded: modelId,
+    provider: "Hugging Face",
+    model: modelId,
+    localModelId: modelId,
+    providerModel: modelId,
+  });
+  await page.locator("#settings").click();
+  await expect(page.locator("#providerSelect")).toHaveValue("Hugging Face");
+  await expect(page.locator("#modelInput")).toHaveValue(modelId);
+});
+test("marketplace download failures expose a retryable mobile state", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.downloadAttempts = 0;
+    window.desktopModels = {
+      searchHuggingFace: async () => [],
+      download: async (model) => {
+        window.downloadAttempts += 1;
+        if (window.downloadAttempts === 1) throw Error("offline");
+        return { downloaded: 1, model };
+      },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      chatgptStatus: async () => ({ connected: false }),
+      githubStatus: async () => ({ connected: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  const card = page.locator(".market-card").first();
+  const download = card.getByRole("button", { name: "Download" });
+  await download.click();
+  await expect(page.locator("#marketStatus")).toContainText("offline");
+  await expect(download).toHaveText("Retry download");
+  await expect(download).toBeEnabled();
+  await expect(download).not.toHaveAttribute("aria-busy");
+  await download.click();
+  await expect(card.getByRole("button", { name: "Selected" })).toBeVisible();
+});
+test("marketplace loading state is announced and keyboard-safe on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.resolveMarketplaceSearch = null;
+    window.desktopModels = {
+      searchHuggingFace: async () => new Promise((resolve) => {
+        window.resolveMarketplaceSearch = () => resolve([]);
+      }),
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      chatgptStatus: async () => ({ connected: false }),
+      githubStatus: async () => ({ connected: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await expect.poll(() => page.evaluate(() => typeof window.resolveMarketplaceSearch)).toBe("function");
+  await expect(page.locator("#marketGrid")).toHaveAttribute("aria-busy", "true");
+  await expect(page.locator("#marketSearchButton")).toBeDisabled();
+  await expect(page.locator("#marketSearchButton")).toHaveAttribute("aria-label", "Searching model catalog");
+  await page.evaluate(() => window.resolveMarketplaceSearch());
+  await expect(page.locator("#marketGrid")).not.toHaveAttribute("aria-busy");
+  await expect(page.locator("#marketSearchButton")).toBeEnabled();
+  await expect(page.locator("#marketSearchButton")).toHaveAttribute("aria-label", "Search model catalog");
+});
+test("marketplace search restores keyboard focus after completion", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.marketplaceCalls = 0;
+    window.resolveMarketplaceSearch = null;
+    window.desktopModels = {
+      searchHuggingFace: async () => {
+        window.marketplaceCalls += 1;
+        if (window.marketplaceCalls === 1) return [];
+        return new Promise((resolve) => {
+          window.resolveMarketplaceSearch = () => resolve([]);
+        });
+      },
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      chatgptStatus: async () => ({ connected: false }),
+      githubStatus: async () => ({ connected: false }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await expect.poll(() => page.evaluate(() => window.marketplaceCalls)).toBe(1);
+  const searchButton = page.locator("#marketSearchButton");
+  await searchButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(searchButton).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => typeof window.resolveMarketplaceSearch)).toBe("function");
+  await page.evaluate(() => window.resolveMarketplaceSearch());
+  await expect(searchButton).toBeEnabled();
+  await expect(searchButton).toBeFocused();
+});
+test("superseded marketplace searches keep the busy state until the latest result", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.marketplaceResolvers = [];
+    window.desktopModels = {
+      searchHuggingFace: async () => new Promise((resolve) => {
+        window.marketplaceResolvers.push(resolve);
+      }),
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await expect.poll(() => page.evaluate(() => window.marketplaceResolvers.length)).toBe(1);
+  await page.locator("#marketTask").selectOption("text-to-speech");
+  await expect.poll(() => page.evaluate(() => window.marketplaceResolvers.length)).toBe(2);
+  await page.evaluate(() => window.marketplaceResolvers[0]([]));
+  await expect(page.locator("#marketGrid")).toHaveAttribute("aria-busy", "true");
+  await page.evaluate(() => window.marketplaceResolvers[1]([]));
+  await expect(page.locator("#marketGrid")).not.toHaveAttribute("aria-busy");
+});
+test("AI SuperMarket opens model details through the desktop bridge", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      searchHuggingFace: async () => [],
+      openHuggingFaceModel: async (repoId) => { window.openedModelDetails = repoId; },
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#openModelLibrary").click();
+  const card = page.locator(".market-card").first();
+  const repoId = await card.locator(".market-card-id").textContent();
+  await card.getByRole("button", { name: "Model details" }).click();
+  await expect.poll(() => page.evaluate(() => window.openedModelDetails)).toBe(repoId);
 });
 test("connection labels reflect local and hosted providers and the single settings button works", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
@@ -103,6 +374,185 @@ test("responsive navigation opens and closes with a labelled drawer control", as
   await page.locator("#openGitHub").click();
   await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
 });
+test("GitHub repository shortcut opens an explicit connection state instead of redirecting to settings", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = { githubStatus: async () => ({ connected: false }) };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#openGitHub").click();
+  await expect(page.locator("#githubDialog")).toBeVisible();
+  await expect(page.locator("#settingsDialog")).toBeHidden();
+  await expect(page.locator("#githubDialogStatus")).toContainText("GitHub is not connected yet");
+  await page.locator("#githubDialogConnect").click();
+  await expect(page.locator("#githubDialog")).toBeHidden();
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await expect(page.locator("#accountConnections")).toHaveJSProperty("open", true);
+});
+test("chat context menu actions rename, pin, move, archive, restore, and delete local chats", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.evaluate(() => {
+    state.projects = [{ id: "project-one", name: "Demo project", folders: [] }];
+    state.chats = [{ id: "chat-one", title: "First chat", projectId: null, messages: [] }];
+    persist();
+    renderProjects();
+    renderHistory();
+  });
+  await page.locator(".chat-row").click({ button: "right" });
+  await expect(page.locator("#chatContextMenu")).toBeVisible();
+  await page.getByRole("menuitem", { name: "Pin" }).click();
+  await expect.poll(() => page.evaluate(() => state.chats[0].pinned)).toBe(true);
+  await expect(page.locator(".chat-row .chat-item-actions")).toBeFocused();
+  await page.locator(".chat-row .chat-item-actions").click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  await page.locator("#chatRenameInput").fill("A clearer title");
+  await page.getByRole("button", { name: "Save name" }).click();
+  await expect(page.locator(".chat-item")).toHaveText("A clearer title");
+  await page.locator(".chat-row .chat-item-actions").click();
+  await page.getByText("Move to project", { exact: true }).click();
+  await page.getByRole("menuitem", { name: "Demo project" }).click();
+  await expect.poll(() => page.evaluate(() => state.chats[0].projectId)).toBe("project-one");
+  await page.locator(".chat-row .chat-item-actions").click();
+  await page.getByRole("menuitem", { name: "Archive" }).click();
+  await expect(page.locator(".archived-chats summary")).toContainText("Archived (1)");
+  await page.locator(".archived-chats summary").click();
+  await page.locator(".archived-chats").locator(".chat-item-actions").click();
+  await page.getByRole("menuitem", { name: "Restore from archive" }).click();
+  await expect(page.locator(".chat-row .chat-item")).toHaveText("A clearer title");
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.locator(".chat-row .chat-item-actions").click();
+  await page.getByRole("menuitem", { name: "Delete chat" }).click();
+  await expect(page.locator(".chat-row")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => state.chats.length)).toBe(0);
+});
+test("chat actions support the keyboard context-menu key, arrow navigation, and focus restoration", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.evaluate(() => {
+    state.chats = [{ id: "keyboard-chat", title: "Keyboard chat", messages: [] }];
+    persist();
+    renderHistory();
+  });
+  const trigger = page.locator('.chat-row .chat-item-actions');
+  await trigger.focus();
+  await page.keyboard.press("Shift+F10");
+  await expect(page.locator("#chatContextMenu")).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Rename" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitem", { name: "Pin" })).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(page.getByRole("menuitem", { name: "Delete chat" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#chatContextMenu")).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
+test("local pet companion can be shown, customized, and hidden without a network dependency", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#accountMenuToggle").click();
+  await page.getByRole("menuitem", { name: "Show pet" }).click();
+  await expect(page.locator("#petMini")).toBeVisible();
+  await expect(page.locator("#petMini .pet-mini-name")).toHaveText("Rocky");
+  await page.locator("#accountMenuToggle").click();
+  await page.getByRole("menuitem", { name: "Customize pet" }).click();
+  await expect(page.locator("#petDialog")).toBeVisible();
+  await page.getByRole("radio", { name: /Byte/ }).click();
+  await expect(page.locator("#petMini .pet-mini-name")).toHaveText("Byte");
+  await expect.poll(() => page.evaluate(() => [...document.querySelectorAll(".pet-choice-art, #petMini .pet-mini-art")].every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
+  await expect(page.locator(".pet-choice-art")).toHaveCount(3);
+  await page.locator("#petDialogClose").click();
+  await page.locator("#petMiniHide").click();
+  await expect(page.locator("#petMini")).toBeHidden();
+  await expect.poll(() => page.evaluate(() => state.pet.visible)).toBe(false);
+  await expect.poll(() => page.evaluate(() => state.pet.selected)).toBe("byte");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("#mobileMenu").click();
+  await page.locator("#mobilePetVisibilityToggle").click();
+  await page.locator("#mobileOpenPetSettings").click();
+  await expect(page.locator("#petDialog")).toBeVisible();
+  await page.locator("#petDialogClose").click();
+  await expect(page.locator(".sidebar")).toHaveClass(/mobile-open/);
+  const petDoesNotCoverComposer = await page.evaluate(() => {
+    const pet = document.querySelector("#petMini").getBoundingClientRect();
+    const composer = document.querySelector(".composer-wrap").getBoundingClientRect();
+    return pet.bottom <= composer.top;
+  });
+  expect(petDoesNotCoverComposer).toBe(true);
+});
+test("pet companion stays clear of primary controls across workspace pages and viewport sizes", async ({ page }) => {
+  const overlapsPet = async (selector) => page.evaluate((target) => {
+    const pet = document.querySelector("#petMini").getBoundingClientRect();
+    const element = document.querySelector(target);
+    if (!element || element.getClientRects().length === 0) return false;
+    const rect = element.getBoundingClientRect();
+    return !(pet.right <= rect.left || pet.left >= rect.right || pet.bottom <= rect.top || pet.top >= rect.bottom);
+  }, selector);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.evaluate(() => { state.pet.visible = true; persist(); renderPet(); });
+  for (const selector of [".top-actions", ".composer-wrap"]) expect(await overlapsPet(selector), `pet overlaps ${selector} on chat`).toBe(false);
+  await page.locator("#navImages").click();
+  for (const selector of ["#imagePrompt", "#createImage"]) expect(await overlapsPet(selector), `pet overlaps ${selector} on images`).toBe(false);
+  await page.locator("#navActivity").click();
+  for (const selector of ["#terminalRefresh", ".terminal-controls", "#terminalInput"]) expect(await overlapsPet(selector), `pet overlaps ${selector} on activity`).toBe(false);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("#mobileMenu").click();
+  await page.locator('.mobile-nav [data-page="chat"]').click();
+  for (const selector of [".top-actions", ".composer-wrap"]) expect(await overlapsPet(selector), `mobile pet overlaps ${selector} on chat`).toBe(false);
+  await page.locator("#mobileMenu").click();
+  await page.locator('.mobile-nav [data-page="images"]').click();
+  for (const selector of ["#imagePrompt", "#createImage"]) expect(await overlapsPet(selector), `mobile pet overlaps ${selector} on images`).toBe(false);
+  await page.locator("#mobileMenu").click();
+  await page.locator('.mobile-nav [data-page="activity"]').click();
+  for (const selector of ["#terminalRefresh", ".terminal-controls", "#terminalInput"]) expect(await overlapsPet(selector), `mobile pet overlaps ${selector} on activity`).toBe(false);
+});
+test("mobile drawer keeps workspace navigation reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator('.mobile-nav [data-page="activity"]').click();
+  await expect(page.locator("#activityPage")).toBeVisible();
+  await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await expect(page.locator("#marketplacePage")).toBeVisible();
+  await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
+  await expect.poll(() => page.locator("#sidebar").evaluate((element) => element.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.reload();
+  await page.locator("#mobileMenu").click();
+  await expect(page.locator(".sidebar")).toHaveClass(/mobile-open/);
+});
+test("mobile first-run navigation returns focus to the visible menu button", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#marketplacePage")).toBeVisible();
+  await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
+  await expect(page.locator("#mobileMenu")).toBeFocused();
+
+  await page.keyboard.press("Enter");
+  await page.locator('.mobile-nav [data-page="chat"]').focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#marketplacePage")).toBeHidden();
+  await expect(page.locator("#mobileMenu")).toBeFocused();
+});
+test("primary navigation and dialogs are keyboard operable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  await page.locator("#settings").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#settingsDialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#settingsDialog")).toBeHidden();
+  await page.locator("#mobileMenu").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#mobileMenu")).toHaveAttribute("aria-expanded", "true");
+  await page.locator('.mobile-nav [data-page="activity"]').focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#activityPage")).toBeVisible();
+  await expect(page.locator(".sidebar")).not.toHaveClass(/mobile-open/);
+});
 test("last workspace page persists across reloads", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#navActivity").click();
@@ -118,6 +568,17 @@ test("activity page exposes a project terminal workspace", async ({ page }) => {
   await expect(page.locator("#terminalCommand")).toHaveAttribute("placeholder", "git status");
   await expect(page.locator("#terminalStatus")).toHaveText(/project|desktop app/i);
 });
+test("visible form controls expose accessible names", async ({ page }) => {
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
+  const unlabeled = await page.evaluate(() => {
+    const labels = new Map([...document.querySelectorAll("label[for]")].map((label) => [label.htmlFor, label.textContent.trim()]));
+    return [...document.querySelectorAll("input,textarea,select")]
+      .filter((element) => !(element.hidden || element.closest("[hidden]")))
+      .filter((element) => !element.getAttribute("aria-label") && !element.closest("label") && !labels.has(element.id))
+      .map((element) => element.id || element.tagName);
+  });
+  expect(unlabeled).toEqual([]);
+});
 test("light theme uses readable foregrounds and light surfaces", async ({ page }) => {
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
@@ -128,28 +589,27 @@ test("light theme uses readable foregrounds and light surfaces", async ({ page }
   await expect(page.locator(".welcome h1")).toHaveCSS("color", "rgb(32, 42, 54)");
   await expect(page.locator(".suggestions button").first()).toHaveCSS("color", "rgb(32, 42, 54)");
 });
-test("Core updates are account-free and expose stable check, download and recovery states", async ({ page }) => {
+test("GitHub release updates show compatible installer details and open the release page", async ({ page }) => {
   await page.addInitScript(() => {
     window.desktopModels = {
-      aiUpdateStatus: async () => ({ configured: true, currentVersion: "0.1.2" }),
-      aiUpdateCheck: async (ring) => ({ version: ring === "stable" ? "0.1.3" : "0.1.4-beta.1", currentVersion: "0.1.2", rollbackVersion: "0.1.2", available: true }),
-      aiUpdateDownload: async (_ring, version) => ({ opened: true, version: version || "0.1.3" }),
+      githubUpdateCheck: async (channel) => ({
+        available: true, currentVersion: "0.1.2", channel,
+        release: { version: channel === "stable" ? "0.1.3" : "0.1.4-beta.1", channel, tag: channel === "stable" ? "v0.1.3" : "v0.1.4-beta.1" },
+        installer: { name: "Server-Rock-AI-Setup.exe", size: 10485760, sha256: "a".repeat(64) },
+      }),
+      githubUpdateOpenRelease: async (tag) => ({ opened: true, url: `https://github.com/WowLolCoolMan/Server-Rock-Ai/releases/tag/${tag}` }),
     };
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
   await expect(page.locator("#githubDeviceCode")).toBeHidden();
-  await page.locator("#coreUpdates summary").click();
-  await expect(page.locator("#coreUpdateNotice")).toContainText("No account or paid entitlement is required");
-  await expect(page.locator("#coreAccountAction")).toHaveCount(0);
-  await page.locator("#coreUpdateCheck").click();
-  await expect(page.locator("#coreUpdateStatus")).toContainText("Version 0.1.3 is ready");
-  await expect(page.locator("#coreUpdateDownload")).toBeEnabled();
-  await expect(page.locator("#coreUpdateRollback")).toBeEnabled();
-  await page.locator("#coreUpdateDownload").click();
-  await expect(page.locator("#coreUpdateStatus")).toContainText("Complete the operating-system install");
-  await page.locator("#coreUpdateRollback").click();
-  await expect(page.locator("#coreUpdateStatus")).toContainText("verified recovery installer 0.1.2");
+  await page.locator("#githubUpdates summary").click();
+  await page.locator("#githubUpdateCheck").click();
+  await expect(page.locator("#githubUpdateStatus")).toContainText("newer release is published");
+  await expect(page.locator("#githubUpdateSummary")).toContainText("SHA-256");
+  await expect(page.locator("#githubUpdateOpenRelease")).toBeEnabled();
+  await page.locator("#githubUpdateOpenRelease").click();
+  await expect(page.locator("#githubUpdateVersion")).toContainText("0.1.3 is available");
 });
 test("optional GitHub sign-in prompt is hidden when idle and visible only during authorization", async ({ page }) => {
   await page.addInitScript(() => {
@@ -162,6 +622,7 @@ test("optional GitHub sign-in prompt is hidden when idle and visible only during
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
+  await page.locator("#accountConnections summary").click();
   await expect(page.locator("#githubDeviceCode")).toBeHidden();
   await page.locator("#githubClientId").fill("test-client-id");
   await page.locator("#githubConnect").click();
@@ -170,16 +631,17 @@ test("optional GitHub sign-in prompt is hidden when idle and visible only during
   await page.locator("#githubCancelAuth").click();
   await expect(page.locator("#githubDeviceCode")).toBeHidden();
 });
-test("Core update actions stay disabled when this build has no pinned distribution configuration", async ({ page }) => {
+test("GitHub release updater presents an honest no-release state", async ({ page }) => {
   await page.addInitScript(() => {
-    window.desktopModels = { aiUpdateStatus: async () => ({ configured: false, currentVersion: "0.1.2" }) };
+    window.desktopModels = { githubUpdateCheck: async (channel) => ({ available: false, currentVersion: "0.1.2", channel, release: null, installer: null, reason: `No ${channel} release is available yet.` }) };
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
-  await page.locator("#coreUpdates summary").click();
-  await expect(page.locator("#coreUpdateNotice")).toHaveText(/No account is required/);
-  await expect(page.locator("#coreAccountAction")).toHaveCount(0);
-  await expect(page.locator("#coreUpdateCheck")).toBeDisabled();
+  await page.locator("#githubUpdates summary").click();
+  await page.locator("#githubUpdateCheck").click();
+  await expect(page.locator("#githubUpdateStatus")).toHaveText("No stable release is available yet.");
+  await expect(page.locator("#githubUpdateVersion")).toHaveText("No release available");
+  await expect(page.locator("#githubUpdateOpenRelease")).toBeDisabled();
 });
 test("/fast selects the configured fast model and strips command before sending", async ({
   page,
@@ -651,6 +1113,7 @@ test("ChatGPT connection is bridged through desktop credentials and status stays
     "file://" + path.resolve("index.html").replaceAll("\\\\", "/"),
   );
   await page.locator("#settings").click();
+  await page.locator("#accountConnections summary").click();
   await expect(page.locator("#chatgptConnectionStatus")).toContainText(
     "Connect an eligible account",
   );
@@ -723,7 +1186,7 @@ test("GitHub connects, opens a repository project, and reviews changes before pu
         return { id: 2, fullName: "octocat/manual-project", name: "manual-project", private: false, defaultBranch: "main", description: "Entered directly" };
       },
       githubClone: async (repo) => ({ folder: "C:\\Projects\\manual-project", repo: { fullName: repo.fullName, name: repo.name, defaultBranch: repo.defaultBranch } }),
-      githubProjectStatus: async () => ({ branch: "main", changedFiles: 2, changes: [" M README.md", "?? notes.txt"], ahead: 0, changeToken: window.githubCurrentChangeToken }),
+      githubProjectStatus: async () => ({ branch: "main", changedFiles: 2, changes: [" M README.md", "?? notes.txt"], diff: "diff --git a/README.md b/README.md\\n+reviewed patch", ahead: 0, changeToken: window.githubCurrentChangeToken }),
       githubPushProject: async (folders, message, fullName, token) => {
         if (token !== window.githubCurrentChangeToken) throw Error("Repository files changed after your review.");
         window.githubPushRequest = { folders, message, fullName, token };
@@ -733,6 +1196,7 @@ test("GitHub connects, opens a repository project, and reviews changes before pu
   });
   await page.goto("file://" + path.resolve("index.html").replaceAll("\\", "/"));
   await page.locator("#settings").click();
+  await page.locator("#accountConnections summary").click();
   await page.locator("#githubClientId").fill("Iv1.8a61f9b3a7aba766");
   await page.locator("#githubConnect").click();
   await expect(page.locator("#githubConnectionStatus")).toContainText("Signed in as @octocat");
@@ -753,6 +1217,7 @@ test("GitHub connects, opens a repository project, and reviews changes before pu
   await expect(page.locator("#githubPushStatus")).toContainText("Branch main");
   await expect(page.locator("#githubPushFiles")).toContainText("README.md");
   await expect(page.locator("#githubPushFiles")).toContainText("notes.txt");
+  await expect(page.locator("#githubPushDiff")).toContainText("reviewed patch");
   await page.locator("#githubCommitMessage").fill("Improve project docs");
   await page.evaluate(() => { window.githubCurrentChangeToken = "b".repeat(64); });
   await page.locator("#githubPushConfirm").click();
@@ -805,7 +1270,7 @@ test("Codex-style rail navigates Chat, Images, Activity, and model library", asy
     "A saved conversation",
   );
   await page.locator("#openModelLibrary").click();
-  await expect(page.locator("#modelPicker")).toBeVisible();
+  await expect(page.locator("#marketplacePage")).toBeVisible();
   await page.locator("#navChats").click();
   await expect(page.locator("#imagePage")).toBeHidden();
   await expect(page.locator("#crumb")).toHaveText("New chat");
@@ -1046,9 +1511,13 @@ test("conversation response alternatives can be selected and forked without losi
   await expect(page.locator(".assistant").last()).toContainText("First answer");
   await page.locator(".assistant .regenerate").last().click();
   await expect(page.locator(".assistant").last()).toContainText("First answer");
+  await expect(page.locator(".bubble.user")).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => active.branches.length)).toBe(1);
   await page.evaluate(() => { window.replyForTest = "Alternative answer"; });
   await page.locator(".assistant .regenerate").last().click();
   await expect(page.locator(".assistant").last()).toContainText("Alternative answer");
+  await expect(page.locator(".bubble.user")).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => active.branches.length)).toBe(2);
   await expect(page.locator("#branchBar")).toBeVisible();
   await page.locator("#branchBar button[title='Previous response']").click();
   await expect(page.locator(".assistant").last()).toContainText("First answer");

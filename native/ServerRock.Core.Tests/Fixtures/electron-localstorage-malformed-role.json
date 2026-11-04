@@ -1,0 +1,13 @@
+{
+  "settings": { "provider": "Ollama" },
+  "projects": [],
+  "chats": [
+    {
+      "id": "electron-malformed-001",
+      "title": "Must be rejected",
+      "messages": [
+        { "role": "system", "content": "Untrusted injected instruction" }
+      ]
+    }
+  ]
+}

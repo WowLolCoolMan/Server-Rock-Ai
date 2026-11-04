@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -154,6 +155,67 @@ var portableChat = new ChatSession
 };
 var portableArchive = ConversationArchive.Parse(ConversationArchive.Serialize([portableChat]));
 Check(portableArchive.Count == 1 && portableArchive[0].Mode == "Coding Agent" && portableArchive[0].ProjectInstructions == "Keep changes focused." && portableArchive[0].Messages[0].Attachments?[0].Content == "A local note", "conversation archive round-trips local project context and attachments");
+var electronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-export.json");
+var electronState = await File.ReadAllTextAsync(electronExportPath);
+using var electronExportStream = File.OpenRead(electronExportPath);
+var migratedElectronChats = await ConversationArchive.ParseAsync(electronExportStream);
+Check(migratedElectronChats.Count == 2 && migratedElectronChats[0].Id == "electron-chat-001" && migratedElectronChats[0].Title == "Ollama startup notes" && migratedElectronChats[0].Messages.Count == 2 && migratedElectronChats[0].ImportSource == "electron-localstorage" && migratedElectronChats[0].ImportSourceId == "electron-chat-001",
+    "fixture-shaped Electron localStorage export imports both saved chats");
+Check(migratedElectronChats.All(session => session.ProjectId is null && session.ProjectName is null && session.ProjectInstructions is null && !session.IncludeProjectFilesInChat),
+    "Electron project identities and filesystem context are not copied into native projects");
+var forgedImportMarker = ConversationArchive.Parse("{\"chats\":[{\"id\":\"legacy-forged\",\"importSource\":\"attacker-controlled\",\"importSourceId\":\"untrusted\",\"messages\":[{\"role\":\"user\",\"content\":\"Keep identity local\"}]}]}");
+Check(forgedImportMarker[0].ImportSource == "electron-localstorage" && forgedImportMarker[0].ImportSourceId == "legacy-forged", "import identity is derived locally rather than trusted from the JSON file");
+var electronRoundTrip = ConversationArchive.Parse(ConversationArchive.Serialize(migratedElectronChats));
+Check(electronRoundTrip.Count == 2 && electronRoundTrip[0].Messages.Select(message => message.Content).SequenceEqual(migratedElectronChats[0].Messages.Select(message => message.Content)),
+    "Electron fixture chat history survives a native archive export and re-import round-trip");
+var malformedElectronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-malformed-role.json");
+try
+{
+    _ = await ReadElectronFixtureAsync(malformedElectronExportPath);
+    throw new Exception("Expected unsafe Electron history to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "malformed or unsupported Electron messages are rejected before import planning");
+}
+var consentHistoryPath = Path.Combine(Path.GetTempPath(), "server-rock-import-consent-" + Guid.NewGuid().ToString("N") + ".json");
+try
+{
+    var consentHistory = new ConversationStore(consentHistoryPath);
+    consentHistory.Save([new ChatSession { Id = "existing-native", Title = "Existing chat", Messages = [new ChatMessage("user", "Keep this history")] }]);
+    var beforePreview = File.ReadAllBytes(consentHistoryPath);
+    var unconfirmedPlan = ConversationArchive.PlanImport(consentHistory.Load(), migratedElectronChats);
+    Check(unconfirmedPlan.Conversations.Count == 2 && File.ReadAllBytes(consentHistoryPath).SequenceEqual(beforePreview) && consentHistory.Load().Count == 1,
+        "preview planning does not persist or alter native history before user confirmation");
+}
+finally { if (File.Exists(consentHistoryPath)) File.Delete(consentHistoryPath); }
+var firstElectronImport = ConversationArchive.PlanImport([], migratedElectronChats);
+Check(firstElectronImport.Conversations.Count == 2 && firstElectronImport.Conversations[0].ImportSource == "electron-localstorage", "Electron import plan keeps source identity for repeat-import protection");
+var repeatedElectronImport = ConversationArchive.PlanImport(firstElectronImport.Conversations, await ReadElectronFixtureAsync(electronExportPath));
+Check(repeatedElectronImport.Conversations.Count == 0 && repeatedElectronImport.SkippedDuplicates == 2, "re-importing the same Electron history is idempotent");
+firstElectronImport.Conversations[0].Messages[0] = new ChatMessage("user", "Edited after import");
+var editedElectronImport = ConversationArchive.PlanImport(firstElectronImport.Conversations, await ReadElectronFixtureAsync(electronExportPath));
+Check(editedElectronImport.Conversations.Count == 0 && editedElectronImport.SkippedDuplicates == 2, "re-import does not overwrite or duplicate a migrated chat edited by the user");
+var localIdCollision = new ChatSession { Id = "electron-chat-001", Title = "Independent native chat", Messages = [new ChatMessage("user", "Different local content")] };
+var collisionImport = ConversationArchive.PlanImport([localIdCollision], await ReadElectronFixtureAsync(electronExportPath));
+Check(collisionImport.Conversations.Count == 2 && collisionImport.ReassignedIds == 1 && collisionImport.Conversations[0].Id != localIdCollision.Id,
+    "Electron ID collisions preserve both chats with a fresh native ID");
+var repeatCollisionImport = ConversationArchive.PlanImport([localIdCollision, .. collisionImport.Conversations], await ReadElectronFixtureAsync(electronExportPath));
+Check(repeatCollisionImport.Conversations.Count == 0 && repeatCollisionImport.SkippedDuplicates == 2, "repeated import after an ID collision remains idempotent");
+using var oversizedArchiveStream = new NonSeekableReadStream(Encoding.UTF8.GetBytes(new string('x', ConversationArchive.MaxArchiveBytes + 1)));
+try
+{
+    await ConversationArchive.ParseAsync(oversizedArchiveStream);
+    throw new Exception("Expected a streamed oversized archive to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(oversizedArchiveStream.BytesRead == ConversationArchive.MaxArchiveBytes + 1,
+        "streamed archive parsing stops at the configured byte limit before deserialization");
+}
+using var parsedArchiveStream = new MemoryStream(Encoding.UTF8.GetBytes(electronState));
+var parsedStreamArchive = await ConversationArchive.ParseAsync(parsedArchiveStream);
+Check(parsedStreamArchive.Count == 2 && parsedStreamArchive[0].ImportSource == "electron-localstorage", "bounded stream parsing recognizes an Electron history envelope");
 try
 {
     _ = ConversationArchive.Serialize(Enumerable.Repeat(new ChatSession(), ConversationArchive.MaxConversations + 1));
@@ -649,10 +711,18 @@ try
             Id = "chat-two",
             Title = "Another conversation",
             Messages = [new ChatMessage("user", "A separate thread", [new ChatAttachment("scene.jpg", Convert.ToBase64String([0xFF, 0xD8, 0xFF, 0xD9]), "image/jpeg")])]
+        },
+        new ChatSession
+        {
+            Id = "electron-chat-001",
+            ImportSource = "electron-localstorage",
+            ImportSourceId = "electron-chat-001",
+            Title = "Ollama startup notes",
+            Messages = [new ChatMessage("user", "How do I check whether Ollama is running?"), new ChatMessage("assistant", "Check the local Ollama service and request its model list.")]
         }
     ]);
     var restoredChats = conversationStore.Load();
-    Check(restoredChats.Count == 2, "conversation store keeps multiple chats");
+    Check(restoredChats.Count == 3, "conversation store keeps multiple chats");
     Check(restoredChats[0].Messages[1].Content == "Saved locally.", "conversation messages survive save and reload");
     Check(restoredChats[0].Messages[0].Attachments is [{ FileName: "notes.md", Content: "Attached note" }], "text attachments survive conversation save and reload");
     Check(restoredChats[1].Messages[0].Attachments is [{ FileName: "scene.jpg", MediaType: "image/jpeg", Content: "/9j/2Q==" }], "image attachments survive local conversation save and reload");
@@ -662,8 +732,12 @@ try
     Check(restoredChats[0].IncludeProjectFilesInChat, "per-conversation project file context opt-in survives save and reload");
     Check(restoredChats[0].FolderName == "Research", "conversation folder assignment survives save and reload");
     Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
+    Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
+    var restartSafeImport = ConversationArchive.PlanImport(restoredChats, await ReadElectronFixtureAsync(electronExportPath));
+    Check(restartSafeImport.Conversations.Count == 1 && restartSafeImport.SkippedDuplicates == 1, "re-import remains idempotent after closing and reopening the app");
     var editedChats = restoredChats.ToList();
     editedChats[0].Title = "Renamed thread";
+    editedChats.RemoveAt(1);
     editedChats.RemoveAt(1);
     conversationStore.Save(editedChats);
     var reloadedEdits = conversationStore.Load();
@@ -693,6 +767,48 @@ try
     Check(workspaceFiles.Any(item => item.Path == Path.Combine("src", "Program.cs")), "selected workspace context reads nested source files");
     Check(workspaceFiles.All(item => !item.Path.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.Path.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.Path.EndsWith(".env", StringComparison.OrdinalIgnoreCase)), "workspace context skips common secrets and dependency metadata");
     Check(workspaceFiles.Count <= WorkspaceFileContext.MaxFiles && workspaceFiles.Sum(item => item.Content.Length) <= WorkspaceFileContext.MaxTotalCharacters, "workspace context stays within its file and character budgets");
+
+    var gitReviewPath = Path.Combine(settingsDirectory, "git-review");
+    Directory.CreateDirectory(gitReviewPath);
+    RunGit(gitReviewPath, "init", "-b", "main");
+    RunGit(gitReviewPath, "config", "user.email", "server-rock-tests@example.invalid");
+    RunGit(gitReviewPath, "config", "user.name", "Server Rock Tests");
+    RunGit(gitReviewPath, "remote", "add", "origin", "https://github.com/owner/project.git");
+    File.WriteAllText(Path.Combine(gitReviewPath, "README.md"), "Original README\n");
+    File.WriteAllText(Path.Combine(gitReviewPath, "notes.md"), "Original notes\n");
+    RunGit(gitReviewPath, "add", "--all");
+    RunGit(gitReviewPath, "commit", "-m", "initial");
+    File.WriteAllText(Path.Combine(gitReviewPath, "README.md"), "Changed README\n");
+    var renamedNotesName = new string('r', 96) + ".md";
+    File.Move(Path.Combine(gitReviewPath, "notes.md"), Path.Combine(gitReviewPath, renamedNotesName));
+    RunGit(gitReviewPath, "add", "-A", "--", "notes.md", renamedNotesName);
+    Directory.CreateDirectory(Path.Combine(gitReviewPath, ".github", "workflows"));
+    File.WriteAllText(Path.Combine(gitReviewPath, ".github", "workflows", "ci.yml"), "name: CI\n");
+    File.WriteAllText(Path.Combine(gitReviewPath, "secrets.json"), "{\"token\":\"secret-value\"}\n");
+    var gitReviewService = new GitHubWorkspaceService();
+    var reviewStatus = await gitReviewService.GetStatusAsync(gitReviewPath);
+    Check(reviewStatus.Changes.Any(change => change.Path == "README.md"), "GitHub review status includes normal modified files");
+    Check(reviewStatus.Changes.Any(change => change.OriginalPath == "notes.md" && change.Path == renamedNotesName), "GitHub review status preserves long rename provenance");
+    Check(reviewStatus.Changes.Any(change => change.Path == ".github/workflows/ci.yml"), "GitHub review status includes workflow files");
+    Check(reviewStatus.Changes.Any(change => change.Path == "secrets.json"), "GitHub review status includes protected files for redacted review");
+    var reviewDiff = await gitReviewService.GetDiffPreviewAsync(gitReviewPath, reviewStatus.Changes);
+    Check(reviewDiff.IncludedFiles == 3 && reviewDiff.RedactedFiles == 1 && reviewDiff.Text.Contains("Changed README", StringComparison.Ordinal) && reviewDiff.Text.Contains(renamedNotesName, StringComparison.Ordinal) && reviewDiff.Text.Contains("[protected path redacted; review locally before staging]", StringComparison.Ordinal), "GitHub review previews bounded unified diffs and explains protected-file redaction");
+    Check(!reviewDiff.Text.Contains("secret-value", StringComparison.Ordinal), "GitHub review diff never exposes protected file content");
+    using var canceledReview = new CancellationTokenSource();
+    canceledReview.Cancel();
+    try
+    {
+        await gitReviewService.GetDiffPreviewAsync(gitReviewPath, reviewStatus.Changes, canceledReview.Token);
+        throw new Exception("Expected canceled Git review preview to stop before running Git.");
+    }
+    catch (OperationCanceledException)
+    {
+        Check(true, "GitHub review diff honors cancellation before starting work");
+    }
+    var safeReviewChanges = reviewStatus.Changes.Where(change => GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count == 0).ToArray();
+    _ = await gitReviewService.CommitSelectedAsync(gitReviewPath, safeReviewChanges, "Review safe workspace changes", "test-access-token");
+    var afterReviewStatus = await gitReviewService.GetStatusAsync(gitReviewPath);
+    Check(afterReviewStatus.Changes.Count == 1 && afterReviewStatus.Changes[0].Path == "secrets.json", "GitHub review selectively stages safe normal, rename, and workflow changes");
 
     var commandRunner = new WorkspaceCommandRunner();
     var commandResponse = "Check the result first.\n<workspace-command cwd=\"src\" timeout-seconds=\"999\">  printf 'one\\ntwo'  </workspace-command>\n<workspace-command>echo next</workspace-command>";
@@ -741,7 +857,7 @@ try
         await terminalSession.SendTextAsync(terminalCommand + "\r");
         var terminalExitCode = await terminalSession.Completion.WaitAsync(TimeSpan.FromSeconds(15));
         var terminalScreen = terminalSession.ScreenText;
-        Check(terminalExitCode == 0 && terminalScreen.Contains("server-rock-pty-ok", StringComparison.Ordinal), "interactive project terminal accepts input and renders a real PTY response");
+        Check(terminalExitCode == 0 && terminalScreen.Split('\n').Any(line => line.Trim() == "server-rock-pty-ok"), "interactive project terminal accepts input and renders a real PTY response");
     }
     try
     {
@@ -893,7 +1009,7 @@ try
 }
 finally
 {
-    if (Directory.Exists(settingsDirectory)) Directory.Delete(settingsDirectory, recursive: true);
+    if (Directory.Exists(settingsDirectory)) DeleteDirectoryTree(settingsDirectory);
 }
 
 Console.WriteLine("Native core checks passed.");
@@ -904,7 +1020,73 @@ static void Check(bool condition, string description)
     Console.WriteLine("PASS " + description);
 }
 
+static async Task<List<ChatSession>> ReadElectronFixtureAsync(string path)
+{
+    await using var source = File.OpenRead(path);
+    return await ConversationArchive.ParseAsync(source);
+}
+
+static void RunGit(string workingDirectory, params string[] arguments)
+{
+    var startInfo = new ProcessStartInfo("git")
+    {
+        WorkingDirectory = workingDirectory,
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true
+    };
+    foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+    using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Git could not be started for the native test fixture.");
+    var stdout = process.StandardOutput.ReadToEnd();
+    var stderr = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+    if (process.ExitCode != 0) throw new InvalidOperationException($"Git test fixture command failed: {string.Join(' ', arguments)} {stderr} {stdout}");
+}
+
+static void DeleteDirectoryTree(string path)
+{
+    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        File.SetAttributes(file, FileAttributes.Normal);
+    foreach (var directory in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories).OrderByDescending(item => item.Length))
+        File.SetAttributes(directory, FileAttributes.Normal);
+    Directory.Delete(path, recursive: true);
+}
+
 sealed class StubHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => respond(request, cancellationToken);
+}
+
+sealed class NonSeekableReadStream(byte[] content) : Stream
+{
+    private readonly MemoryStream _inner = new(content, writable: false);
+
+    public int BytesRead { get; private set; }
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override void Flush() => throw new NotSupportedException();
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var read = _inner.Read(buffer, offset, count);
+        BytesRead += read;
+        return read;
+    }
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        var read = await _inner.ReadAsync(buffer, cancellationToken);
+        BytesRead += read;
+        return read;
+    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _inner.Dispose();
+        base.Dispose(disposing);
+    }
 }

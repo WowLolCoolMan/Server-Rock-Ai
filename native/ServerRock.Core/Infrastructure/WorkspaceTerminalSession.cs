@@ -114,8 +114,19 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
     private void OnProcessExited(object? sender, PtyExitedEventArgs args)
     {
         ExitCode = args.ExitCode;
-        _completed.TrySetResult(ExitCode);
         ScreenChanged?.Invoke(this, EventArgs.Empty);
+        _ = CompleteAfterProcessExitAsync();
+    }
+
+    private async Task CompleteAfterProcessExitAsync()
+    {
+        var readLoop = _readLoop;
+        if (readLoop is not null)
+        {
+            try { await Task.WhenAny(readLoop, Task.Delay(TimeSpan.FromMilliseconds(500))).ConfigureAwait(false); }
+            catch (Exception) { }
+        }
+        _completed.TrySetResult(ExitCode);
     }
 
     private async Task ReadOutputAsync(CancellationToken cancellationToken)
