@@ -494,3 +494,10 @@ test("every dependency install script has an explicit allowScripts decision", as
   // Electron 45 downloads its runtime on first launch, so it needs no install script.
   expect(withScripts.has("electron")).toBe(false);
 });
+
+// The Linux .deb build fails without a maintainer email ("Please specify
+// author 'email'"), which stopped tagged releases at the Linux package jobs.
+test("Linux packages declare a maintainer with an email address", async () => {
+  const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8"));
+  expect(pkg.build.linux.maintainer).toMatch(/^[^<>]+ <[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+>$/);
+});

@@ -64,7 +64,8 @@
         "AppImage",
         "deb",
         "tar.gz"
-      ]
+      ],
+      "maintainer": "Server Rock <112198324+Moidberger@users.noreply.github.com>"
     },
     "mac": {
       "target": [
