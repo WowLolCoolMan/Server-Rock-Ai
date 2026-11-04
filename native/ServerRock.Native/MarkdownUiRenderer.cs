@@ -2,6 +2,7 @@ using System.Xml.Linq;
 using Markdig;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
@@ -185,10 +186,13 @@ internal static class MarkdownUiRenderer
             FontFamily = new FontFamily("monospace"),
             FontSize = 13,
             Foreground = Brush(38, 56, 62),
-            TextWrapping = TextWrapping.Wrap,
+            // Preserve code indentation and long tokens. The containing viewer
+            // provides horizontal scrolling instead of reflowing source lines.
+            TextWrapping = TextWrapping.NoWrap,
             IsTextSelectionEnabled = true,
             LineHeight = 19
         };
+        AutomationProperties.SetName(body, $"{language} code block");
         var copy = new Button
         {
             Content = "Copy",
@@ -200,6 +204,8 @@ internal static class MarkdownUiRenderer
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7)
         };
+        AutomationProperties.SetName(copy, $"Copy {language} code");
+        AutomationProperties.SetHelpText(copy, "Copies the complete code block to the clipboard.");
         copy.Click += (_, _) =>
         {
             try
@@ -215,7 +221,18 @@ internal static class MarkdownUiRenderer
         header.Children.Add(new TextBlock { Text = language, FontSize = 11, Foreground = Brush(105, 126, 132), VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(copy, 1);
         header.Children.Add(copy);
-        var stack = new StackPanel { Spacing = 8, Children = { header, body } };
+        var codeScroller = new ScrollViewer
+        {
+            Content = body,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollMode = ScrollMode.Enabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            IsTabStop = true,
+            MaxHeight = 520
+        };
+        AutomationProperties.SetName(codeScroller, $"Scroll {language} code horizontally");
+        AutomationProperties.SetHelpText(codeScroller, "Use the horizontal scrollbar, mouse wheel, or keyboard to view long source lines.");
+        var stack = new StackPanel { Spacing = 8, Children = { header, codeScroller } };
         parent.Children.Add(new Border
         {
             Background = Brush(248, 250, 250),

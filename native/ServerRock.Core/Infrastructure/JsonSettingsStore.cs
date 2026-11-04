@@ -20,12 +20,32 @@ public sealed class JsonSettingsStore
     {
         try
         {
-            if (File.Exists(_path)) return JsonSerializer.Deserialize<AppSettings>(BoundedFileReader.ReadText(_path), Options) ?? new AppSettings();
+            if (File.Exists(_path)) return Normalize(JsonSerializer.Deserialize<AppSettings>(BoundedFileReader.ReadText(_path), Options) ?? new AppSettings());
         }
         catch (JsonException) { PreserveCorruptSettings(); }
         catch (InvalidDataException) { PreserveCorruptSettings(); }
         catch (IOException) { }
         return new AppSettings();
+    }
+
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        // Settings are user-local JSON and older versions or manual recovery can
+        // legitimately contain explicit nulls. Keep optional project fields null,
+        // but restore required strings and collections before UI code reads them.
+        var defaults = new AppSettings();
+        settings.Endpoint ??= defaults.Endpoint;
+        settings.Model ??= defaults.Model;
+        settings.ModelProvider ??= defaults.ModelProvider;
+        settings.VisionApiFormat ??= defaults.VisionApiFormat;
+        settings.ComfyEndpoint ??= defaults.ComfyEndpoint;
+        settings.ImageWorkflow ??= defaults.ImageWorkflow;
+        settings.GitHubAppClientId ??= defaults.GitHubAppClientId;
+        settings.PinnedModels ??= [];
+        settings.PinnedModelConnections ??= [];
+        settings.LocalModelPerformance ??= new(StringComparer.OrdinalIgnoreCase);
+        settings.ChatFolders ??= [];
+        return settings;
     }
 
     public void Save(AppSettings settings)

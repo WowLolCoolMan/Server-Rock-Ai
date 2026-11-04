@@ -1,4 +1,5 @@
 node_modules/
+electron/update-config.generated.cjs
 dist/
 release/
 release-check*/
@@ -11,3 +12,4 @@ native/**/obj/
 *.log
 test-results/
 playwright-report/
+.ui-shots/

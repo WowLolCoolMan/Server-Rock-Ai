@@ -20,14 +20,6 @@ public partial class App : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainWindow = new Window();
-#if DEBUG
-        // Keep the shipped interface clean and avoid starting the optional HotDesign
-        // accessibility overlay unless a developer explicitly opts in.
-        if (Environment.GetEnvironmentVariable("SERVERROCK_ENABLE_UNO_STUDIO") == "1")
-            MainWindow.UseStudio();
-#endif
-
-
         // Do not repeat app initialization when the Window already has content,
         // just ensure that the window is active
         if (MainWindow.Content is not Frame rootFrame)

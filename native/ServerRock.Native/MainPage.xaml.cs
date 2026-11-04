@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
@@ -37,6 +38,7 @@ public sealed partial class MainPage : Page
     private readonly List<ChatMessage> _messages = [];
     private readonly OpenAiCompatibleProvider _provider = new();
     private readonly ModelLibraryService _modelLibrary = new();
+    private readonly ComfyImageProvider _comfyImageProvider = new();
     private readonly WebSearchProvider _webSearchProvider = new();
     private readonly JsonSettingsStore _settingsStore = new();
     private readonly ConversationStore _conversationStore = new();
@@ -61,6 +63,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _collapsedChatFolders = new(StringComparer.OrdinalIgnoreCase);
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
+    private bool _compactNavigation;
     private bool _historyAvailable = true;
     private bool _projectsAvailable = true;
     private bool _undoHistoryAvailable = true;
@@ -76,9 +79,16 @@ public sealed partial class MainPage : Page
     private CancellationTokenSource? _modelBenchmarkCancellation;
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
 
+    // Match the minimum practical desktop window width imposed by the current
+    // chat controls, so a split-window layout can still open navigation as a drawer.
+    private const double CompactNavigationBreakpoint = 1200;
+
     public MainPage()
     {
         InitializeComponent();
+        Canvas.SetZIndex(SidebarBackdrop, 1);
+        Canvas.SetZIndex(Sidebar, 2);
+        ApplyResponsiveNavigation(AppRoot.ActualWidth);
         _runtimeStatusTimer.Tick += (_, _) =>
         {
             _runtimeStatusTimer.Stop();
@@ -153,8 +163,44 @@ public sealed partial class MainPage : Page
 
     private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
 
-    private async void ExportChatsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ExportChatsAsync);
-    private async void ImportChatsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImportChatsAsync);
+    private void AppRootSizeChanged(object sender, SizeChangedEventArgs e) => ApplyResponsiveNavigation(e.NewSize.Width);
+
+    private void ApplyResponsiveNavigation(double width)
+    {
+        if (width <= 0) return;
+        var compact = width < CompactNavigationBreakpoint;
+        if (_compactNavigation == compact) return;
+
+        _compactNavigation = compact;
+        AppRoot.ColumnDefinitions[0].Width = new GridLength(compact ? 0 : 276);
+        Grid.SetColumnSpan(Sidebar, compact ? 2 : 1);
+        Sidebar.Width = compact ? 276 : double.NaN;
+        Sidebar.HorizontalAlignment = compact ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+        Sidebar.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+        SidebarBackdrop.Visibility = Visibility.Collapsed;
+        ToggleSidebarButton.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ToggleSidebarClick(object sender, RoutedEventArgs e)
+    {
+        if (!_compactNavigation) return;
+        Sidebar.Visibility = Visibility.Visible;
+        SidebarBackdrop.Visibility = Visibility.Visible;
+        NewConversationButton.Focus(FocusState.Programmatic);
+    }
+
+    private void CloseSidebarClick(object sender, RoutedEventArgs e) => CloseCompactSidebar();
+
+    private void CloseCompactSidebar()
+    {
+        if (!_compactNavigation) return;
+        Sidebar.Visibility = Visibility.Collapsed;
+        SidebarBackdrop.Visibility = Visibility.Collapsed;
+        ToggleSidebarButton.Focus(FocusState.Programmatic);
+    }
+
+    private async void ExportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ExportChatsAsync); }
+    private async void ImportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ImportChatsAsync); }
 
     private async Task ExportChatsAsync()
     {
@@ -224,23 +270,30 @@ public sealed partial class MainPage : Page
             var file = await picker.PickSingleFileAsync();
             if (file is null) return;
             var properties = await file.GetBasicPropertiesAsync();
-            if (properties.Size > 100 * 1024 * 1024)
+            if (properties.Size > ConversationArchive.MaxArchiveBytes)
             {
-                RuntimeStatus.Text = "This archive is larger than the 100 MB file limit.";
+                RuntimeStatus.Text = "This archive is larger than the 25 MB import limit.";
                 return;
             }
-            var imported = ConversationArchive.Parse(await Windows.Storage.FileIO.ReadTextAsync(file));
-            if (imported.Count == 0)
+            await using var archiveStream = await file.OpenStreamForReadAsync();
+            var incoming = await ConversationArchive.ParseAsync(archiveStream);
+            if (incoming.Count == 0)
             {
                 RuntimeStatus.Text = "The selected archive contains no conversations.";
                 return;
             }
-            var knownIds = _sessions.Select(session => session.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var duplicateIds = imported.Count(session => !knownIds.Add(session.Id));
+            var plan = ConversationArchive.PlanImport(_sessions, incoming);
+            if (plan.Conversations.Count == 0)
+            {
+                RuntimeStatus.Text = $"No chats added. This file contains {plan.SkippedDuplicates} conversation(s) already in your history.";
+                return;
+            }
+            var previewTitles = string.Join("\n", plan.Conversations.Take(5).Select(session => $"• {session.Title}"));
+            if (plan.Conversations.Count > 5) previewTitles += $"\n• and {plan.Conversations.Count - 5} more";
             var dialog = new ContentDialog
             {
                 Title = "Import conversations?",
-                Content = $"Add {imported.Count} conversation(s) from {file.Name} to this device? Existing chats stay in place. {duplicateIds} ID collision(s) will be imported as new chats. Review imported content before sending it to a model or attaching it to a project.",
+                Content = $"File: {file.Name}\n\nChats to add: {plan.Conversations.Count}\nAlready present: {plan.SkippedDuplicates}\nID conflicts kept as separate chats: {plan.ReassignedIds}\n\nPreview:\n{previewTitles}\n\nImport accepts native chat archives and Electron localStorage JSON exports. It leaves existing history and the selected file unchanged. Electron exports retain chat titles and messages, but their project links, folder paths, provider settings, credentials, archive flags, and fork metadata are not imported. Native archives retain supported per-chat context. The app does not read an Electron browser profile automatically. Review the added chats before sending them to a model.",
                 PrimaryButtonText = "Import chats",
                 CloseButtonText = "Cancel",
                 XamlRoot = XamlRoot
@@ -248,23 +301,22 @@ public sealed partial class MainPage : Page
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             SaveCurrentSession();
             if (!_historyAvailable) return;
-            var ids = _sessions.Select(session => session.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (var session in imported)
+            // Re-plan after saving the active chat so the import remains idempotent even
+            // if the active conversation changed between preview and confirmation.
+            plan = ConversationArchive.PlanImport(_sessions, plan.Conversations);
+            if (plan.Conversations.Count == 0)
             {
-                if (!ids.Add(session.Id))
-                {
-                    session.Id = Guid.NewGuid().ToString("N");
-                    ids.Add(session.Id);
-                }
+                RuntimeStatus.Text = "No chats added. The selected conversations are already in your history.";
+                return;
             }
-            _sessions.AddRange(imported);
+            _sessions.AddRange(plan.Conversations);
             if (!PersistConversationEdits())
             {
-                _sessions.RemoveAll(session => imported.Contains(session));
+                _sessions.RemoveAll(session => plan.Conversations.Contains(session));
                 RenderRecent();
                 return;
             }
-            RuntimeStatus.Text = $"Imported {imported.Count} conversation(s) from {file.Name}.";
+            RuntimeStatus.Text = $"Imported {plan.Conversations.Count} conversation(s) from {file.Name}; skipped {plan.SkippedDuplicates} already present.";
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Could not import chats: {ex.Message}"; }
     }
@@ -286,8 +338,36 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = destination switch { "images" => "Image generation is not connected yet", "activity" => "Recent conversations are being migrated", _ => $"⌖　{_settings.Endpoint}" };
     }
 
-    private async void ChatModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("ChatBot"));
-    private async void CodingModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("Coding Agent"));
+    private async void ChatModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("ChatBot")); }
+    private async void CodingModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("Coding Agent")); }
+
+    private void AppKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Escape && _compactNavigation && Sidebar.Visibility == Visibility.Visible)
+        {
+            e.Handled = true;
+            CloseCompactSidebar();
+            return;
+        }
+
+        var controlPressed = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        if (controlPressed && e.Key == Windows.System.VirtualKey.L)
+        {
+            e.Handled = true;
+            PromptBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        if (e.Key == Windows.System.VirtualKey.Escape && CommandHintPanel.Visibility == Visibility.Visible)
+        {
+            e.Handled = true;
+            CommandHintPanel.Visibility = Visibility.Collapsed;
+            _selectedSlashSuggestion = -1;
+            PromptBox.Focus(FocusState.Programmatic);
+        }
+    }
 
     private async Task SwitchModeAsync(string selected)
     {
@@ -789,7 +869,7 @@ public sealed partial class MainPage : Page
             (System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address));
     }
 
-    private async void NewProjectClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(NewProjectClickAsync);
+    private async void NewProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(NewProjectClickAsync); }
 
     private async Task NewProjectClickAsync()
     {
@@ -905,6 +985,7 @@ public sealed partial class MainPage : Page
 
     private void ProjectActionsClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (_requestCancellation is not null)
         {
             RuntimeStatus.Text = "Wait for the response to finish before changing project settings.";
@@ -1079,7 +1160,7 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = $"Project “{project.Name}” removed. Its saved chats and disk folders remain untouched.";
     }
 
-    private async void ProjectClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => ProjectClickAsync(sender));
+    private async void ProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => ProjectClickAsync(sender)); }
 
     private async Task ProjectClickAsync(object sender)
     {
@@ -1222,6 +1303,7 @@ public sealed partial class MainPage : Page
 
     private void NewChatClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (_requestCancellation is not null)
         {
             CancelRequest();
@@ -1348,7 +1430,7 @@ public sealed partial class MainPage : Page
         return row;
     }
 
-    private async void RecentClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => RecentClickAsync(sender));
+    private async void RecentClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => RecentClickAsync(sender)); }
 
     private async Task RecentClickAsync(object sender)
     {
@@ -1401,6 +1483,7 @@ public sealed partial class MainPage : Page
 
     private void RecentActionsClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (sender is not Button { Tag: string sessionId }) return;
         if (_requestCancellation is not null)
         {
@@ -1436,7 +1519,7 @@ public sealed partial class MainPage : Page
         menu.ShowAt((FrameworkElement)sender);
     }
 
-    private async void NewChatFolderClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(CreateChatFolderAsync);
+    private async void NewChatFolderClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(CreateChatFolderAsync); }
 
     private async Task CreateChatFolderAsync()
     {
@@ -2675,7 +2758,7 @@ public sealed partial class MainPage : Page
         return panel;
     }
 
-    private async void ModelClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ModelLibraryClickAsync);
+    private async void ModelClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ModelLibraryClickAsync); }
 
     private async Task ModelClickAsync() => await ModelLibraryClickAsync();
 
@@ -2762,8 +2845,8 @@ public sealed partial class MainPage : Page
     private async Task ModelLibraryClickAsync()
     {
         var source = new ComboBox { MinWidth = 220 };
+        source.Items.Add("AI SuperMarket · Hugging Face GGUF");
         source.Items.Add("Installed models");
-        source.Items.Add("Hugging Face · GGUF");
         source.Items.Add("Ollama Library");
         source.Items.Add("ModelScope · GGUF");
         source.SelectedIndex = 0;
@@ -2771,7 +2854,7 @@ public sealed partial class MainPage : Page
         catalogMode.Items.Add("Regular models");
         catalogMode.Items.Add("Uncensored / abliterated");
         catalogMode.SelectedIndex = 0;
-        var query = new TextBox { PlaceholderText = "Search models or enter a model ID", MinWidth = 280 };
+        var query = new TextBox { PlaceholderText = "Search models by name or capability", MinWidth = 280 };
         var search = new Button { Content = "Search / refresh", MinWidth = 108 };
         var pin = new Button { Content = "Pin / unpin", MinWidth = 88 };
         var benchmark = new Button { Content = "Benchmark selected", MinWidth = 130 };
@@ -2782,7 +2865,7 @@ public sealed partial class MainPage : Page
         var actionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { query, search } };
         var dialog = new ContentDialog
         {
-            Title = "Model library",
+            Title = "AI SuperMarket",
             PrimaryButtonText = "Use selected",
             CloseButtonText = "Done",
             XamlRoot = XamlRoot,
@@ -2791,7 +2874,7 @@ public sealed partial class MainPage : Page
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = "All installed models stay here. Pin a few for quick switching beside the composer. Run the same short local prompt on a model to compare this PC’s speed.", TextWrapping = TextWrapping.Wrap },
+                    new TextBlock { Text = "Browse popular local models, search by capability, and download compatible GGUF models through a local runtime. Installed models can be pinned for quick switching and benchmarked on this PC.", TextWrapping = TextWrapping.Wrap },
                     source,
                     catalogMode,
                     actionRow,
@@ -2809,13 +2892,13 @@ public sealed partial class MainPage : Page
             catalogSearchCancellation = searchCancellation;
             previousSearch?.Cancel();
             var cancellationToken = searchCancellation.Token;
-            dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 0;
-            pin.IsEnabled = source.SelectedIndex == 0;
-            catalogMode.Visibility = source.SelectedIndex is 1 or 3 ? Visibility.Visible : Visibility.Collapsed;
+            dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
+            pin.IsEnabled = source.SelectedIndex == 1;
+            catalogMode.Visibility = source.SelectedIndex is 0 or 3 ? Visibility.Visible : Visibility.Collapsed;
             status.Text = source.SelectedIndex switch
             {
-                0 => "Checking installed models on local runtimes…",
-                1 => "Searching Hugging Face GGUF models…",
+                0 => "Loading popular Hugging Face GGUF models for local runtimes…",
+                1 => "Checking installed models on local runtimes…",
                 2 => "Enter an Ollama model ID, then choose Download selected.",
                 3 => "Searching ModelScope GGUF models…",
                 _ => ""
@@ -2827,7 +2910,7 @@ public sealed partial class MainPage : Page
             try
             {
                 var choice = source.SelectedIndex;
-                if (choice == 0)
+                if (choice == 1)
                 {
                     var models = await _modelLibrary.DiscoverLocalModelsAsync(_settings.Endpoint, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
@@ -2849,11 +2932,11 @@ public sealed partial class MainPage : Page
                     var hostCount = choices.Select(choice => choice.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).Count();
                     status.Text = $"{choices.Length} installed model(s) found across {hostCount} local runtime(s). Performance is measured from completed responses on this device; tokens/second is estimated from response length.";
                 }
-                else if (choice == 1)
+                else if (choice == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(query.Text)) { status.Text = "Enter a model name to search Hugging Face GGUF repositories."; return; }
+                    var searchText = string.IsNullOrWhiteSpace(query.Text) ? "instruct" : query.Text.Trim();
                     var uncensored = catalogMode.SelectedIndex == 1;
-                    var models = await _modelLibrary.SearchHuggingFaceAsync(query.Text, uncensored, cancellationToken);
+                    var models = await _modelLibrary.SearchHuggingFaceAsync(searchText, uncensored, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                     var choices = models.Select(model => new CatalogModelChoice(model,
                         $"{model.Id}   ·   {model.Downloads:N0} downloads" + (model.IsUncensored ? "   ·   Explicit uncensored / abliterated label" : ""))).ToArray();
@@ -2861,7 +2944,9 @@ public sealed partial class MainPage : Page
                     list.ItemsSource = choices;
                     status.Text = uncensored
                         ? $"Found {models.Count} GGUF repositories with explicit uncensored/abliterated labels. Labels come from repository IDs and tags and do not guarantee model behavior."
-                        : $"Found {models.Count} regular GGUF repositories; explicitly labeled uncensored/abliterated results are excluded. Hugging Face download uses the configured LM Studio server.";
+                        : string.IsNullOrWhiteSpace(query.Text)
+                            ? $"Showing {models.Count} popular chat-ready GGUF repositories. Search by name or capability to refine the catalog. Downloads use the configured LM Studio server."
+                            : $"Found {models.Count} regular GGUF repositories; explicitly labeled uncensored/abliterated results are excluded. Hugging Face download uses the configured LM Studio server.";
                 }
                 else if (choice == 3)
                 {
@@ -2899,7 +2984,7 @@ public sealed partial class MainPage : Page
         }
         search.Click += async (_, _) => await RefreshOrSearchAsync();
         source.SelectionChanged += async (_, _) => await RefreshOrSearchAsync();
-        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 1 or 3) await RefreshOrSearchAsync(); };
+        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 0 or 3) await RefreshOrSearchAsync(); };
         pin.Click += (_, _) =>
         {
             if (list.SelectedItem is not InstalledModelChoice selected) { status.Text = "Select an installed model first."; return; }
@@ -2930,7 +3015,7 @@ public sealed partial class MainPage : Page
         {
             var selected = list.SelectedItem as InstalledModelChoice;
             pin.Content = selected is not null && ((_settings.PinnedModelConnections ?? []).Any(model => model.Model.Equals(selected.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(selected.Endpoint, StringComparison.OrdinalIgnoreCase)) || (selected.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase) && (_settings.PinnedModels ?? []).Contains(selected.Model, StringComparer.OrdinalIgnoreCase))) ? "Unpin" : "Pin";
-            benchmark.IsEnabled = source.SelectedIndex == 0 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
+            benchmark.IsEnabled = source.SelectedIndex == 1 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
         };
         stopBenchmark.Click += (_, _) => _modelBenchmarkCancellation?.Cancel();
         benchmark.Click += async (_, _) =>
@@ -2993,11 +3078,11 @@ public sealed partial class MainPage : Page
                 cancellation.Dispose();
                 _modelBenchmarkCancellation = null;
                 stopBenchmark.IsEnabled = false;
-                benchmark.IsEnabled = source.SelectedIndex == 0 && list.SelectedItem is InstalledModelChoice finalChoice && IsLocalEndpoint(finalChoice.Endpoint);
+                benchmark.IsEnabled = source.SelectedIndex == 1 && list.SelectedItem is InstalledModelChoice finalChoice && IsLocalEndpoint(finalChoice.Endpoint);
                 source.IsEnabled = true;
                 search.IsEnabled = true;
-                pin.IsEnabled = source.SelectedIndex == 0;
-                dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 0;
+                pin.IsEnabled = source.SelectedIndex == 1;
+                dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
             }
         };
         dialog.Closed += (_, _) =>
@@ -3009,7 +3094,7 @@ public sealed partial class MainPage : Page
         while (true)
         {
             await RefreshOrSearchAsync();
-            if (source.SelectedIndex == 0)
+            if (source.SelectedIndex == 1)
                 list.SelectedItem = (list.ItemsSource as IEnumerable<InstalledModelChoice>)?.FirstOrDefault(item => item.Model.Equals(_settings.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase));
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
@@ -3024,7 +3109,7 @@ public sealed partial class MainPage : Page
             {
                 status.Text = "Starting model download… Keep the app open while the local runtime installs it.";
                 RuntimeStatus.Text = status.Text;
-                if (source.SelectedIndex == 1)
+                if (source.SelectedIndex == 0)
                 {
                     var endpoint = await GetRuntimeEndpointAsync("LM Studio");
                     await _modelLibrary.DownloadFromHuggingFaceAsync(endpoint, selectedId, onProgress: progress => RuntimeStatus.Text = progress);
@@ -3042,7 +3127,7 @@ public sealed partial class MainPage : Page
                 }
                 else { status.Text = "Select a supported model source and a downloadable model."; continue; }
                 if (source.SelectedIndex != 3) status.Text = $"Downloaded {selectedId}. Refresh Installed models to select and pin it.";
-                source.SelectedIndex = 0;
+                source.SelectedIndex = 1;
             }
             catch (Exception ex) { status.Text = $"Download failed: {ex.Message}"; }
         }
@@ -3188,12 +3273,8 @@ public sealed partial class MainPage : Page
         TemporaryButton.Content = _isTemporaryChat ? "◉　Temporary on" : "◌　Temporary off";
         TemporaryBadge.Visibility = _isTemporaryChat ? Visibility.Visible : Visibility.Collapsed;
         UpdateEditingControls();
-        AutomationProperties.SetHelpText(TemporaryButton, _isTemporaryChat
-            ? "Temporary mode is on. Messages are kept in memory only and are not written to Recents or local history. Click to clear and end this temporary chat."
-            : "Start a temporary chat. Messages stay in memory and are not written to Recents or local history.");
         ChatFolderBadge.Visibility = string.IsNullOrWhiteSpace(_activeChatFolder) || _isTemporaryChat ? Visibility.Collapsed : Visibility.Visible;
         ChatFolderBadgeText.Text = _activeChatFolder is null ? string.Empty : $"▱　{_activeChatFolder}";
-        AutomationProperties.SetHelpText(ChatFolderBadge, _activeChatFolder is null ? string.Empty : $"This conversation is filed in {_activeChatFolder}.");
     }
 
     private void UpdateEditingControls() => CancelEditButton.Visibility = _editingMessageIndex is null ? Visibility.Collapsed : Visibility.Visible;
@@ -3231,16 +3312,13 @@ public sealed partial class MainPage : Page
         var available = _mode == "ChatBot" && project is not null && project.FolderPaths.Count > 0;
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _includeProjectFilesInChat ? "▤　Project files on" : "▤　Project files off";
-        AutomationProperties.SetHelpText(ProjectFilesButton, _includeProjectFilesInChat
-            ? "This Chat includes bounded, secret-filtered text excerpts from the active project's selected folders. A remote model requires consent before those files are sent. Click to turn off."
-            : "Optionally include bounded, secret-filtered excerpts from the active project's selected folders in Chat. A remote model requires consent before those files are sent.");
         ProjectBadgeText.Text = _mode == "Coding Agent"
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
         ProcessingLabel.Text = DescribeDataRoute();
     }
 
-    private async void SearchClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(SearchClickAsync);
+    private async void SearchClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SearchClickAsync); }
 
     private async Task SearchClickAsync()
     {
@@ -3267,9 +3345,6 @@ public sealed partial class MainPage : Page
     private void UpdateWebSearchButton()
     {
         WebSearchButton.Content = _settings.WebSearchEnabled ? "⌕　Web on" : "⌕　Web off";
-        AutomationProperties.SetHelpText(WebSearchButton, _settings.WebSearchEnabled
-            ? "Search sends this prompt to DuckDuckGo and result excerpts to your selected model server. Click to turn off."
-            : "Turn on optional DuckDuckGo web search for Chat conversations.");
         var local = IsLocalEndpoint(_settings.Endpoint);
         var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
         if (_isTemporaryChat)
@@ -3287,8 +3362,8 @@ public sealed partial class MainPage : Page
             ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
             : _settings.WebSearchEnabled
                 ? $"Search query goes to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model server."
-                : local ? $"Your prompt{(projectFiles ? " and selected project files" : "")} go to the on-device model. Web search is off."
-                    : $"Your prompt{(projectFiles ? " and selected project files" : "")} go to the configured remote model server. Web search is off.";
+                : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
+                    : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
     }
 
     private void CancelRequest() => _requestCancellation?.Cancel();
@@ -3338,7 +3413,93 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void SettingsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(SettingsDialogAsync);
+    private async void SettingsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SettingsDialogAsync); }
+
+    private async void ImageStudioClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImageStudioAsync);
+
+    private async Task ImageStudioAsync()
+    {
+        var prompt = new TextBox { Header = "Image prompt", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 88, PlaceholderText = "Describe the image you want to create" };
+        var endpoint = new TextBox { Header = "Local ComfyUI endpoint", Text = _settings.ComfyEndpoint, PlaceholderText = "http://127.0.0.1:8188" };
+        var workflow = new TextBox { Header = "ComfyUI API workflow JSON", Text = _settings.ImageWorkflow, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 120, PlaceholderText = "Put {{prompt}} inside the workflow's prompt text value." };
+        var status = new TextBlock { Text = "Images run only through a local loopback ComfyUI server. Your workflow is saved only on this device.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = .8 };
+        var results = new StackPanel { Spacing = 8 };
+        CancellationTokenSource? generationCancellation = null;
+        var cancel = new Button { Content = "Cancel generation", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
+        AutomationProperties.SetName(cancel, "Cancel local image generation");
+        cancel.Click += (_, _) => generationCancellation?.Cancel();
+        var panel = new StackPanel { Spacing = 10, Children = { prompt, endpoint, workflow, status, cancel, results } };
+        var dialog = new ContentDialog { Title = "Image Studio", Content = new ScrollViewer { Content = panel, MaxHeight = 680 }, PrimaryButtonText = "Generate", CloseButtonText = "Done", XamlRoot = XamlRoot };
+        while (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            try
+            {
+                dialog.IsPrimaryButtonEnabled = false;
+                prompt.IsEnabled = endpoint.IsEnabled = workflow.IsEnabled = false;
+                generationCancellation = new CancellationTokenSource();
+                cancel.IsEnabled = true;
+                status.Text = "Preparing local image generation…";
+                _settings.ComfyEndpoint = endpoint.Text.Trim().TrimEnd('/');
+                _settings.ImageWorkflow = workflow.Text;
+                SaveSettings();
+                results.Children.Clear();
+                var images = await _comfyImageProvider.GenerateAsync(_settings.ComfyEndpoint, _settings.ImageWorkflow, prompt.Text, message => status.Text = message, generationCancellation.Token);
+                status.Text = $"Generated {images.Count} image(s) locally. Previews are loaded only from your local ComfyUI server.";
+                foreach (var image in images)
+                {
+                    var preview = new Image
+                    {
+                        Source = new BitmapImage { UriSource = image.Url },
+                        MaxWidth = 520,
+                        MaxHeight = 360,
+                        Stretch = Stretch.Uniform,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
+                    AutomationProperties.SetName(preview, $"Generated image preview: {image.FileName}");
+                    var open = new Button { Content = image.FileName, HorizontalAlignment = HorizontalAlignment.Left, Tag = image.Url };
+                    AutomationProperties.SetName(open, $"Open generated image {image.FileName}");
+                    open.Click += async (_, _) =>
+                    {
+                        if (open.Tag is Uri uri) await Windows.System.Launcher.LaunchUriAsync(uri);
+                    };
+                    results.Children.Add(new Border
+                    {
+                        Background = new SolidColorBrush(Colors.White),
+                        BorderBrush = new SolidColorBrush(Colors.LightGray),
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(10),
+                        Padding = new Thickness(10),
+                        Child = new StackPanel
+                        {
+                            Spacing = 8,
+                            Children =
+                            {
+                                preview,
+                                new TextBlock { Text = image.FileName, FontSize = 12, Opacity = .8, TextTrimming = TextTrimming.CharacterEllipsis },
+                                open
+                            }
+                        }
+                    });
+                }
+            }
+            catch (OperationCanceledException) when (generationCancellation?.IsCancellationRequested == true)
+            {
+                status.Text = "Image generation cancelled. Your local workflow remains available to try again.";
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                status.Text = $"Image generation failed: {FriendlyError(exception)}";
+            }
+            finally
+            {
+                dialog.IsPrimaryButtonEnabled = true;
+                prompt.IsEnabled = endpoint.IsEnabled = workflow.IsEnabled = true;
+                cancel.IsEnabled = false;
+                generationCancellation?.Dispose();
+                generationCancellation = null;
+            }
+        }
+    }
 
     private async Task SettingsDialogAsync()
     {

@@ -1,0 +1,98 @@
+name: Native desktop artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-artifacts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-portable:
+    name: Windows x64 portable archive
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish self-contained desktop app
+        run: >-
+          dotnet publish native/ServerRock.Native/ServerRock.Native.csproj
+          -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true
+          -o ${{ runner.temp }}/serverrock-ai-native/win-x64
+
+      - name: Create portable archive and checksum
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'serverrock-ai-native'
+          $publish = Join-Path $root 'win-x64'
+          Copy-Item 'docs/NATIVE_RELEASE_ACCEPTANCE.md' $publish
+          @'
+          Server Rock: AI native Windows x64 build
+
+          This is an unsigned, self-contained portable build. Extract the archive and run ServerRock.Native.exe.
+          Keep the user's app data outside this folder when replacing app files. This archive has no installer or uninstaller.
+          See NATIVE_RELEASE_ACCEPTANCE.md in this archive for current limitations and verification status.
+          '@ | Set-Content -Encoding utf8 (Join-Path $publish 'README-release.txt')
+          $archive = Join-Path $root 'serverrock-ai-native-win-x64.zip'
+          Compress-Archive -Path (Join-Path $publish '*') -DestinationPath $archive
+          $digest = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          "$digest  $(Split-Path -Leaf $archive)" | Set-Content -Encoding ascii (Join-Path $root 'SHA256SUMS.txt')
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serverrock-ai-native-win-x64-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/serverrock-ai-native/serverrock-ai-native-win-x64.zip
+            ${{ runner.temp }}/serverrock-ai-native/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  linux-portable:
+    name: Linux x64 portable archive
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish self-contained desktop app
+        run: >-
+          dotnet publish native/ServerRock.Native/ServerRock.Native.csproj
+          -c Release -f net10.0-desktop -r linux-x64 -p:SelfContained=true
+          -o "$RUNNER_TEMP/serverrock-ai-native/linux-x64"
+
+      - name: Create portable archive and checksum
+        shell: bash
+        run: |
+          root="$RUNNER_TEMP/serverrock-ai-native"
+          publish="$root/linux-x64"
+          cp docs/NATIVE_RELEASE_ACCEPTANCE.md "$publish/"
+          cat > "$publish/README-release.txt" <<'EOF'
+          Server Rock: AI native Linux x64 build
+
+          This is an unsigned, self-contained portable build. Extract the archive, make ServerRock.Native executable if needed, then run it.
+          The app still requires native desktop libraries from the host OS. See NATIVE_RELEASE_ACCEPTANCE.md in this archive for the current dependency list and limitations.
+          This archive has no package-manager installer or uninstaller. Keep the user's app data outside this folder when replacing app files.
+          EOF
+          chmod +x "$publish/ServerRock.Native"
+          archive="$root/serverrock-ai-native-linux-x64.tar.gz"
+          tar -czf "$archive" -C "$publish" .
+          (cd "$root" && sha256sum "$(basename "$archive")" > SHA256SUMS.txt)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serverrock-ai-native-linux-x64-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/serverrock-ai-native/serverrock-ai-native-linux-x64.tar.gz
+            ${{ runner.temp }}/serverrock-ai-native/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

@@ -1,6 +1,50 @@
 const $ = (s) => document.querySelector(s),
   KEY = "local-studio-v1",
-  MAX_STATE_CHARACTERS = 4_000_000;
+  MAX_STATE_CHARACTERS = 4_000_000,
+  MAX_LOCAL_JSON_BYTES = 4 * 1024 * 1024,
+  MAX_LOCAL_TEXT_BYTES = 16 * 1024;
+async function readResponseBytesLimited(response, maxBytes, label) {
+  const declared = Number(response.headers?.get?.("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes)
+    throw Error(`${label} exceeds its ${Math.round(maxBytes / 1024)} KB limit.`);
+  if (!response.body) {
+    const text = await response.text();
+    const bytes = new TextEncoder().encode(text);
+    if (bytes.byteLength > maxBytes) throw Error(`${label} exceeds its ${Math.round(maxBytes / 1024)} KB limit.`);
+    return bytes;
+  }
+  const reader = response.body.getReader(), chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw Error(`${label} exceeds its ${Math.round(maxBytes / 1024)} KB limit.`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const output = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return output;
+}
+async function readJsonResponseLimited(response, label, maxBytes = MAX_LOCAL_JSON_BYTES) {
+  const bytes = await readResponseBytesLimited(response, maxBytes, label);
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+}
+async function readTextResponseLimited(response, label, maxBytes = MAX_LOCAL_TEXT_BYTES) {
+  const bytes = await readResponseBytesLimited(response, maxBytes, label);
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
 function loadState() {
   const raw = localStorage.getItem(KEY);
   if (!raw) return {};
@@ -25,6 +69,7 @@ function loadState() {
 let state = loadState();
 state.chats ??= [];
 state.projects ??= [];
+state.pet ??= { selected: "rocky", visible: false };
 state.settings ??= {
   provider: "Ollama",
   endpoint: "http://localhost:11434/v1/chat/completions",
@@ -34,12 +79,16 @@ state.settings ??= {
 };
 state.settings.temperature ??= 0.7;
 state.settingsByProvider ??= {};
+state.activePage = ["chat", "images", "activity", "models"].includes(state.activePage)
+  ? state.activePage
+  : "chat";
 let providerSecretsReady = false;
 let editingProjectId = null;
 let pendingBranchBase = null;
 let githubPushReview = null;
 let githubPushRunning = false;
 let active = null;
+const terminalState = { sessions: new Map(), activeId: null, unsubscribe: null };
 const localHfTasks = [
   "text-generation",
   "text2text-generation",
@@ -159,6 +208,36 @@ function persist() {
     const status = $("#runtimeStatus");
     if (status) status.textContent = "History could not be saved locally.";
     return false;
+  }
+}
+async function exportNativeMigration() {
+  const status = $("#nativeMigrationStatus");
+  const chats = Array.isArray(state.chats) ? state.chats : [];
+  if (!chats.length) {
+    status.textContent = "There are no saved conversations to export yet.";
+    return;
+  }
+  const archive = JSON.stringify({
+    format: "server-rock-electron-localstorage-v1",
+    exportedAt: new Date().toISOString(),
+    chats,
+  });
+  if (new TextEncoder().encode(archive).byteLength > 25 * 1024 * 1024) {
+    status.textContent = "This chat history is larger than the native app's 25 MB import limit. Remove unneeded chats and try again.";
+    return;
+  }
+  if (!window.desktopModels?.exportNativeMigration) {
+    status.textContent = "Migration export is available in the Server Rock desktop app.";
+    return;
+  }
+  try {
+    status.textContent = "Choose where to save the migration file…";
+    const result = await window.desktopModels.exportNativeMigration(archive);
+    status.textContent = result?.canceled
+      ? "Migration export canceled. Your chats remain unchanged."
+      : `Saved ${chats.length} conversation(s) to ${result?.fileName || "the selected file"}. Import this file in the native Server Rock app.`;
+  } catch (error) {
+    status.textContent = `Could not export migration file: ${error.message}`;
   }
 }
 async function getProviderSecretStatus(provider) {
@@ -313,17 +392,395 @@ function paintProjectFolders() {
 function renderHistory() {
   const h = $("#history");
   h.replaceChildren();
-  for (const c of [...state.chats].reverse()) {
+  if (!state.chats.length) {
+    const empty = document.createElement("p");
+    empty.className = "history-empty muted";
+    empty.textContent = "No chats yet — start a new conversation.";
+    h.append(empty);
+    return;
+  }
+  const createRow = (c) => {
+    const row = document.createElement("div");
+    row.className = "chat-row";
+    row.dataset.chatId = c.id;
     const b = document.createElement("button");
-    b.className = "chat-item";
-    b.textContent = c.title;
-    b.onclick = () => openChat(c.id);
-    h.append(b);
+    b.className = "chat-item" + (active?.id === c.id ? " selected" : "");
+    b.textContent = c.title || "New chat";
+    b.title = c.title || "New chat";
+    b.setAttribute("aria-current", active?.id === c.id ? "page" : "false");
+    b.onclick = () => {
+      openChat(c.id);
+      setPage("chat");
+      renderHistory();
+    };
+    const actions = document.createElement("button");
+    actions.type = "button";
+    actions.className = "chat-item-actions";
+    actions.textContent = "⋯";
+    actions.setAttribute("aria-label", `Actions for ${c.title || "New chat"}`);
+    actions.setAttribute("aria-haspopup", "menu");
+    actions.onclick = (event) => showChatContextMenu(c.id, event.currentTarget.getBoundingClientRect().right, event.currentTarget.getBoundingClientRect().top);
+    row.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      showChatContextMenu(c.id, event.clientX, event.clientY);
+    });
+    row.addEventListener("keydown", (event) => {
+      if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
+      event.preventDefault();
+      const bounds = event.target.getBoundingClientRect();
+      showChatContextMenu(c.id, bounds.right, bounds.top);
+    });
+    row.append(b, actions);
+    return row;
+  };
+  const visible = state.chats.filter((c) => !c.archived);
+  const pinned = visible.filter((c) => c.pinned).reverse();
+  const recent = visible.filter((c) => !c.pinned).reverse();
+  for (const chat of [...pinned, ...recent]) h.append(createRow(chat));
+  const archived = state.chats.filter((c) => c.archived).reverse();
+  if (archived.length) {
+    const section = document.createElement("details");
+    section.className = "archived-chats";
+    const summary = document.createElement("summary");
+    summary.textContent = `Archived (${archived.length})`;
+    section.append(summary);
+    for (const chat of archived) section.append(createRow(chat));
+    h.append(section);
   }
 }
+let contextChatId = null;
+let chatContextReturnFocus = null;
+function closeChatContextMenu(restoreFocus = false, preserveContext = false) {
+  const menu = $("#chatContextMenu");
+  const chatId = contextChatId;
+  const focusTarget = chatContextReturnFocus;
+  menu.hidden = true;
+  menu.replaceChildren();
+  if (!preserveContext) {
+    contextChatId = null;
+    chatContextReturnFocus = null;
+  }
+  if (restoreFocus) {
+    queueMicrotask(() => {
+      if (focusTarget?.isConnected) {
+        focusTarget.focus();
+        return;
+      }
+      const row = [...document.querySelectorAll(".chat-row")]
+        .find((item) => item.dataset.chatId === chatId);
+      (row?.querySelector(".chat-item-actions") || $("#newChat"))?.focus();
+    });
+  }
+}
+function showChatContextMenu(chatId, x, y) {
+  const chat = state.chats.find((item) => item.id === chatId);
+  if (!chat) return;
+  contextChatId = chatId;
+  chatContextReturnFocus =
+    document.activeElement instanceof HTMLElement &&
+    document.activeElement !== document.body
+      ? document.activeElement
+      : null;
+  const menu = $("#chatContextMenu");
+  menu.replaceChildren();
+  const addAction = (label, action, options = {}) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = "menuitem";
+    button.textContent = label;
+    if (options.disabled) button.disabled = true;
+    button.onclick = () => {
+      action();
+      closeChatContextMenu(
+        options.restoreFocus !== false,
+        options.preserveContext === true,
+      );
+    };
+    menu.append(button);
+    return button;
+  };
+  addAction("Rename", () => {
+    $("#chatRenameInput").value = chat.title || "";
+    $("#chatRenameDialog").showModal();
+    $("#chatRenameInput").focus();
+  }, { restoreFocus: false, preserveContext: true });
+  addAction(chat.pinned ? "Unpin" : "Pin", () => {
+    chat.pinned = !chat.pinned;
+    persist();
+    renderHistory();
+  });
+  addAction(chat.unread ? "Mark as read" : "Mark as unread", () => {
+    chat.unread = !chat.unread;
+    persist();
+    renderHistory();
+  });
+  const projectGroup = document.createElement("details");
+  projectGroup.className = "chat-project-actions";
+  const projectSummary = document.createElement("summary");
+  projectSummary.textContent = "Move to project";
+  projectGroup.append(projectSummary);
+  const noProject = document.createElement("button");
+  noProject.type = "button";
+  noProject.role = "menuitem";
+  noProject.textContent = "No project";
+  noProject.onclick = () => {
+    chat.projectId = null;
+    persist();
+    renderHistory();
+    closeChatContextMenu(true);
+  };
+  projectGroup.append(noProject);
+  for (const project of state.projects) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = "menuitem";
+    button.textContent = project.name;
+    button.onclick = () => {
+      chat.projectId = project.id;
+      persist();
+      renderHistory();
+      closeChatContextMenu(true);
+    };
+    projectGroup.append(button);
+  }
+  menu.append(projectGroup);
+  addAction(chat.archived ? "Restore from archive" : "Archive", () => {
+    chat.archived = !chat.archived;
+    persist();
+    renderHistory();
+  });
+  addAction("Delete chat", () => {
+    if (!confirm(`Permanently delete “${chat.title || "New chat"}” from this device?`)) return;
+    state.chats = state.chats.filter((item) => item.id !== chatId);
+    if (active?.id === chatId) newChat();
+    persist();
+    renderHistory();
+  });
+  menu.hidden = false;
+  const bounds = menu.getBoundingClientRect();
+  menu.style.left = `${Math.max(8, Math.min(x, innerWidth - bounds.width - 8))}px`;
+  menu.style.top = `${Math.max(8, Math.min(y, innerHeight - bounds.height - 8))}px`;
+  menu.querySelector("button")?.focus();
+}
+document.addEventListener("pointerdown", (event) => {
+  if (!$("#chatContextMenu").hidden && !$("#chatContextMenu").contains(event.target)) closeChatContextMenu();
+});
+document.addEventListener("keydown", (event) => {
+  const menu = $("#chatContextMenu");
+  if (menu.hidden) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeChatContextMenu(true);
+    return;
+  }
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+  const items = [...menu.querySelectorAll('[role="menuitem"]')]
+    .filter((item) => !item.disabled && item.getClientRects().length);
+  if (!items.length) return;
+  event.preventDefault();
+  const current = items.indexOf(document.activeElement);
+  const next = event.key === "Home" ? 0
+    : event.key === "End" ? items.length - 1
+      : (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+  items[next]?.focus();
+});
+$("#chatRenameForm").onsubmit = (event) => {
+  event.preventDefault();
+  const chat = state.chats.find((item) => item.id === contextChatId);
+  const title = $("#chatRenameInput").value.trim();
+  if (!chat || !title) return;
+  chat.title = title;
+  if (active?.id === chat.id) $("#crumb").textContent = title;
+  persist();
+  renderHistory();
+  $("#chatRenameDialog").close();
+};
+$("#chatRenameClose").onclick = $("#chatRenameCancel").onclick = () => $("#chatRenameDialog").close();
+const localPets = [
+  { id: "rocky", name: "Rocky", description: "A steady little rock for focused work." },
+  { id: "byte", name: "Byte", description: "A curious pixel bot for new ideas." },
+  { id: "sprout", name: "Sprout", description: "A calm green companion for fresh starts." },
+];
+function renderPet() {
+  const pet = localPets.find((item) => item.id === state.pet.selected) || localPets[0];
+  state.pet.selected = pet.id;
+  const mini = $("#petMini");
+  mini.hidden = !state.pet.visible;
+  mini.querySelector(".pet-mini-art").src = `./assets/pets/${pet.id}.svg`;
+  $("#petMini .pet-mini-name").textContent = pet.name;
+  if (state.pet.position && state.pet.visible) setPetPosition(state.pet.position.x, state.pet.position.y, false);
+  $("#petVisibleSetting").checked = Boolean(state.pet.visible);
+  $("#petVisibilityToggle").textContent = state.pet.visible ? "Hide pet" : "Show pet";
+  $("#mobilePetVisibilityToggle").textContent = state.pet.visible ? "Hide pet" : "Show pet";
+  const choices = $("#petChoices");
+  choices.replaceChildren();
+  for (const item of localPets) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "pet-choice" + (item.id === pet.id ? " selected" : "");
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", String(item.id === pet.id));
+    const art = document.createElement("img");
+    art.className = "pet-choice-art";
+    art.src = `./assets/pets/${item.id}.svg`;
+    art.alt = "";
+    art.setAttribute("aria-hidden", "true");
+    const name = document.createElement("b");
+    name.textContent = item.name;
+    const description = document.createElement("small");
+    description.textContent = item.description;
+    button.append(art, name, description);
+    button.onclick = () => {
+      state.pet.selected = item.id;
+      persist();
+      renderPet();
+    };
+    choices.append(button);
+  }
+}
+const petMoveButton = $("#petMiniMove");
+const petMoveStatus = $("#petMoveStatus");
+let petPointerMove = null;
+let ignorePetDragClick = false;
+function clampPetPosition(left, top) {
+  const rect = $("#petMini").getBoundingClientRect();
+  const gap = 8;
+  return {
+    x: Math.round(Math.max(gap, Math.min(left, window.innerWidth - rect.width - gap))),
+    y: Math.round(Math.max(gap, Math.min(top, window.innerHeight - rect.height - gap))),
+  };
+}
+function setPetPosition(left, top, save = true) {
+  const position = clampPetPosition(Number(left) || 0, Number(top) || 0);
+  const mini = $("#petMini");
+  mini.style.left = `${position.x}px`;
+  mini.style.top = `${position.y}px`;
+  mini.style.right = "auto";
+  state.pet.position = position;
+  if (save) persist();
+}
+function resetPetPosition() {
+  state.pet.position = null;
+  const mini = $("#petMini");
+  mini.style.removeProperty("left");
+  mini.style.removeProperty("top");
+  mini.style.removeProperty("right");
+  persist();
+}
+function setPetMoveMode(enabled) {
+  const moving = Boolean(enabled && state.pet.visible);
+  petMoveButton.setAttribute("aria-pressed", String(moving));
+  petMoveButton.setAttribute("aria-label", moving ? "Finish moving pet companion" : "Move pet companion");
+  petMoveStatus.textContent = moving
+    ? "Pet move mode on. Use the arrow keys to move it; press Escape to finish."
+    : "Pet move mode off.";
+}
+function movePetBy(deltaX, deltaY) {
+  const rect = $("#petMini").getBoundingClientRect();
+  const current = state.pet.position || { x: rect.left, y: rect.top };
+  setPetPosition(current.x + deltaX, current.y + deltaY);
+}
+petMoveButton.addEventListener("click", () => {
+  if (ignorePetDragClick) {
+    ignorePetDragClick = false;
+    return;
+  }
+  setPetMoveMode(petMoveButton.getAttribute("aria-pressed") !== "true");
+});
+petMoveButton.addEventListener("keydown", (event) => {
+  const delta = event.shiftKey ? 48 : 16;
+  const movement = { ArrowLeft: [-delta, 0], ArrowRight: [delta, 0], ArrowUp: [0, -delta], ArrowDown: [0, delta] }[event.key];
+  if (movement && petMoveButton.getAttribute("aria-pressed") === "true") {
+    event.preventDefault();
+    movePetBy(...movement);
+  } else if (event.key === "Escape" && petMoveButton.getAttribute("aria-pressed") === "true") {
+    event.preventDefault();
+    setPetMoveMode(false);
+  }
+});
+petMoveButton.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  const rect = $("#petMini").getBoundingClientRect();
+  petPointerMove = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: rect.left, top: rect.top, moved: false };
+  petMoveButton.setPointerCapture(event.pointerId);
+});
+petMoveButton.addEventListener("pointermove", (event) => {
+  if (!petPointerMove || petPointerMove.pointerId !== event.pointerId) return;
+  const deltaX = event.clientX - petPointerMove.startX;
+  const deltaY = event.clientY - petPointerMove.startY;
+  if (!petPointerMove.moved && Math.hypot(deltaX, deltaY) < 5) return;
+  petPointerMove.moved = true;
+  setPetPosition(petPointerMove.left + deltaX, petPointerMove.top + deltaY, false);
+});
+function finishPetPointerMove(event) {
+  if (!petPointerMove || petPointerMove.pointerId !== event.pointerId) return;
+  if (petPointerMove.moved) {
+    const rect = $("#petMini").getBoundingClientRect();
+    setPetPosition(rect.left, rect.top);
+    ignorePetDragClick = true;
+  }
+  petPointerMove = null;
+}
+petMoveButton.addEventListener("pointerup", finishPetPointerMove);
+petMoveButton.addEventListener("pointercancel", finishPetPointerMove);
+window.addEventListener("resize", () => {
+  if (state.pet.position && state.pet.visible) setPetPosition(state.pet.position.x, state.pet.position.y);
+});
+$("#petResetPosition").onclick = resetPetPosition;
+function setPetVisible(visible) {
+  state.pet.visible = Boolean(visible);
+  if (!state.pet.visible) setPetMoveMode(false);
+  persist();
+  renderPet();
+}
+$("#accountMenuToggle").onclick = () => {
+  const menu = $("#accountMenu");
+  const open = menu.hidden;
+  menu.hidden = !open;
+  $("#accountMenuToggle").setAttribute("aria-expanded", String(open));
+  if (open) menu.querySelector("button")?.focus();
+};
+$("#petVisibilityToggle").onclick = () => {
+  setPetVisible(!state.pet.visible);
+  $("#accountMenu").hidden = true;
+  $("#accountMenuToggle").setAttribute("aria-expanded", "false");
+};
+function openPetSettings() {
+  $("#accountMenu").hidden = true;
+  $("#accountMenuToggle").setAttribute("aria-expanded", "false");
+  setPetMoveMode(false);
+  renderPet();
+  $("#petDialog").showModal();
+}
+$("#openPetSettings").onclick = $("#mobileOpenPetSettings").onclick = openPetSettings;
+$("#mobilePetVisibilityToggle").onclick = () => setPetVisible(!state.pet.visible);
+$("#accountSettings").onclick = () => {
+  $("#accountMenu").hidden = true;
+  $("#accountMenuToggle").setAttribute("aria-expanded", "false");
+  openSettingsDialog();
+};
+$("#petVisibleSetting").onchange = (event) => setPetVisible(event.currentTarget.checked);
+$("#petMiniHide").onclick = () => setPetVisible(false);
+$("#petDialogClose").onclick = () => $("#petDialog").close();
+$("#petDialog").addEventListener("click", (event) => {
+  if (event.target === $("#petDialog")) $("#petDialog").close();
+});
+document.addEventListener("pointerdown", (event) => {
+  const menu = $("#accountMenu");
+  if (!menu.hidden && !menu.contains(event.target) && !$("#accountMenuToggle").contains(event.target)) {
+    menu.hidden = true;
+    $("#accountMenuToggle").setAttribute("aria-expanded", "false");
+  }
+});
+renderPet();
 function openChat(id) {
+  setMobileSidebar(false);
   active = state.chats.find((c) => c.id === id);
   if (active) {
+    if (active.unread) {
+      active.unread = false;
+      persist();
+    }
     $("#crumb").textContent = active.title;
     state.activeProjectId = active.projectId || null;
     renderProjects();
@@ -364,6 +821,9 @@ function selectBranch(index) {
   renderMessages();
   renderBranchBar();
 }
+function conversationMatches(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
 function regenerateLastTurn() {
   if (!active || activeRequest) return;
   const userIndex = active.messages.map((m) => m.role).lastIndexOf("user");
@@ -372,13 +832,13 @@ function regenerateLastTurn() {
   pendingBranchBase = JSON.parse(JSON.stringify(history));
   if (!active.branches?.length) active.branches = [];
   const priorAnswer = active.messages[userIndex + 1];
-  if (priorAnswer?.role === "assistant") {
-    if (!active.branches.length)
-      active.branches.push(JSON.parse(JSON.stringify(history.concat([priorAnswer]))));
-    else
-      active.branches.push(JSON.parse(JSON.stringify(history.concat([priorAnswer]))));
-  }
-  active.baseMessages = history.concat([{ role: "assistant", content: "" }]);
+  const currentBranch = JSON.parse(JSON.stringify(active.messages));
+  if (priorAnswer?.role === "assistant" &&
+      !active.branches.some((branch) => conversationMatches(branch, currentBranch)))
+    active.branches.push(currentBranch);
+  // send() adds the user turn itself. Keep only the preceding context here so
+  // regenerating cannot duplicate the prompt in the rendered conversation.
+  active.baseMessages = history.slice(0, -1);
   active.branchIndex = active.branches.length;
   active.messages = JSON.parse(JSON.stringify(active.baseMessages));
   persist();
@@ -409,6 +869,8 @@ function renderMessages() {
     for (const m of active.messages) {
       const el = document.createElement("article");
       el.className = "bubble " + m.role;
+      if (m.role === "assistant" && !m.content && activeRequest)
+        el.classList.add("is-generating");
       el.innerHTML = window.DOMPurify.sanitize(
         window.marked.parse(m.content || "", { breaks: true, gfm: true }),
       );
@@ -506,12 +968,8 @@ function settingLoad() {
   const isLocal = providerUsesLocalInference(s);
   $("#connectionModeLabel").textContent = isLocal ? "Local" : "Cloud";
   $("#privacyLabel").textContent = isLocal
-    ? "● Prompt stays on this device"
-    : "● Prompt sent to " + s.provider;
-  $("#sidebarConnectionLabel").textContent = isLocal
-    ? "Local model · on this device"
-    : s.provider + " · prompts leave this device";
-  $("#connectionDot").classList.toggle("remote", !isLocal);
+    ? "Prompts stay on this device"
+    : "Prompts sent to " + s.provider;
   $("#model").textContent = s.model + "　⌄";
   $("#model").title = s.model + " · " + s.provider;
   document.documentElement.classList.toggle("light", s.theme === "light");
@@ -527,6 +985,9 @@ function settingLoad() {
   $("#imageWorkflow").value = s.imageWorkflow || "";
   $("#theme").value = s.theme || "dark";
   syncProviderFields();
+  if (s.provider === "ChatGPT plan") $("#accountConnections").open = true;
+  else if (["OpenAI API", "Anthropic API", "OpenRouter", "Groq", "DeepSeek", "Mistral", "Hugging Face"].includes(s.provider))
+    $("#providerCredentials").open = true;
   refreshChatGPTStatus();
   refreshGitHubStatus();
 }
@@ -556,6 +1017,7 @@ function syncProviderFields() {
   $("#chatgptSettingRow").hidden = false;
   $("#endpointSettingRow").hidden = isChatGPT;
   $("#providerSecretSettingRow").hidden = isChatGPT;
+  $("#providerCredentials").hidden = isChatGPT;
   $("#taskSettingRow").hidden = !isHuggingFace;
   $("#hfDownloads").open = isHuggingFace;
   const keyHelp = {
@@ -631,7 +1093,7 @@ async function pushProjectChanges(message = "") {
   $("#githubPushDialog").showModal();
   try {
     const review = await window.desktopModels.githubProjectStatus(project.folders);
-    githubPushReview = { projectId: project.id, folders: [...project.folders], fullName: project.github.fullName, changeToken: review.changeToken };
+    githubPushReview = { projectId: project.id, folders: [...project.folders], fullName: project.github.fullName, changeToken: review.changeToken, protectedPaths: review.protectedPaths || [], diff: review.diff || "" };
     for (const change of (review.changes || []).slice(0, 500)) {
       const item = document.createElement("li");
       item.textContent = change;
@@ -642,13 +1104,19 @@ async function pushProjectChanges(message = "") {
       more.textContent = "…and " + (review.changes.length - 500) + " more files";
       fileList.append(more);
     }
+    $("#githubPushDiff").textContent = review.protectedPaths?.length
+      ? "Patch preview hidden while protected files are present. Remove them and refresh the review."
+      : review.diff || "No tracked textual diff is available for these changes.";
     const changeCount = Number(review.changedFiles) || 0,
       ahead = Number(review.ahead) || 0;
-    statusLabel.textContent = review.branch
+    const protectedPaths = review.protectedPaths || [];
+    statusLabel.textContent = protectedPaths.length
+      ? "Push blocked: remove protected files first (" + protectedPaths.slice(0, 3).join(", ") + (protectedPaths.length > 3 ? " …" : "") + ")."
+      : review.branch
       ? "Branch " + review.branch + " · " + changeCount + " uncommitted file(s) · " + ahead + " commit(s) ahead"
       : "This repository is in detached HEAD state. Check out a named branch before pushing.";
     confirmButton.textContent = changeCount ? "Commit and push" : "Push commits";
-    confirmButton.disabled = !review.branch || (!changeCount && !ahead);
+    confirmButton.disabled = protectedPaths.length > 0 || !review.branch || (!changeCount && !ahead);
     if (!review.branch) confirmButton.title = "A named branch is required to push safely.";
     else if (!changeCount && !ahead) confirmButton.title = "There are no changes or commits to push.";
     else confirmButton.title = "Commit and push the changes listed above.";
@@ -1016,7 +1484,30 @@ function recordModelPerformance(s, started, content, firstTokenMs) {
   persist();
 }
 async function saveSettings() {
-  let p = $("#providerSelect").value;
+  const p = $("#providerSelect").value,
+    endpointInput = $("#endpoint"),
+    modelInput = $("#modelInput"),
+    validation = $("#settingsValidationStatus"),
+    endpoint = endpointInput.value.trim(),
+    model = modelInput.value.trim();
+  const showValidation = (message, control) => {
+    validation.textContent = message;
+    control.focus();
+  };
+  validation.textContent = "";
+  if (!model) {
+    showValidation("Enter a model name before saving.", modelInput);
+    return;
+  }
+  if (p !== "ChatGPT plan") {
+    try {
+      const url = new URL(endpoint);
+      if (!["http:", "https:"].includes(url.protocol)) throw Error("unsupported scheme");
+    } catch {
+      showValidation("Enter a full http(s) provider endpoint before saving.", endpointInput);
+      return;
+    }
+  }
   const apiKey = $("#apiKey").value;
   try {
     if (apiKey.trim()) {
@@ -1029,8 +1520,8 @@ async function saveSettings() {
     return;
   }
   state.settingsByProvider[p] = {
-    endpoint: $("#endpoint").value,
-    model: $("#modelInput").value,
+    endpoint,
+    model,
     hfTask: $("#taskSelect").value,
     localModelId: $("#localModelId").value.trim(),
     fastModel: $("#fastModelInput").value.trim(),
@@ -1047,12 +1538,16 @@ async function saveSettings() {
     temperature: Number(state.settings.temperature ?? 0.7),
   };
   persist();
+  validation.textContent = "";
   $("#apiKey").value = "";
   await refreshProviderSecretStatus(p);
   settingLoad();
   $("#settingsDialog").close();
 }
-$("#newProject").onclick = showProjectDialog;
+$("#newProject").onclick = () => {
+  setMobileSidebar(false);
+  showProjectDialog();
+};
 $("#addProjectFolder").onclick = async () => {
   try {
     const folder = await window.desktopModels?.pickFolder();
@@ -1147,38 +1642,88 @@ document.querySelectorAll("[data-agent-mode]").forEach(
     }),
 );
 updateAgentModeLabel();
-$("#settings").onclick = $("#railSettings").onclick = () =>
-  $("#settingsDialog").showModal();
-$(".close").onclick = () => $("#settingsDialog").close();
-function renderUpdateState(update) {
-  const status = $("#updateStatus");
-  if (!status || !update) return;
-  const download = $("#downloadUpdate");
-  const install = $("#installUpdate");
-  download.hidden = update.status !== "available";
-  install.hidden = update.status !== "downloaded";
-  if (update.status === "checking") status.textContent = "Checking GitHub releases…";
-  else if (update.status === "available") status.textContent = "Version " + update.version + " is available.";
-  else if (update.status === "downloading") status.textContent = "Downloading update… " + (update.percent || 0) + "%";
-  else if (update.status === "downloaded") status.textContent = "Version " + update.version + " is ready to install.";
-  else if (update.status === "current") status.textContent = "You are up to date (" + update.version + ").";
-  else if (update.status === "dev") status.textContent = "Updates are checked in packaged builds.";
-  // Builds that can't update in place (unsigned macOS, portable Windows,
-  // Linux tar.gz) explain how to update instead of failing mid-check.
-  else if (update.status === "manual") status.textContent = update.message;
-  else if (update.status === "error") status.textContent = "Update check failed: " + update.message;
+function clearSettingsValidation() {
+  const validation = $("#settingsValidationStatus");
+  if (validation) validation.textContent = "";
 }
-$("#checkUpdates").onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.checkForUpdates()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
+function openSettingsDialog() {
+  const dialog = $("#settingsDialog");
+  if (!dialog.open) dialog.showModal();
+  $("#providerSelect").focus();
+}
+$("#settings").onclick = () => {
+  setMobileSidebar(false);
+  clearSettingsValidation();
+  openSettingsDialog();
 };
-$("#downloadUpdate").onclick = async () => {
-  try { renderUpdateState(await window.desktopModels.downloadUpdate()); }
-  catch (error) { renderUpdateState({ status: "error", message: error.message }); }
-};
-$("#installUpdate").onclick = () => window.desktopModels.installUpdate();
-window.desktopModels?.updateState?.().then(renderUpdateState);
-window.desktopModels?.onUpdateState?.(renderUpdateState);
+function setMobileSidebar(open, returnFocus = false) {
+  const sidebar = $(".sidebar");
+  const wasOpen = sidebar.classList.contains("mobile-open");
+  const isNarrow = matchMedia("(max-width: 700px)").matches;
+  sidebar.classList.toggle("mobile-open", open);
+  sidebar.style.transform = isNarrow
+    ? open
+      ? "translateX(0)"
+      : "translateX(-105%)"
+    : "";
+  $("#sidebarBackdrop").hidden = !open;
+  $("#mobileMenu").setAttribute("aria-expanded", String(open));
+  $("#mobileMenu").setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+  if (!open && returnFocus && wasOpen) {
+    requestAnimationFrame(() => {
+      if (!sidebar.classList.contains("mobile-open")) $("#mobileMenu").focus();
+    });
+  }
+}
+$("#mobileMenu").onclick = () => setMobileSidebar(!$(".sidebar").classList.contains("mobile-open"));
+$("#sidebarBackdrop").onclick = () => setMobileSidebar(false);
+$("#settingsDialog .close").onclick = () => $("#settingsDialog").close();
+let checkedGitHubUpdate = null;
+if ($("#githubUpdateCheck")) {
+  $("#githubUpdateCheck").onclick = async () => {
+    const button = $("#githubUpdateCheck");
+    button.disabled = true;
+    $("#githubUpdateOpenRelease").disabled = true;
+    $("#githubUpdateStatus").textContent = "Checking public GitHub releases…";
+    try {
+      checkedGitHubUpdate = await window.desktopModels.githubUpdateCheck($("#githubUpdateRing").value);
+      if (!checkedGitHubUpdate.release) {
+        $("#githubUpdateStatus").textContent = checkedGitHubUpdate.reason;
+        $("#githubUpdateSummary").textContent = "When a release is published, compatible installers and GitHub’s SHA-256 asset digests will appear here.";
+        $("#githubUpdateVersion").textContent = "No release available";
+      } else {
+        const release = checkedGitHubUpdate.release;
+        $("#githubUpdateVersion").textContent = `Version ${release.version}${checkedGitHubUpdate.available ? " is available" : ""}`;
+        $("#githubUpdateStatus").textContent = checkedGitHubUpdate.available
+          ? `You have ${checkedGitHubUpdate.currentVersion}; a newer release is published.`
+          : `You have the latest ${release.channel} release (${release.version}).`;
+        const installer = checkedGitHubUpdate.installer;
+        $("#githubUpdateSummary").textContent = installer
+          ? `${installer.name} · ${(installer.size / 1024 / 1024).toFixed(1)} MB · SHA-256 ${installer.sha256}`
+          : checkedGitHubUpdate.reason;
+        $("#githubUpdateOpenRelease").disabled = !installer;
+      }
+    } catch (error) {
+      checkedGitHubUpdate = null;
+      $("#githubUpdateVersion").textContent = "Could not check releases";
+      $("#githubUpdateStatus").textContent = error.message;
+      $("#githubUpdateSummary").textContent = "Check your internet connection and try again.";
+    } finally { button.disabled = false; }
+  };
+  $("#githubUpdateOpenRelease").onclick = async () => {
+    const tag = checkedGitHubUpdate?.release?.tag;
+    if (!tag || !checkedGitHubUpdate.installer) return;
+    try { await window.desktopModels.githubUpdateOpenRelease(tag); }
+    catch (error) { $("#githubUpdateStatus").textContent = error.message; }
+  };
+  $("#githubUpdateRing").onchange = () => {
+    checkedGitHubUpdate = null;
+    $("#githubUpdateOpenRelease").disabled = true;
+    $("#githubUpdateStatus").textContent = "Check for a release for this computer.";
+    $("#githubUpdateSummary").textContent = "Release notes, compatible installers, and SHA-256 digests appear after checking.";
+    $("#githubUpdateVersion").textContent = "GitHub release";
+  };
+}
 $("#githubConnect").onclick = async () => {
   if (githubAuthFlow) return;
   const clientId = $("#githubClientId").value.trim();
@@ -1268,15 +1813,28 @@ function renderGitHubRepos() {
   }
 }
 async function openGitHubDialog() {
+  setMobileSidebar(false);
   const status = await refreshGitHubStatus();
+  $("#githubDialog").showModal();
+  $("#githubDialogConnect").hidden = Boolean(status.connected);
+  $("#githubDisconnect").hidden = !status.connected;
+  $("#githubRefresh").disabled = !status.connected;
+  $("#githubClone").disabled = !status.connected;
+  $("#githubRepoSearch").value = "";
   if (!status.connected) {
-    $("#settingsDialog").showModal();
+    githubRepos = [];
+    renderGitHubRepos();
+    $("#githubDialogStatus").textContent = "GitHub is not connected yet. Connect your account to browse repositories, or close this panel and continue using local projects.";
     return;
   }
-  $("#githubRepoSearch").value = "";
-  $("#githubDialog").showModal();
   await loadGitHubRepos();
 }
+$("#githubDialogConnect").onclick = () => {
+  $("#githubDialog").close();
+  openSettingsDialog();
+  $("#accountConnections").open = true;
+  $("#githubClientId").focus();
+};
 $("#githubOpenRepos").onclick = openGitHubDialog;
 $("#githubRefresh").onclick = loadGitHubRepos;
 $("#githubRepoSearch").oninput = renderGitHubRepos;
@@ -1356,13 +1914,22 @@ $("#githubDisconnect").onclick = async () => {
 };
 $("#githubSync").onclick = () => pushProjectChanges();
 $("#saveSettings").onclick = saveSettings;
+$("#exportNativeMigration").onclick = exportNativeMigration;
 $("#providerSelect").onchange = async () => {
+  clearSettingsValidation();
   let p = $("#providerSelect").value,
     d = defaults[p],
     v = state.settingsByProvider[p] || {};
   $("#endpoint").value = v.endpoint || d[0];
   $("#modelInput").value = v.model || d[1];
   syncProviderFields();
+  if (p === "ChatGPT plan") {
+    $("#accountConnections").open = true;
+    $("#accountConnections").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } else if (["OpenAI API", "Anthropic API", "OpenRouter", "Groq", "DeepSeek", "Mistral", "Hugging Face"].includes(p)) {
+    $("#providerCredentials").open = true;
+    $("#providerCredentials").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
   $("#apiKey").value = "";
   await refreshProviderSecretStatus(p);
 };
@@ -1376,22 +1943,30 @@ $("#forgetProviderKey").onclick = async () => {
     $("#providerSecretStatus").textContent = error.message;
   }
 };
-$("#newChat").onclick = $("#newTop").onclick = newChat;
+$("#newChat").onclick = () => {
+  setMobileSidebar(false);
+  newChat();
+};
 $("#clear").onclick = () => {
   state.chats = [];
   persist();
   renderHistory();
   newChat();
 };
-$("#provider").onclick = () => $("#settingsDialog").showModal();
+$("#provider").onclick = () => {
+  clearSettingsValidation();
+  openSettingsDialog();
+};
 $("#model").onclick = () => toggleModelPicker();
 $("#scanModels").onclick = () => scanModels();
 $("#modelSearch").oninput = () => renderModelChoices();
 document.addEventListener("click", (e) => {
+  if (!e.target.closest("#slashMenu") && !e.target.closest("#slashHelp"))
+    closeSlashMenu();
   if (
     !e.target.closest("#modelPicker") &&
     !e.target.closest("#model") &&
-    !e.target.closest("#navLibrary")
+    !e.target.closest("#openModelLibrary")
   )
     closeModelPicker();
   if (
@@ -1570,8 +2145,8 @@ async function generateImage(s, prompt, out, signal) {
     body: JSON.stringify({ prompt: workflow, client_id: crypto.randomUUID() }),
   });
   if (!q.ok)
-    throw Error("ComfyUI: " + q.status + " " + (await q.text()).slice(0, 160));
-  let { prompt_id: promptId } = await q.json();
+    throw Error("ComfyUI: " + q.status + " " + (await readTextResponseLimited(q, "ComfyUI error")).slice(0, 160));
+  let { prompt_id: promptId } = await readJsonResponseLimited(q, "ComfyUI prompt");
   out.content = "Image queued. Waiting for ComfyUI…";
   renderMessages();
   for (let i = 0; i < 180; i++) {
@@ -1579,7 +2154,7 @@ async function generateImage(s, prompt, out, signal) {
     await new Promise((r) => setTimeout(r, 1000));
     let h = await fetch(base + "/history/" + promptId, { signal });
     if (!h.ok) continue;
-    let data = await h.json(),
+    let data = await readJsonResponseLimited(h, "ComfyUI history"),
       job = data[promptId];
     if (job?.outputs) {
       let urls = [];
@@ -1629,6 +2204,181 @@ async function searchHub() {
     sel.append(o);
   }
 }
+const featuredModels = [
+  { id: "onnx-community/Qwen2.5-0.5B-Instruct", task: "text-generation", description: "Compact instruction model for quick offline chat.", tags: ["Chat", "Small", "ONNX"] },
+  { id: "onnx-community/Qwen2.5-1.5B-Instruct", task: "text-generation", description: "Balanced multilingual assistant for everyday questions.", tags: ["Chat", "Multilingual", "ONNX"] },
+  { id: "onnx-community/Llama-3.2-1B-Instruct", task: "text-generation", description: "A capable small assistant for local conversations.", tags: ["Chat", "Instruction tuned", "ONNX"] },
+  { id: "onnx-community/Phi-3.5-mini-instruct", task: "text-generation", description: "Compact model suited to reasoning and coding tasks.", tags: ["Chat", "Coding", "ONNX"] },
+  { id: "onnx-community/SmolLM2-360M-Instruct", task: "text-generation", description: "Very small model for lightweight local use.", tags: ["Chat", "Tiny", "ONNX"] },
+  { id: "onnx-community/Florence-2-base", task: "image-to-text", description: "Vision model for image descriptions and visual tasks.", tags: ["Vision", "Images", "ONNX"] },
+  { id: "Xenova/whisper-tiny", task: "automatic-speech-recognition", description: "Transcribe speech locally with a compact Whisper model.", tags: ["Audio", "Transcription", "ONNX"] },
+  { id: "Xenova/LaMini-Flan-T5-783M", task: "summarization", description: "Text-to-text model for summaries and instructions.", tags: ["Text", "Summaries", "ONNX"] },
+];
+let marketplaceModels = [], marketplaceRequest = 0, marketplaceLoaded = false;
+let marketplaceBusyFocus = null;
+function setMarketplaceLoading(loading) {
+  const grid = $("#marketGrid");
+  const searchButton = $("#marketSearchButton");
+  const refreshButton = $("#marketplaceRefresh");
+  if (loading) {
+    const active = document.activeElement;
+    if (
+      marketplaceBusyFocus &&
+      active &&
+      active !== document.body &&
+      active !== marketplaceBusyFocus
+    )
+      marketplaceBusyFocus = null;
+    if (
+      !marketplaceBusyFocus &&
+      (active === searchButton || active === refreshButton)
+    )
+      marketplaceBusyFocus = active;
+  }
+  if (grid) {
+    if (loading) grid.setAttribute("aria-busy", "true");
+    else grid.removeAttribute("aria-busy");
+  }
+  if (searchButton) {
+    searchButton.disabled = loading;
+    searchButton.textContent = loading ? "Searching…" : "Search Hub";
+    searchButton.setAttribute("aria-label", loading ? "Searching model catalog" : "Search model catalog");
+  }
+  if (refreshButton) {
+    refreshButton.disabled = loading;
+    refreshButton.textContent = loading ? "Refreshing…" : "Refresh catalog";
+  }
+  if (!loading) {
+    const focusTarget = marketplaceBusyFocus;
+    marketplaceBusyFocus = null;
+    if (
+      focusTarget?.isConnected &&
+      !focusTarget.disabled &&
+      (document.activeElement === document.body || !document.activeElement)
+    )
+      focusTarget.focus();
+  }
+}
+function renderMarketplace() {
+  const grid = $("#marketGrid"), query = $("#marketSearch").value.trim().toLowerCase(), task = $("#marketTask").value;
+  grid.replaceChildren();
+  const rows = marketplaceModels.filter((m) => (!query || `${m.id} ${m.description || ""} ${(m.tags || []).join(" ")}`.toLowerCase().includes(query)) && (task === "all" || m.pipeline_tag === task || m.task === task));
+  for (const model of rows) {
+    const card = document.createElement("article"), title = document.createElement("h3"), id = document.createElement("div"), description = document.createElement("p"), meta = document.createElement("div"), actions = document.createElement("div");
+    const onnx = Boolean(model.localCompatible ?? model.onnx), installed = state.settings.localModelId === model.id;
+    card.className = "market-card"; title.textContent = model.id.split("/").pop(); id.className = "market-card-id"; id.textContent = model.id;
+    description.className = "market-card-description"; description.textContent = model.description || model.cardData?.description || `Model for ${model.pipeline_tag || model.task || "machine learning"}. Open its Hugging Face model page to review details and license.`;
+    meta.className = "market-card-tags";
+    for (const label of [...(model.tags || []), model.pipeline_tag || model.task || "Model", model.cardData?.license || "License varies", onnx ? "Offline ready" : "Hosted / external runtime"]) { const tag = document.createElement("span"); tag.textContent = label; meta.append(tag); }
+    actions.className = "market-card-actions";
+    const view = document.createElement("button"); view.className = "secondary-action"; view.textContent = "Model details"; view.onclick = () => openMarketplaceModelDetails(model.id); actions.append(view);
+    const install = document.createElement("button"); install.className = "save"; install.textContent = installed ? "Selected" : onnx ? "Download" : "Select model"; install.disabled = installed || (!onnx && !model.pipeline_tag);
+    install.onclick = () => onnx ? installMarketplaceModel(model, install) : selectHostedMarketplaceModel(model);
+    actions.append(install); card.append(title, id, description, meta, actions); grid.append(card);
+  }
+  if (!rows.length) { const empty = document.createElement("div"); empty.className = "marketplace-empty"; empty.textContent = marketplaceModels.length ? "No models match these filters. Try another search or task." : "Loading recommended models…"; grid.append(empty); }
+}
+async function openMarketplaceModelDetails(repoId) {
+  if (window.desktopModels?.openHuggingFaceModel) {
+    try {
+      await window.desktopModels.openHuggingFaceModel(repoId);
+      return;
+    } catch (error) {
+      $("#marketStatus").textContent = `Could not open ${repoId}: ${error.message}`;
+      return;
+    }
+  }
+  window.open(`https://huggingface.co/${encodeURIComponent(repoId).replaceAll("%2F", "/")}`, "_blank", "noopener");
+}
+async function installMarketplaceModel(model, button) {
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.textContent = "Downloading…";
+  $("#marketStatus").textContent = `Downloading ${model.id}. Large models can take a while.`;
+  try {
+    const result = await window.desktopModels.download(model.id);
+    const hfTask = model.pipeline_tag || model.task || "text-generation";
+    state.settings.localModelId = model.id;
+    state.settings.model = model.id;
+    state.settings.provider = "Hugging Face";
+    state.settings.hfTask = hfTask;
+    state.settingsByProvider["Hugging Face"] = {
+      ...(state.settingsByProvider["Hugging Face"] || {}),
+      model: model.id,
+      hfTask,
+      localModelId: model.id,
+    };
+    $("#taskSelect").value = hfTask;
+    $("#localModelId").value = model.id;
+    $("#modelInput").value = model.id;
+    persist();
+    settingLoad();
+    $("#marketStatus").textContent = `Installed ${model.id}: ${result.downloaded} files downloaded. It is selected for local use.`;
+    button.textContent = "Selected";
+    renderMarketplace();
+  }
+  catch (error) {
+    $("#marketStatus").textContent = `${model.id}: ${error.message}`;
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    button.textContent = "Retry download";
+  }
+}
+function selectHostedMarketplaceModel(model) {
+  const hfTask = model.pipeline_tag || model.task || "text-generation";
+  state.settings.provider = "Hugging Face";
+  state.settings.model = model.id;
+  state.settings.hfTask = hfTask;
+  state.settingsByProvider["Hugging Face"] = {
+    ...(state.settingsByProvider["Hugging Face"] || {}),
+    model: model.id,
+    hfTask,
+    localModelId: "",
+  };
+  $("#modelInput").value = model.id;
+  $("#taskSelect").value = hfTask;
+  persist();
+  settingLoad();
+  $("#marketStatus").textContent = `${model.id} selected. Hosted inference may require a Hugging Face token in Settings.`;
+}
+function loadFeaturedMarketplace() { marketplaceModels = featuredModels.map((m) => ({ ...m, pipeline_tag: m.task, localCompatible: true })); renderMarketplace(); }
+async function searchMarketplace() {
+  marketplaceLoaded = true;
+  const request = ++marketplaceRequest, task = $("#marketTask").value, query = $("#marketSearch").value.trim();
+  setMarketplaceLoading(true);
+  if (!window.desktopModels?.searchHuggingFace) {
+    setMarketplaceLoading(false);
+    $("#marketStatus").textContent =
+      "Catalog search is available in the Server Rock desktop app. Featured offline-ready models remain available.";
+    return;
+  }
+  $("#marketStatus").textContent = "Searching Hugging Face model catalog…";
+  try { const models = await window.desktopModels.searchHuggingFace(query, task); if (request !== marketplaceRequest) return; if (!query && marketplaceModels.length) { const featured = featuredModels.filter((m) => task === "all" || m.task === task).map((m) => ({ ...m, pipeline_tag: m.task, localCompatible: true })); const additions = models.map((m) => ({ ...m, pipeline_tag: m.pipeline_tag || task, localCompatible: (m.siblings || []).some((f) => f.rfilename?.startsWith("onnx/")) })).filter((m) => !featured.some((f) => f.id === m.id)); marketplaceModels = [...featured, ...additions]; renderMarketplace(); $("#marketStatus").textContent = `${models.length} Hugging Face results and ${featured.length} featured recommendations · ONNX models can be installed offline; other models need hosted inference or an external runtime.`; return; } const featured = featuredModels.filter((m) => task === "all" || m.task === task).map((m) => ({ ...m, pipeline_tag: m.task, localCompatible: true })); const results = models.map((m) => ({ ...m, pipeline_tag: m.pipeline_tag || task, localCompatible: (m.siblings || []).some((f) => f.rfilename?.startsWith("onnx/")) })); const seen = new Set(results.map((m) => m.id)); marketplaceModels = query ? [...results, ...featured.filter((m) => !seen.has(m.id))] : [...featured.filter((m) => !seen.has(m.id)), ...results]; renderMarketplace(); $("#marketStatus").textContent = `${results.length} Hugging Face results and ${featured.length} featured recommendations · ONNX models can be installed offline; other models need hosted inference or an external runtime.`; }
+  catch (error) { if (request === marketplaceRequest) { setMarketplaceLoading(false); $("#marketStatus").textContent = "Catalog unavailable: " + error.message + ". Featured models remain available."; } }
+}
+const marketplaceSearchImplementation = searchMarketplace;
+let marketplaceLoadingRequest = 0;
+searchMarketplace = async (...args) => {
+  const token = ++marketplaceLoadingRequest;
+  setMarketplaceLoading(true);
+  try {
+    return await marketplaceSearchImplementation(...args);
+  } finally {
+    if (token === marketplaceLoadingRequest) setMarketplaceLoading(false);
+  }
+};
+$("#marketSearch").oninput = renderMarketplace;
+$("#marketTask").onchange = () => {
+  renderMarketplace();
+  const task = $("#marketTask").value;
+  const query = $("#marketSearch").value.trim();
+  const hasMatchingModel = marketplaceModels.some((model) =>
+    task === "all" || model.pipeline_tag === task || model.task === task,
+  );
+  if (!hasMatchingModel || query) searchMarketplace();
+};
+$("#marketSearchButton").onclick = searchMarketplace;
+$("#marketplaceRefresh").onclick = searchMarketplace;
 $("#hfFind").onclick = async () => {
   try {
     await searchHub();
@@ -1737,7 +2487,7 @@ async function send() {
     // window.prompt(), which Electron doesn't support, so it always fell back
     // to a misleading "Start Ollama" alert. Deferred so the click that sent
     // the command doesn't immediately close the picker again.
-    setTimeout(openModelLibrary, 0);
+    setTimeout(openModelPicker, 0);
     return;
   }
   if (cmd.push) {
@@ -1934,6 +2684,8 @@ async function send() {
     }
     if (request.signal.aborted && !out.content)
       out.content = "Generation stopped.";
+    else if (request.signal.aborted && out.content)
+      out.content += "\n\n_Response stopped._";
     if (!out.content) out.content = "The provider returned no text.";
   } catch (e) {
     if (request.signal.aborted) {
@@ -1943,6 +2695,7 @@ async function send() {
         "Request failed: " +
         e.message +
         "\n\nCheck provider status, endpoint, API key and CORS settings.";
+    if (!request.signal.aborted) console.error("Chat request failed:", e);
   } finally {
     if (activeRequest === request) {
       activeRequest = null;
@@ -1959,7 +2712,9 @@ async function send() {
       const chat = state.chats.find((item) => item.id === active.id);
       if (chat && pendingBranchBase) {
         chat.baseMessages = pendingBranchBase;
-        chat.branches = [...(chat.branches || []), JSON.parse(JSON.stringify(chat.messages))];
+        const nextBranch = JSON.parse(JSON.stringify(chat.messages));
+        if (!(chat.branches || []).some((branch) => conversationMatches(branch, nextBranch)))
+          chat.branches = [...(chat.branches || []), nextBranch];
         chat.branchIndex = chat.branches.length;
         active = chat;
       }
@@ -1978,7 +2733,76 @@ async function send() {
     }
   }
 }
+const slashCommandDescriptions = {
+  fast: "Use the configured fast model",
+  plan: "Ask for a structured plan",
+  goal: "Create a focused work goal",
+  status: "Show provider, model, and project status",
+  imagegen: "Generate an image from a prompt",
+  imagine: "Generate an image from a prompt",
+  review: "Review the current project context",
+  summarize: "Summarize the provided content",
+  explain: "Explain the provided content",
+  translate: "Translate the provided text",
+  help: "Show all available commands",
+  models: "Discover available local models",
+  push: "Review and push project changes",
+  clear: "Clear local conversation history",
+};
+function closeSlashMenu() {
+  $("#slashMenu").hidden = true;
+  $("#slashHelp").setAttribute("aria-expanded", "false");
+}
+function renderSlashMenu(filter = "") {
+  const menu = $("#slashMenu");
+  menu.replaceChildren();
+  for (const command of COMMANDS.filter((name) => name.startsWith(filter.toLowerCase()))) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "slash-option";
+    button.setAttribute("role", "menuitem");
+    const name = document.createElement("span");
+    const description = document.createElement("small");
+    name.textContent = `/${command}`;
+    description.textContent = slashCommandDescriptions[command] || "Run a command";
+    button.append(name, description);
+    button.onclick = () => {
+      $("#prompt").value = `/${command} `;
+      $("#prompt").focus();
+      $("#prompt").dispatchEvent(new Event("input", { bubbles: true }));
+      closeSlashMenu();
+    };
+    menu.append(button);
+  }
+  if (!menu.children.length) {
+    const empty = document.createElement("div");
+    empty.className = "slash-empty";
+    empty.textContent = "No matching command";
+    menu.append(empty);
+  }
+}
+function openSlashMenu(filter = "") {
+  renderSlashMenu(filter);
+  $("#slashMenu").hidden = false;
+  $("#slashHelp").setAttribute("aria-expanded", "true");
+}
+$("#slashHelp").onclick = () => {
+  if ($("#slashMenu").hidden) openSlashMenu();
+  else closeSlashMenu();
+};
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (!$("#slashMenu").hidden) {
+      closeSlashMenu();
+      $("#slashHelp").focus();
+    }
+    if ($(".sidebar").classList.contains("mobile-open")) setMobileSidebar(false);
+  }
+});
 $("#prompt").addEventListener("input", () => {
+  const slashMatch = $("#prompt").value.match(/^\/([a-z]*)$/i);
+  if (slashMatch) openSlashMenu(slashMatch[1]);
+  else if (!$("#slashMenu").hidden) closeSlashMenu();
   let m = $("#prompt").value.match(/^\/(fast|imagegen|imagine)\b/i),
     h = $("#commandHint");
   h.hidden = !m;
@@ -2016,15 +2840,26 @@ $("#prompt").onkeydown = (e) => {
   }
 };
 function setPage(name) {
-  const image = name === "images",
-    activity = name === "activity";
+  const drawerWasOpen = $(".sidebar").classList.contains("mobile-open");
+  setMobileSidebar(false, drawerWasOpen);
+  const nextPage = ["chat", "images", "activity", "models"].includes(name)
+    ? name
+    : "chat";
+  if (state.activePage !== nextPage) {
+    state.activePage = nextPage;
+    persist();
+  }
+  const image = nextPage === "images",
+    activity = nextPage === "activity",
+    models = nextPage === "models";
   $("#imagePage").hidden = !image;
   $("#activityPage").hidden = !activity;
-  const chat = !image && !activity;
+  $("#marketplacePage").hidden = !models;
+  const chat = !image && !activity && !models;
   $(".welcome").hidden = !chat || Boolean(active);
   $(".messages").hidden = !chat;
   $(".composer-wrap").hidden = !chat;
-  $("#crumb").textContent = image
+  $("#crumb").textContent = models ? "AI SuperMarket" : image
     ? "Images"
     : activity
       ? "Activity"
@@ -2032,8 +2867,13 @@ function setPage(name) {
   if (!image && !activity) $("#projectContextBadge").hidden = !state.activeProjectId;
   document
     .querySelectorAll(".rail [data-page]")
-    .forEach((b) => b.classList.toggle("selected", b.dataset.page === name));
-  if (activity) renderActivity();
+    .forEach((b) => b.classList.toggle("selected", b.dataset.page === nextPage));
+  if (activity) {
+    renderActivity();
+    ensureTerminalEvents();
+    renderTerminalProjects();
+    refreshTerminalSessions();
+  }
 }
 function renderActivity() {
   const list = $("#activityList");
@@ -2061,22 +2901,195 @@ function renderActivity() {
     list.append(empty);
   }
 }
+function terminalBridgeAvailable() {
+  return Boolean(window.desktopModels?.terminalStart && window.desktopModels?.terminalList);
+}
+function terminalProject() {
+  return state.projects.find((project) => project.id === $("#terminalProject").value) ||
+    state.projects.find((project) => project.id === state.activeProjectId) ||
+    state.projects.find((project) => project.folders?.length);
+}
+function renderTerminalProjects() {
+  const projectSelect = $("#terminalProject"), cwdSelect = $("#terminalCwd");
+  if (!projectSelect || !cwdSelect) return;
+  const projects = state.projects.filter((project) => Array.isArray(project.folders) && project.folders.length);
+  const selected = terminalProject()?.id || "";
+  projectSelect.replaceChildren();
+  if (!projects.length) {
+    projectSelect.append(new Option("Create a project with an authorized folder", ""));
+    projectSelect.disabled = true;
+    cwdSelect.replaceChildren(new Option("No authorized folders", ""));
+    cwdSelect.disabled = true;
+    $("#terminalRun").disabled = true;
+    $("#terminalStatus").textContent = terminalBridgeAvailable()
+      ? "Create a project and add a folder before using the terminal."
+      : "Open the packaged desktop app to use the project terminal.";
+    return;
+  }
+  for (const project of projects) projectSelect.append(new Option(project.name, project.id));
+  projectSelect.disabled = false;
+  projectSelect.value = projects.some((project) => project.id === selected) ? selected : projects[0].id;
+  cwdSelect.replaceChildren();
+  const project = projects.find((item) => item.id === projectSelect.value) || projects[0];
+  for (const folder of project.folders) cwdSelect.append(new Option(folder, folder));
+  cwdSelect.disabled = false;
+  $("#terminalRun").disabled = !terminalBridgeAvailable();
+}
+function renderTerminalSessions() {
+  const list = $("#terminalSessions");
+  if (!list) return;
+  list.replaceChildren();
+  for (const session of terminalState.sessions.values()) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "terminal-session" + (session.id === terminalState.activeId ? " selected" : "");
+    button.textContent = `${session.status === "running" ? "●" : "○"} ${session.command}`;
+    button.title = `${session.cwd} · ${session.status}`;
+    button.onclick = async () => {
+      terminalState.activeId = session.id;
+      renderTerminalSessions();
+      renderTerminalOutput();
+      if (terminalBridgeAvailable() && window.desktopModels.terminalAttach) {
+        try { await window.desktopModels.terminalAttach(session.id); } catch (error) { setTerminalStatus(error.message); }
+      }
+    };
+    list.append(button);
+  }
+  if (!list.children.length) {
+    const empty = document.createElement("span");
+    empty.className = "muted";
+    empty.textContent = "No terminal sessions yet.";
+    list.append(empty);
+  }
+  const activeSession = terminalState.sessions.get(terminalState.activeId);
+  $("#terminalStop").disabled = !activeSession || activeSession.status !== "running";
+  $("#terminalSend").disabled = !activeSession || activeSession.status !== "running";
+}
+function renderTerminalOutput() {
+  const output = $("#terminalOutput");
+  if (!output) return;
+  const session = terminalState.sessions.get(terminalState.activeId);
+  output.textContent = session?.output || (session ? "Waiting for terminal output…" : "Select a project to start a terminal session.");
+  output.scrollTop = output.scrollHeight;
+}
+function setTerminalStatus(message) {
+  const status = $("#terminalStatus");
+  if (status) status.textContent = message;
+}
+function handleTerminalEvent(event) {
+  if (!event?.id || !event.type) return;
+  let session = terminalState.sessions.get(event.id);
+  if (!session) {
+    session = { id: event.id, status: "running", command: event.command || "Terminal", cwd: event.cwd || "", output: "" };
+    terminalState.sessions.set(event.id, session);
+  }
+  if (event.type === "snapshot") {
+    Object.assign(session, { status: event.status, command: event.command, cwd: event.cwd, output: event.output || "", code: event.code, signal: event.signal, truncated: event.truncated });
+  } else if (event.type === "started") {
+    Object.assign(session, { status: "running", command: event.command, cwd: event.cwd });
+    setTerminalStatus(`Running in ${event.cwd}`);
+  } else if (event.type === "data") {
+    session.output = (session.output || "") + (event.text || "");
+    if (event.truncated) session.truncated = true;
+  } else if (event.type === "status") {
+    setTerminalStatus(event.message || "Terminal status updated.");
+  } else if (event.type === "error") {
+    setTerminalStatus(event.message || "Terminal failed.");
+  } else if (event.type === "exit") {
+    session.status = "exited";
+    session.code = event.code;
+    session.signal = event.signal;
+    const codeText = event.code === null || event.code === undefined ? "" : ` with code ${event.code}`;
+    setTerminalStatus(event.reason === "timeout" ? "Terminal timed out." : `Terminal exited${codeText}.`);
+  }
+  if (!terminalState.activeId) terminalState.activeId = event.id;
+  renderTerminalSessions();
+  renderTerminalOutput();
+}
+function ensureTerminalEvents() {
+  if (terminalState.unsubscribe || !window.desktopModels?.terminalOnEvent) return;
+  terminalState.unsubscribe = window.desktopModels.terminalOnEvent(handleTerminalEvent);
+}
+async function refreshTerminalSessions() {
+  renderTerminalProjects();
+  if (!terminalBridgeAvailable()) {
+    setTerminalStatus("Open the packaged desktop app to use the project terminal.");
+    renderTerminalSessions();
+    renderTerminalOutput();
+    return;
+  }
+  try {
+    const sessions = await window.desktopModels.terminalList();
+    terminalState.sessions.clear();
+    for (const session of sessions || []) terminalState.sessions.set(session.id, { ...session, output: "" });
+    if (!terminalState.sessions.has(terminalState.activeId)) terminalState.activeId = sessions?.[0]?.id || null;
+    if (terminalState.activeId && window.desktopModels.terminalAttach) await window.desktopModels.terminalAttach(terminalState.activeId);
+    renderTerminalSessions();
+    renderTerminalOutput();
+  } catch (error) {
+    setTerminalStatus(`Terminal unavailable: ${error.message}`);
+  }
+}
+async function startTerminalSession() {
+  if (!terminalBridgeAvailable()) return setTerminalStatus("Open the packaged desktop app to use the project terminal.");
+  const project = terminalProject(), command = $("#terminalCommand").value.trim(), cwd = $("#terminalCwd").value;
+  if (!project?.folders?.length) return setTerminalStatus("Create a project with an authorized folder first.");
+  if (!command) return setTerminalStatus("Enter a terminal command first.");
+  $("#terminalRun").disabled = true;
+  try {
+    const session = await window.desktopModels.terminalStart({ folders: project.folders, cwd, command });
+    terminalState.sessions.set(session.id, { ...session, output: "" });
+    terminalState.activeId = session.id;
+    await window.desktopModels.terminalAttach?.(session.id);
+    $("#terminalCommand").value = "";
+    setTerminalStatus(`Running in ${session.cwd}`);
+    renderTerminalSessions();
+    renderTerminalOutput();
+  } catch (error) {
+    setTerminalStatus(error.message);
+  } finally {
+    $("#terminalRun").disabled = false;
+  }
+}
+$("#terminalProject").onchange = renderTerminalProjects;
+$("#terminalRun").onclick = startTerminalSession;
+$("#terminalRefresh").onclick = refreshTerminalSessions;
+$("#terminalStop").onclick = async () => {
+  if (!terminalState.activeId || !window.desktopModels?.terminalStop) return;
+  try { await window.desktopModels.terminalStop(terminalState.activeId, "user"); } catch (error) { setTerminalStatus(error.message); }
+};
+$("#terminalSend").onclick = async () => {
+  const input = $("#terminalInput").value;
+  if (!input || !terminalState.activeId || !window.desktopModels?.terminalWrite) return;
+  try { await window.desktopModels.terminalWrite(terminalState.activeId, input + "\n"); $("#terminalInput").value = ""; } catch (error) { setTerminalStatus(error.message); }
+};
+$("#terminalInput").onkeydown = (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    $("#terminalSend").click();
+  }
+};
 $("#navChats").onclick = () => setPage("chat");
 $("#navImages").onclick = () => setPage("images");
 $("#navActivity").onclick = () => setPage("activity");
-// Shows the chat page with the model picker open and starts a host scan.
-// Shared by the Model library rail button and the /models command.
+document.querySelectorAll(".mobile-nav [data-page]").forEach((button) => {
+  button.onclick = () => setPage(button.dataset.page);
+});
 function openModelLibrary() {
-  setPage("chat");
-  const picker = $("#modelPicker");
-  picker.hidden = false;
-  $("#model").setAttribute("aria-expanded", "true");
-  renderModelChoices();
-  scanModels();
+  setPage("models");
+  if (!marketplaceModels.length) loadFeaturedMarketplace();
+  if (!marketplaceLoaded) { marketplaceLoaded = true; searchMarketplace(); }
 }
-$("#navLibrary").onclick = openModelLibrary;
-$("#openModelLibrary").onclick = () => $("#navLibrary").click();
-$("#openConnections").onclick = () => $("#settings").click();
+$("#openModelLibrary").onclick = openModelLibrary;
+$("#welcomeMarketplace").onclick = openModelLibrary;
+$("#welcomeSettings").onclick = () => $("#settings").click();
+// Opens the composer's model picker (which scans every local host) for /models.
+// Separate from openModelLibrary(), which opens the model marketplace page.
+function openModelPicker() {
+  setPage("chat");
+  if ($("#modelPicker").hidden) toggleModelPicker();
+  else scanModels();
+}
 $("#temperatureControl").oninput = (event) => {
   const value = Number(event.target.value);
   state.settings.temperature = value;
@@ -2170,6 +3183,7 @@ window.desktopModels?.githubDefaultClientId?.().then((clientId) => {
 migrateAndLoadProviderSecrets();
 renderProjects();
 renderHistory();
+setPage(state.activePage);
 
 function speakReply(text) {
   if (!("speechSynthesis" in window)) return;

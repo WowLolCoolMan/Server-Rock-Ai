@@ -1,7 +1,6 @@
 const {
   app,
   BrowserWindow,
-  Menu,
   protocol,
   net,
   ipcMain,
@@ -9,16 +8,16 @@ const {
   shell,
   safeStorage,
 } = require("electron");
-const { autoUpdater } = require("electron-updater");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
+const { spawn } = require("node:child_process");
 const http = require("node:http");
 const crypto = require("node:crypto");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const execFileAsync = promisify(execFile);
-const { createWorkspace, readUtf8Limited } = require("./workspace.cjs");
+const { createWorkspace, isProtectedPath, readUtf8Limited } = require("./workspace.cjs");
 const { createProviderBridge, validateEndpoint } = require("./provider-bridge.cjs");
 const {
   readJsonBodyLimited,
@@ -31,16 +30,16 @@ const { createSafeChildEnvironment } = require("./child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
-const { manualUpdateReason: manualUpdateReasonFor } = require("./update-support.cjs");
+const { createTerminalManager } = require("./terminal-sessions.cjs");
+const { fetchReleaseStatus, releasePageUrl } = require("./github-updates.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
+const MAX_GITHUB_DIFF_BYTES = 256 * 1024;
 const localPipelines = new Map();
 const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
 const githubDeviceRequests = new Map();
-let updateState = { status: "idle", version: app.getVersion(), downloaded: false };
-let updateCheckPromise = null;
-let updateDownloadPromise = null;
+let terminalManager = null;
 let chatGPTJwks = null;
 const CHATGPT_AUTH = "https://auth.openai.com/api/accounts/oauth";
 const CHATGPT_RESOURCE = "https://api.openai.com/v1";
@@ -81,67 +80,6 @@ async function quarantineUnreadableFile(filePath) {
   } catch {
     // Missing or inaccessible files cannot be quarantined; callers still get a clean state.
   }
-}
-// Unsigned macOS, portable Windows, and Linux tar.gz builds can't update in
-// place (see update-support.cjs). Those builds report a "manual" update state.
-const manualUpdateReason = () =>
-  manualUpdateReasonFor({
-    platform: process.platform,
-    env: process.env,
-    resourcesPath: process.resourcesPath,
-    fileExists: fsSync.existsSync,
-  });
-function setupAutoUpdater() {
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.allowPrerelease = false;
-  const notify = (status, extra = {}) => {
-    updateState = { ...updateState, status, ...extra };
-    for (const win of BrowserWindow.getAllWindows())
-      win.webContents.send("updates:state", updateState);
-  };
-  autoUpdater.on("checking-for-update", () => notify("checking"));
-  autoUpdater.on("update-available", (info) =>
-    notify("available", { version: info.version, releaseDate: info.releaseDate }),
-  );
-  autoUpdater.on("update-not-available", (info) =>
-    notify("current", { version: info.version }),
-  );
-  autoUpdater.on("download-progress", (progress) =>
-    notify("downloading", { percent: Math.round(progress.percent) }),
-  );
-  autoUpdater.on("update-downloaded", (info) =>
-    notify("downloaded", { version: info.version, downloaded: true }),
-  );
-  autoUpdater.on("error", (error) =>
-    notify("error", { message: String(error.message || error) }),
-  );
-  ipcMain.handle("updates:state", () => updateState);
-  ipcMain.handle("updates:check", async () => {
-    if (!app.isPackaged) return { ...updateState, status: "dev" };
-    const manualReason = manualUpdateReason();
-    if (manualReason) return { ...updateState, status: "manual", message: manualReason };
-    updateCheckPromise ??= autoUpdater.checkForUpdates().finally(() => {
-      updateCheckPromise = null;
-    });
-    await updateCheckPromise;
-    return updateState;
-  });
-  ipcMain.handle("updates:download", async () => {
-    if (!app.isPackaged) throw Error("Updates are disabled in development mode.");
-    const manualReason = manualUpdateReason();
-    if (manualReason) throw Error(manualReason);
-    updateDownloadPromise ??= autoUpdater.downloadUpdate().finally(() => {
-      updateDownloadPromise = null;
-    });
-    await updateDownloadPromise;
-    return updateState;
-  });
-  ipcMain.handle("updates:install", () => {
-    if (!updateState.downloaded) throw Error("Download an update first.");
-    autoUpdater.quitAndInstall(false, true);
-    return { status: "installing" };
-  });
 }
 async function readChatGPTState() {
   try {
@@ -195,6 +133,10 @@ async function writeProviderSecret(provider, secret) {
       .toString("base64");
   await writeProtectedFile(dest, encoded);
   return { saved: Boolean(secret.trim()) };
+}
+
+async function checkGitHubRelease(channel) {
+  return fetchReleaseStatus({ channel, currentVersion: app.getVersion(), platform: process.platform, arch: process.arch });
 }
 async function getChatGPTProfile() {
   const data = await readChatGPTState();
@@ -633,6 +575,7 @@ function createWindow() {
     height: 920,
     minWidth: 800,
     minHeight: 580,
+    autoHideMenuBar: true,
     backgroundColor: "#111210",
     title: "Server Rock: AI",
     webPreferences: {
@@ -642,12 +585,30 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
     },
   });
+  win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, "..", "index.html"));
 }
 app.whenReady().then(() => {
-  setupAutoUpdater();
   const modelRoot = path.join(app.getPath("userData"), "models"),
     workspace = createWorkspace(app.getPath("userData"));
+  terminalManager = createTerminalManager({ resolveRoots: (folders) => workspace.getRoots(folders) });
+  ipcMain.handle("history:export-native-migration", async (_event, archive) => {
+    if (typeof archive !== "string" || archive.length === 0 || Buffer.byteLength(archive, "utf8") > 25 * 1024 * 1024)
+      throw Error("The migration archive must be a JSON file no larger than 25 MB.");
+    let parsed;
+    try { parsed = JSON.parse(archive); } catch { throw Error("The migration archive is not valid JSON."); }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Array.isArray(parsed.chats))
+      throw Error("The migration archive must contain a chat list.");
+    const result = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+      title: "Export chats for Server Rock native",
+      defaultPath: `server-rock-native-migration-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "Server Rock migration archive", extensions: ["json"] }],
+      properties: ["showOverwriteConfirmation", "createDirectory"],
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    await writeProtectedFile(result.filePath, archive);
+    return { canceled: false, fileName: path.basename(result.filePath) };
+  });
   ipcMain.handle("projects:read-files", (_event, folders) =>
     workspace.readFiles(folders),
   );
@@ -656,9 +617,27 @@ app.whenReady().then(() => {
     (_event, folders, relativePath, content) =>
       workspace.writeFile(folders, relativePath, content),
   );
+  ipcMain.handle("terminal:start", (event, options) =>
+    terminalManager.start(options, (data) => event.sender.send("terminal:event", data)),
+  );
+  ipcMain.handle("terminal:write", (_event, id, input) => terminalManager.write(id, input));
+  ipcMain.handle("terminal:stop", (_event, id, reason) => terminalManager.stop(id, reason));
+  ipcMain.handle("terminal:list", () => terminalManager.list());
+  ipcMain.handle("terminal:snapshot", (_event, id) => terminalManager.snapshot(id));
+  ipcMain.handle("terminal:attach", (event, id) => {
+    const unsubscribe = terminalManager.attach(id, (data) => event.sender.send("terminal:event", data));
+    event.sender.once("destroyed", unsubscribe);
+    return terminalManager.snapshot(id);
+  });
   ipcMain.handle("chatgpt:status", () => chatGPTStatus());
   ipcMain.handle("chatgpt:signin", () => chatGPTSignIn());
   ipcMain.handle("chatgpt:models", () => chatGPTModels());
+  ipcMain.handle("github-updates:check", (_event, channel) => checkGitHubRelease(channel));
+  ipcMain.handle("github-updates:open-release", async (_event, tag) => {
+    const url = releasePageUrl(tag);
+    await shell.openExternal(url);
+    return { opened: true, url };
+  });
   ipcMain.handle("chatgpt:stream", (event, messages, model, requestId) =>
     chatGPTStream(event, messages, model, requestId),
   );
@@ -666,6 +645,13 @@ app.whenReady().then(() => {
     activeChatGPTRequests.get(requestId)?.abort(),
   );
   ipcMain.handle("models:scan-hosts", () => scanModelHosts());
+  ipcMain.handle("models:open-hub", async (_event, repoId) => {
+    if (typeof repoId !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(repoId) || repoId.length > 200)
+      throw Error("Enter a valid Hugging Face repository ID.");
+    const url = "https://huggingface.co/" + repoId;
+    await shell.openExternal(url);
+    return { opened: true, url };
+  });
   const readSecureProviderSecret = async (provider) => {
     validateProviderName(provider);
     const secrets = await readProviderSecrets();
@@ -858,6 +844,24 @@ app.whenReady().then(() => {
       if (entry.length >= 3 && entry[2] === " ") paths.add(entry.slice(3));
       else paths.add(entry);
     }
+    const protectedPaths = [...paths].filter((relativePath) => isProtectedPath(relativePath.replaceAll("\\", "/")));
+    let diff = "";
+    if (!protectedPaths.length) {
+      try {
+        const result = await runGit(
+          ["diff", "HEAD", "--no-ext-diff", "--no-color", "--unified=3", "--"],
+          root,
+          undefined,
+          { preserveStdout: true },
+        );
+        const bytes = Buffer.from(result.stdout || "", "utf8");
+        diff = bytes.length > MAX_GITHUB_DIFF_BYTES
+          ? bytes.subarray(0, MAX_GITHUB_DIFF_BYTES).toString("utf8") + "\n[patch preview truncated]\n"
+          : result.stdout || "";
+      } catch {
+        diff = "";
+      }
+    }
     const snapshot = crypto.createHash("sha256").update(porcelain || "");
     for (const relativePath of paths) {
       const absolutePath = path.resolve(root, relativePath);
@@ -886,7 +890,7 @@ app.whenReady().then(() => {
         snapshot.update("deleted");
       }
     }
-    return { changes, changeToken: snapshot.digest("hex") };
+    return { changes, protectedPaths, diff, changeToken: snapshot.digest("hex") };
   };
   const streamProviderChat = createProviderBridge({
     net,
@@ -1024,6 +1028,7 @@ app.whenReady().then(() => {
       branch,
       changedFiles: snapshot.changes.length,
       changes: snapshot.changes,
+      protectedPaths: snapshot.protectedPaths,
       changeToken: snapshot.changeToken,
       ahead: Number(ahead) || 0,
       remoteUrl,
@@ -1046,6 +1051,8 @@ app.whenReady().then(() => {
     const snapshot = await githubChangeSnapshot(root);
     if (snapshot.changeToken !== expectedChangeToken)
       throw Error("Repository files changed after your review. Close this dialog and review the updated changes before pushing.");
+    if (snapshot.protectedPaths.length)
+      throw Error("Remove protected files before pushing: " + snapshot.protectedPaths.slice(0, 5).join(", ") + (snapshot.protectedPaths.length > 5 ? " …" : ""));
     let commit = "";
     if (snapshot.changes.length) {
       await runGit(["add", "--all"], root);
@@ -1065,7 +1072,7 @@ app.whenReady().then(() => {
       throw Error("Choose a valid Hugging Face task.");
     const url = new URL("https://huggingface.co/api/models");
     url.searchParams.set("search", query.trim());
-    url.searchParams.set("pipeline_tag", task);
+    if (task !== "all") url.searchParams.set("pipeline_tag", task);
     url.searchParams.set("sort", "downloads");
     url.searchParams.set("limit", "30");
     url.searchParams.set("full", "true");
@@ -1648,65 +1655,15 @@ app.whenReady().then(() => {
     if (result.canceled || !result.filePaths[0]) return null;
     return workspace.approveFolder(result.filePaths[0]);
   });
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate([
-      {
-        label: "File",
-        submenu: [
-          {
-            label: "New chat",
-            accelerator: "CmdOrCtrl+N",
-            click: () => {
-              const w = BrowserWindow.getFocusedWindow();
-              w?.webContents.executeJavaScript(
-                "document.querySelector('#newChat').click()",
-              );
-            },
-          },
-          { type: "separator" },
-          { role: "quit" },
-        ],
-      },
-      {
-        label: "Edit",
-        submenu: [
-          { role: "undo" },
-          { role: "redo" },
-          { type: "separator" },
-          { role: "cut" },
-          { role: "copy" },
-          { role: "paste" },
-          { role: "selectAll" },
-        ],
-      },
-      {
-        label: "View",
-        submenu: [
-          { role: "reload" },
-          { role: "toggleDevTools" },
-          { type: "separator" },
-          { role: "togglefullscreen" },
-        ],
-      },
-      {
-        label: "Help",
-        submenu: [
-          {
-            label: "About Server Rock: AI",
-            click: () =>
-              BrowserWindow.getFocusedWindow()?.webContents.executeJavaScript(
-                "alert('Server Rock: AI · Local-first AI workspace')",
-              ),
-          },
-        ],
-      },
-    ]),
-  );
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    terminalManager?.dispose();
+    app.quit();
+  }
 });
+app.on("before-quit", () => terminalManager?.dispose());

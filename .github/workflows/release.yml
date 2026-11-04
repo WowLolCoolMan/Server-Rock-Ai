@@ -26,6 +26,12 @@ jobs:
       - run: npm run check:syntax
       - run: npm run check:hygiene
       - run: npm test
+      - run: npm run audit:ui
+      - run: npm run audit:electron
+      - name: Validate release tag policy
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          node -e 'const tag=process.env.GITHUB_REF_NAME; if (!/^v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-beta\.(?:0|[1-9]\d*))?$/.test(tag)) { console.error("Use vX.Y.Z for stable or vX.Y.Z-beta.N for beta releases."); process.exit(1); }'
 
   native:
     runs-on: ubuntu-latest
@@ -74,16 +80,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Set package version from release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
       - run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
+      - name: Smoke test packaged Windows app
+        if: matrix.platform == 'win' && matrix.arch == 'x64'
+        shell: pwsh
+        env:
+          SERVER_ROCK_ELECTRON_EXECUTABLE: ${{ github.workspace }}\dist\win-unpacked\Server Rock AI.exe
+        run: npm run audit:electron:packaged
       - uses: actions/upload-artifact@v4
         with:
           name: Server-Rock-AI-${{ matrix.platform }}-${{ matrix.arch }}
-          # Besides the installers, upload the in-app updater metadata:
-          # electron-updater reads latest.yml (Windows) and latest-linux*.yml
-          # (Linux) from the release and uses blockmaps for smaller downloads.
-          # latest-mac.yml is left out on purpose: the x64 and arm64 jobs both
-          # write that name, and unsigned macOS builds can't update in place,
-          # so the app sends macOS users to GitHub Releases instead.
           path: |
             dist/*.exe
             dist/*.dmg
@@ -91,9 +101,6 @@ jobs:
             dist/*.AppImage
             dist/*.deb
             dist/*.tar.gz
-            dist/latest.yml
-            dist/latest-linux*.yml
-            dist/*.blockmap
           if-no-files-found: error
           retention-days: 14
 
@@ -114,3 +121,4 @@ jobs:
         with:
           files: release-assets/*
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-beta.') }}

@@ -14,11 +14,6 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
     private IPtyConnection? _connection;
     private Task? _readLoop;
     private bool _disposed;
-    // Settings for waiting out late output after the shell exits (see OnProcessExited).
-    private static readonly TimeSpan OutputQuietPeriod = TimeSpan.FromMilliseconds(250);
-    private static readonly TimeSpan MaxOutputSettleTime = TimeSpan.FromSeconds(3);
-    private long _lastOutputTicks;
-    private int _settleStarted;
 
     public WorkspaceTerminalSession(int columns = 100, int rows = 26)
     {
@@ -119,30 +114,21 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
     private void OnProcessExited(object? sender, PtyExitedEventArgs args)
     {
         ExitCode = args.ExitCode;
-        // Don't report completion yet. On Windows, ConPTY can deliver the shell's final output
-        // after this exit event, and with blocking pipes the output stream stays open until the
-        // session is disposed. Completing here let callers read ScreenText before the last output
-        // arrived (this failed the Windows CI terminal check). Wait for output to go quiet instead;
-        // the read loop completes immediately if the stream ends first (the usual case on Linux).
-        Interlocked.Exchange(ref _lastOutputTicks, Environment.TickCount64);
-        if (Interlocked.Exchange(ref _settleStarted, 1) == 0) _ = CompleteAfterOutputSettlesAsync();
         ScreenChanged?.Invoke(this, EventArgs.Empty);
+        _ = CompleteAfterProcessExitAsync();
     }
 
-    private async Task CompleteAfterOutputSettlesAsync()
+    private async Task CompleteAfterProcessExitAsync()
     {
-        var deadline = Environment.TickCount64 + (long)MaxOutputSettleTime.TotalMilliseconds;
-        while (!_completed.Task.IsCompleted && Environment.TickCount64 < deadline)
+        var readLoop = _readLoop;
+        if (readLoop is not null)
         {
-            var quietFor = Environment.TickCount64 - Interlocked.Read(ref _lastOutputTicks);
-            if (quietFor >= OutputQuietPeriod.TotalMilliseconds) break;
-            try { await Task.Delay(50, _stopping.Token).ConfigureAwait(false); }
-            catch (OperationCanceledException) { break; }
+            try { await Task.WhenAny(readLoop, Task.Delay(TimeSpan.FromMilliseconds(500))).ConfigureAwait(false); }
+            catch (Exception) { }
         }
         _completed.TrySetResult(ExitCode);
     }
 
-    // Process.ExitCode throws until the process has exited, so the read loop can't read it blindly.
     private int? TryReadExitCode(IPtyConnection connection)
     {
         if (ExitCode is not null) return ExitCode;
@@ -160,7 +146,6 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
             {
                 var read = await connection.ReaderStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                 if (read <= 0) break;
-                Interlocked.Exchange(ref _lastOutputTicks, Environment.TickCount64);
                 Terminal.Write(buffer.AsSpan(0, read));
                 ScreenChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -169,7 +154,8 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
         catch (IOException) when (cancellationToken.IsCancellationRequested) { }
         finally
         {
-            // The output stream ended, so all output has been rendered and it is safe to complete.
+            // Process.ExitCode throws until the process has exited, and the read loop can end first
+            // (for example when the session is disposed while the shell is still running).
             ExitCode = TryReadExitCode(connection);
             _completed.TrySetResult(ExitCode);
             ScreenChanged?.Invoke(this, EventArgs.Empty);

@@ -8,12 +8,16 @@ const path = require("node:path");
 const fs = require("node:fs");
 
 const label = process.argv[2] || "current";
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(label) || label === "." || label === "..") {
+  throw new Error("Label must be 1–64 letters, numbers, dots, dashes, or underscores and start with a letter or number.");
+}
 const outDir = path.resolve(".ui-shots", label);
 const appUrl = "file://" + path.resolve("index.html").replaceAll("\\", "/");
 const viewports = [
   { width: 1440, height: 900 },
   { width: 1100, height: 750 },
   { width: 800, height: 700 },
+  { width: 390, height: 844 },
 ];
 
 const messages = [
@@ -74,40 +78,58 @@ function installBridge() {
 const states = {
   "empty-dark": { theme: "dark" },
   "empty-light": { theme: "light" },
-  "chat-dark": { theme: "dark", chat: true, run: (p) => p.locator("#history .chat-item").first().click() },
-  "chat-light": { theme: "light", chat: true, run: (p) => p.locator("#history .chat-item").first().click() },
+  "chat-dark": { theme: "dark", chat: true, run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#history .chat-item").first().click(); } },
+  "chat-light": { theme: "light", chat: true, run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#history .chat-item").first().click(); } },
   "model-picker": { theme: "dark", run: async (p) => { await p.locator("#model").click(); await p.waitForTimeout(400); } },
   "settings": { theme: "dark", run: (p) => p.locator("#settings").click() },
   "settings-light": { theme: "light", run: (p) => p.locator("#settings").click() },
   "coding-agent": { theme: "dark", mode: "code", chat: true },
-  "mode-menu": { theme: "dark", run: (p) => p.locator("#agentModeToggle").click() },
+  "mode-menu": { theme: "dark", run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#agentModeToggle").click(); } },
   "slash-command": { theme: "dark", run: async (p) => { await p.locator("#prompt").fill("/fast summarise this"); await p.locator("#prompt").dispatchEvent("input"); } },
   "advanced": { theme: "dark", run: (p) => p.locator(".advanced-menu summary").click() },
 };
 
-(async () => {
+const only = process.env.STATES !== undefined
+  ? process.env.STATES.split(",").map((name) => name.trim()).filter(Boolean)
+  : Object.keys(states);
+const unknown = only.filter((name) => !Object.hasOwn(states, name));
+if (unknown.length) throw new Error(`Unknown state(s): ${unknown.join(", ")}`);
+if (!only.length) throw new Error("Select at least one state to capture.");
+
+async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch();
-  const only = process.env.STATES ? process.env.STATES.split(",") : null;
-  for (const vp of viewports) {
-    for (const [name, st] of Object.entries(states)) {
-      if (only && !only.includes(name)) continue;
-      const context = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, reducedMotion: "reduce" });
-      const page = await context.newPage();
-      await page.addInitScript(
-        ({ data }) => { localStorage.setItem("local-studio-v1", JSON.stringify(data)); },
-        { data: seed(st.theme, st.mode || "chat", st.chat) },
-      );
-      await page.addInitScript(installBridge);
-      await page.goto(appUrl);
-      await page.waitForTimeout(300);
-      if (st.run) await st.run(page).catch((e) => console.warn(name, "step failed:", e.message.split("\n")[0]));
-      await page.waitForTimeout(200);
-      const file = path.join(outDir, `${name}-${vp.width}x${vp.height}.png`);
-      await page.screenshot({ path: file });
-      await context.close();
+  try {
+    for (const vp of viewports) {
+      for (const name of only) {
+        const st = states[name];
+        const context = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, reducedMotion: "reduce" });
+        try {
+          const page = await context.newPage();
+          await page.addInitScript(
+            ({ data }) => { localStorage.setItem("local-studio-v1", JSON.stringify(data)); },
+            { data: seed(st.theme, st.mode || "chat", st.chat) },
+          );
+          await page.addInitScript(installBridge);
+          await page.goto(appUrl);
+          await page.locator("#prompt").waitFor({ state: "visible" });
+          if (st.run) await st.run(page);
+          const file = path.join(outDir, `${name}-${vp.width}x${vp.height}.png`);
+          await page.screenshot({ path: file });
+        } catch (error) {
+          throw new Error(`Failed to capture ${name} at ${vp.width}x${vp.height}: ${error.message}`, { cause: error });
+        } finally {
+          await context.close();
+        }
+      }
     }
+  } finally {
+    await browser.close();
   }
-  await browser.close();
-  console.log("Saved screenshots to", outDir);
-})();
+  console.log(`Saved ${only.length * viewports.length} screenshots to`, outDir);
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});

@@ -2,13 +2,16 @@ const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 const os = require("node:os");
+const { EventEmitter } = require("node:events");
+const { PassThrough } = require("node:stream");
 const { pathToFileURL } = require("node:url");
-const { createWorkspace } = require("../electron/workspace.cjs");
+const { createWorkspace, isProtectedPath } = require("../electron/workspace.cjs");
 const { createProviderBridge } = require("../electron/provider-bridge.cjs");
 const { createSafeChildEnvironment } = require("../electron/child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("../electron/model-path-safety.cjs");
 const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("../electron/ipc-validation.cjs");
 const { MAX_ENCRYPTED_STATE_BYTES, readTextFileLimited } = require("../electron/bounded-file.cjs");
+const { createTerminalManager, MAX_OUTPUT_BYTES, MAX_INPUT_BYTES } = require("../electron/terminal-sessions.cjs");
 const {
   MAX_JSON_BODY_BYTES,
   MAX_TEXT_BODY_BYTES,
@@ -205,6 +208,20 @@ test("provider streams stop before unbounded text accumulation", async () => {
   })).rejects.toThrow("2 MB stream limit");
 });
 
+test("renderer local-runtime readers reject oversized JSON and text responses", async ({ page }) => {
+  await page.goto(appUrl);
+  const result = await page.evaluate(async () => {
+    let jsonError = "", textError = "";
+    try { await readJsonResponseLimited(new Response("x".repeat(4097)), "Test JSON", 4096); }
+    catch (error) { jsonError = error.message; }
+    try { await readTextResponseLimited(new Response("x".repeat(4097)), "Test text", 4096); }
+    catch (error) { textError = error.message; }
+    return { jsonError, textError };
+  });
+  expect(result.jsonError).toContain("4 KB limit");
+  expect(result.textError).toContain("4 KB limit");
+});
+
 test("Electron child environments omit secret-shaped variables", async () => {
   const safe = createSafeChildEnvironment({ PATH: "tools", API_KEY: "hidden", GITHUB_TOKEN: "hidden", SAFE_FLAG: "kept" });
   expect(safe).toEqual({ PATH: "tools", SAFE_FLAG: "kept" });
@@ -239,6 +256,59 @@ test("encrypted state files are bounded before reading", async () => {
   } finally {
     await fs.rm(path.dirname(filePath), { recursive: true, force: true });
   }
+});
+
+test("terminal sessions stay inside authorized roots and replay bounded output", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "server-rock-terminal-"));
+  const children = [];
+  try {
+    const manager = createTerminalManager({
+      resolveRoots: async () => [root],
+      platform: "linux",
+      environment: { SHELL: "/bin/sh", PATH: process.env.PATH, API_KEY: "must-not-leak" },
+      now: () => 123,
+      spawn: (_shell, _args, options) => {
+        const child = new EventEmitter();
+        child.stdout = new PassThrough();
+        child.stderr = new PassThrough();
+        child.stdin = new PassThrough();
+        child.kill = () => child.emit("exit", null, "SIGTERM");
+        child.spawnOptions = options;
+        children.push(child);
+        return child;
+      },
+    });
+    const events = [];
+    const session = await manager.start({ folders: [root], cwd: root, command: "printf hello", timeoutMs: 5000 }, (event) => events.push(event));
+    expect(session.status).toBe("running");
+    expect(children[0].spawnOptions.cwd).toBe(root);
+    expect(children[0].spawnOptions.env.API_KEY).toBeUndefined();
+    children[0].stdout.write("hello");
+    children[0].emit("exit", 0, null);
+    expect(manager.snapshot(session.id)).toMatchObject({ status: "exited", output: "hello" });
+    let replay;
+    manager.attach(session.id, (event) => { if (event.type === "snapshot") replay = event; });
+    expect(replay).toMatchObject({ output: "hello", status: "exited" });
+    await expect(manager.start({ folders: [root], cwd: path.dirname(root), command: "pwd" }, () => {})).rejects.toThrow("authorized project folder");
+
+    const bounded = await manager.start({ folders: [root], cwd: root, command: "yes", timeoutMs: 5000 }, () => {});
+    children[1].stdout.write(Buffer.alloc(MAX_OUTPUT_BYTES + 1, "x"));
+    expect(manager.snapshot(bounded.id).truncated).toBe(true);
+    const inputSession = await manager.start({ folders: [root], cwd: root, command: "cat", timeoutMs: 5000 }, () => {});
+    expect(() => manager.write(inputSession.id, "x".repeat(MAX_INPUT_BYTES + 1))).toThrow("invalid or too large");
+    manager.dispose();
+    expect(events.some((event) => event.type === "exit")).toBe(true);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("GitHub push protection recognizes secret-shaped changed paths", () => {
+  expect(isProtectedPath(".env")).toBe(true);
+  expect(isProtectedPath("config/.env.production")).toBe(true);
+  expect(isProtectedPath(".git/config")).toBe(true);
+  expect(isProtectedPath(".github/workflows/release.yml")).toBe(false);
+  expect(isProtectedPath("src/index.js")).toBe(false);
 });
 
 // Smoke-test item 1: saving an edited project must update it, not add a copy.
@@ -363,51 +433,36 @@ test("/models opens the model picker instead of using window.prompt", async ({ p
   expect(dialogs).toEqual([]);
 });
 
-// Smoke-test item 4: the in-app updater needs its metadata on the release,
-// asset names it can find, and an honest message where updates can't install.
-test("release uploads updater metadata and installer names have no spaces", async () => {
+// Smoke-test item 4: installer names must let the GitHub release updater find
+// the right file. GitHub turns spaces in asset names into dots, and
+// chooseInstaller() needs the architecture in macOS and Linux file names.
+test("installer names have no spaces and the updater picks the right one per platform", async () => {
+  const { chooseInstaller } = require("../electron/github-updates.cjs");
   const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8"));
-  const names = [pkg.build.artifactName, pkg.build.nsis.artifactName, pkg.build.portable.artifactName];
-  // GitHub turns spaces in asset names into dots, while latest*.yml uses
-  // dashes, so a name with spaces makes the updater's download 404.
-  for (const name of names) expect(name).not.toMatch(/\s/);
-  expect(new Set(names).size).toBe(3);
-  expect(pkg.build.artifactName).toContain("${arch}");
+  const patterns = [pkg.build.artifactName, pkg.build.nsis.artifactName, pkg.build.portable.artifactName];
+  for (const pattern of patterns) expect(pattern).not.toMatch(/\s/);
+  expect(new Set(patterns).size).toBe(3);
 
-  const workflow = await fs.readFile(path.resolve(__dirname, "..", ".github", "workflows", "release.yml"), "utf8");
-  const uploads = workflow.slice(workflow.indexOf("path: |"), workflow.indexOf("if-no-files-found"));
-  for (const pattern of ["dist/latest.yml", "dist/latest-linux*.yml", "dist/*.blockmap"])
-    expect(uploads).toContain(pattern);
-  expect(uploads).not.toContain("latest-mac");
-});
+  // File names as electron-builder expands these patterns (checked with a local Linux build).
+  const release = (names) => ({ assets: names.map((name, index) => ({ name, size: 1, id: index + 1, digest: "sha256:" + "a".repeat(64) })) });
+  const ours = release([
+    "Server-Rock-AI-Setup-0.1.2.exe", "Server-Rock-AI-0.1.2-portable.exe",
+    "Server-Rock-AI-0.1.2-x64.dmg", "Server-Rock-AI-0.1.2-arm64.dmg",
+    "Server-Rock-AI-0.1.2-x64.zip", "Server-Rock-AI-0.1.2-arm64.zip",
+    "Server-Rock-AI-0.1.2-x86_64.AppImage", "Server-Rock-AI-0.1.2-arm64.AppImage",
+    "Server-Rock-AI-0.1.2-amd64.deb", "Server-Rock-AI-0.1.2-x64.tar.gz",
+  ]);
+  expect(chooseInstaller(ours, "win32", "x64")?.name).toBe("Server-Rock-AI-Setup-0.1.2.exe");
+  expect(chooseInstaller(ours, "darwin", "x64")?.name).toBe("Server-Rock-AI-0.1.2-x64.dmg");
+  expect(chooseInstaller(ours, "darwin", "arm64")?.name).toBe("Server-Rock-AI-0.1.2-arm64.dmg");
+  expect(chooseInstaller(ours, "linux", "x64")?.name).toBe("Server-Rock-AI-0.1.2-x86_64.AppImage");
+  expect(chooseInstaller(ours, "linux", "arm64")?.name).toBe("Server-Rock-AI-0.1.2-arm64.AppImage");
 
-test("builds that can't update in place report a manual update", async () => {
-  const { manualUpdateReason } = require("../electron/update-support.cjs");
-  const none = () => false;
-  expect(manualUpdateReason({ platform: "darwin", env: {}, resourcesPath: "/r", fileExists: none })).toContain("isn't code-signed");
-  expect(manualUpdateReason({ platform: "win32", env: { PORTABLE_EXECUTABLE_DIR: "C:\\x" }, resourcesPath: "C:\\r", fileExists: none })).toContain("portable app");
-  expect(manualUpdateReason({ platform: "win32", env: {}, resourcesPath: "C:\\r", fileExists: none })).toBe("");
-  expect(manualUpdateReason({ platform: "linux", env: {}, resourcesPath: "/r", fileExists: none })).toContain("tar.gz");
-  expect(manualUpdateReason({ platform: "linux", env: { APPIMAGE: "/a.AppImage" }, resourcesPath: "/r", fileExists: none })).toBe("");
-  expect(manualUpdateReason({ platform: "linux", env: {}, resourcesPath: "/r", fileExists: (p) => p === path.join("/r", "package-type") })).toBe("");
-});
-
-test("Settings shows how to update when this build can't update itself", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.desktopModels = {
-      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
-      updateState: async () => ({ status: "idle", version: "0.1.2" }),
-      onUpdateState: () => () => {},
-      checkForUpdates: async () => ({ status: "manual", version: "0.1.2", message: "The portable app can't update itself. Download the new version from GitHub Releases instead." }),
-    };
-  });
-  await page.goto(appUrl);
-  await page.locator("#settings").click();
-  await page.locator("#settingsDialog details.settings-group:not(#hfDownloads) summary").click();
-  await page.locator("#checkUpdates").click();
-  await expect(page.locator("#updateStatus")).toHaveText(/portable app can't update itself.*GitHub Releases/);
-  await expect(page.locator("#downloadUpdate")).toBeHidden();
-  await expect(page.locator("#installUpdate")).toBeHidden();
+  // The old default names (after GitHub's space-to-dot rename) leave Intel Macs
+  // and x64 Linux without a match, because the x64 builds had no arch in the name.
+  const defaults = release(["Server.Rock.AI-0.1.2.dmg", "Server.Rock.AI-0.1.2-arm64.dmg", "Server.Rock.AI-0.1.2.AppImage", "Server.Rock.AI-0.1.2-arm64.AppImage"]);
+  expect(chooseInstaller(defaults, "darwin", "x64")).toBeNull();
+  expect(chooseInstaller(defaults, "linux", "x64")).toBeNull();
 });
 
 // Smoke-test item 7: every installed package with an install script must have

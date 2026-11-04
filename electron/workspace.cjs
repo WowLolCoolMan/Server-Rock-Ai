@@ -169,7 +169,7 @@ function createWorkspace(profilePath) {
     }
     return { path: destination, relativePath: normalized };
   }
-  return { approveFolder, readFiles, writeFile };
+  return { approveFolder, getRoots, readFiles, writeFile };
 }
 
-module.exports = { createWorkspace, readUtf8Limited };
+module.exports = { createWorkspace, isProtectedPath, readUtf8Limited };

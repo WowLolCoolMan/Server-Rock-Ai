@@ -1,0 +1,47 @@
+{
+  "activePage": "chat",
+  "agentMode": "chat",
+  "activeProjectId": "electron-project-77",
+  "settings": {
+    "provider": "Ollama",
+    "endpoint": "http://localhost:11434/v1/chat/completions",
+    "model": "llama3.2",
+    "theme": "dark"
+  },
+  "projects": [
+    {
+      "id": "electron-project-77",
+      "name": "Fixture project (must not migrate)",
+      "instructions": "Fixture-only project instruction",
+      "folders": ["C:\\FixtureOnly\\PrivateWorkspace"]
+    }
+  ],
+  "chats": [
+    {
+      "id": "electron-chat-001",
+      "title": "Ollama startup notes",
+      "updatedAt": "2026-10-29T09:15:00Z",
+      "projectId": "electron-project-77",
+      "messages": [
+        { "role": "user", "content": "How do I check whether Ollama is running?" },
+        { "role": "assistant", "content": "Check the local Ollama service and request its model list." }
+      ],
+      "baseMessages": [],
+      "branches": [],
+      "branchIndex": 0,
+      "archived": false
+    },
+    {
+      "id": "electron-chat-002",
+      "title": "Archived follow-up",
+      "updatedAt": "2026-10-30T13:45:00Z",
+      "projectId": "electron-project-77",
+      "messages": [
+        { "role": "user", "content": "Keep a local copy of this conversation." },
+        { "role": "assistant", "content": "This history stays in the selected export file until you choose Import chats." }
+      ],
+      "forkedFrom": "electron-chat-001",
+      "archived": true
+    }
+  ]
+}

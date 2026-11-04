@@ -13,4 +13,8 @@ public sealed class ChatSession
     public string Mode { get; set; } = "ChatBot";
     public bool IncludeProjectFilesInChat { get; set; }
     public string? FolderName { get; set; }
+    /// <summary>Import origin used to make explicit archive migrations idempotent.</summary>
+    public string? ImportSource { get; set; }
+    /// <summary>The original conversation identifier in the imported source.</summary>
+    public string? ImportSourceId { get; set; }
 }

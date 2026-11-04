@@ -37,6 +37,10 @@ public sealed class ConversationStore
     {
         ArgumentNullException.ThrowIfNull(sessions);
         var json = BoundedFileReader.EnsureTextSize(JsonSerializer.Serialize(sessions, Options), "saved conversations");
+        // Local history is trusted only after it meets the same bounds and content
+        // policy enforced for an imported archive. Validate before the atomic move
+        // so malformed in-memory data cannot replace a previously healthy history.
+        _ = ConversationArchive.Parse(json);
         AtomicFileWriter.WriteText(_path, json);
     }
 }

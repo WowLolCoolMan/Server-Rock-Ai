@@ -28,9 +28,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Electron 45 requires Node.js 22.12 or newer (release.yml already uses 22).
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Check repository hygiene

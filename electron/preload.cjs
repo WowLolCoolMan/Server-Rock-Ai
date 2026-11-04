@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld("desktopModels", {
     ipcRenderer.invoke("models:download", repoId),
   searchHuggingFace: (query, task) =>
     ipcRenderer.invoke("hf:search", query, task),
+  openHuggingFaceModel: (repoId) =>
+    ipcRenderer.invoke("models:open-hub", repoId),
   runHuggingFaceTask: (task, model, prompt, mediaData) =>
     ipcRenderer.invoke("hf:inference", task, model, prompt, mediaData),
   generate: (repoId, task, prompt, requestId, onChunk, imageData) => {
@@ -17,10 +19,22 @@ contextBridge.exposeInMainWorld("desktopModels", {
   },
   cancel: (requestId) => ipcRenderer.send("models:cancel", requestId),
   pickFolder: () => ipcRenderer.invoke("projects:pick-folder"),
+  exportNativeMigration: (archive) => ipcRenderer.invoke("history:export-native-migration", archive),
   readProjectFiles: (folders) =>
     ipcRenderer.invoke("projects:read-files", folders),
   writeProjectFile: (folders, relativePath, content) =>
     ipcRenderer.invoke("projects:write-file", folders, relativePath, content),
+  terminalStart: (options) => ipcRenderer.invoke("terminal:start", options),
+  terminalWrite: (id, input) => ipcRenderer.invoke("terminal:write", id, input),
+  terminalStop: (id, reason) => ipcRenderer.invoke("terminal:stop", id, reason),
+  terminalList: () => ipcRenderer.invoke("terminal:list"),
+  terminalSnapshot: (id) => ipcRenderer.invoke("terminal:snapshot", id),
+  terminalAttach: (id) => ipcRenderer.invoke("terminal:attach", id),
+  terminalOnEvent: (onEvent) => {
+    const handler = (_event, data) => onEvent(data);
+    ipcRenderer.on("terminal:event", handler);
+    return () => ipcRenderer.removeListener("terminal:event", handler);
+  },
   scanHosts: () => ipcRenderer.invoke("models:scan-hosts"),
   getProviderSecretStatus: (provider) =>
     ipcRenderer.invoke("secrets:status", provider),
@@ -53,15 +67,6 @@ contextBridge.exposeInMainWorld("desktopModels", {
     ipcRenderer.invoke("github:status-project", folders),
   githubPushProject: (folders, message, expectedFullName, expectedChangeToken) =>
     ipcRenderer.invoke("github:push-project", folders, message, expectedFullName, expectedChangeToken),
-  updateState: () => ipcRenderer.invoke("updates:state"),
-  checkForUpdates: () => ipcRenderer.invoke("updates:check"),
-  downloadUpdate: () => ipcRenderer.invoke("updates:download"),
-  installUpdate: () => ipcRenderer.invoke("updates:install"),
-  onUpdateState: (handler) => {
-    const listener = (_event, state) => handler(state);
-    ipcRenderer.on("updates:state", listener);
-    return () => ipcRenderer.removeListener("updates:state", listener);
-  },
   chatgptStatus: () => ipcRenderer.invoke("chatgpt:status"),
   chatgptSignIn: () => ipcRenderer.invoke("chatgpt:signin"),
   chatgptModels: () => ipcRenderer.invoke("chatgpt:models"),
@@ -75,4 +80,6 @@ contextBridge.exposeInMainWorld("desktopModels", {
       .finally(() => ipcRenderer.removeListener("chatgpt:chunk", h));
   },
   cancelChatGPT: (id) => ipcRenderer.send("chatgpt:cancel", id),
+  githubUpdateCheck: (channel) => ipcRenderer.invoke("github-updates:check", channel),
+  githubUpdateOpenRelease: (tag) => ipcRenderer.invoke("github-updates:open-release", tag),
 });

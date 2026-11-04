@@ -24,3 +24,7 @@ Upstream references:
 - [Current upstream LICENSE](https://github.com/open-webui/open-webui/blob/main/LICENSE)
 - [Provider API modules](https://github.com/open-webui/open-webui/tree/main/src/lib/apis)
 - [Model selector](https://github.com/open-webui/open-webui/blob/main/src/lib/components/chat/ModelSelector.svelte)
+
+## Computer parity target (2026-11-04)
+
+Open WebUI's current Computer product page groups the target workflow into a real editor, filesystem browsing, a live terminal, and Git diff/commit/push review in one self-hosted workspace. Server Rock now covers the desktop half of that loop: authorized project folders, a resumable Electron terminal with bounded I/O, Coding Agent file review, and guarded GitHub push review. The remaining parity gaps are intentional follow-up work: remote/browser/mobile access to the same session, parallel agents/worktrees, and a richer unified-diff/selective-staging surface. The app should not claim those capabilities until they are implemented and verified.

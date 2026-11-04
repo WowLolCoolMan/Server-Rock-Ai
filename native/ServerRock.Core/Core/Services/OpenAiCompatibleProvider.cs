@@ -11,6 +11,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
 {
     private const int MaxMessages = 500;
     private const int MaxMessageCharacters = 1_000_000;
+    private const int MaxStreamedResponseCharacters = 1_000_000;
     private const int MaxRequestCharacters = 8_000_000;
     private const int MaxModelCharacters = 512;
     private static readonly HttpClient SharedHttp = new() { Timeout = Timeout.InfiniteTimeSpan };
@@ -60,6 +61,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         using var reader = new StreamReader(stream);
         var lineReader = BoundedHttpContent.CreateLineReader(reader);
         var receivedContent = false;
+        var receivedCharacters = 0;
         while (await lineReader.ReadLineAsync(timeout.Token) is { } line)
         {
             timeout.Token.ThrowIfCancellationRequested();
@@ -83,6 +85,9 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
                 _ => null
             };
             if (string.IsNullOrEmpty(text)) continue;
+            if (text.Length > MaxStreamedResponseCharacters - receivedCharacters)
+                throw new InvalidDataException($"The model response exceeds the {MaxStreamedResponseCharacters:N0}-character limit.");
+            receivedCharacters += text.Length;
             receivedContent = true;
             onText(text);
         }

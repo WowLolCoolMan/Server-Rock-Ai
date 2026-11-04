@@ -1,18 +1,9 @@
-# Rolling updates
+# App updates through GitHub Releases
 
-Packaged Server Rock: AI builds use electron-updater with GitHub Releases as the update channel. The application checks only when the user selects Check for updates in Settings; there is no background telemetry or analytics service.
+The app checks its public GitHub Releases feed directly. The check does not require a Server Rock account or a service operated by the developer. Stable and beta tags use `vMAJOR.MINOR.PATCH` and `vMAJOR.MINOR.PATCH-beta.N` respectively.
 
-## Release workflow
+The update screen selects the newest matching published release, locates a compatible installer, and displays the SHA-256 digest supplied by GitHub’s release asset API. It links to that exact release page so users can review the release notes and download the installer themselves. Drafts, malformed tags, unsupported operating systems, missing digests, and unexpected GitHub URLs are ignored. If no release exists, the screen shows that state and keeps the download action disabled.
 
-1. Update the version in package.json.
-2. Build the platform artifacts:
-   - Windows: npm run build:win
-   - Linux: npm run build:linux
-   - macOS: npm run build:mac
-3. Create a GitHub Release tagged with the exact version, for example v0.1.3.
-4. Upload the generated installer artifacts and the generated update metadata files (latest.yml, latest-linux.yml, or latest-mac.yml plus its blockmap files).
-5. Users can check for the new release in Settings. They choose when to download and when to restart and install it.
+Checks are manual. This implementation does not silently download, install, replace, or roll back the app. It trusts GitHub’s published asset digest and directs the user to GitHub; independent publisher signatures and automatic installation remain future work. Windows ARM64 installers and formats beyond Windows x64 NSIS, macOS DMG, and Linux AppImage are not currently selected by the updater.
 
-The GitHub repository is configured in package.json under build.publish. Development runs intentionally report that updates are available only in packaged builds.
-
-Windows NSIS installs support in-app replacement. Portable Windows builds can detect a release but should use the downloaded installer for replacement because a running portable executable cannot safely replace itself.
+To publish an update, create a version tag and use the repository release workflow to build the supported artifacts and attach them to a GitHub release. Keep release tags immutable after publication so the displayed version and asset digests remain meaningful.

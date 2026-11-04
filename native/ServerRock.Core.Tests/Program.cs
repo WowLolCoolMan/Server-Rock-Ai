@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -21,6 +22,44 @@ var discoveryHandler = new StubHandler((request, _) =>
 var provider = new OpenAiCompatibleProvider(new HttpClient(discoveryHandler));
 var models = await provider.DiscoverModelsAsync("http://localhost:11434/v1");
 Check(models.SequenceEqual(["local-a", "local-b"]), "model discovery reads model IDs");
+var comfyRequests = 0;
+var comfy = new ComfyImageProvider(new HttpClient(new StubHandler((request, _) =>
+{
+    comfyRequests++;
+    if (request.RequestUri!.AbsolutePath == "/prompt")
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"prompt_id\":\"local-job\"}", Encoding.UTF8, "application/json") });
+    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"local-job\":{\"outputs\":{\"9\":{\"images\":[{\"filename\":\"result.png\",\"subfolder\":\"\",\"type\":\"output\"}]}}}}", Encoding.UTF8, "application/json") });
+})));
+var comfyImages = await comfy.GenerateAsync("http://127.0.0.1:8188", "{\"1\":{\"inputs\":{\"text\":\"{{prompt}}\"}}}", "a \"safe\" image");
+Check(comfyRequests == 2 && comfyImages.Count == 1 && comfyImages[0].Url.AbsolutePath == "/view", "local ComfyUI image workflow queues, polls, and returns bounded output URLs");
+var cancellationRequests = new List<(string Path, string Body)>();
+using var imageCancellation = new CancellationTokenSource();
+var cancellableComfy = new ComfyImageProvider(new HttpClient(new StubHandler(async (request, cancellationToken) =>
+{
+    var path = request.RequestUri!.AbsolutePath;
+    var body = request.Content is null ? "" : await request.Content.ReadAsStringAsync(cancellationToken);
+    cancellationRequests.Add((path, body));
+    if (path == "/prompt")
+    {
+        imageCancellation.Cancel();
+        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"prompt_id\":\"local-cancel-job\"}", Encoding.UTF8, "application/json") };
+    }
+    return new HttpResponseMessage(HttpStatusCode.OK);
+})));
+try
+{
+    await cancellableComfy.GenerateAsync("http://127.0.0.1:8188", "{\"1\":{\"inputs\":{\"text\":\"{{prompt}}\"}}}", "cancel this image", cancellationToken: imageCancellation.Token);
+    throw new Exception("Expected cancelled ComfyUI generation to stop.");
+}
+catch (OperationCanceledException)
+{
+    Check(cancellationRequests.Select(request => request.Path).SequenceEqual(["/prompt", "/queue", "/interrupt"]) &&
+          cancellationRequests[1].Body.Contains("local-cancel-job", StringComparison.Ordinal) &&
+          cancellationRequests[2].Body.Contains("local-cancel-job", StringComparison.Ordinal),
+        "cancelling an image request removes and interrupts only its matching local ComfyUI prompt");
+}
+try { await comfy.GenerateAsync("http://example.com:8188", "{\"x\":\"{{prompt}}\"}", "no"); throw new Exception("Expected remote ComfyUI endpoint to be rejected."); }
+catch (InvalidOperationException) { Check(true, "native image provider rejects non-local ComfyUI endpoints"); }
 try
 {
     var remoteProvider = new OpenAiCompatibleProvider(new HttpClient());
@@ -144,6 +183,22 @@ var discoveredLocalModels = await localInventory.DiscoverLocalModelsAsync("http:
 Check(discoveredLocalModels.Count == 3, "model library finds installed models across multiple local runtimes");
 Check(discoveredLocalModels.Count(model => model.Model == "qwen3:8b") == 2 && discoveredLocalModels.Select(model => model.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).Count() == 2, "same model ID remains distinguishable when installed in separate runtimes");
 Check(discoveredLocalModels.Any(model => model.Provider == "LM Studio" && model.IsLoaded == false && model.DisplayName == "Qwen 3 8B") && discoveredLocalModels.Any(model => model.Provider == "Ollama" && model.SizeBytes == 123456789), "runtime-native inventories include installed state and model metadata");
+var resilientInventory = new ModelLibraryService(new HttpClient(new StubHandler((request, _) =>
+{
+    if (request.RequestUri?.Port == 1234 && request.RequestUri.AbsolutePath == "/api/v1/models")
+    {
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"models\":[{\"type\":\"llm\",\"key\":\"healthy-local-model\"}]}", Encoding.UTF8, "application/json")
+        });
+    }
+    var oversized = new StringContent("{}");
+    oversized.Headers.ContentLength = BoundedHttpContent.MaxJsonBytes + 1L;
+    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = oversized });
+})));
+var resilientModels = await resilientInventory.DiscoverLocalModelsAsync("http://localhost:1234/v1");
+Check(resilientModels.Count == 1 && resilientModels[0].Model == "healthy-local-model" && resilientModels[0].Provider == "LM Studio",
+    "one malformed local runtime response does not block AI SuperMarket inventory from healthy runtimes");
 var portableChat = new ChatSession
 {
     Title = "Portable conversation",
@@ -154,6 +209,67 @@ var portableChat = new ChatSession
 };
 var portableArchive = ConversationArchive.Parse(ConversationArchive.Serialize([portableChat]));
 Check(portableArchive.Count == 1 && portableArchive[0].Mode == "Coding Agent" && portableArchive[0].ProjectInstructions == "Keep changes focused." && portableArchive[0].Messages[0].Attachments?[0].Content == "A local note", "conversation archive round-trips local project context and attachments");
+var electronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-export.json");
+var electronState = await File.ReadAllTextAsync(electronExportPath);
+using var electronExportStream = File.OpenRead(electronExportPath);
+var migratedElectronChats = await ConversationArchive.ParseAsync(electronExportStream);
+Check(migratedElectronChats.Count == 2 && migratedElectronChats[0].Id == "electron-chat-001" && migratedElectronChats[0].Title == "Ollama startup notes" && migratedElectronChats[0].Messages.Count == 2 && migratedElectronChats[0].ImportSource == "electron-localstorage" && migratedElectronChats[0].ImportSourceId == "electron-chat-001",
+    "fixture-shaped Electron localStorage export imports both saved chats");
+Check(migratedElectronChats.All(session => session.ProjectId is null && session.ProjectName is null && session.ProjectInstructions is null && !session.IncludeProjectFilesInChat),
+    "Electron project identities and filesystem context are not copied into native projects");
+var forgedImportMarker = ConversationArchive.Parse("{\"chats\":[{\"id\":\"legacy-forged\",\"importSource\":\"attacker-controlled\",\"importSourceId\":\"untrusted\",\"messages\":[{\"role\":\"user\",\"content\":\"Keep identity local\"}]}]}");
+Check(forgedImportMarker[0].ImportSource == "electron-localstorage" && forgedImportMarker[0].ImportSourceId == "legacy-forged", "import identity is derived locally rather than trusted from the JSON file");
+var electronRoundTrip = ConversationArchive.Parse(ConversationArchive.Serialize(migratedElectronChats));
+Check(electronRoundTrip.Count == 2 && electronRoundTrip[0].Messages.Select(message => message.Content).SequenceEqual(migratedElectronChats[0].Messages.Select(message => message.Content)),
+    "Electron fixture chat history survives a native archive export and re-import round-trip");
+var malformedElectronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-malformed-role.json");
+try
+{
+    _ = await ReadElectronFixtureAsync(malformedElectronExportPath);
+    throw new Exception("Expected unsafe Electron history to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "malformed or unsupported Electron messages are rejected before import planning");
+}
+var consentHistoryPath = Path.Combine(Path.GetTempPath(), "server-rock-import-consent-" + Guid.NewGuid().ToString("N") + ".json");
+try
+{
+    var consentHistory = new ConversationStore(consentHistoryPath);
+    consentHistory.Save([new ChatSession { Id = "existing-native", Title = "Existing chat", Messages = [new ChatMessage("user", "Keep this history")] }]);
+    var beforePreview = File.ReadAllBytes(consentHistoryPath);
+    var unconfirmedPlan = ConversationArchive.PlanImport(consentHistory.Load(), migratedElectronChats);
+    Check(unconfirmedPlan.Conversations.Count == 2 && File.ReadAllBytes(consentHistoryPath).SequenceEqual(beforePreview) && consentHistory.Load().Count == 1,
+        "preview planning does not persist or alter native history before user confirmation");
+}
+finally { if (File.Exists(consentHistoryPath)) File.Delete(consentHistoryPath); }
+var firstElectronImport = ConversationArchive.PlanImport([], migratedElectronChats);
+Check(firstElectronImport.Conversations.Count == 2 && firstElectronImport.Conversations[0].ImportSource == "electron-localstorage", "Electron import plan keeps source identity for repeat-import protection");
+var repeatedElectronImport = ConversationArchive.PlanImport(firstElectronImport.Conversations, await ReadElectronFixtureAsync(electronExportPath));
+Check(repeatedElectronImport.Conversations.Count == 0 && repeatedElectronImport.SkippedDuplicates == 2, "re-importing the same Electron history is idempotent");
+firstElectronImport.Conversations[0].Messages[0] = new ChatMessage("user", "Edited after import");
+var editedElectronImport = ConversationArchive.PlanImport(firstElectronImport.Conversations, await ReadElectronFixtureAsync(electronExportPath));
+Check(editedElectronImport.Conversations.Count == 0 && editedElectronImport.SkippedDuplicates == 2, "re-import does not overwrite or duplicate a migrated chat edited by the user");
+var localIdCollision = new ChatSession { Id = "electron-chat-001", Title = "Independent native chat", Messages = [new ChatMessage("user", "Different local content")] };
+var collisionImport = ConversationArchive.PlanImport([localIdCollision], await ReadElectronFixtureAsync(electronExportPath));
+Check(collisionImport.Conversations.Count == 2 && collisionImport.ReassignedIds == 1 && collisionImport.Conversations[0].Id != localIdCollision.Id,
+    "Electron ID collisions preserve both chats with a fresh native ID");
+var repeatCollisionImport = ConversationArchive.PlanImport([localIdCollision, .. collisionImport.Conversations], await ReadElectronFixtureAsync(electronExportPath));
+Check(repeatCollisionImport.Conversations.Count == 0 && repeatCollisionImport.SkippedDuplicates == 2, "repeated import after an ID collision remains idempotent");
+using var oversizedArchiveStream = new NonSeekableReadStream(Encoding.UTF8.GetBytes(new string('x', ConversationArchive.MaxArchiveBytes + 1)));
+try
+{
+    await ConversationArchive.ParseAsync(oversizedArchiveStream);
+    throw new Exception("Expected a streamed oversized archive to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(oversizedArchiveStream.BytesRead == ConversationArchive.MaxArchiveBytes + 1,
+        "streamed archive parsing stops at the configured byte limit before deserialization");
+}
+using var parsedArchiveStream = new MemoryStream(Encoding.UTF8.GetBytes(electronState));
+var parsedStreamArchive = await ConversationArchive.ParseAsync(parsedArchiveStream);
+Check(parsedStreamArchive.Count == 2 && parsedStreamArchive[0].ImportSource == "electron-localstorage", "bounded stream parsing recognizes an Electron history envelope");
 try
 {
     _ = ConversationArchive.Serialize(Enumerable.Repeat(new ChatSession(), ConversationArchive.MaxConversations + 1));
@@ -373,6 +489,17 @@ if (OperatingSystem.IsWindows())
     await credentialStore.WriteAsync("gho_test-access-token-value");
     Check(File.Exists(credentialPath) && !File.ReadAllText(credentialPath).Contains("gho_test-access-token-value", StringComparison.Ordinal), "Windows GitHub credentials are stored as DPAPI ciphertext");
     Check(await credentialStore.ReadAsync() == "gho_test-access-token-value", "Windows GitHub credentials decrypt for the same user");
+    var credentialBeforeRejectedWrite = File.ReadAllBytes(credentialPath);
+    try
+    {
+        await credentialStore.WriteAsync("gho_test-access-token\nwith-control-character");
+        throw new Exception("Expected an invalid GitHub credential to be rejected.");
+    }
+    catch (ArgumentException)
+    {
+        Check(File.ReadAllBytes(credentialPath).SequenceEqual(credentialBeforeRejectedWrite) && await credentialStore.ReadAsync() == "gho_test-access-token-value",
+            "invalid GitHub credential writes preserve the previous protected credential");
+    }
     await credentialStore.DeleteAsync();
     Check(!File.Exists(credentialPath), "Windows GitHub credential disconnect removes the protected file");
     Directory.Delete(Path.GetDirectoryName(credentialPath)!, recursive: true);
@@ -382,6 +509,10 @@ Check(GitHubApiClient.ParseRepositoryReference("https://github.com/owner/project
 var parsedGitStatus = GitHubWorkspaceService.ParseStatus("# branch.oid 0123456789abcdef\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +2 -1\n1 .M N... 100644 100644 100644 00000000 11111111 path with spaces.txt\n? new file.md\n", "owner/project");
 Check(parsedGitStatus.Branch == "main" && parsedGitStatus.CommitsAhead == 2 && parsedGitStatus.CommitsBehind == 1, "GitHub workspace parses branch status and ahead/behind counts");
 Check(parsedGitStatus.Changes.Count == 2 && parsedGitStatus.Changes[0].Path == "path with spaces.txt" && parsedGitStatus.Changes[1].Status == "??", "GitHub workspace preserves modified and untracked paths for review");
+var parsedRenameStatus = GitHubWorkspaceService.ParseStatus("# branch.head main\n2 R. N... 100644 100644 100644 00000000 11111111 R100 safe.txt\t.env.production\n", "owner/project");
+Check(parsedRenameStatus.Changes.Count == 1 && parsedRenameStatus.Changes[0].Path == "safe.txt" && parsedRenameStatus.Changes[0].OriginalPath == ".env.production", "GitHub workspace preserves both sides of a rename for review");
+var unsafeRenamePaths = GitHubWorkspaceService.FindUnsafeChangePaths(parsedRenameStatus.Changes);
+Check(unsafeRenamePaths.Contains(".env.production"), "GitHub commit safety checks the source path of renames");
 foreach (var unsafeReference in new[] { "https://evil.example/owner/project", "https://user:pass@github.com/owner/project", "owner/../settings", "owner/project?tab=code" })
 {
     try
@@ -508,6 +639,23 @@ await streamProvider.StreamChatAsync(
     chunk => received.Append(chunk),
     CancellationToken.None);
 Check(received.ToString() == "Hello world", "SSE text and content-part deltas stream in order");
+var excessiveSse = string.Concat(Enumerable.Range(0, 8).Select(_ =>
+    "data: {\"choices\":[{\"delta\":{\"content\":\"" + new string('x', 131_072) + "\"}}]}\n\n"));
+var excessiveStreamProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) =>
+    Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent(excessiveSse, Encoding.UTF8, "text/event-stream")
+    }))));
+try
+{
+    await excessiveStreamProvider.StreamChatAsync(new AppSettings { Endpoint = "http://localhost:11434/v1", Model = "local-a" },
+        [new ChatMessage("user", "Return a bounded answer")], _ => { }, CancellationToken.None);
+    throw new Exception("Expected excessive streamed output to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "native provider bounds cumulative streamed response text");
+}
 using (var requestJson = JsonDocument.Parse(streamedPayload!))
 {
     var root = requestJson.RootElement;
@@ -600,13 +748,14 @@ var settingsDirectory = Path.Combine(Path.GetTempPath(), "server-rock-core-check
 try
 {
     var settingsStore = new JsonSettingsStore(Path.Combine(settingsDirectory, "settings.json"));
-    settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", Temperature = 1.2, WebSearchEnabled = true, GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"] });
+    settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", Temperature = 1.2, WebSearchEnabled = true, ComfyEndpoint = "http://127.0.0.1:8188", ImageWorkflow = "{\"workflow\":\"{{prompt}}\"}", GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"] });
     var reloaded = settingsStore.Load();
     Check(reloaded.Model == "persisted-model" && Math.Abs(reloaded.Temperature - 1.2) < 0.001 && reloaded.WebSearchEnabled, "settings survive save and reload");
     Check(reloaded.PinnedModels.SequenceEqual(["persisted-model", "second-model"]), "pinned model hotswapper selection survives settings save and reload");
     Check(reloaded.ModelProvider == "LM Studio" && reloaded.PinnedModelConnections.Count == 2 && reloaded.PinnedModelConnections[1].Endpoint.EndsWith(":11434/v1", StringComparison.Ordinal), "pinned model endpoints survive settings save and reload");
     Check(reloaded.LocalModelPerformance["http://127.0.0.1:1234/v1\npersisted-model"].Samples == 3, "local model benchmark measurements survive settings save and reload");
     Check(reloaded.VisionApiFormat == "ollama", "vision API format selection survives save and reload");
+    Check(reloaded.ComfyEndpoint == "http://127.0.0.1:8188" && reloaded.ImageWorkflow.Contains("{{prompt}}", StringComparison.Ordinal), "local ComfyUI image workflow settings survive save and reload");
     Check(reloaded.GitHubAppClientId == "Iv1.example-client-id", "GitHub App client ID persists as a non-secret preference");
     Check(reloaded.ChatFolders.SequenceEqual(["Research", "Writing"]), "chat folders survive settings save and reload");
 
@@ -614,6 +763,12 @@ try
     File.WriteAllText(corruptSettingsPath, "{broken");
     var recoveredSettings = new JsonSettingsStore(corruptSettingsPath).Load();
     Check(recoveredSettings is not null && Directory.EnumerateFiles(settingsDirectory, "corrupt-settings.json.corrupt-*").Any(), "corrupt settings are preserved for recovery");
+    var nullableSettingsPath = Path.Combine(settingsDirectory, "nullable-settings.json");
+    File.WriteAllText(nullableSettingsPath, "{\"endpoint\":null,\"model\":null,\"modelProvider\":null,\"visionApiFormat\":null,\"comfyEndpoint\":null,\"imageWorkflow\":null,\"gitHubAppClientId\":null,\"pinnedModels\":null,\"pinnedModelConnections\":null,\"localModelPerformance\":null,\"chatFolders\":null}");
+    var normalizedSettings = new JsonSettingsStore(nullableSettingsPath).Load();
+    Check(normalizedSettings.Endpoint == "http://localhost:11434/v1" && normalizedSettings.Model == "llama3.2" && normalizedSettings.ModelProvider == "Ollama" &&
+          normalizedSettings.PinnedModels is not null && normalizedSettings.PinnedModelConnections is not null && normalizedSettings.LocalModelPerformance is not null && normalizedSettings.ChatFolders is not null,
+        "nullable settings fields recover to usable native defaults");
 
     var conversationsPath = Path.Combine(settingsDirectory, "conversations.json");
     var conversationStore = new ConversationStore(conversationsPath);
@@ -645,10 +800,18 @@ try
             Id = "chat-two",
             Title = "Another conversation",
             Messages = [new ChatMessage("user", "A separate thread", [new ChatAttachment("scene.jpg", Convert.ToBase64String([0xFF, 0xD8, 0xFF, 0xD9]), "image/jpeg")])]
+        },
+        new ChatSession
+        {
+            Id = "electron-chat-001",
+            ImportSource = "electron-localstorage",
+            ImportSourceId = "electron-chat-001",
+            Title = "Ollama startup notes",
+            Messages = [new ChatMessage("user", "How do I check whether Ollama is running?"), new ChatMessage("assistant", "Check the local Ollama service and request its model list.")]
         }
     ]);
     var restoredChats = conversationStore.Load();
-    Check(restoredChats.Count == 2, "conversation store keeps multiple chats");
+    Check(restoredChats.Count == 3, "conversation store keeps multiple chats");
     Check(restoredChats[0].Messages[1].Content == "Saved locally.", "conversation messages survive save and reload");
     Check(restoredChats[0].Messages[0].Attachments is [{ FileName: "notes.md", Content: "Attached note" }], "text attachments survive conversation save and reload");
     Check(restoredChats[1].Messages[0].Attachments is [{ FileName: "scene.jpg", MediaType: "image/jpeg", Content: "/9j/2Q==" }], "image attachments survive local conversation save and reload");
@@ -658,8 +821,27 @@ try
     Check(restoredChats[0].IncludeProjectFilesInChat, "per-conversation project file context opt-in survives save and reload");
     Check(restoredChats[0].FolderName == "Research", "conversation folder assignment survives save and reload");
     Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
+    Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
+    var healthyHistoryBeforeRejectedSave = File.ReadAllBytes(conversationsPath);
+    try
+    {
+        conversationStore.Save([new ChatSession
+        {
+            Id = "invalid-local-history",
+            Messages = [new ChatMessage("system", "This role must never enter persisted user history.")]
+        }]);
+        throw new Exception("Expected invalid local conversation persistence to be rejected.");
+    }
+    catch (InvalidDataException)
+    {
+        Check(File.ReadAllBytes(conversationsPath).SequenceEqual(healthyHistoryBeforeRejectedSave),
+            "invalid local history is rejected without replacing the previous saved conversations");
+    }
+    var restartSafeImport = ConversationArchive.PlanImport(restoredChats, await ReadElectronFixtureAsync(electronExportPath));
+    Check(restartSafeImport.Conversations.Count == 1 && restartSafeImport.SkippedDuplicates == 1, "re-import remains idempotent after closing and reopening the app");
     var editedChats = restoredChats.ToList();
     editedChats[0].Title = "Renamed thread";
+    editedChats.RemoveAt(1);
     editedChats.RemoveAt(1);
     conversationStore.Save(editedChats);
     var reloadedEdits = conversationStore.Load();
@@ -689,6 +871,48 @@ try
     Check(workspaceFiles.Any(item => item.Path == Path.Combine("src", "Program.cs")), "selected workspace context reads nested source files");
     Check(workspaceFiles.All(item => !item.Path.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.Path.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.Path.EndsWith(".env", StringComparison.OrdinalIgnoreCase)), "workspace context skips common secrets and dependency metadata");
     Check(workspaceFiles.Count <= WorkspaceFileContext.MaxFiles && workspaceFiles.Sum(item => item.Content.Length) <= WorkspaceFileContext.MaxTotalCharacters, "workspace context stays within its file and character budgets");
+
+    var gitReviewPath = Path.Combine(settingsDirectory, "git-review");
+    Directory.CreateDirectory(gitReviewPath);
+    RunGit(gitReviewPath, "init", "-b", "main");
+    RunGit(gitReviewPath, "config", "user.email", "server-rock-tests@example.invalid");
+    RunGit(gitReviewPath, "config", "user.name", "Server Rock Tests");
+    RunGit(gitReviewPath, "remote", "add", "origin", "https://github.com/owner/project.git");
+    File.WriteAllText(Path.Combine(gitReviewPath, "README.md"), "Original README\n");
+    File.WriteAllText(Path.Combine(gitReviewPath, "notes.md"), "Original notes\n");
+    RunGit(gitReviewPath, "add", "--all");
+    RunGit(gitReviewPath, "commit", "-m", "initial");
+    File.WriteAllText(Path.Combine(gitReviewPath, "README.md"), "Changed README\n");
+    var renamedNotesName = new string('r', 96) + ".md";
+    File.Move(Path.Combine(gitReviewPath, "notes.md"), Path.Combine(gitReviewPath, renamedNotesName));
+    RunGit(gitReviewPath, "add", "-A", "--", "notes.md", renamedNotesName);
+    Directory.CreateDirectory(Path.Combine(gitReviewPath, ".github", "workflows"));
+    File.WriteAllText(Path.Combine(gitReviewPath, ".github", "workflows", "ci.yml"), "name: CI\n");
+    File.WriteAllText(Path.Combine(gitReviewPath, "secrets.json"), "{\"token\":\"secret-value\"}\n");
+    var gitReviewService = new GitHubWorkspaceService();
+    var reviewStatus = await gitReviewService.GetStatusAsync(gitReviewPath);
+    Check(reviewStatus.Changes.Any(change => change.Path == "README.md"), "GitHub review status includes normal modified files");
+    Check(reviewStatus.Changes.Any(change => change.OriginalPath == "notes.md" && change.Path == renamedNotesName), "GitHub review status preserves long rename provenance");
+    Check(reviewStatus.Changes.Any(change => change.Path == ".github/workflows/ci.yml"), "GitHub review status includes workflow files");
+    Check(reviewStatus.Changes.Any(change => change.Path == "secrets.json"), "GitHub review status includes protected files for redacted review");
+    var reviewDiff = await gitReviewService.GetDiffPreviewAsync(gitReviewPath, reviewStatus.Changes);
+    Check(reviewDiff.IncludedFiles == 3 && reviewDiff.RedactedFiles == 1 && reviewDiff.Text.Contains("Changed README", StringComparison.Ordinal) && reviewDiff.Text.Contains(renamedNotesName, StringComparison.Ordinal) && reviewDiff.Text.Contains("[protected path redacted; review locally before staging]", StringComparison.Ordinal), "GitHub review previews bounded unified diffs and explains protected-file redaction");
+    Check(!reviewDiff.Text.Contains("secret-value", StringComparison.Ordinal), "GitHub review diff never exposes protected file content");
+    using var canceledReview = new CancellationTokenSource();
+    canceledReview.Cancel();
+    try
+    {
+        await gitReviewService.GetDiffPreviewAsync(gitReviewPath, reviewStatus.Changes, canceledReview.Token);
+        throw new Exception("Expected canceled Git review preview to stop before running Git.");
+    }
+    catch (OperationCanceledException)
+    {
+        Check(true, "GitHub review diff honors cancellation before starting work");
+    }
+    var safeReviewChanges = reviewStatus.Changes.Where(change => GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count == 0).ToArray();
+    _ = await gitReviewService.CommitSelectedAsync(gitReviewPath, safeReviewChanges, "Review safe workspace changes", "test-access-token");
+    var afterReviewStatus = await gitReviewService.GetStatusAsync(gitReviewPath);
+    Check(afterReviewStatus.Changes.Count == 1 && afterReviewStatus.Changes[0].Path == "secrets.json", "GitHub review selectively stages safe normal, rename, and workflow changes");
 
     var commandRunner = new WorkspaceCommandRunner();
     var commandResponse = "Check the result first.\n<workspace-command cwd=\"src\" timeout-seconds=\"999\">  printf 'one\\ntwo'  </workspace-command>\n<workspace-command>echo next</workspace-command>";
@@ -738,7 +962,7 @@ try
         var terminalExitCode = await terminalSession.Completion.WaitAsync(TimeSpan.FromSeconds(15));
         var terminalScreen = terminalSession.ScreenText;
         // On failure, include the exit code and screen so CI shows why (it only said "Check failed").
-        var terminalPassed = terminalExitCode == 0 && terminalScreen.Contains("server-rock-pty-ok", StringComparison.Ordinal);
+        var terminalPassed = terminalExitCode == 0 && terminalScreen.Split('\n').Any(line => line.Trim() == "server-rock-pty-ok");
         Check(terminalPassed, terminalPassed
             ? "interactive project terminal accepts input and renders a real PTY response"
             : $"interactive project terminal accepts input and renders a real PTY response (exit code: {terminalExitCode?.ToString() ?? "none"}; screen: {terminalScreen.Trim().Replace("\n", " | ")})");
@@ -893,7 +1117,7 @@ try
 }
 finally
 {
-    if (Directory.Exists(settingsDirectory)) Directory.Delete(settingsDirectory, recursive: true);
+    if (Directory.Exists(settingsDirectory)) DeleteDirectoryTree(settingsDirectory);
 }
 
 Console.WriteLine("Native core checks passed.");
@@ -904,7 +1128,73 @@ static void Check(bool condition, string description)
     Console.WriteLine("PASS " + description);
 }
 
+static async Task<List<ChatSession>> ReadElectronFixtureAsync(string path)
+{
+    await using var source = File.OpenRead(path);
+    return await ConversationArchive.ParseAsync(source);
+}
+
+static void RunGit(string workingDirectory, params string[] arguments)
+{
+    var startInfo = new ProcessStartInfo("git")
+    {
+        WorkingDirectory = workingDirectory,
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true
+    };
+    foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+    using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Git could not be started for the native test fixture.");
+    var stdout = process.StandardOutput.ReadToEnd();
+    var stderr = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+    if (process.ExitCode != 0) throw new InvalidOperationException($"Git test fixture command failed: {string.Join(' ', arguments)} {stderr} {stdout}");
+}
+
+static void DeleteDirectoryTree(string path)
+{
+    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        File.SetAttributes(file, FileAttributes.Normal);
+    foreach (var directory in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories).OrderByDescending(item => item.Length))
+        File.SetAttributes(directory, FileAttributes.Normal);
+    Directory.Delete(path, recursive: true);
+}
+
 sealed class StubHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => respond(request, cancellationToken);
+}
+
+sealed class NonSeekableReadStream(byte[] content) : Stream
+{
+    private readonly MemoryStream _inner = new(content, writable: false);
+
+    public int BytesRead { get; private set; }
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override void Flush() => throw new NotSupportedException();
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var read = _inner.Read(buffer, offset, count);
+        BytesRead += read;
+        return read;
+    }
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        var read = await _inner.ReadAsync(buffer, cancellationToken);
+        BytesRead += read;
+        return read;
+    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _inner.Dispose();
+        base.Dispose(disposing);
+    }
 }
