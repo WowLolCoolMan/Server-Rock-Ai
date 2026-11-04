@@ -54,6 +54,10 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return Array.Empty<InstalledLocalModel>(); }
             catch (HttpRequestException) { return Array.Empty<InstalledLocalModel>(); }
             catch (JsonException) { return Array.Empty<InstalledLocalModel>(); }
+            // A local port may be occupied by an unrelated or unhealthy service.
+            // Inventory discovery is best-effort, so a bounded-body failure from one
+            // runtime must not hide models served by every other local runtime.
+            catch (InvalidDataException) { return Array.Empty<InstalledLocalModel>(); }
         }));
         return results.SelectMany(models => models)
             .DistinctBy(model => (model.Model, model.Endpoint), StringTupleComparer.Instance)
