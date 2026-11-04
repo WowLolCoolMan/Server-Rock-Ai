@@ -39,12 +39,14 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 
 ## Run locally
 
-Install Node.js 20 or newer. From this repository:
+Install Node.js 22.12 or newer (required by Electron 45). From this repository:
 
 ```sh
 npm install
 npm start
 ```
+
+The first `npm start` downloads the Electron runtime (about 110 MB) if it isn't already cached. `package.json` records, under `allowScripts`, that the install scripts of `onnxruntime-node` (optional CUDA GPU libraries; the app runs models on the CPU), `protobufjs` (a version warning), and `electron-winstaller` (only used for Squirrel installers, which this app doesn't build) are not needed. npm 11 and newer then skip them without a warning.
 
 Configure a provider using the gear button. Ollama is commonly available at `http://localhost:11434/v1/chat/completions`; GPT4All's local API is `http://127.0.0.1:4891/v1/chat/completions`. Start the local host first, scan for models in the model picker, and select an installed model.
 

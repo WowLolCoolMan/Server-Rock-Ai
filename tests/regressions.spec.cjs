@@ -409,3 +409,33 @@ test("Settings shows how to update when this build can't update itself", async (
   await expect(page.locator("#downloadUpdate")).toBeHidden();
   await expect(page.locator("#installUpdate")).toBeHidden();
 });
+
+// Smoke-test item 7: every installed package with an install script must have
+// an explicit allowScripts decision, so a fresh `npm install` on npm 11+ is
+// deterministic and doesn't block anything the app needs without saying so.
+test("every dependency install script has an explicit allowScripts decision", async () => {
+  const root = path.resolve(__dirname, "..");
+  const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  const decided = pkg.allowScripts || {};
+  const withScripts = new Set();
+  async function scan(dir) {
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.name.startsWith("@")) { await scan(full); continue; }
+      try {
+        const meta = JSON.parse(await fs.readFile(path.join(full, "package.json"), "utf8"));
+        const scripts = meta.scripts || {};
+        if (scripts.preinstall || scripts.install || scripts.postinstall) withScripts.add(meta.name);
+      } catch {}
+      await scan(path.join(full, "node_modules"));
+    }
+  }
+  await scan(path.join(root, "node_modules"));
+  const undecided = [...withScripts].filter((name) => !(name in decided)).sort();
+  expect(undecided).toEqual([]);
+  // Electron 45 downloads its runtime on first launch, so it needs no install script.
+  expect(withScripts.has("electron")).toBe(false);
+});
