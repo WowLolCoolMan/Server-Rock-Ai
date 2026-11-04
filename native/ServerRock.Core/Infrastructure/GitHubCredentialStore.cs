@@ -71,7 +71,7 @@ public sealed class GitHubCredentialStore(string? windowsCredentialPath = null, 
             await DeleteAsync(cancellationToken).ConfigureAwait(false);
             return;
         }
-        if (value.Length > 32_768 || value.Contains('\0')) throw new ArgumentException("The GitHub credential has an invalid format.", nameof(value));
+        if (value.Length > 32_768 || value.Any(char.IsControl)) throw new ArgumentException("The GitHub credential has an invalid format.", nameof(value));
 
         if (OperatingSystem.IsWindows())
         {

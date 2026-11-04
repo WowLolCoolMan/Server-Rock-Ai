@@ -489,6 +489,17 @@ if (OperatingSystem.IsWindows())
     await credentialStore.WriteAsync("gho_test-access-token-value");
     Check(File.Exists(credentialPath) && !File.ReadAllText(credentialPath).Contains("gho_test-access-token-value", StringComparison.Ordinal), "Windows GitHub credentials are stored as DPAPI ciphertext");
     Check(await credentialStore.ReadAsync() == "gho_test-access-token-value", "Windows GitHub credentials decrypt for the same user");
+    var credentialBeforeRejectedWrite = File.ReadAllBytes(credentialPath);
+    try
+    {
+        await credentialStore.WriteAsync("gho_test-access-token\nwith-control-character");
+        throw new Exception("Expected an invalid GitHub credential to be rejected.");
+    }
+    catch (ArgumentException)
+    {
+        Check(File.ReadAllBytes(credentialPath).SequenceEqual(credentialBeforeRejectedWrite) && await credentialStore.ReadAsync() == "gho_test-access-token-value",
+            "invalid GitHub credential writes preserve the previous protected credential");
+    }
     await credentialStore.DeleteAsync();
     Check(!File.Exists(credentialPath), "Windows GitHub credential disconnect removes the protected file");
     Directory.Delete(Path.GetDirectoryName(credentialPath)!, recursive: true);
