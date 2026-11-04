@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
@@ -62,6 +63,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _collapsedChatFolders = new(StringComparer.OrdinalIgnoreCase);
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
+    private bool _compactNavigation;
     private bool _historyAvailable = true;
     private bool _projectsAvailable = true;
     private bool _undoHistoryAvailable = true;
@@ -77,9 +79,16 @@ public sealed partial class MainPage : Page
     private CancellationTokenSource? _modelBenchmarkCancellation;
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
 
+    // Match the minimum practical desktop window width imposed by the current
+    // chat controls, so a split-window layout can still open navigation as a drawer.
+    private const double CompactNavigationBreakpoint = 1200;
+
     public MainPage()
     {
         InitializeComponent();
+        Canvas.SetZIndex(SidebarBackdrop, 1);
+        Canvas.SetZIndex(Sidebar, 2);
+        ApplyResponsiveNavigation(AppRoot.ActualWidth);
         _runtimeStatusTimer.Tick += (_, _) =>
         {
             _runtimeStatusTimer.Stop();
@@ -154,8 +163,44 @@ public sealed partial class MainPage : Page
 
     private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
 
-    private async void ExportChatsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ExportChatsAsync);
-    private async void ImportChatsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImportChatsAsync);
+    private void AppRootSizeChanged(object sender, SizeChangedEventArgs e) => ApplyResponsiveNavigation(e.NewSize.Width);
+
+    private void ApplyResponsiveNavigation(double width)
+    {
+        if (width <= 0) return;
+        var compact = width < CompactNavigationBreakpoint;
+        if (_compactNavigation == compact) return;
+
+        _compactNavigation = compact;
+        AppRoot.ColumnDefinitions[0].Width = new GridLength(compact ? 0 : 276);
+        Grid.SetColumnSpan(Sidebar, compact ? 2 : 1);
+        Sidebar.Width = compact ? 276 : double.NaN;
+        Sidebar.HorizontalAlignment = compact ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+        Sidebar.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+        SidebarBackdrop.Visibility = Visibility.Collapsed;
+        ToggleSidebarButton.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ToggleSidebarClick(object sender, RoutedEventArgs e)
+    {
+        if (!_compactNavigation) return;
+        Sidebar.Visibility = Visibility.Visible;
+        SidebarBackdrop.Visibility = Visibility.Visible;
+        NewConversationButton.Focus(FocusState.Programmatic);
+    }
+
+    private void CloseSidebarClick(object sender, RoutedEventArgs e) => CloseCompactSidebar();
+
+    private void CloseCompactSidebar()
+    {
+        if (!_compactNavigation) return;
+        Sidebar.Visibility = Visibility.Collapsed;
+        SidebarBackdrop.Visibility = Visibility.Collapsed;
+        ToggleSidebarButton.Focus(FocusState.Programmatic);
+    }
+
+    private async void ExportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ExportChatsAsync); }
+    private async void ImportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ImportChatsAsync); }
 
     private async Task ExportChatsAsync()
     {
@@ -293,11 +338,18 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = destination switch { "images" => "Image generation is not connected yet", "activity" => "Recent conversations are being migrated", _ => $"⌖　{_settings.Endpoint}" };
     }
 
-    private async void ChatModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("ChatBot"));
-    private async void CodingModeClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SwitchModeAsync("Coding Agent"));
+    private async void ChatModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("ChatBot")); }
+    private async void CodingModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("Coding Agent")); }
 
     private void AppKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == Windows.System.VirtualKey.Escape && _compactNavigation && Sidebar.Visibility == Visibility.Visible)
+        {
+            e.Handled = true;
+            CloseCompactSidebar();
+            return;
+        }
+
         var controlPressed = Microsoft.UI.Input.InputKeyboardSource
             .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
@@ -817,7 +869,7 @@ public sealed partial class MainPage : Page
             (System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address));
     }
 
-    private async void NewProjectClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(NewProjectClickAsync);
+    private async void NewProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(NewProjectClickAsync); }
 
     private async Task NewProjectClickAsync()
     {
@@ -933,6 +985,7 @@ public sealed partial class MainPage : Page
 
     private void ProjectActionsClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (_requestCancellation is not null)
         {
             RuntimeStatus.Text = "Wait for the response to finish before changing project settings.";
@@ -1107,7 +1160,7 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = $"Project “{project.Name}” removed. Its saved chats and disk folders remain untouched.";
     }
 
-    private async void ProjectClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => ProjectClickAsync(sender));
+    private async void ProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => ProjectClickAsync(sender)); }
 
     private async Task ProjectClickAsync(object sender)
     {
@@ -1250,6 +1303,7 @@ public sealed partial class MainPage : Page
 
     private void NewChatClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (_requestCancellation is not null)
         {
             CancelRequest();
@@ -1376,7 +1430,7 @@ public sealed partial class MainPage : Page
         return row;
     }
 
-    private async void RecentClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => RecentClickAsync(sender));
+    private async void RecentClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => RecentClickAsync(sender)); }
 
     private async Task RecentClickAsync(object sender)
     {
@@ -1429,6 +1483,7 @@ public sealed partial class MainPage : Page
 
     private void RecentActionsClick(object sender, RoutedEventArgs e)
     {
+        CloseCompactSidebar();
         if (sender is not Button { Tag: string sessionId }) return;
         if (_requestCancellation is not null)
         {
@@ -1464,7 +1519,7 @@ public sealed partial class MainPage : Page
         menu.ShowAt((FrameworkElement)sender);
     }
 
-    private async void NewChatFolderClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(CreateChatFolderAsync);
+    private async void NewChatFolderClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(CreateChatFolderAsync); }
 
     private async Task CreateChatFolderAsync()
     {
@@ -2703,7 +2758,7 @@ public sealed partial class MainPage : Page
         return panel;
     }
 
-    private async void ModelClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ModelLibraryClickAsync);
+    private async void ModelClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ModelLibraryClickAsync); }
 
     private async Task ModelClickAsync() => await ModelLibraryClickAsync();
 
@@ -3263,7 +3318,7 @@ public sealed partial class MainPage : Page
         ProcessingLabel.Text = DescribeDataRoute();
     }
 
-    private async void SearchClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(SearchClickAsync);
+    private async void SearchClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SearchClickAsync); }
 
     private async Task SearchClickAsync()
     {
@@ -3358,7 +3413,7 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void SettingsClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(SettingsDialogAsync);
+    private async void SettingsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SettingsDialogAsync); }
 
     private async void ImageStudioClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImageStudioAsync);
 
@@ -3389,16 +3444,42 @@ public sealed partial class MainPage : Page
                 SaveSettings();
                 results.Children.Clear();
                 var images = await _comfyImageProvider.GenerateAsync(_settings.ComfyEndpoint, _settings.ImageWorkflow, prompt.Text, message => status.Text = message, generationCancellation.Token);
-                status.Text = $"Generated {images.Count} image(s) locally. Select an image to open it.";
+                status.Text = $"Generated {images.Count} image(s) locally. Previews are loaded only from your local ComfyUI server.";
                 foreach (var image in images)
                 {
+                    var preview = new Image
+                    {
+                        Source = new BitmapImage { UriSource = image.Url },
+                        MaxWidth = 520,
+                        MaxHeight = 360,
+                        Stretch = Stretch.Uniform,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
+                    AutomationProperties.SetName(preview, $"Generated image preview: {image.FileName}");
                     var open = new Button { Content = image.FileName, HorizontalAlignment = HorizontalAlignment.Left, Tag = image.Url };
                     AutomationProperties.SetName(open, $"Open generated image {image.FileName}");
                     open.Click += async (_, _) =>
                     {
                         if (open.Tag is Uri uri) await Windows.System.Launcher.LaunchUriAsync(uri);
                     };
-                    results.Children.Add(open);
+                    results.Children.Add(new Border
+                    {
+                        Background = new SolidColorBrush(Colors.White),
+                        BorderBrush = new SolidColorBrush(Colors.LightGray),
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(10),
+                        Padding = new Thickness(10),
+                        Child = new StackPanel
+                        {
+                            Spacing = 8,
+                            Children =
+                            {
+                                preview,
+                                new TextBlock { Text = image.FileName, FontSize = 12, Opacity = .8, TextTrimming = TextTrimming.CharacterEllipsis },
+                                open
+                            }
+                        }
+                    });
                 }
             }
             catch (OperationCanceledException) when (generationCancellation?.IsCancellationRequested == true)

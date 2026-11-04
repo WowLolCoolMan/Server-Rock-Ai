@@ -20,7 +20,7 @@ public sealed partial class MainPage
     private GitHubAccount? _githubAccount;
     private CancellationTokenSource? _githubAuthorizationCancellation;
 
-    private async void GitHubClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(GitHubWorkspaceDialogAsync);
+    private async void GitHubClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(GitHubWorkspaceDialogAsync); }
 
     private async Task GitHubWorkspaceDialogAsync()
     {
