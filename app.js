@@ -652,6 +652,9 @@ async function pushProjectChanges(message = "") {
     if (!review.branch) confirmButton.title = "A named branch is required to push safely.";
     else if (!changeCount && !ahead) confirmButton.title = "There are no changes or commits to push.";
     else confirmButton.title = "Commit and push the changes listed above.";
+    // Put the cursor in the commit message once the review is ready, so the
+    // user can type a message and press Enter instead of starting on "×".
+    if (!confirmButton.disabled) $("#githubCommitMessage").focus();
   } catch (error) {
     statusLabel.textContent = "Could not prepare the push review: " + error.message;
     confirmButton.textContent = "Push unavailable";
@@ -662,6 +665,15 @@ async function pushProjectChanges(message = "") {
 }
 $("#githubPushClose").onclick = () => $("#githubPushDialog").close();
 $("#githubPushCancel").onclick = () => $("#githubPushDialog").close();
+// The push review lives in a <form method="dialog">, so pressing Enter in the
+// commit message used to submit the form and silently close the review without
+// pushing. Enter now acts like "Commit and push" when that button is enabled,
+// and otherwise leaves the review open. Close, Cancel, and Escape still close it.
+$("#githubPushDialog form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const confirmButton = $("#githubPushConfirm");
+  if (!confirmButton.disabled) confirmButton.click();
+});
 $("#githubPushConfirm").onclick = async () => {
   const review = githubPushReview,
     commitMessage = $("#githubCommitMessage").value.trim().slice(0, 160),

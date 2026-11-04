@@ -284,3 +284,49 @@ test("editing a project updates it instead of creating a duplicate", async ({ pa
   await page.locator("#projectForm .save").click();
   await expect(page.locator("#projectList .project-item")).toHaveCount(2);
 });
+
+// Smoke-test item 2: Enter in the commit message must not close the push
+// review without pushing.
+test("Enter in the push review commit message pushes instead of closing silently", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [],
+      projects: [{ id: "g", name: "Repo", folders: ["/repo"], github: { fullName: "octocat/repo" } }],
+      activeProjectId: "g",
+      settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.2", theme: "dark", temperature: 0.7 },
+    }));
+    window.reviewHasChanges = true;
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      githubStatus: async () => ({ connected: true, login: "octocat" }),
+      githubProjectStatus: async () => window.reviewHasChanges
+        ? { branch: "main", changedFiles: 1, ahead: 0, changes: [" M README.md"], changeToken: "t".repeat(64) }
+        : { branch: "main", changedFiles: 0, ahead: 0, changes: [], changeToken: "t".repeat(64) },
+      githubPushProject: async (folders, message, fullName) => {
+        window.pushRequest = { message, fullName };
+        return { pushed: true, branch: "main", commit: "abc1234", changedFiles: 1 };
+      },
+    };
+  });
+  await page.goto(appUrl);
+
+  // Nothing to push: Enter leaves the review open instead of closing it.
+  await page.evaluate(() => { window.reviewHasChanges = false; });
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushConfirm")).toBeDisabled();
+  await page.locator("#githubCommitMessage").press("Enter");
+  await expect(page.locator("#githubPushDialog")).toBeVisible();
+  expect(await page.evaluate(() => window.pushRequest)).toBeUndefined();
+  await page.locator("#githubPushCancel").click();
+  await expect(page.locator("#githubPushDialog")).toBeHidden();
+
+  // With changes: the message box gets focus and Enter commits and pushes.
+  await page.evaluate(() => { window.reviewHasChanges = true; });
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushConfirm")).toBeEnabled();
+  await expect(page.locator("#githubCommitMessage")).toBeFocused();
+  await page.locator("#githubCommitMessage").fill("Docs update");
+  await page.locator("#githubCommitMessage").press("Enter");
+  await expect(page.locator("#githubPushDialog")).toBeHidden();
+  expect(await page.evaluate(() => window.pushRequest)).toEqual({ message: "Docs update", fullName: "octocat/repo" });
+});
