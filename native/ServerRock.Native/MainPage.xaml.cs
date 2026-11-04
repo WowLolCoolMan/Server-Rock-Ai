@@ -3257,9 +3257,6 @@ public sealed partial class MainPage : Page
         var available = _mode == "ChatBot" && project is not null && project.FolderPaths.Count > 0;
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _includeProjectFilesInChat ? "▤　Project files on" : "▤　Project files off";
-        AutomationProperties.SetHelpText(ProjectFilesButton, _includeProjectFilesInChat
-            ? "This Chat includes bounded, secret-filtered text excerpts from the active project's selected folders. A remote model requires consent before those files are sent. Click to turn off."
-            : "Optionally include bounded, secret-filtered excerpts from the active project's selected folders in Chat. A remote model requires consent before those files are sent.");
         ProjectBadgeText.Text = _mode == "Coding Agent"
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
@@ -3293,9 +3290,6 @@ public sealed partial class MainPage : Page
     private void UpdateWebSearchButton()
     {
         WebSearchButton.Content = _settings.WebSearchEnabled ? "⌕　Web on" : "⌕　Web off";
-        AutomationProperties.SetHelpText(WebSearchButton, _settings.WebSearchEnabled
-            ? "Search sends this prompt to DuckDuckGo and result excerpts to your selected model server. Click to turn off."
-            : "Turn on optional DuckDuckGo web search for Chat conversations.");
         var local = IsLocalEndpoint(_settings.Endpoint);
         var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
         if (_isTemporaryChat)
