@@ -602,6 +602,23 @@ await streamProvider.StreamChatAsync(
     chunk => received.Append(chunk),
     CancellationToken.None);
 Check(received.ToString() == "Hello world", "SSE text and content-part deltas stream in order");
+var excessiveSse = string.Concat(Enumerable.Range(0, 8).Select(_ =>
+    "data: {\"choices\":[{\"delta\":{\"content\":\"" + new string('x', 131_072) + "\"}}]}\n\n"));
+var excessiveStreamProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) =>
+    Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent(excessiveSse, Encoding.UTF8, "text/event-stream")
+    }))));
+try
+{
+    await excessiveStreamProvider.StreamChatAsync(new AppSettings { Endpoint = "http://localhost:11434/v1", Model = "local-a" },
+        [new ChatMessage("user", "Return a bounded answer")], _ => { }, CancellationToken.None);
+    throw new Exception("Expected excessive streamed output to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "native provider bounds cumulative streamed response text");
+}
 using (var requestJson = JsonDocument.Parse(streamedPayload!))
 {
     var root = requestJson.RootElement;
