@@ -805,6 +805,21 @@ try
     Check(restoredChats[0].FolderName == "Research", "conversation folder assignment survives save and reload");
     Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
     Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
+    var healthyHistoryBeforeRejectedSave = File.ReadAllBytes(conversationsPath);
+    try
+    {
+        conversationStore.Save([new ChatSession
+        {
+            Id = "invalid-local-history",
+            Messages = [new ChatMessage("system", "This role must never enter persisted user history.")]
+        }]);
+        throw new Exception("Expected invalid local conversation persistence to be rejected.");
+    }
+    catch (InvalidDataException)
+    {
+        Check(File.ReadAllBytes(conversationsPath).SequenceEqual(healthyHistoryBeforeRejectedSave),
+            "invalid local history is rejected without replacing the previous saved conversations");
+    }
     var restartSafeImport = ConversationArchive.PlanImport(restoredChats, await ReadElectronFixtureAsync(electronExportPath));
     Check(restartSafeImport.Conversations.Count == 1 && restartSafeImport.SkippedDuplicates == 1, "re-import remains idempotent after closing and reopening the app");
     var editedChats = restoredChats.ToList();
