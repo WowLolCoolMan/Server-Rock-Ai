@@ -21,13 +21,14 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "electron": "^35.0.0",
+    "electron": "^45.2.2",
     "electron-builder": "^26.0.0"
   },
   "build": {
     "appId": "com.server-rock.ai",
     "productName": "Server Rock: AI",
     "compression": "normal",
+    "artifactName": "Server-Rock-AI-${version}-${arch}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -79,7 +80,11 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Server Rock: AI",
       "uninstallDisplayName": "Server Rock: AI",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Server-Rock-AI-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Server-Rock-AI-${version}-portable.${ext}"
     },
     "npmRebuild": false,
     "publish": {
@@ -95,5 +100,10 @@
     "electron-updater": "^6.8.11",
     "jose": "^6.2.15",
     "marked": "^18.1.3"
+  },
+  "allowScripts": {
+    "electron-winstaller": false,
+    "onnxruntime-node": false,
+    "protobufjs": false
   }
 }

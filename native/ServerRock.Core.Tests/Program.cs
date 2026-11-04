@@ -961,7 +961,11 @@ try
         await terminalSession.SendTextAsync(terminalCommand + "\r");
         var terminalExitCode = await terminalSession.Completion.WaitAsync(TimeSpan.FromSeconds(15));
         var terminalScreen = terminalSession.ScreenText;
-        Check(terminalExitCode == 0 && terminalScreen.Split('\n').Any(line => line.Trim() == "server-rock-pty-ok"), "interactive project terminal accepts input and renders a real PTY response");
+        // On failure, include the exit code and screen so CI shows why (it only said "Check failed").
+        var terminalPassed = terminalExitCode == 0 && terminalScreen.Split('\n').Any(line => line.Trim() == "server-rock-pty-ok");
+        Check(terminalPassed, terminalPassed
+            ? "interactive project terminal accepts input and renders a real PTY response"
+            : $"interactive project terminal accepts input and renders a real PTY response (exit code: {terminalExitCode?.ToString() ?? "none"}; screen: {terminalScreen.Trim().Replace("\n", " | ")})");
     }
     try
     {

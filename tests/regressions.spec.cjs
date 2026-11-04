@@ -310,3 +310,187 @@ test("GitHub push protection recognizes secret-shaped changed paths", () => {
   expect(isProtectedPath(".github/workflows/release.yml")).toBe(false);
   expect(isProtectedPath("src/index.js")).toBe(false);
 });
+
+// Smoke-test item 1: saving an edited project must update it, not add a copy.
+test("editing a project updates it instead of creating a duplicate", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [],
+      projects: [{ id: "p1", name: "Alpha", folders: [], instructions: "Old notes" }],
+      settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.2", theme: "dark", temperature: 0.7 },
+    }));
+  });
+  await page.goto(appUrl);
+
+  await page.locator("#projectList .project-item").dblclick();
+  await expect(page.locator("#projectDialog")).toBeVisible();
+  await expect(page.locator("#projectDialog h2")).toHaveText("Edit project");
+  await expect(page.locator("#editProject")).toBeHidden();
+  await expect(page.locator("#projectForm .save")).toHaveText("Save changes");
+
+  await page.locator("#projectName").fill("Alpha renamed");
+  await page.locator("#projectInstructions").fill("New notes");
+  await page.locator("#projectForm .save").click();
+
+  await expect(page.locator("#projectDialog")).toBeHidden();
+  await expect(page.locator("#projectList .project-item")).toHaveCount(1);
+  await expect(page.locator("#projectList")).toContainText("Alpha renamed");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("local-studio-v1")).projects);
+  expect(saved).toEqual([expect.objectContaining({ id: "p1", name: "Alpha renamed", instructions: "New notes" })]);
+
+  // Pressing Enter in the name field while editing also updates in place.
+  await page.locator("#projectList .project-item").dblclick();
+  await page.locator("#projectName").fill("Alpha final");
+  await page.locator("#projectName").press("Enter");
+  await expect(page.locator("#projectList .project-item")).toHaveCount(1);
+  await expect(page.locator("#projectList")).toContainText("Alpha final");
+
+  // Creating afterwards still creates a new project with the create heading.
+  await page.locator("#newProject").click();
+  await expect(page.locator("#projectDialog h2")).toHaveText("Create project");
+  await page.locator("#projectName").fill("Beta");
+  await page.locator("#projectForm .save").click();
+  await expect(page.locator("#projectList .project-item")).toHaveCount(2);
+});
+
+// Smoke-test item 2: Enter in the commit message must not close the push
+// review without pushing.
+test("Enter in the push review commit message pushes instead of closing silently", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [],
+      projects: [{ id: "g", name: "Repo", folders: ["/repo"], github: { fullName: "octocat/repo" } }],
+      activeProjectId: "g",
+      settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.2", theme: "dark", temperature: 0.7 },
+    }));
+    window.reviewHasChanges = true;
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      githubStatus: async () => ({ connected: true, login: "octocat" }),
+      githubProjectStatus: async () => window.reviewHasChanges
+        ? { branch: "main", changedFiles: 1, ahead: 0, changes: [" M README.md"], changeToken: "t".repeat(64) }
+        : { branch: "main", changedFiles: 0, ahead: 0, changes: [], changeToken: "t".repeat(64) },
+      githubPushProject: async (folders, message, fullName) => {
+        window.pushRequest = { message, fullName };
+        return { pushed: true, branch: "main", commit: "abc1234", changedFiles: 1 };
+      },
+    };
+  });
+  await page.goto(appUrl);
+
+  // Nothing to push: Enter leaves the review open instead of closing it.
+  await page.evaluate(() => { window.reviewHasChanges = false; });
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushConfirm")).toBeDisabled();
+  await page.locator("#githubCommitMessage").press("Enter");
+  await expect(page.locator("#githubPushDialog")).toBeVisible();
+  expect(await page.evaluate(() => window.pushRequest)).toBeUndefined();
+  await page.locator("#githubPushCancel").click();
+  await expect(page.locator("#githubPushDialog")).toBeHidden();
+
+  // With changes: the message box gets focus and Enter commits and pushes.
+  await page.evaluate(() => { window.reviewHasChanges = true; });
+  await page.locator("#githubSync").click();
+  await expect(page.locator("#githubPushConfirm")).toBeEnabled();
+  await expect(page.locator("#githubCommitMessage")).toBeFocused();
+  await page.locator("#githubCommitMessage").fill("Docs update");
+  await page.locator("#githubCommitMessage").press("Enter");
+  await expect(page.locator("#githubPushDialog")).toBeHidden();
+  expect(await page.evaluate(() => window.pushRequest)).toEqual({ message: "Docs update", fullName: "octocat/repo" });
+});
+
+// Smoke-test item 3: /models must work in Electron, where window.prompt()
+// throws "prompt() is not supported".
+test("/models opens the model picker instead of using window.prompt", async ({ page }) => {
+  const dialogs = [];
+  page.on("dialog", async (dialog) => { dialogs.push(dialog.message()); await dialog.dismiss(); });
+  await page.addInitScript(() => {
+    window.prompt = () => { throw new Error("prompt() is not supported."); };
+    window.hostScans = 0;
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      scanHosts: async () => {
+        window.hostScans++;
+        return { models: [{ provider: "Ollama", model: "qwen3:4b", endpoint: "http://127.0.0.1:11434/v1/chat/completions", local: true }], hosts: ["Ollama"] };
+      },
+    };
+  });
+  await page.goto(appUrl);
+
+  for (const sendWith of ["click", "Enter"]) {
+    await page.locator("#prompt").fill("/models");
+    if (sendWith === "click") await page.locator("#send").click();
+    else await page.locator("#prompt").press("Enter");
+    await expect(page.locator("#modelPicker")).toBeVisible();
+    await expect(page.locator("#modelOptions")).toContainText("qwen3:4b");
+    await expect(page.locator("#prompt")).toHaveValue("");
+    await page.mouse.click(5, 5);
+    await expect(page.locator("#modelPicker")).toBeHidden();
+  }
+  expect(await page.evaluate(() => window.hostScans)).toBeGreaterThanOrEqual(2);
+  expect(dialogs).toEqual([]);
+});
+
+// Smoke-test item 4: installer names must let the GitHub release updater find
+// the right file. GitHub turns spaces in asset names into dots, and
+// chooseInstaller() needs the architecture in macOS and Linux file names.
+test("installer names have no spaces and the updater picks the right one per platform", async () => {
+  const { chooseInstaller } = require("../electron/github-updates.cjs");
+  const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8"));
+  const patterns = [pkg.build.artifactName, pkg.build.nsis.artifactName, pkg.build.portable.artifactName];
+  for (const pattern of patterns) expect(pattern).not.toMatch(/\s/);
+  expect(new Set(patterns).size).toBe(3);
+
+  // File names as electron-builder expands these patterns (checked with a local Linux build).
+  const release = (names) => ({ assets: names.map((name, index) => ({ name, size: 1, id: index + 1, digest: "sha256:" + "a".repeat(64) })) });
+  const ours = release([
+    "Server-Rock-AI-Setup-0.1.2.exe", "Server-Rock-AI-0.1.2-portable.exe",
+    "Server-Rock-AI-0.1.2-x64.dmg", "Server-Rock-AI-0.1.2-arm64.dmg",
+    "Server-Rock-AI-0.1.2-x64.zip", "Server-Rock-AI-0.1.2-arm64.zip",
+    "Server-Rock-AI-0.1.2-x86_64.AppImage", "Server-Rock-AI-0.1.2-arm64.AppImage",
+    "Server-Rock-AI-0.1.2-amd64.deb", "Server-Rock-AI-0.1.2-x64.tar.gz",
+  ]);
+  expect(chooseInstaller(ours, "win32", "x64")?.name).toBe("Server-Rock-AI-Setup-0.1.2.exe");
+  expect(chooseInstaller(ours, "darwin", "x64")?.name).toBe("Server-Rock-AI-0.1.2-x64.dmg");
+  expect(chooseInstaller(ours, "darwin", "arm64")?.name).toBe("Server-Rock-AI-0.1.2-arm64.dmg");
+  expect(chooseInstaller(ours, "linux", "x64")?.name).toBe("Server-Rock-AI-0.1.2-x86_64.AppImage");
+  expect(chooseInstaller(ours, "linux", "arm64")?.name).toBe("Server-Rock-AI-0.1.2-arm64.AppImage");
+
+  // The old default names (after GitHub's space-to-dot rename) leave Intel Macs
+  // and x64 Linux without a match, because the x64 builds had no arch in the name.
+  const defaults = release(["Server.Rock.AI-0.1.2.dmg", "Server.Rock.AI-0.1.2-arm64.dmg", "Server.Rock.AI-0.1.2.AppImage", "Server.Rock.AI-0.1.2-arm64.AppImage"]);
+  expect(chooseInstaller(defaults, "darwin", "x64")).toBeNull();
+  expect(chooseInstaller(defaults, "linux", "x64")).toBeNull();
+});
+
+// Smoke-test item 7: every installed package with an install script must have
+// an explicit allowScripts decision, so a fresh `npm install` on npm 11+ is
+// deterministic and doesn't block anything the app needs without saying so.
+test("every dependency install script has an explicit allowScripts decision", async () => {
+  const root = path.resolve(__dirname, "..");
+  const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  const decided = pkg.allowScripts || {};
+  const withScripts = new Set();
+  async function scan(dir) {
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.name.startsWith("@")) { await scan(full); continue; }
+      try {
+        const meta = JSON.parse(await fs.readFile(path.join(full, "package.json"), "utf8"));
+        const scripts = meta.scripts || {};
+        if (scripts.preinstall || scripts.install || scripts.postinstall) withScripts.add(meta.name);
+      } catch {}
+      await scan(path.join(full, "node_modules"));
+    }
+  }
+  await scan(path.join(root, "node_modules"));
+  const undecided = [...withScripts].filter((name) => !(name in decided)).sort();
+  expect(undecided).toEqual([]);
+  // Electron 45 downloads its runtime on first launch, so it needs no install script.
+  expect(withScripts.has("electron")).toBe(false);
+});
