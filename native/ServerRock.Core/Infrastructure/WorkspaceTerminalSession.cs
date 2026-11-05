@@ -129,6 +129,13 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
         _completed.TrySetResult(ExitCode);
     }
 
+    private int? TryReadExitCode(IPtyConnection connection)
+    {
+        if (ExitCode is not null) return ExitCode;
+        try { return connection.ExitCode; }
+        catch (InvalidOperationException) { return null; }
+    }
+
     private async Task ReadOutputAsync(CancellationToken cancellationToken)
     {
         var connection = _connection!;
@@ -147,7 +154,9 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
         catch (IOException) when (cancellationToken.IsCancellationRequested) { }
         finally
         {
-            ExitCode = connection.ExitCode;
+            // Process.ExitCode throws until the process has exited, and the read loop can end first
+            // (for example when the session is disposed while the shell is still running).
+            ExitCode = TryReadExitCode(connection);
             _completed.TrySetResult(ExitCode);
             ScreenChanged?.Invoke(this, EventArgs.Empty);
         }

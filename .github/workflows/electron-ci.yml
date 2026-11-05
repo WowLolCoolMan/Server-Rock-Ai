@@ -19,9 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Electron 45 requires Node.js 22.12 or newer (release.yml already uses 22).
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -45,5 +46,8 @@ jobs:
       - name: Run responsive UI audit
         run: npm run audit:ui
 
+      # This audit opens a real Electron window. The runner has no display
+      # ("Missing X server or $DISPLAY"), so run it under a virtual X server.
+      # xvfb-run comes from the Playwright --with-deps step above.
       - name: Run Electron boundary audit
-        run: npm run audit:electron
+        run: xvfb-run -a npm run audit:electron

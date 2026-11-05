@@ -352,7 +352,10 @@ function openProjectEditor(id) {
   pendingProjectFolders = [...(project.folders || [])];
   $("#projectName").value = project.name;
   $("#projectInstructions").value = project.instructions || "";
-  $("#editProject").hidden = false;
+  // Editing uses the form's own submit button ("Save changes"), so the separate
+  // "Save project" button stays hidden; showing both offered two save buttons.
+  $("#editProject").hidden = true;
+  setProjectDialogHeading("Edit project");
   document.querySelector("#projectForm .save").textContent = "Save changes";
   paintProjectFolders();
   $("#projectDialog").showModal();
@@ -363,6 +366,7 @@ function showProjectDialog() {
   $("#projectName").value = "";
   $("#projectInstructions").value = "";
   $("#editProject").hidden = true;
+  setProjectDialogHeading("Create project");
   document.querySelector("#projectForm .save").textContent = "Create project";
   $("#projectSources").innerHTML =
     '<span class="muted">No folders added yet</span>';
@@ -1116,6 +1120,9 @@ async function pushProjectChanges(message = "") {
     if (!review.branch) confirmButton.title = "A named branch is required to push safely.";
     else if (!changeCount && !ahead) confirmButton.title = "There are no changes or commits to push.";
     else confirmButton.title = "Commit and push the changes listed above.";
+    // Put the cursor in the commit message once the review is ready, so the
+    // user can type a message and press Enter instead of starting on "×".
+    if (!confirmButton.disabled) $("#githubCommitMessage").focus();
   } catch (error) {
     statusLabel.textContent = "Could not prepare the push review: " + error.message;
     confirmButton.textContent = "Push unavailable";
@@ -1126,6 +1133,15 @@ async function pushProjectChanges(message = "") {
 }
 $("#githubPushClose").onclick = () => $("#githubPushDialog").close();
 $("#githubPushCancel").onclick = () => $("#githubPushDialog").close();
+// The push review lives in a <form method="dialog">, so pressing Enter in the
+// commit message used to submit the form and silently close the review without
+// pushing. Enter now acts like "Commit and push" when that button is enabled,
+// and otherwise leaves the review open. Close, Cancel, and Escape still close it.
+$("#githubPushDialog form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const confirmButton = $("#githubPushConfirm");
+  if (!confirmButton.disabled) confirmButton.click();
+});
 $("#githubPushConfirm").onclick = async () => {
   const review = githubPushReview,
     commitMessage = $("#githubCommitMessage").value.trim().slice(0, 160),
@@ -1545,7 +1561,15 @@ $("#addProjectFolder").onclick = async () => {
 };
 $("#closeProject").onclick = $("#cancelProject").onclick = () =>
   $("#projectDialog").close();
-$("#editProject").onclick = () => {
+// The project dialog is shared by "create" and "edit". The heading is looked up
+// loosely so a markup redesign of the dialog header can't break the editor.
+function setProjectDialogHeading(text) {
+  const heading = document.querySelector("#projectDialog h2");
+  if (heading) heading.textContent = text;
+}
+// Saves the project currently open in the editor. Used by the form's submit
+// button and by the (normally hidden) #editProject button.
+function saveProjectEdits() {
   const project = state.projects.find((item) => item.id === editingProjectId);
   if (!project) return;
   project.name = $("#projectName").value.trim() || project.name;
@@ -1557,9 +1581,17 @@ $("#editProject").onclick = () => {
   renderProjects();
   $("#crumb").textContent = project.name;
   $("#projectDialog").close();
-};
+}
+$("#editProject").onclick = saveProjectEdits;
 $("#projectForm").onsubmit = (e) => {
   e.preventDefault();
+  // When the dialog was opened to edit a project, submitting ("Save changes"
+  // or Enter) updates that project. Previously it always created a new one,
+  // which duplicated the project being edited.
+  if (editingProjectId) {
+    saveProjectEdits();
+    return;
+  }
   const name = $("#projectName").value.trim();
   if (!name) return;
   const project = {
@@ -2365,27 +2397,6 @@ $("#hfResults").ondblclick = () => {
   $("#localModelId").value = state.settings.localModelId || "";
   $("#modelInput").focus();
 };
-async function discoverModels() {
-  let base = state.settings.endpoint.replace(/\/v1\/chat\/completions.*$/, "");
-  try {
-    let r = await fetch(base + "/api/tags"),
-      data = await readJsonResponseLimited(r, "Ollama model list"),
-      names = (data.models || []).map((m) => m.name);
-    if (!names.length)
-      return alert("Ollama is running, but no models are installed.");
-    let name = prompt(
-      "Installed Ollama models:\n" + names.join("\n") + "\nEnter model name:",
-      names[0],
-    );
-    if (name) {
-      state.settings.model = name;
-      persist();
-      settingLoad();
-    }
-  } catch {
-    alert("Start Ollama and check " + base);
-  }
-}
 function retrieveProjectKnowledge(files, query, limit = 6) {
   const terms = [...new Set(
     (query.toLowerCase().match(/[\p{L}\p{N}_-]{3,}/gu) || []).filter(
@@ -2472,7 +2483,11 @@ async function send() {
     return;
   }
   if (cmd.models) {
-    discoverModels();
+    // /models opens the model picker (which scans every local host). It used
+    // window.prompt(), which Electron doesn't support, so it always fell back
+    // to a misleading "Start Ollama" alert. Deferred so the click that sent
+    // the command doesn't immediately close the picker again.
+    setTimeout(openModelPicker, 0);
     return;
   }
   if (cmd.push) {
@@ -3068,6 +3083,13 @@ function openModelLibrary() {
 $("#openModelLibrary").onclick = openModelLibrary;
 $("#welcomeMarketplace").onclick = openModelLibrary;
 $("#welcomeSettings").onclick = () => $("#settings").click();
+// Opens the composer's model picker (which scans every local host) for /models.
+// Separate from openModelLibrary(), which opens the model marketplace page.
+function openModelPicker() {
+  setPage("chat");
+  if ($("#modelPicker").hidden) toggleModelPicker();
+  else scanModels();
+}
 $("#temperatureControl").oninput = (event) => {
   const value = Number(event.target.value);
   state.settings.temperature = value;
