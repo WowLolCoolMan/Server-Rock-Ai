@@ -4,11 +4,11 @@
 
 A local-first desktop workspace for chatting with local models and compatible AI endpoints. It uses a compact, keyboard-friendly layout inspired by modern chat desktop apps.
 
-## Native cross-platform app (migration in progress)
+## Native cross-platform app (target stack)
 
 The repository includes a C# and XAML app in `native/ServerRock.Native`, built with Uno Platform, plus a UI-independent `native/ServerRock.Core` library for application models, provider transport, and settings storage. The UI uses a shared `net10.0-desktop` Skia target for Linux and desktop Windows plus a Windows App SDK target. Native Chat and Coding Agent have separate screens and recent-chat lists. Chat supports opt-in web search. Coding Agent reads bounded project context and proposes source-file replacements for review, approval, and guarded undo. Both use a configurable OpenAI-compatible endpoint with model discovery, streaming, cancellation, and local persistence.
 
-This is an incremental migration, not feature parity. The native app saves conversations, selected text/code, PDF text, and image attachments, named projects, and selected folder paths locally. PDF text is extracted on-device and bounded before it is attached. Project files are read as context, then written only after explicit approval; common secret/dependency folders and symbolic links are excluded, edits have guarded undo, and the latest 20 approved changes are available in a local persistent undo history. Web search is opt-in and sends queries to DuckDuckGo and returned excerpts to the configured model endpoint. The Coding Agent now has a project-scoped interactive terminal and GitHub commit/push integration, but project-wide search/indexing, export/import, Electron history migration, audio/spreadsheet workflows, image generation, connectors, skills/automations, hosted-provider credentials, and production installers still need to be ported and verified. See `docs/NATIVE_MIGRATION.md` for the capability map. The Electron app remains the complete product and its packaged builds are still the supported distribution. Native controls for unfinished areas must describe their current status accurately. Do not remove the Electron app or user data until those workflows and migration have been verified.
+This is an incremental migration, not feature parity. The native app saves conversations, selected text/code, PDF text, and image attachments, named projects, and selected folder paths locally. PDF text is extracted on-device and bounded before it is attached. Project files are read as context, then written only after explicit approval; common secret/dependency folders and symbolic links are excluded, edits have guarded undo, and the latest 20 approved changes are available in a local persistent undo history. Web search is opt-in and sends queries to DuckDuckGo and returned excerpts to the configured model endpoint. The Coding Agent now has a project-scoped interactive terminal and GitHub commit/push integration. The remaining migration gates are tracked in `docs/NATIVE_MIGRATION.md` and `docs/NATIVE_RELEASE_ACCEPTANCE.md`; unfinished areas must describe their current status accurately. Electron is retained only as a transitional compatibility and history-export path while those native gates are verified, and must not receive new product features.
 
 The requested Windows 8 compatibility conflicts with the current .NET 10 target: Microsoft lists Windows 8.1 as unsupported for current .NET releases. Windows 10 support is edition/build-specific in Microsoft's current support table. Treat Windows 8 and general consumer Windows 10 support as unresolved compatibility requirements; do not advertise them based only on a successful compile. Evaluate a legacy runtime/package strategy or explain the support limit before release.
 
@@ -40,7 +40,17 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 
 ## Run locally
 
-Install Node.js 22.12 or newer (required by Electron 45). From this repository:
+For product development, run the native Uno/.NET target first:
+
+```sh
+dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
+dotnet run --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
+dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+```
+
+The Node/Electron commands below are retained only for legacy compatibility checks, migration export, and transitional packaging.
+
+Install Node.js 22.12 or newer (required by the transitional Electron 45 path). From this repository:
 
 ```sh
 npm install
@@ -51,7 +61,9 @@ The first `npm start` downloads the Electron runtime (about 110 MB) if it isn't 
 
 Configure a provider using the gear button. Ollama is commonly available at `http://localhost:11434/v1/chat/completions`; GPT4All's local API is `http://127.0.0.1:4891/v1/chat/completions`. Start the local host first, scan for models in the model picker, and select an installed model.
 
-## Build installers
+## Build legacy Electron installers
+
+These commands package the transitional Electron compatibility build. They are not the target native release workflow.
 
 ```sh
 npm run build:win   # NSIS installer and portable executable
