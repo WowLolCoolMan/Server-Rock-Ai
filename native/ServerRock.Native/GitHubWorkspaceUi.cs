@@ -270,25 +270,36 @@ public sealed partial class MainPage
             SaveSettings();
             connect.IsEnabled = false;
             signInStatus.Text = "Starting GitHub device sign-in…";
+            _githubAuthorizationCancellation?.Dispose();
+            var authorizationCancellation = new CancellationTokenSource();
+            _githubAuthorizationCancellation = authorizationCancellation;
+            cancelSignIn.Visibility = Visibility.Visible;
             try
             {
-                var authorization = await _githubDeviceFlow.BeginAsync(configuredClientId);
+                var authorization = await _githubDeviceFlow.BeginAsync(configuredClientId, authorizationCancellation.Token);
                 code.Text = authorization.UserCode;
                 code.Visibility = Visibility.Visible;
                 code.Focus(FocusState.Programmatic);
                 verification.Visibility = Visibility.Visible;
-                cancelSignIn.Visibility = Visibility.Visible;
                 signInStatus.Text = "Enter the code in GitHub. This app will check for approval automatically.";
-                _githubAuthorizationCancellation = new CancellationTokenSource();
                 try { OpenExternalUri(authorization.VerificationUri); }
                 catch (Exception exception) { signInStatus.Text = $"Enter the code at github.com/login/device. Browser could not open: {exception.Message}"; }
                 _ = PollGitHubAuthorizationAsync(authorization, connection, signInStatus, connect, disconnect,
-                    code, verification, cancelSignIn, RefreshRepositoryListAsync, cancellationToken: _githubAuthorizationCancellation.Token);
+                    code, verification, cancelSignIn, RefreshRepositoryListAsync, cancellationToken: authorizationCancellation.Token);
             }
             catch (Exception exception)
             {
-                connect.IsEnabled = _githubCredential is null && storage.Available;
-                signInStatus.Text = exception.Message;
+                var wasCanceled = exception is OperationCanceledException || authorizationCancellation.IsCancellationRequested;
+                authorizationCancellation.Dispose();
+                if (ReferenceEquals(_githubAuthorizationCancellation, authorizationCancellation)) _githubAuthorizationCancellation = null;
+                code.Text = string.Empty;
+                code.Visibility = Visibility.Collapsed;
+                verification.Visibility = Visibility.Collapsed;
+                cancelSignIn.Visibility = Visibility.Collapsed;
+                connect.Content = "Connect GitHub";
+                connect.IsEnabled = storage.Available && !string.IsNullOrWhiteSpace(clientId.Text);
+                signInStatus.Text = wasCanceled ? "GitHub sign-in canceled." : exception.Message;
+                if (workspaceDialogOpen) connect.Focus(FocusState.Programmatic);
             }
         };
 
