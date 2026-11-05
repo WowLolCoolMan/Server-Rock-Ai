@@ -203,36 +203,22 @@ public sealed partial class MainPage : Page
         {
             // Keep model selection and Tools together; place optional switches on
             // a second row so narrow windows never clip or hide them.
-            Grid.SetRow(ModelButton, 0);
-            Grid.SetColumn(ModelButton, 0);
-            Grid.SetRow(ComposerToolsButton, 0);
-            Grid.SetColumn(ComposerToolsButton, 6);
-            Grid.SetColumnSpan(ComposerToolsButton, 1);
-            Grid.SetRow(WebSearchButton, 1);
-            Grid.SetColumn(WebSearchButton, 0);
-            Grid.SetRow(TemporaryButton, 1);
-            Grid.SetColumn(TemporaryButton, 1);
-            Grid.SetRow(ProjectFilesButton, 1);
-            Grid.SetColumn(ProjectFilesButton, 2);
-            Grid.SetRow(CancelEditButton, 1);
-            Grid.SetColumn(CancelEditButton, 3);
+            Grid.SetRow(PrimaryComposerToolbar, 0);
+            Grid.SetColumn(PrimaryComposerToolbar, 0);
+            Grid.SetColumnSpan(PrimaryComposerToolbar, 2);
+            Grid.SetRow(SecondaryComposerToolbar, 1);
+            Grid.SetColumn(SecondaryComposerToolbar, 0);
+            Grid.SetColumnSpan(SecondaryComposerToolbar, 2);
             ModelButton.MaxWidth = 190;
         }
         else
         {
-            Grid.SetRow(ModelButton, 0);
-            Grid.SetColumn(ModelButton, 0);
-            Grid.SetRow(WebSearchButton, 0);
-            Grid.SetColumn(WebSearchButton, 1);
-            Grid.SetRow(TemporaryButton, 0);
-            Grid.SetColumn(TemporaryButton, 2);
-            Grid.SetRow(ProjectFilesButton, 0);
-            Grid.SetColumn(ProjectFilesButton, 3);
-            Grid.SetRow(CancelEditButton, 0);
-            Grid.SetColumn(CancelEditButton, 4);
-            Grid.SetRow(ComposerToolsButton, 0);
-            Grid.SetColumn(ComposerToolsButton, 5);
-            Grid.SetColumnSpan(ComposerToolsButton, 2);
+            Grid.SetRow(PrimaryComposerToolbar, 0);
+            Grid.SetColumn(PrimaryComposerToolbar, 0);
+            Grid.SetColumnSpan(PrimaryComposerToolbar, 1);
+            Grid.SetRow(SecondaryComposerToolbar, 0);
+            Grid.SetColumn(SecondaryComposerToolbar, 1);
+            Grid.SetColumnSpan(SecondaryComposerToolbar, 1);
             ModelButton.MaxWidth = 330;
         }
 
@@ -3746,7 +3732,7 @@ public sealed partial class MainPage : Page
     private void UpdateTemporaryControls()
     {
         TemporaryButton.Content = _compactComposerToolbar
-            ? _isTemporaryChat ? "◉ Temp on" : "◌ Temp off"
+            ? _isTemporaryChat ? "Temp on" : "Temp off"
             : _isTemporaryChat ? "◉　Temporary on" : "◌　Temporary off";
         TemporaryBadge.Visibility = _isTemporaryChat ? Visibility.Visible : Visibility.Collapsed;
         UpdateEditingControls();
@@ -3755,7 +3741,11 @@ public sealed partial class MainPage : Page
         UpdateBranchControls();
     }
 
-    private void UpdateEditingControls() => CancelEditButton.Visibility = _editingMessageIndex is null ? Visibility.Collapsed : Visibility.Visible;
+    private void UpdateEditingControls()
+    {
+        CancelEditButton.Content = _compactComposerToolbar ? "Cancel" : "Cancel edit";
+        CancelEditButton.Visibility = _editingMessageIndex is null ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     private void CancelEditClick(object sender, RoutedEventArgs e)
     {
@@ -3790,7 +3780,7 @@ public sealed partial class MainPage : Page
         var available = _mode == "ChatBot" && project is not null && project.FolderPaths.Count > 0;
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _compactComposerToolbar
-            ? _includeProjectFilesInChat ? "▤ Files on" : "▤ Files off"
+            ? _includeProjectFilesInChat ? "Files on" : "Files off"
             : _includeProjectFilesInChat ? "▤　Project files on" : "▤　Project files off";
         ProjectBadgeText.Text = _mode == "Coding Agent"
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
@@ -3825,7 +3815,7 @@ public sealed partial class MainPage : Page
     private void UpdateWebSearchButton()
     {
         WebSearchButton.Content = _compactComposerToolbar
-            ? _settings.WebSearchEnabled ? "⌕ Web on" : "⌕ Web off"
+            ? _settings.WebSearchEnabled ? "Web on" : "Web off"
             : _settings.WebSearchEnabled ? "⌕　Web on" : "⌕　Web off";
         var local = IsLocalEndpoint(_settings.Endpoint);
         var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
