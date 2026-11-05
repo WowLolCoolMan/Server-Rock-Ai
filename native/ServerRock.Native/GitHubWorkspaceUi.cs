@@ -352,12 +352,14 @@ public sealed partial class MainPage
     private async Task SaveGitHubCredentialAsync(GitHubUserCredential credential, CancellationToken cancellationToken = default) =>
         await _githubCredentialStore.WriteAsync(JsonSerializer.Serialize(credential), cancellationToken);
 
-    private async void GitHubActionsClick(object sender, RoutedEventArgs e)
+    private async void GitHubActionsClick(object sender, RoutedEventArgs e) => await GitHubActionsClickAsync(sender);
+
+    private async Task GitHubActionsClickAsync(object sender)
     {
-        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
-        if (project is null || string.IsNullOrWhiteSpace(project.GitHubRepository) || project.FolderPaths.Count == 0) return;
         try
         {
+            var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+            if (project is null || string.IsNullOrWhiteSpace(project.GitHubRepository) || project.FolderPaths.Count == 0) return;
             var credential = await GetGitHubCredentialAsync();
             if (credential is null)
             {
@@ -370,6 +372,7 @@ public sealed partial class MainPage
             await GitHubChangesDialogAsync(project, repositoryPath, status, credential);
         }
         catch (Exception exception) { RuntimeStatus.Text = $"GitHub workspace is unavailable: {exception.Message}"; }
+        finally { RestoreNavigationDialogFocus(false, sender as Control); }
     }
 
     private async Task GitHubChangesDialogAsync(LocalProject project, string repositoryPath, GitWorkspaceStatus initialStatus, GitHubUserCredential credential)

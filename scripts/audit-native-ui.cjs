@@ -60,6 +60,7 @@ const requiredCode = [
 const requiredGitHubCode = [
   ['GitHub review initial focus registration', 'dialog.Opened += (_, _) => FocusInitialReviewTarget();'],
   ['GitHub review first selectable file focus', 'var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);'],
+  ['GitHub commit/push launcher focus return', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
 ];
 
 const missing = [
