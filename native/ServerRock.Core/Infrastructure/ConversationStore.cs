@@ -32,6 +32,8 @@ public sealed class ConversationStore
                 session.Id ??= Guid.NewGuid().ToString("N");
                 session.Title ??= "New chat";
                 session.Messages ??= [];
+                session.BaseMessages ??= [];
+                session.Branches ??= [];
                 session.Mode ??= "ChatBot";
             }
             return sessions;

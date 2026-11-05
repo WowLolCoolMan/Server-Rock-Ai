@@ -834,9 +834,9 @@ try
     Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
     Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
     var nullableConversationPath = Path.Combine(settingsDirectory, "nullable-conversations.json");
-    File.WriteAllText(nullableConversationPath, "[{\"id\":null,\"title\":null,\"messages\":null,\"mode\":null,\"importSource\":\"electron-localstorage\",\"importSourceId\":\"legacy-chat\"}]");
+    File.WriteAllText(nullableConversationPath, "[{\"id\":null,\"title\":null,\"messages\":null,\"baseMessages\":null,\"branches\":null,\"mode\":null,\"importSource\":\"electron-localstorage\",\"importSourceId\":\"legacy-chat\"}]");
     var normalizedConversation = new ConversationStore(nullableConversationPath).Load().Single();
-    Check(!string.IsNullOrWhiteSpace(normalizedConversation.Id) && normalizedConversation.Title == "New chat" && normalizedConversation.Messages.Count == 0 && normalizedConversation.Mode == "ChatBot" && normalizedConversation.ImportSourceId == "legacy-chat",
+    Check(!string.IsNullOrWhiteSpace(normalizedConversation.Id) && normalizedConversation.Title == "New chat" && normalizedConversation.Messages.Count == 0 && normalizedConversation.BaseMessages.Count == 0 && normalizedConversation.Branches.Count == 0 && normalizedConversation.Mode == "ChatBot" && normalizedConversation.ImportSourceId == "legacy-chat",
         "nullable conversation fields recover without losing migration identity");
     var healthyHistoryBeforeRejectedSave = File.ReadAllBytes(conversationsPath);
     try
