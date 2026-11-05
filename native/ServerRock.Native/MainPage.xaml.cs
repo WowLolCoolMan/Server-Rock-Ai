@@ -3743,21 +3743,10 @@ public sealed partial class MainPage : Page
             Title = "Model connection",
             Content = panel,
             PrimaryButtonText = "Save",
-            SecondaryButtonText = "Browse models",
             CloseButtonText = "Cancel",
             XamlRoot = XamlRoot
         };
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Secondary)
-        {
-            // Uno's desktop accessibility tree can still be flushing the first
-            // dialog as ShowAsync completes. Yielding one dispatcher turn avoids
-            // opening another dialog against that disappearing visual tree.
-            await Task.Delay(50);
-            await ModelLibraryClickAsync();
-            return;
-        }
-        if (result != ContentDialogResult.Primary) return;
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
         {
             RuntimeStatus.Text = "Enter both a server address and model ID.";
