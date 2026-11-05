@@ -225,6 +225,9 @@ Check(migratedElectronChats.Count == 2 && migratedElectronChats[0].Id == "electr
     "fixture-shaped Electron localStorage export imports both saved chats");
 Check(migratedElectronChats.All(session => session.ProjectId is null && session.ProjectName is null && session.ProjectInstructions is null && !session.IncludeProjectFilesInChat),
     "Electron project identities and filesystem context are not copied into native projects");
+Check(!migratedElectronChats[0].Archived && migratedElectronChats[0].BaseMessages.Count == 0 && migratedElectronChats[0].Branches.Count == 0 &&
+    migratedElectronChats[1].Archived && migratedElectronChats[1].ForkedFrom == "electron-chat-001",
+    "Electron archived and fork metadata survives native migration without project context");
 var forgedImportMarker = ConversationArchive.Parse("{\"chats\":[{\"id\":\"legacy-forged\",\"importSource\":\"attacker-controlled\",\"importSourceId\":\"untrusted\",\"messages\":[{\"role\":\"user\",\"content\":\"Keep identity local\"}]}]}");
 Check(forgedImportMarker[0].ImportSource == "electron-localstorage" && forgedImportMarker[0].ImportSourceId == "legacy-forged", "import identity is derived locally rather than trusted from the JSON file");
 var electronRoundTrip = ConversationArchive.Parse(ConversationArchive.Serialize(migratedElectronChats));

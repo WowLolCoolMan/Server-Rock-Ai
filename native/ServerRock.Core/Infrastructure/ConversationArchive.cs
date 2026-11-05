@@ -12,6 +12,7 @@ public static class ConversationArchive
     public const int MaxArchiveBytes = 25 * 1024 * 1024;
     public const int MaxConversations = 2_000;
     public const int MaxMessagesPerConversation = 2_000;
+    public const int MaxBranchesPerConversation = 32;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 48 };
 
     public sealed record ImportPlan(IReadOnlyList<ChatSession> Conversations, int SkippedDuplicates, int ReassignedIds);
@@ -81,8 +82,19 @@ public static class ConversationArchive
             if (session.Title.Length > 200) session.Title = session.Title[..200];
             if (session.Mode is not ("ChatBot" or "Coding Agent")) session.Mode = "ChatBot";
             if (session.FolderName?.Length > 80) session.FolderName = session.FolderName[..80];
+            if (session.ForkedFrom is { Length: > 128 } || session.ForkedFrom?.Any(char.IsControl) == true)
+                throw new InvalidDataException("A conversation fork reference is invalid.");
+            session.BaseMessages ??= [];
+            session.Branches ??= [];
+            if (session.BaseMessages.Count > MaxMessagesPerConversation || session.Branches.Count > MaxBranchesPerConversation ||
+                session.Branches.Any(branch => branch is null || branch.Count > MaxMessagesPerConversation) ||
+                session.BranchIndex < 0 || session.BranchIndex > session.Branches.Count)
+                throw new InvalidDataException("A conversation branch exceeds the supported limits.");
             long contentCharacters = (session.ProjectName?.Length ?? 0) + (session.ProjectInstructions?.Length ?? 0);
-            foreach (var message in session.Messages)
+            var messageGroups = new List<IReadOnlyList<ChatMessage>> { session.Messages, session.BaseMessages };
+            messageGroups.AddRange(session.Branches);
+            foreach (var messages in messageGroups)
+            foreach (var message in messages)
             {
                 if (message is null || message.Role is not ("user" or "assistant") || message.Content is null)
                     throw new InvalidDataException("Archives may contain only user and assistant messages.");
