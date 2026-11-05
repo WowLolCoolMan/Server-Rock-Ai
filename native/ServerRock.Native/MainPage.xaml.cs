@@ -75,6 +75,8 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _collapsedChatFolders = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Button> _recentActionButtons = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _chatFolderActionButtons = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Button> _chatFolderToggleButtons = new(StringComparer.OrdinalIgnoreCase);
+    private Button? _archivedChatsToggleButton;
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
@@ -1651,6 +1653,8 @@ public sealed partial class MainPage : Page
         RecentList.Children.Clear();
         _recentActionButtons.Clear();
         _chatFolderActionButtons.Clear();
+        _chatFolderToggleButtons.Clear();
+        _archivedChatsToggleButton = null;
         _settings.ChatFolders ??= [];
         var modeSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
         var visibleSessions = modeSessions.Where(item => !item.Archived).ToArray();
@@ -1677,10 +1681,12 @@ public sealed partial class MainPage : Page
                 CornerRadius = new CornerRadius(8)
             };
             AutomationProperties.SetName(open, $"{(collapsed ? "Expand" : "Collapse")} chat folder {folder}, {folderSessions.Length} chats");
+            _chatFolderToggleButtons[folder] = open;
             open.Click += (_, _) =>
             {
                 if (!_collapsedChatFolders.Add(folder)) _collapsedChatFolders.Remove(folder);
                 RenderRecent();
+                DispatcherQueue.TryEnqueue(() => FocusChatFolderToggleOrFallback(folder));
             };
             var more = new Button
             {
@@ -1735,10 +1741,12 @@ public sealed partial class MainPage : Page
                 Margin = new Thickness(0, 10, 0, 0)
             };
             AutomationProperties.SetName(archivedHeader, $"{(_archivedChatsExpanded ? "Collapse" : "Expand")} archived chats, {archivedSessions.Length} chats");
+            _archivedChatsToggleButton = archivedHeader;
             archivedHeader.Click += (_, _) =>
             {
                 _archivedChatsExpanded = !_archivedChatsExpanded;
                 RenderRecent();
+                DispatcherQueue.TryEnqueue(FocusArchivedChatsToggleOrFallback);
             };
             RecentList.Children.Add(archivedHeader);
             if (_archivedChatsExpanded)
@@ -2115,6 +2123,31 @@ public sealed partial class MainPage : Page
         if (folderFallback?.Focus(FocusState.Programmatic) == true) return;
         var chatFallback = _recentActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
         if (chatFallback?.Focus(FocusState.Programmatic) == true) return;
+        NewConversationButton.Focus(FocusState.Programmatic);
+    }
+
+    private void FocusChatFolderToggleOrFallback(string folder)
+    {
+        if (_chatFolderToggleButtons.TryGetValue(folder, out var toggle) &&
+            toggle.Visibility == Visibility.Visible && toggle.IsEnabled && toggle.Focus(FocusState.Programmatic))
+            return;
+        if (_archivedChatsToggleButton?.Visibility == Visibility.Visible && _archivedChatsToggleButton.IsEnabled &&
+            _archivedChatsToggleButton.Focus(FocusState.Programmatic))
+            return;
+        FocusChatFolderActionOrFallback(folder);
+    }
+
+    private void FocusArchivedChatsToggleOrFallback()
+    {
+        if (_archivedChatsToggleButton?.Visibility == Visibility.Visible && _archivedChatsToggleButton.IsEnabled &&
+            _archivedChatsToggleButton.Focus(FocusState.Programmatic))
+            return;
+        var folderToggle = _chatFolderToggleButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (folderToggle?.Focus(FocusState.Programmatic) == true) return;
+        var folderAction = _chatFolderActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (folderAction?.Focus(FocusState.Programmatic) == true) return;
+        var chatAction = _recentActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (chatAction?.Focus(FocusState.Programmatic) == true) return;
         NewConversationButton.Focus(FocusState.Programmatic);
     }
 

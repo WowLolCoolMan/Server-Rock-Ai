@@ -21,6 +21,9 @@ const requiredCode = [
   ['Project name label', 'AutomationProperties.SetName(name, "Project name")'],
   ['Project folder action label', 'AutomationProperties.SetName(addFolder, "Add local project folder")'],
   ['Live model status', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
+  ['Folder toggle focus tracking', '_chatFolderToggleButtons[folder] = open;'],
+  ['Folder toggle focus restoration', 'FocusChatFolderToggleOrFallback(folder)'],
+  ['Archived toggle focus restoration', 'DispatcherQueue.TryEnqueue(FocusArchivedChatsToggleOrFallback);'],
 ];
 
 const missing = [
