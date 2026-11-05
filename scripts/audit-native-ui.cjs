@@ -34,6 +34,8 @@ const requiredCode = [
   ['Chat mode drawer focus return', 'SwitchModeFromSidebarAsync("ChatBot")'],
   ['Coding Agent drawer focus return', 'SwitchModeFromSidebarAsync("Coding Agent")'],
   ['Compact workspace focus restoration', 'DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
+  ['Compact project action focus restoration', 'RunCompactProjectActionAsync'],
+  ['Compact project cancellation focus fallback', 'if (restoreComposerFocus)\n                DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
 ];
 
 const missing = [

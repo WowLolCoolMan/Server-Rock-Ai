@@ -1187,7 +1187,19 @@ public sealed partial class MainPage : Page
             (System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address));
     }
 
-    private async void NewProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(NewProjectClickAsync); }
+    private async void NewProjectClick(object sender, RoutedEventArgs e) => await RunCompactProjectActionAsync(NewProjectClickAsync);
+
+    private async Task RunCompactProjectActionAsync(Func<Task> action)
+    {
+        var restoreComposerFocus = _compactNavigation;
+        CloseCompactSidebar();
+        try { await RunUiActionAsync(action); }
+        finally
+        {
+            if (restoreComposerFocus)
+                DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));
+        }
+    }
 
     private async Task NewProjectClickAsync()
     {
@@ -1489,7 +1501,7 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = $"Project “{project.Name}” removed. Its saved chats and disk folders remain untouched.";
     }
 
-    private async void ProjectClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => ProjectClickAsync(sender)); }
+    private async void ProjectClick(object sender, RoutedEventArgs e) => await RunCompactProjectActionAsync(() => ProjectClickAsync(sender));
 
     private async Task ProjectClickAsync(object sender)
     {
