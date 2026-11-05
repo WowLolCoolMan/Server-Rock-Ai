@@ -2959,7 +2959,8 @@ public sealed partial class MainPage : Page
             messageStack.Children.Add(new TextBlock { Text = heading, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Margin = new Thickness(0, 9, 0, 0), TextWrapping = TextWrapping.Wrap });
             messageStack.Children.Add(new TextBlock { Text = $"Working directory: {result.WorkingDirectory}", FontSize = 11, Opacity = 0.75, TextWrapping = TextWrapping.Wrap });
             if (!string.IsNullOrEmpty(result.Output))
-                messageStack.Children.Add(new TextBox
+            {
+                var outputPreview = new TextBox
                 {
                     Text = result.Output + (result.OutputTruncated ? "\n… output shortened at 30,000 characters" : ""),
                     IsReadOnly = true,
@@ -2969,7 +2970,11 @@ public sealed partial class MainPage : Page
                     MaxHeight = 240,
                     MinHeight = 52,
                     Margin = new Thickness(0, 3, 0, 0)
-                });
+                };
+                AutomationProperties.SetName(outputPreview, "Approved local command output");
+                AutomationProperties.SetHelpText(outputPreview, "Untrusted output from the command you approved. Review it before adding it to a prompt.");
+                messageStack.Children.Add(outputPreview);
+            }
             else messageStack.Children.Add(new TextBlock { Text = "No output.", FontSize = 11, Opacity = 0.75 });
             var outputForReview = result.Output + (result.OutputTruncated ? "\n… output shortened at 30,000 characters" : "");
             messageStack.Children.Add(new TextBlock
@@ -2980,6 +2985,8 @@ public sealed partial class MainPage : Page
                 Margin = new Thickness(0, 3, 0, 0)
             });
             var addResult = new Button { Content = "Add result to composer", HorizontalAlignment = HorizontalAlignment.Left };
+            AutomationProperties.SetName(addResult, "Add approved command result to message composer");
+            AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.");
             setFocusAfterReview(addResult);
             addResult.Click += (_, _) =>
             {

@@ -47,6 +47,8 @@ const requiredCode = [
   ['Command review cancel focus target', 'Control focusAfterReview = reviewButton;'],
   ['Command review completion focus restoration', 'finally\n        {\n            DispatcherQueue.TryEnqueue(() =>\n            {\n                if (focusAfterReview.Visibility == Visibility.Visible && focusAfterReview.IsEnabled'],
   ['Command approval result action focus', 'setFocusAfterReview(addResult);'],
+  ['Command output accessible preview label', 'AutomationProperties.SetName(outputPreview, "Approved local command output")'],
+  ['Untrusted result insertion disclosure', 'AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.")'],
 ];
 
 const missing = [
