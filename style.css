@@ -16,6 +16,15 @@
   --border-strong: #414851;
   --success: #61b68a;
   --danger: #e38f8a;
+  /* Message content tokens: code blocks, inline code and links get their own values so
+     each theme stays readable (the light theme used to inherit dark code colors). */
+  --code-bg: #121417;
+  --code-bar: #1b1f23;
+  --code-text: #e3e7ec;
+  --code-muted: #a4adb8;
+  --inline-code-bg: #262b31;
+  --link: #9bbaff;
+  --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "DejaVu Sans Mono", "Noto Sans Mono", Consolas, monospace;
 }
 * {
   box-sizing: border-box;
@@ -633,6 +642,12 @@ dialog::backdrop {
   --border-strong: #c4ccd7;
   --success: #247a50;
   --danger: #a53f3b;
+  --code-bg: #f3f5f8;
+  --code-bar: #e8ecf1;
+  --code-text: #1d2631;
+  --code-muted: #4f5b6b;
+  --inline-code-bg: #e9edf3;
+  --link: #2459c0;
 }
 .light .rail,
 .light .composer,
@@ -642,8 +657,8 @@ dialog::backdrop {
 .light .welcome p {
   color: #777;
 }
-.light .suggestions button,
-.light .bubble.assistant {
+/* Light replies no longer sit on a white card; assistant messages are flat in both themes. */
+.light .suggestions button {
   background: #fff;
 }
 .light .setting-row input,
@@ -1938,19 +1953,25 @@ dialog {
 }
 .branch-bar button:disabled { opacity: .4; cursor: default; }
 .branch-bar button:hover:not(:disabled) { background: #333; }
+/* ===== Messages: reply actions ===== */
+/* Regenerate sits under the reply it acts on (left-aligned, not floating at the far right),
+   with readable 12px text and token colors that work in both themes. */
 .message-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  gap: 6px;
   margin-top: 10px;
 }
 .message-actions button {
-  border: 1px solid #3d3d3d;
-  color: #aaa;
-  border-radius: 7px;
-  padding: 4px 9px;
-  font-size: 11px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
 }
-.message-actions button:hover { background: #303030; color: #eee; }
+.message-actions button:hover { border-color: var(--border-strong); background: var(--surface-raised); color: var(--text); }
+.message-actions button:active { background: var(--surface-soft); }
 .advanced-menu {
   position: relative;
   margin-left: 6px;
@@ -2015,7 +2036,10 @@ select:focus-visible {
   .advanced-menu { display: none; }
 }
 
-/* Offline-rendered assistant content: readable Markdown and copyable code. */
+/* ===== Messages: Markdown content and code blocks ===== */
+/* Rewritten on tokens so both themes stay readable. The old values were hard-coded dark
+   greys (#282828 toolbar, #e4e4e4 code text, #333 inline code), which made code nearly
+   invisible in the light theme. Fonts use --font-mono instead of Windows-only Consolas. */
 .bubble {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -2029,9 +2053,10 @@ select:focus-visible {
 .bubble h1,
 .bubble h2,
 .bubble h3 {
-  margin: 18px 0 9px;
+  margin: 20px 0 8px;
   font-size: 20px;
-  letter-spacing: 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 .bubble h2 {
   font-size: 17px;
@@ -2042,21 +2067,28 @@ select:focus-visible {
 .bubble ul,
 .bubble ol {
   padding-left: 24px;
-  margin: 7px 0 13px;
+  margin: 8px 0 12px;
 }
 .bubble li {
   padding: 2px 0;
 }
+.bubble li::marker {
+  color: var(--muted);
+}
 .bubble blockquote {
-  margin: 10px 0;
+  margin: 12px 0;
   padding: 4px 14px;
-  border-left: 3px solid #5b8fe0;
-  color: #c3c3c3;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
 }
 .bubble a {
-  color: #9cc2ff;
+  color: var(--link);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.bubble a:hover {
+  text-decoration-thickness: 2px;
 }
 .bubble table {
   border-collapse: collapse;
@@ -2066,70 +2098,66 @@ select:focus-visible {
 }
 .bubble th,
 .bubble td {
-  border: 1px solid #494949;
-  padding: 7px 10px;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
   text-align: left;
 }
 .bubble th {
-  background: #292929;
+  background: var(--surface-soft);
+  font-weight: 600;
 }
 .bubble :not(pre) > code {
-  background: #333;
-  border: 1px solid #444;
-  border-radius: 5px;
-  padding: 1px 5px;
-  font:
-    12px Consolas,
-    "Cascadia Code",
-    monospace;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--inline-code-bg);
+  color: var(--code-text);
+  font: 0.86em/1.4 var(--font-mono);
 }
 .bubble pre {
   max-width: 100%;
   overflow: auto;
-  margin: 12px 0;
+  margin: 12px 0 16px;
   padding: 0;
-  border: 1px solid #424242;
-  border-radius: 11px;
-  background: #1d1d1d;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--code-bg);
   scrollbar-width: thin;
-  scrollbar-color: #4a4a4a transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
+/* Language label + Copy button; sticky left so it stays put when long lines scroll sideways. */
 .code-toolbar {
-  height: 34px;
+  position: sticky;
+  left: 0;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 10px;
-  background: #282828;
-  color: #aaa;
-  font:
-    11px "Segoe UI",
-    Arial,
-    sans-serif;
-  border-bottom: 1px solid #393939;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--code-bar);
+  color: var(--code-muted);
+  font: 500 12px/1 var(--font-mono);
 }
 .copy-code {
-  color: #ddd;
-  padding: 5px 8px;
-  border-radius: 6px;
-  background: #383838;
-  font:
-    11px "Segoe UI",
-    Arial,
-    sans-serif;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font: 500 12px/1 system-ui, sans-serif;
 }
 .copy-code:hover {
-  background: #484848;
+  border-color: var(--border-strong);
+  background: var(--surface-soft);
 }
 .bubble pre code {
   display: block;
-  padding: 12px 14px;
-  color: #e4e4e4;
-  font:
-    12px/1.6 Consolas,
-    "Cascadia Code",
-    monospace;
+  padding: 14px 16px;
+  color: var(--code-text);
+  font: 13px/1.6 var(--font-mono);
   white-space: pre;
   tab-size: 4;
 }
@@ -2568,11 +2596,12 @@ h1 { color: var(--text); font-family: inherit; font-weight: 650; letter-spacing:
   width: min(760px, calc(100% - 48px));
   padding: 28px 0 22px;
   scrollbar-color: var(--border-strong) transparent;
+  /* Soft 20px fade where replies scroll under the composer, instead of a hard cut. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
 }
 .bubble.user { background: var(--user); color: var(--text); }
 .bubble.assistant { background: transparent; border: 0; color: var(--text); }
-.bubble pre { overflow-x: auto; background: var(--input-bg); border: 1px solid var(--line); border-radius: 12px; }
-.bubble blockquote { color: var(--muted); border-color: var(--accent); }
+/* Code block and blockquote colors now live in the Messages section above. */
 .composer-wrap {
   position: relative;
   inset: auto;
