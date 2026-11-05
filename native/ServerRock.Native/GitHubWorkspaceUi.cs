@@ -271,7 +271,7 @@ public sealed partial class MainPage
                 try { OpenExternalUri(authorization.VerificationUri); }
                 catch (Exception exception) { signInStatus.Text = $"Enter the code at github.com/login/device. Browser could not open: {exception.Message}"; }
                 _ = PollGitHubAuthorizationAsync(authorization, connection, signInStatus, connect, disconnect,
-                    RefreshRepositoryListAsync, cancellationToken: _githubAuthorizationCancellation.Token);
+                    code, verification, cancelSignIn, RefreshRepositoryListAsync, cancellationToken: _githubAuthorizationCancellation.Token);
             }
             catch (Exception exception)
             {
@@ -395,6 +395,7 @@ public sealed partial class MainPage
 
     private async Task PollGitHubAuthorizationAsync(GitHubDeviceAuthorization authorization,
         TextBlock connection, TextBlock signInStatus, Button connect, Button disconnect,
+        TextBox code, Button verification, Button cancelSignIn,
         Func<string, Task> refreshRepositoriesAsync, CancellationToken cancellationToken)
     {
         try
@@ -433,9 +434,17 @@ public sealed partial class MainPage
         }
         finally
         {
+            code.Text = string.Empty;
+            code.Visibility = Visibility.Collapsed;
+            verification.Visibility = Visibility.Collapsed;
+            cancelSignIn.Visibility = Visibility.Collapsed;
             _githubAuthorizationCancellation?.Dispose();
             _githubAuthorizationCancellation = null;
-            if (connect.Content?.ToString() != "Connected") connect.IsEnabled = _githubCredentialStore.GetStatus().Available && !string.IsNullOrWhiteSpace(_settings.GitHubAppClientId);
+            if (connect.Content?.ToString() != "Connected")
+            {
+                connect.IsEnabled = _githubCredentialStore.GetStatus().Available && !string.IsNullOrWhiteSpace(_settings.GitHubAppClientId);
+                connect.Focus(FocusState.Programmatic);
+            }
         }
     }
 
