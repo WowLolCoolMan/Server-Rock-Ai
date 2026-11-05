@@ -69,6 +69,7 @@ const requiredGitHubCode = [
   ['GitHub connection state accessible name', 'AutomationProperties.SetName(connection, "GitHub connection state")'],
   ['GitHub connection state polite announcements', 'AutomationProperties.SetLiveSetting(connection, AutomationLiveSetting.Polite)'],
   ['GitHub device code focus after creation', 'code.Focus(FocusState.Programmatic);'],
+  ['GitHub device flow start announcement', 'signInStatus.Text = "Starting GitHub device sign-in…";'],
   ['GitHub repository chooser accessible label', 'AutomationProperties.SetName(repositoryPicker, "GitHub repositories")'],
   ['GitHub connection and repository status accessible name', 'AutomationProperties.SetName(signInStatus, "GitHub connection and repository status")'],
   ['GitHub sign-in live status', 'AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite)'],

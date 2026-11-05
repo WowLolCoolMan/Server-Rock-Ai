@@ -269,6 +269,7 @@ public sealed partial class MainPage
             _settings.GitHubAppClientId = configuredClientId;
             SaveSettings();
             connect.IsEnabled = false;
+            signInStatus.Text = "Starting GitHub device sign-in…";
             try
             {
                 var authorization = await _githubDeviceFlow.BeginAsync(configuredClientId);
