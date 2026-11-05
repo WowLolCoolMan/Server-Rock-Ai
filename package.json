@@ -14,6 +14,7 @@
     "audit:native-ui": "node scripts/audit-native-ui.cjs",
     "audit:electron": "node scripts/audit-electron.cjs",
     "audit:electron:packaged": "node scripts/audit-electron.cjs",
+    "audit:release-artifacts": "node scripts/audit-release-artifacts.cjs",
     "test": "node --test tests/github-updates.test.cjs && playwright test",
     "build": "electron-builder --publish never",
     "build:win": "electron-builder --win nsis portable --publish never",
