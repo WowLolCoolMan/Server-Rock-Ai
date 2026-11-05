@@ -881,8 +881,13 @@ try
           branchReloaded[0].Branches[1][1].Content == "Middle answer" &&
           branchReloaded[0].Branches[2][1].Content == "Last answer",
         "main, first, middle, and last conversation branches survive persistence");
-    branchReloaded.RemoveAll(session => session.Id == branchSource.Id);
+    branchReloaded[0].Archived = true;
     branchStore.Save(branchReloaded);
+    var archivedParentReloaded = branchStore.Load();
+    Check(archivedParentReloaded.Single(session => session.Id == "branch-fork").Archived == false,
+        "archiving a source conversation does not cascade to its fork");
+    archivedParentReloaded.RemoveAll(session => session.Id == branchSource.Id);
+    branchStore.Save(archivedParentReloaded);
     var forkAfterSourceDelete = branchStore.Load().Single();
     Check(forkAfterSourceDelete.Id == "branch-fork" && forkAfterSourceDelete.ForkedFrom == "branch-source" &&
           forkAfterSourceDelete.Messages[1].Content == "Middle answer",
