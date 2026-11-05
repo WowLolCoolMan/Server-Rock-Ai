@@ -501,3 +501,54 @@ test("Linux packages declare a maintainer with an email address", async () => {
   const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "..", "package.json"), "utf8"));
   expect(pkg.build.linux.maintainer).toMatch(/^[^<>]+ <[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+>$/);
 });
+
+// Smoke-test item 10: the sidebar "Clear" button deleted every saved chat
+// instantly, with no confirmation (the /clear command already asked).
+test("sidebar Clear asks before deleting chat history", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("local-studio-v1", JSON.stringify({
+      chats: [
+        { id: "c1", title: "First chat", messages: [{ role: "user", content: "a" }] },
+        { id: "c2", title: "Second chat", messages: [{ role: "user", content: "b" }] },
+      ],
+      projects: [],
+      settings: { provider: "Ollama", endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.2", theme: "dark", temperature: 0.7 },
+    }));
+  });
+  const dialogs = [];
+  let answer = false;
+  page.on("dialog", async (dialog) => {
+    dialogs.push(dialog.message());
+    if (answer) await dialog.accept(); else await dialog.dismiss();
+  });
+  await page.goto(appUrl);
+  const savedChats = () => page.evaluate(() => JSON.parse(localStorage.getItem("local-studio-v1")).chats.length);
+  await expect(page.locator("#history .chat-item")).toHaveCount(2);
+
+  // Cancel keeps everything.
+  await page.locator("#clear").click();
+  expect(dialogs).toHaveLength(1);
+  expect(dialogs[0]).toContain("2 chats");
+  await expect(page.locator("#history .chat-item")).toHaveCount(2);
+  expect(await savedChats()).toBe(2);
+
+  // The /clear command uses the same confirmation.
+  await page.locator("#prompt").fill("/clear");
+  await page.locator("#prompt").press("Enter");
+  await expect.poll(() => dialogs.length).toBe(2);
+  expect(dialogs[1]).toContain("2 chats");
+  expect(await savedChats()).toBe(2);
+
+  // Confirm deletes the history.
+  answer = true;
+  await page.locator("#clear").click();
+  await expect(page.locator("#history .chat-item")).toHaveCount(0);
+  expect(await savedChats()).toBe(0);
+
+  // With nothing saved, Clear doesn't ask a pointless question.
+  await page.locator("#clear").click();
+  expect(dialogs).toHaveLength(3);
+  await expect(page.locator("#runtimeStatus")).toHaveText("There is no chat history to clear.");
+});
