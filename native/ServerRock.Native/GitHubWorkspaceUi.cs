@@ -55,12 +55,25 @@ public sealed partial class MainPage
         var clone = new Button { Content = "Clone and open project", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
         var cancelClone = new Button { Content = "Cancel clone", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
         var signInPanel = new StackPanel { Spacing = 7, Children = { clientId, storageMessage, connection, connect, cancelSignIn, disconnect, code, verification, signInStatus } };
-        var repoPanel = new StackPanel { Spacing = 8, Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#35494d") }, repositoryPicker, repositoryReference, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone } };
+        var repositoryAccessHint = new TextBlock
+        {
+            Text = "Connect GitHub above to browse repositories or enter a repository to clone.",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+            Foreground = Brush("#718187")
+        };
+        var repoPanel = new StackPanel
+        {
+            Spacing = 8,
+            Visibility = Visibility.Collapsed,
+            Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#35494d") }, repositoryPicker, repositoryReference, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone }
+        };
         var content = new StackPanel { Spacing = 16, Children =
         {
             new TextBlock { Text = "Sign in to browse repositories you can access. Choose one to clone it into a local project. Git credentials stay in your OS keyring.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Brush("#718187") },
             signInPanel,
             new Border { Height = 1, Background = Brush("#e5ece9"), Margin = new Thickness(0, 0, 0, 1) },
+            repositoryAccessHint,
             repoPanel,
             new TextBlock { Text = "The app’s GitHub App must have Device Flow enabled and Contents read/write permission for private clone, commit, and push.", TextWrapping = TextWrapping.Wrap, FontSize = 10, Foreground = Brush("#829093") }
         } };
@@ -88,6 +101,8 @@ public sealed partial class MainPage
 
         async Task RefreshRepositoryListAsync(string token)
         {
+            repositoryAccessHint.Visibility = Visibility.Collapsed;
+            repoPanel.Visibility = Visibility.Visible;
             refreshRepositories.IsEnabled = false;
             try
             {
@@ -171,6 +186,8 @@ public sealed partial class MainPage
                 _githubAccount = null;
                 _githubRepositories.Clear();
                 repositoryPicker.Items.Clear();
+                repoPanel.Visibility = Visibility.Collapsed;
+                repositoryAccessHint.Visibility = Visibility.Visible;
                 connection.Text = "Saved sign-in removed from this device";
                 signInStatus.Text = "To revoke this app’s GitHub access, also remove it from your GitHub Applications settings.";
                 disconnect.Visibility = Visibility.Collapsed;
