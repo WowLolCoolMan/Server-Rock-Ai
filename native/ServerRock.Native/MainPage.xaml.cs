@@ -1098,6 +1098,7 @@ public sealed partial class MainPage : Page
                 IsPrimaryButtonEnabled = false,
                 XamlRoot = XamlRoot
             };
+            dialog.Opened += (_, _) => editor.Focus(FocusState.Programmatic);
             editor.TextChanged += (_, _) =>
             {
                 var changed = !string.Equals(editor.Text, originalText, StringComparison.Ordinal);
@@ -1134,6 +1135,23 @@ public sealed partial class MainPage : Page
             }
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Project file could not be opened or saved: {ex.Message}"; }
+        finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }
+    }
+
+    private void RestoreProjectFileFocus(string root, string relativePath)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            var fileButton = ProjectFileList.Children.OfType<Button>().FirstOrDefault(button =>
+                button.Tag is ValueTuple<string, string> path &&
+                SamePath(path.Item1, root) &&
+                path.Item2.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
+            if (fileButton?.Focus(FocusState.Programmatic) == true) return;
+            if (ProjectFoldersButton.Visibility == Visibility.Visible &&
+                ProjectFoldersButton.IsEnabled && ProjectFoldersButton.Focus(FocusState.Programmatic))
+                return;
+            PromptBox.Focus(FocusState.Programmatic);
+        });
     }
 
     private async void MainPageLoaded(object sender, RoutedEventArgs e)

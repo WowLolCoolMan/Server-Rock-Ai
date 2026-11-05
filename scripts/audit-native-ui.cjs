@@ -37,6 +37,8 @@ const requiredCode = [
   ['Compact project action focus restoration', 'RunCompactProjectActionAsync'],
   ['Compact project cancellation focus fallback', 'if (restoreComposerFocus)\n                DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
   ['Project folder dialog focus return', 'if (managesExistingProject)\n                RestoreNavigationDialogFocus(false, sender as Control);'],
+  ['Project file editor opening focus', 'dialog.Opened += (_, _) => editor.Focus(FocusState.Programmatic);'],
+  ['Project file selection focus restoration', 'finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }'],
 ];
 
 const missing = [
