@@ -4207,11 +4207,11 @@ public sealed partial class MainPage : Page
         var imageStudio = new MenuFlyoutItem { Text = "Image studio" };
         AutomationProperties.SetName(imageStudio, "Open local image studio");
         AutomationProperties.SetHelpText(imageStudio, "Generate images with your configured local ComfyUI workflow.");
-        imageStudio.Click += async (_, _) => await RunUiActionAsync(ImageStudioAsync);
+        imageStudio.Click += (_, _) => DispatcherQueue.TryEnqueue(async () => await RunUiActionAsync(ImageStudioAsync));
         var advanced = new MenuFlyoutItem { Text = "Advanced response controls" };
         AutomationProperties.SetName(advanced, "Open advanced generation controls");
         AutomationProperties.SetHelpText(advanced, "Adjust response temperature and reset it to the recommended value.");
-        advanced.Click += async (_, _) => await RunUiActionAsync(AdvancedClickAsync);
+        advanced.Click += (_, _) => DispatcherQueue.TryEnqueue(async () => await RunUiActionAsync(AdvancedClickAsync));
         menu.Items.Add(imageStudio);
         menu.Items.Add(advanced);
         menu.ShowAt(anchor);
@@ -4219,6 +4219,7 @@ public sealed partial class MainPage : Page
 
     private async Task AdvancedClickAsync()
     {
+        App.Log.Info("UI", "Opening advanced response controls");
         var temperatureValue = new TextBlock
         {
             Text = _settings.Temperature.ToString("0.0"),
@@ -4232,18 +4233,22 @@ public sealed partial class MainPage : Page
         temperature.ValueChanged += (_, args) => temperatureValue.Text = args.NewValue.ToString("0.0");
         var reset = new Button { Content = "Reset to default (0.7)", HorizontalAlignment = HorizontalAlignment.Left };
         reset.Click += (_, _) => temperature.Value = 0.7;
-        var panel = new StackPanel { Spacing = 8, Children =
+        var temperatureRow = new Grid
         {
-            new TextBlock { Text = "Temperature", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-            new TextBlock { Text = "Lower values usually keep answers more focused; higher values allow more variation. Some local servers may ignore this setting.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) },
-            new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, Children =
+            ColumnDefinitions =
             {
-                temperature,
-                temperatureValue
-            } },
-            reset
-        } };
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = GridLength.Auto }
+            }
+        };
+        temperatureRow.Children.Add(temperature);
         Grid.SetColumn(temperatureValue, 1);
+        temperatureRow.Children.Add(temperatureValue);
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(new TextBlock { Text = "Temperature", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        panel.Children.Add(new TextBlock { Text = "Lower values usually keep answers more focused; higher values allow more variation. Some local servers may ignore this setting.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
+        panel.Children.Add(temperatureRow);
+        panel.Children.Add(reset);
         var dialog = new ContentDialog { Title = "Advanced generation", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
