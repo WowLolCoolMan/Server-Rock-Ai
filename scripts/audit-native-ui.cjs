@@ -49,6 +49,8 @@ const requiredCode = [
   ['Command approval result action focus', 'setFocusAfterReview(addResult);'],
   ['Command output accessible preview label', 'AutomationProperties.SetName(outputPreview, "Approved local command output")'],
   ['Untrusted result insertion disclosure', 'AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.")'],
+  ['Project terminal output accessible name', 'AutomationProperties.SetName(output, "Project terminal output")'],
+  ['Project terminal output accessible description', 'AutomationProperties.SetHelpText(output, "Read-only output from the shell running in the active project folder.")'],
 ];
 
 const missing = [

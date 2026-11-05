@@ -903,6 +903,8 @@ public sealed partial class MainPage : Page
             Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 224, 235, 237)),
             IsTextSelectionEnabled = true
         };
+        AutomationProperties.SetName(output, "Project terminal output");
+        AutomationProperties.SetHelpText(output, "Read-only output from the shell running in the active project folder.");
         var outputScroll = new ScrollViewer
         {
             Content = output,
