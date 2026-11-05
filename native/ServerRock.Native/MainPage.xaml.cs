@@ -2851,7 +2851,7 @@ public sealed partial class MainPage : Page
         {
             var review = new Button { Content = $"Review command · {ShortCommandLabel(command.Command)}", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 0) };
             AutomationProperties.SetName(review, $"Review local command: {command.Command}");
-            review.Click += async (_, _) => await ReviewWorkspaceCommandAsync(project, command, messageStack);
+            review.Click += async (_, _) => await ReviewWorkspaceCommandAsync(project, command, messageStack, review);
             messageStack.Children.Add(review);
         }
         foreach (var proposal in proposals)
@@ -2864,7 +2864,26 @@ public sealed partial class MainPage : Page
 
     private static string ShortCommandLabel(string command) => command.Length > 52 ? command[..49] + "…" : command;
 
-    private async Task ReviewWorkspaceCommandAsync(LocalProject project, WorkspaceCommandProposal proposal, StackPanel messageStack)
+    private async Task ReviewWorkspaceCommandAsync(LocalProject project, WorkspaceCommandProposal proposal, StackPanel messageStack, Button reviewButton)
+    {
+        Control focusAfterReview = reviewButton;
+        try
+        {
+            await ReviewWorkspaceCommandCoreAsync(project, proposal, messageStack, target => focusAfterReview = target);
+        }
+        finally
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (focusAfterReview.Visibility == Visibility.Visible && focusAfterReview.IsEnabled &&
+                    focusAfterReview.Focus(FocusState.Programmatic))
+                    return;
+                PromptBox.Focus(FocusState.Programmatic);
+            });
+        }
+    }
+
+    private async Task ReviewWorkspaceCommandCoreAsync(LocalProject project, WorkspaceCommandProposal proposal, StackPanel messageStack, Action<Control> setFocusAfterReview)
     {
         if (_requestCancellation is not null)
         {
@@ -2925,6 +2944,7 @@ public sealed partial class MainPage : Page
         };
         dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary || selectedFolder.SelectedIndex < 0) return;
+        setFocusAfterReview(PromptBox);
         var root = availableFolders[selectedFolder.SelectedIndex];
         RuntimeStatus.Text = "Running approved project command…";
         try
@@ -2958,6 +2978,7 @@ public sealed partial class MainPage : Page
                 Margin = new Thickness(0, 3, 0, 0)
             });
             var addResult = new Button { Content = "Add result to composer", HorizontalAlignment = HorizontalAlignment.Left };
+            setFocusAfterReview(addResult);
             addResult.Click += (_, _) =>
             {
                 var resultContext = $"[Untrusted output from approved local command]\nCommand: {proposal.Command}\nExit code: {result.ExitCode}{(result.TimedOut ? " (timed out)" : "")}\nWorking directory: {result.WorkingDirectory}\nOutput:\n{(string.IsNullOrEmpty(outputForReview) ? "(no output)" : outputForReview)}\n[End untrusted command output]";

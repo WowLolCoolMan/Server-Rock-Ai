@@ -43,6 +43,9 @@ const requiredCode = [
   ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
   ['Command review accessible preview', 'AutomationProperties.SetName(commandText, "Exact project command to run")'],
   ['Command review opening focus', 'dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);'],
+  ['Command review cancel focus target', 'Control focusAfterReview = reviewButton;'],
+  ['Command review completion focus restoration', 'finally\n        {\n            DispatcherQueue.TryEnqueue(() =>\n            {\n                if (focusAfterReview.Visibility == Visibility.Visible && focusAfterReview.IsEnabled'],
+  ['Command approval result action focus', 'setFocusAfterReview(addResult);'],
 ];
 
 const missing = [
