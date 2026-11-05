@@ -61,7 +61,11 @@ public sealed partial class MainPage
         };
         var chooseParent = new Button { Content = "Choose folder…", HorizontalAlignment = HorizontalAlignment.Left };
         var cloneStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#718187") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(cloneStatus, "GitHub clone status");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite);
         var clone = new Button { Content = "Clone and open project", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clone, "Clone repository and open as project");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(clone, "Clone the selected or entered repository into the chosen local folder, then open it in Coding Agent.");
         var cancelClone = new Button { Content = "Cancel clone", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
         var signInPanel = new StackPanel { Spacing = 7, Children = { clientId, storageMessage, connection, connect, cancelSignIn, disconnect, code, verification, signInStatus } };
         var repositoryAccessHint = new TextBlock
@@ -95,7 +99,14 @@ public sealed partial class MainPage
         };
 
         var workspaceDialogOpen = false;
+        var cloneInProgress = false;
         CancellationTokenSource? cloneCancellation = null;
+        void UpdateCloneAvailability()
+        {
+            var hasRepository = !string.IsNullOrWhiteSpace(repositoryReference.Text) || repositoryPicker.SelectedItem is string;
+            clone.IsEnabled = _githubCredential is not null && hasRepository && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;
+        }
+
         void FocusRepositoryEntry()
         {
             if (repositoryPicker.Items.Count > 0 && repositoryPicker.Focus(FocusState.Programmatic)) return;
@@ -145,6 +156,7 @@ public sealed partial class MainPage
             finally
             {
                 refreshRepositories.IsEnabled = true;
+                UpdateCloneAvailability();
                 if (workspaceDialogOpen) FocusRepositoryEntry();
             }
         }
@@ -221,7 +233,7 @@ public sealed partial class MainPage
                 disconnect.Visibility = Visibility.Collapsed;
                 connect.Content = "Connect GitHub";
                 connect.IsEnabled = storage.Available && !string.IsNullOrWhiteSpace(clientId.Text);
-                clone.IsEnabled = false;
+                UpdateCloneAvailability();
             }
             catch (Exception exception) { signInStatus.Text = $"Could not remove the saved connection: {exception.Message}"; }
         };
@@ -229,7 +241,10 @@ public sealed partial class MainPage
         repositoryPicker.SelectionChanged += (_, _) =>
         {
             if (repositoryPicker.SelectedItem is string selectedRepository) repositoryReference.Text = selectedRepository;
+            UpdateCloneAvailability();
         };
+        repositoryReference.TextChanged += (_, _) => UpdateCloneAvailability();
+        parentPath.TextChanged += (_, _) => UpdateCloneAvailability();
         refreshRepositories.Click += async (_, _) =>
         {
             try
@@ -256,6 +271,8 @@ public sealed partial class MainPage
             if (string.IsNullOrWhiteSpace(parentPath.Text)) { cloneStatus.Text = "Choose a local parent folder for the clone."; return; }
 
             clone.IsEnabled = false;
+            cloneInProgress = true;
+            UpdateCloneAvailability();
             chooseParent.IsEnabled = false;
             cancelClone.Visibility = Visibility.Visible;
             cloneCancellation = new CancellationTokenSource();
@@ -293,9 +310,10 @@ public sealed partial class MainPage
             {
                 cloneCancellation?.Dispose();
                 cloneCancellation = null;
+                cloneInProgress = false;
                 cancelClone.Visibility = Visibility.Collapsed;
                 chooseParent.IsEnabled = true;
-                clone.IsEnabled = _githubCredential is not null;
+                UpdateCloneAvailability();
             }
         };
 

@@ -67,6 +67,10 @@ const requiredGitHubCode = [
   ['GitHub repository chooser accessible label', 'AutomationProperties.SetName(repositoryPicker, "GitHub repositories")'],
   ['GitHub sign-in live status', 'AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite)'],
   ['GitHub repository focus after refresh', 'if (workspaceDialogOpen) FocusRepositoryEntry();'],
+  ['GitHub clone readiness guard', 'clone.IsEnabled = _githubCredential is not null && hasRepository && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;'],
+  ['GitHub manual repository readiness update', 'repositoryReference.TextChanged += (_, _) => UpdateCloneAvailability();'],
+  ['GitHub destination readiness update', 'parentPath.TextChanged += (_, _) => UpdateCloneAvailability();'],
+  ['GitHub clone progress live status', 'AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite)'],
 ];
 
 const missing = [
