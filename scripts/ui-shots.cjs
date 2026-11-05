@@ -8,8 +8,12 @@ const path = require("node:path");
 const fs = require("node:fs");
 
 const label = process.argv[2] || "current";
-if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(label) || label === "." || label === "..") {
-  throw new Error("Label must be 1–64 letters, numbers, dots, dashes, or underscores and start with a letter or number.");
+/* Labels may be nested one or two levels (e.g. "round-1/before") so the polish loop can
+   keep before/after shots per round. Each segment is still validated, so ".." can't escape. */
+const segment = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const parts = label.split("/");
+if (parts.length > 2 || parts.some((part) => !segment.test(part) || part === "." || part === "..")) {
+  throw new Error("Label must be one or two '/'-separated parts of 1–64 letters, numbers, dots, dashes, or underscores, each starting with a letter or number.");
 }
 const outDir = path.resolve(".ui-shots", label);
 const appUrl = "file://" + path.resolve("index.html").replaceAll("\\", "/");
@@ -114,6 +118,9 @@ async function main() {
           await page.goto(appUrl);
           await page.locator("#prompt").waitFor({ state: "visible" });
           if (st.run) await st.run(page);
+          // Let layout, fonts and the post-click scroll settle so shots don't catch a half-laid-out frame.
+          await page.evaluate(() => document.fonts.ready);
+          await page.waitForTimeout(250);
           const file = path.join(outDir, `${name}-${vp.width}x${vp.height}.png`);
           await page.screenshot({ path: file });
         } catch (error) {

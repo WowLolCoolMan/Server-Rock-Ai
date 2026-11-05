@@ -1947,12 +1947,22 @@ $("#newChat").onclick = () => {
   setMobileSidebar(false);
   newChat();
 };
-$("#clear").onclick = () => {
+// Deletes all saved chats after confirming. Shared by the sidebar "Clear"
+// button (which used to delete everything with no confirmation) and /clear.
+function clearChatHistory() {
+  const count = state.chats.length;
+  if (!count) {
+    $("#runtimeStatus").textContent = "There is no chat history to clear.";
+    return;
+  }
+  const label = count === 1 ? "1 chat" : count + " chats";
+  if (!confirm("Delete " + label + " saved on this device? This can't be undone.")) return;
   state.chats = [];
   persist();
   renderHistory();
   newChat();
-};
+}
+$("#clear").onclick = clearChatHistory;
 $("#provider").onclick = () => {
   clearSettingsValidation();
   openSettingsDialog();
@@ -2468,12 +2478,7 @@ async function send() {
   $("#prompt").value = "";
   $("#commandHint").hidden = true;
   if (cmd.clear) {
-    if (confirm("Clear chat history on this device?")) {
-      state.chats = [];
-      persist();
-      renderHistory();
-      newChat();
-    }
+    clearChatHistory();
     return;
   }
   if (cmd.help) {
