@@ -47,6 +47,7 @@ jobs:
       - run: npm ci
       - run: node scripts/check-repo-hygiene.cjs
       - run: node --check scripts/check-repo-hygiene.cjs
+      - run: npm run audit:native-ui
       - run: dotnet restore native/ServerRock.Native.sln
       - run: dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore
       - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop --no-restore
