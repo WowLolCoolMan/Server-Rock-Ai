@@ -4047,9 +4047,27 @@ public sealed partial class MainPage : Page
 
     private async void SettingsClick(object sender, RoutedEventArgs e)
     {
+        var returnToCompactSidebar = _compactNavigation && Sidebar.Visibility == Visibility.Visible;
         CloseCompactSidebar();
         RuntimeStatus.Text = "Opening connection setup…";
-        await RunUiActionAsync(SettingsDialogAsync);
+        try { await RunUiActionAsync(SettingsDialogAsync); }
+        finally { RestoreSettingsDialogFocus(returnToCompactSidebar, sender as Control); }
+    }
+
+    private void RestoreSettingsDialogFocus(bool returnToCompactSidebar, Control? trigger)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (returnToCompactSidebar && ToggleSidebarButton.Visibility == Visibility.Visible &&
+                ToggleSidebarButton.Focus(FocusState.Programmatic))
+                return;
+            if (trigger is { Visibility: Visibility.Visible, IsEnabled: true } && trigger.Focus(FocusState.Programmatic))
+                return;
+            if (_compactNavigation && ToggleSidebarButton.Visibility == Visibility.Visible &&
+                ToggleSidebarButton.Focus(FocusState.Programmatic))
+                return;
+            PromptBox.Focus(FocusState.Programmatic);
+        });
     }
 
     private async void ImageStudioClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImageStudioAsync);

@@ -26,6 +26,8 @@ const requiredCode = [
   ['Archived toggle focus restoration', 'DispatcherQueue.TryEnqueue(FocusArchivedChatsToggleOrFallback);'],
   ['Compact drawer landing focus', 'ChatModeButton.Focus(FocusState.Programmatic);'],
   ['Compact drawer close focus', 'ToggleSidebarButton.Focus(FocusState.Programmatic);'],
+  ['Settings dialog focus return', 'RestoreSettingsDialogFocus(returnToCompactSidebar, sender as Control);'],
+  ['Settings trigger focus restoration', 'trigger.Focus(FocusState.Programmatic)'],
 ];
 
 const missing = [
