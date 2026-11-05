@@ -226,7 +226,9 @@ public sealed partial class MainPage : Page
         if (_compactNavigation)
         {
             Canvas.SetLeft(CompanionCard, maxLeft);
-            Canvas.SetTop(CompanionCard, Math.Clamp(Header.ActualHeight + 8, 8, maxTop));
+            // Keep clear of the header's connection control while preserving the
+            // welcome panel's first line of sight below the compact overlay.
+            Canvas.SetTop(CompanionCard, Math.Clamp(Header.ActualHeight + 16, 8, maxTop));
             return;
         }
 
