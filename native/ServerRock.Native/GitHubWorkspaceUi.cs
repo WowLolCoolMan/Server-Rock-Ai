@@ -201,6 +201,7 @@ public sealed partial class MainPage
             repositoryAccessHint.Visibility = Visibility.Collapsed;
             repoPanel.Visibility = Visibility.Visible;
             refreshRepositories.IsEnabled = false;
+            var repositoryRefreshFailed = false;
             try
             {
                 var repositories = await _githubApiClient.ListRepositoriesAsync(token);
@@ -214,13 +215,18 @@ public sealed partial class MainPage
             }
             catch (Exception exception)
             {
+                repositoryRefreshFailed = true;
                 signInStatus.Text = $"Repository list could not be loaded: {exception.Message} You can still enter owner/name manually if the app has access.";
             }
             finally
             {
                 refreshRepositories.IsEnabled = true;
                 UpdateCloneAvailability();
-                if (workspaceDialogOpen) FocusRepositoryEntry();
+                if (workspaceDialogOpen)
+                {
+                    if (repositoryRefreshFailed) repositoryReference.Focus(FocusState.Programmatic);
+                    else FocusRepositoryEntry();
+                }
             }
         }
 
