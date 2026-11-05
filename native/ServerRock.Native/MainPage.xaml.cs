@@ -3974,14 +3974,12 @@ public sealed partial class MainPage : Page
             checkStatus.Text = "Checking local model servers…";
             try
             {
-                var models = await _modelLibrary.DiscoverLocalModelsAsync(candidateEndpoint);
-                var directMatches = models.Where(item => item.Endpoint.TrimEnd('/').Equals(candidateEndpoint, StringComparison.OrdinalIgnoreCase)).ToArray();
-                var shownModels = directMatches.Length > 0 ? directMatches : models.ToArray();
-                checkStatus.Text = shownModels.Length switch
+                var models = await _provider.DiscoverModelsAsync(candidateEndpoint);
+                checkStatus.Text = models.Count switch
                 {
                     0 => "No local models responded. Start the server, confirm its address, then check again. Models in navigation can help you find compatible downloads.",
-                    1 => $"Connected: found {shownModels[0].Model} on {shownModels[0].Provider}.",
-                    _ => $"Connected: found {shownModels.Length} local models. Save this connection, or use Models in navigation to browse the catalog."
+                    1 => $"Connected: found {models[0]} at this endpoint.",
+                    _ => $"Connected: found {models.Count} models at this endpoint. Save this connection, or use Models in navigation to browse the catalog."
                 };
             }
             catch (Exception ex)
