@@ -4305,6 +4305,7 @@ public sealed partial class MainPage : Page
         visionFormat.SelectedIndex = _settings.VisionApiFormat.ToLowerInvariant() switch { "openai" => 1, "ollama" => 2, _ => 0 };
         var visionNote = new TextBlock { Text = "Choose a vision-capable model. Automatic selects Ollama format for its standard local port and OpenAI format for other endpoints.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.75 };
         var checkConnection = new Button { Content = "Check connection", MinWidth = 132 };
+        var exportLogs = new Button { Content = "Export redacted diagnostics", MinWidth = 190 };
         var checkStatus = new TextBlock
         {
             Text = "Save to make this connection the active model server. Use Models in the navigation to browse and install compatible local models.",
@@ -4322,6 +4323,7 @@ public sealed partial class MainPage : Page
         panel.Children.Add(visionFormat);
         panel.Children.Add(visionNote);
         panel.Children.Add(checkConnection);
+        panel.Children.Add(exportLogs);
         panel.Children.Add(checkStatus);
         var dialog = new ContentDialog
         {
@@ -4359,6 +4361,20 @@ public sealed partial class MainPage : Page
             finally
             {
                 checkConnection.IsEnabled = true;
+            }
+        };
+        exportLogs.Click += (_, _) =>
+        {
+            try
+            {
+                var destination = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Server Rock diagnostics");
+                var archive = App.Log.Export(destination);
+                checkStatus.Text = "Redacted diagnostics exported. You can attach the archive to support.";
+                RuntimeStatus.Text = $"Diagnostics exported to {archive}";
+            }
+            catch (Exception ex)
+            {
+                checkStatus.Text = $"Could not export diagnostics: {ex.Message}";
             }
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;

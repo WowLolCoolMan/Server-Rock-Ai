@@ -15,6 +15,11 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
+        UnhandledException += (_, args) =>
+        {
+            Log.Error("UI", args.Exception, "Unhandled UI exception");
+            args.Handled = true;
+        };
         Log.Info("Startup", "Application instance created");
     }
 
