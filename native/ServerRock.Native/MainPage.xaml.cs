@@ -19,12 +19,28 @@ public sealed partial class MainPage : Page
     private sealed record InstalledModelChoice(string Provider, string Model, string Endpoint, string Display);
     private sealed record CatalogModelChoice(HubModel Model, string Display);
     private sealed record ModelScopeGgufPackageChoice(ModelScopeGgufPackage Package, string Display);
+    private sealed record PluginCatalogItem(string Id, string Name, string Category, string Description, string Access, string Display);
     private sealed record CompanionChoice(string Id, string Name, string Description, string AssetUri);
     private static readonly CompanionChoice[] CompanionChoices =
     [
         new("rocky", "Rocky", "A steady rock when the diff gets large.", "ms-appx:///Assets/Svg/rocky.svg"),
         new("byte", "Byte", "A tiny blue-screen gremlin.", "ms-appx:///Assets/Svg/byte.svg"),
         new("sprout", "Sprout", "Small green shoots for new ideas.", "ms-appx:///Assets/Svg/sprout.svg")
+    ];
+    private static readonly PluginCatalogItem[] PluginCatalog =
+    [
+        new("github", "GitHub", "Developer tools", "Browse repositories, review diffs, and commit or push approved changes.", "User-authorized repositories", "GitHub · Browse repos, diffs, and push approved changes"),
+        new("gmail", "Gmail", "Communication", "Find and summarize messages when you explicitly connect an account.", "Email metadata and message content", "Gmail · Read and manage email"),
+        new("google-drive", "Google Drive", "Productivity", "Find documents and use selected files as context.", "Files you choose", "Google Drive · Drive, Docs, Sheets, and Slides"),
+        new("outlook-email", "Outlook Email", "Communication", "Triage inboxes and draft responses for your review.", "Email metadata and message content", "Outlook Email · Triage inboxes"),
+        new("calendar", "Calendar", "Productivity", "Read availability and prepare event drafts.", "Calendar events you authorize", "Calendar · Read and draft events"),
+        new("slack", "Slack", "Communication", "Search channels and summarize selected conversations.", "Authorized workspace messages", "Slack · Search and summarize channels"),
+        new("notion", "Notion", "Productivity", "Find pages and create drafts in selected workspaces.", "Pages and databases you authorize", "Notion · Search and draft pages"),
+        new("linear", "Linear", "Developer tools", "Review issues and prepare project updates.", "Issues and projects you authorize", "Linear · Issues, projects, and updates"),
+        new("web-search", "Web Search", "Research", "Search the public web when you turn it on for a chat.", "Your query and returned snippets", "Web Search · Search the public web"),
+        new("image-tools", "Image Tools", "Creative", "Connect a local image workflow for generation and editing.", "Local prompts and workflow output", "Image Tools · Local image generation"),
+        new("terminal-tools", "Terminal Tools", "Developer tools", "Expose the guarded project terminal to coding workflows.", "Selected project folder only", "Terminal Tools · Run approved project commands"),
+        new("skills-pack", "Skills Pack", "Skills", "Install reusable prompt and workflow skills from a trusted local folder.", "Skill files you explicitly import", "Skills Pack · Reusable local workflows")
     ];
     private static readonly (string Name, string Description)[] SlashCommandCatalog =
     [
@@ -3483,6 +3499,89 @@ public sealed partial class MainPage : Page
     }
 
     private async Task ModelClickAsync() => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox);
+
+    private async void PluginStoreClick(object sender, RoutedEventArgs e)
+    {
+        CloseCompactSidebar();
+        await RunUiActionAsync(PluginStoreClickAsync);
+    }
+
+    private async Task PluginStoreClickAsync()
+    {
+        var search = new TextBox { PlaceholderText = "Search plugins, extensions, or skills", MinWidth = 300 };
+        var category = new ComboBox { MinWidth = 180 };
+        category.Items.Add("All categories");
+        foreach (var item in PluginCatalog.Select(item => item.Category).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(item => item))
+            category.Items.Add(item);
+        category.SelectedIndex = 0;
+        var list = new ListView { MinHeight = 300, MaxHeight = 460, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(PluginCatalogItem.Display) };
+        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+        var install = new Button { Content = "Install", MinWidth = 100, IsEnabled = false };
+        var status = new TextBlock { FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)), TextWrapping = TextWrapping.Wrap };
+        var dialog = new ContentDialog
+        {
+            Title = "Plugin Store",
+            PrimaryButtonText = "Done",
+            CloseButtonText = "Close",
+            XamlRoot = XamlRoot,
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new TextBlock { Text = "Browse supported plugins, extensions, and skills. Installs are local preferences; each entry states what data it can access.", TextWrapping = TextWrapping.Wrap },
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { search, category } },
+                    list,
+                    details,
+                    install,
+                    status
+                }
+            }
+        };
+
+        void Refresh()
+        {
+            var term = search.Text.Trim();
+            var selectedCategory = category.SelectedItem as string;
+            var filtered = PluginCatalog.Where(item =>
+                (term.Length == 0 || item.Name.Contains(term, StringComparison.OrdinalIgnoreCase) || item.Description.Contains(term, StringComparison.OrdinalIgnoreCase) || item.Category.Contains(term, StringComparison.OrdinalIgnoreCase)) &&
+                (selectedCategory is null || selectedCategory == "All categories" || item.Category.Equals(selectedCategory, StringComparison.OrdinalIgnoreCase))).ToArray();
+            list.ItemsSource = filtered;
+            status.Text = $"{filtered.Length} supported plugin(s) · {(_settings.InstalledPlugins ?? []).Count} installed";
+            install.IsEnabled = list.SelectedItem is PluginCatalogItem;
+        }
+
+        search.TextChanged += (_, _) => Refresh();
+        category.SelectionChanged += (_, _) => Refresh();
+        list.SelectionChanged += (_, _) =>
+        {
+            if (list.SelectedItem is not PluginCatalogItem item) { install.IsEnabled = false; return; }
+            var installed = (_settings.InstalledPlugins ?? []).Contains(item.Id, StringComparer.OrdinalIgnoreCase);
+            details.Text = $"{item.Name}\n\n{item.Description}\n\nAccess: {item.Access}";
+            install.Content = installed ? "Remove" : "Install";
+            install.IsEnabled = true;
+        };
+        install.Click += (_, _) =>
+        {
+            if (list.SelectedItem is not PluginCatalogItem item) return;
+            _settings.InstalledPlugins ??= [];
+            if (_settings.InstalledPlugins.Contains(item.Id, StringComparer.OrdinalIgnoreCase))
+            {
+                _settings.InstalledPlugins.RemoveAll(id => id.Equals(item.Id, StringComparison.OrdinalIgnoreCase));
+                install.Content = "Install";
+                status.Text = $"Removed {item.Name}.";
+            }
+            else
+            {
+                _settings.InstalledPlugins.Add(item.Id);
+                install.Content = "Remove";
+                status.Text = $"Installed {item.Name}.";
+            }
+            SaveSettings();
+        };
+        Refresh();
+        await dialog.ShowAsync();
+    }
 
     private void ModelHotswapClick(object sender, RoutedEventArgs e)
     {

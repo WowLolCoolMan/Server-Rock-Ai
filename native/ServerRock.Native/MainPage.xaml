@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Background="#fbfcfb" Loaded="MainPageLoaded" KeyDown="AppKeyDown">
   <Grid x:Name="AppRoot" ColumnDefinitions="276,*" Background="#fbfcfb" SizeChanged="AppRootSizeChanged">
-    <Grid x:Name="Sidebar" Grid.Column="0" Background="#f2f6f5" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
+    <Grid x:Name="Sidebar" Grid.Column="0" Background="#f2f6f5" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
       <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="4,0,4,18">
         <Border Width="34" Height="34" CornerRadius="11" Background="#183844">
           <TextBlock Text="◈" Foreground="#dff7fa" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -24,8 +24,9 @@
       <Button Grid.Row="4" Content="⌕　Search chats" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
       <Button Grid.Row="5" Content="◉　Models" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
       <Button Grid.Row="6" Content="⚙　Settings" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="SettingsClick" AutomationProperties.Name="Open model connection settings" />
-      <Button x:Name="GitHubButton" Grid.Row="7" Content="⌘　GitHub repositories" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
-      <ScrollViewer Grid.Row="8" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+      <Button Grid.Row="7" Content="✦　Plugins" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
+      <Button Grid.Row="8" x:Name="GitHubButton" Content="⌘　GitHub repositories" HorizontalContentAlignment="Left" Background="Transparent" Foreground="#40575b" CornerRadius="8" Padding="10,8" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
+      <ScrollViewer Grid.Row="9" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
         <StackPanel Spacing="5">
           <StackPanel x:Name="CodingNavigationSection" Spacing="0" Visibility="Collapsed">
             <TextBlock Text="PROJECTS" FontSize="10" CharacterSpacing="110" Foreground="#798b8e" Margin="8,3,0,4" />
@@ -46,7 +47,7 @@
           </StackPanel>
         </StackPanel>
       </ScrollViewer>
-      <Border Grid.Row="9" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,10,5,2">
+      <Border Grid.Row="10" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,10,5,2">
         <StackPanel Spacing="7">
           <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="#d69a4b" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="#294850" /><TextBlock Text="· local history" FontSize="11" Foreground="#66818a" /></StackPanel>
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">

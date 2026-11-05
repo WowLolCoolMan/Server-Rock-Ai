@@ -15,6 +15,7 @@ public sealed class AppSettings
     public string ImageWorkflow { get; set; } = "";
     public string GitHubAppClientId { get; set; } = "";
     public List<string> ChatFolders { get; set; } = [];
+    public List<string> InstalledPlugins { get; set; } = [];
     public string? ProjectPath { get; set; }
     public string? ProjectInstructions { get; set; }
 }
