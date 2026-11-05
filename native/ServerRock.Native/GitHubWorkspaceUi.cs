@@ -217,6 +217,8 @@ public sealed partial class MainPage
             catch (Exception exception)
             {
                 repositoryRefreshFailed = true;
+                _githubRepositories.Clear();
+                repositoryPicker.Items.Clear();
                 signInStatus.Text = $"Repository list could not be loaded: {exception.Message} You can still enter owner/name manually if the app has access.";
             }
             finally
