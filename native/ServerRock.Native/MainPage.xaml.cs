@@ -1561,7 +1561,16 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void ProjectFoldersClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ProjectFoldersClickAsync);
+    private async void ProjectFoldersClick(object sender, RoutedEventArgs e)
+    {
+        var managesExistingProject = _projects.Any(item => item.Id == _activeProjectId);
+        try { await RunUiActionAsync(ProjectFoldersClickAsync); }
+        finally
+        {
+            if (managesExistingProject)
+                RestoreNavigationDialogFocus(false, sender as Control);
+        }
+    }
 
     private async Task ProjectFoldersClickAsync()
     {

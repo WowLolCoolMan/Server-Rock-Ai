@@ -36,6 +36,7 @@ const requiredCode = [
   ['Compact workspace focus restoration', 'DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
   ['Compact project action focus restoration', 'RunCompactProjectActionAsync'],
   ['Compact project cancellation focus fallback', 'if (restoreComposerFocus)\n                DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
+  ['Project folder dialog focus return', 'if (managesExistingProject)\n                RestoreNavigationDialogFocus(false, sender as Control);'],
 ];
 
 const missing = [
