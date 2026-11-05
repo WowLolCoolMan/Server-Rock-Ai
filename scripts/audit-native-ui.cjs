@@ -51,6 +51,8 @@ const requiredCode = [
   ['Untrusted result insertion disclosure', 'AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.")'],
   ['Project terminal output accessible name', 'AutomationProperties.SetName(output, "Project terminal output")'],
   ['Project terminal output accessible description', 'AutomationProperties.SetHelpText(output, "Read-only output from the shell running in the active project folder.")'],
+  ['Project terminal status accessible name', 'AutomationProperties.SetName(status, "Project terminal status")'],
+  ['Project terminal state live announcements', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
 ];
 
 const missing = [

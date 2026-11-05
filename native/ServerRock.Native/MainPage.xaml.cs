@@ -924,6 +924,8 @@ public sealed partial class MainPage : Page
         AutomationProperties.SetName(input, "Project terminal input");
         AutomationProperties.SetHelpText(input, "Type into the shell running in the active project folder. Commands use your account permissions on this device.");
         var status = new TextBlock { Text = "Starting project shell…", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 122, 127)) };
+        AutomationProperties.SetName(status, "Project terminal status");
+        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
         var cancel = new CancellationTokenSource();
         WorkspaceTerminalSession? session = null;
         var content = new Grid { RowSpacing = 10, RowDefinitions = { new RowDefinition { Height = GridLength.Auto }, new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }, new RowDefinition { Height = GridLength.Auto }, new RowDefinition { Height = GridLength.Auto } } };
