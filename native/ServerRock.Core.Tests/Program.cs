@@ -11,6 +11,19 @@ using UglyToad.PdfPig.Core;
 using UglyToad.PdfPig.Fonts.Standard14Fonts;
 using UglyToad.PdfPig.Writer;
 
+var logDirectory = Path.Combine(Path.GetTempPath(), "server-rock-log-test-" + Guid.NewGuid().ToString("N"));
+try
+{
+    var logs = new AppLogService(logDirectory);
+    logs.Info("Diagnostics", "request bearer abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    logs.Error("Crash", new InvalidOperationException("api_key=super-secret-value path=C:\\Users\\basic\\private.txt"));
+    var text = await File.ReadAllTextAsync(Path.Combine(logDirectory, "server-rock.log"));
+    Check(!text.Contains("super-secret-value", StringComparison.Ordinal) && !text.Contains("C:\\Users\\basic", StringComparison.Ordinal) && text.Contains("[REDACTED]", StringComparison.Ordinal), "diagnostic logs redact secrets and machine paths");
+    var archive = logs.Export(Path.Combine(logDirectory, "exports"));
+    Check(File.Exists(archive), "diagnostic logs export to a shareable archive");
+}
+finally { if (System.IO.Directory.Exists(logDirectory)) System.IO.Directory.Delete(logDirectory, recursive: true); }
+
 var discoveryHandler = new StubHandler((request, _) =>
 {
     Check(request.RequestUri?.AbsoluteUri == "http://localhost:11434/v1/models", "model discovery uses the configured /v1 route");

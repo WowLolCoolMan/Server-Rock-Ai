@@ -1,11 +1,13 @@
 using System;
 using Microsoft.Extensions.Logging;
+using ServerRock.Core.Infrastructure;
 using Uno.Resizetizer;
 
 namespace ServerRock.Native;
 
 public partial class App : Application
 {
+    public static AppLogService Log { get; } = new();
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -13,12 +15,14 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
+        Log.Info("Startup", "Application instance created");
     }
 
     public Window? MainWindow { get; private set; }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        Log.Info("Startup", "Application launched");
         MainWindow = new Window();
         // Do not repeat app initialization when the Window already has content,
         // just ensure that the window is active
@@ -53,6 +57,7 @@ public partial class App : Application
     /// <param name="e">Details about the navigation failure</param>
     void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
     {
+        Log.Error("Navigation", e.Exception, $"Failed to load {e.SourcePageType.FullName}");
         throw new InvalidOperationException($"Failed to load {e.SourcePageType.FullName}: {e.Exception}");
     }
 
@@ -61,6 +66,15 @@ public partial class App : Application
     /// </summary>
     public static void InitializeLogging()
     {
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception exception) Log.Error("AppDomain", exception, "Unhandled exception");
+        };
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Log.Error("TaskScheduler", args.Exception, "Unobserved task exception");
+            args.SetObserved();
+        };
 #if DEBUG
         // Logging is disabled by default for release builds, as it incurs a significant
         // initialization cost from Microsoft.Extensions.Logging setup. If startup performance
