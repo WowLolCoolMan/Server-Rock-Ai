@@ -75,7 +75,7 @@
           <Button Click="SettingsClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="12" Padding="9,4" AutomationProperties.Name="Model connection settings">
             <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="#d69a4b" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
           </Button>
-          <Button Content="＋" Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="New chat" />
+          <Button Content="＋" Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Add window · start a new chat" AutomationProperties.Name="Add window" AutomationProperties.HelpText="Start a fresh chat without closing the current app window." />
         </StackPanel>
       </Grid>
 
@@ -148,7 +148,7 @@
         </Border>
         <Border x:Name="ComposerBorder" Background="#ffffff" BorderBrush="#dce4e6" BorderThickness="1" CornerRadius="17" Padding="14,10">
           <Grid RowDefinitions="Auto,Auto">
-            <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="52" MaxHeight="150" PlaceholderText="Ask anything…" Background="Transparent" BorderThickness="0" Foreground="#283b41" TextChanged="PromptTextChanged" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer." />
+            <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="132" MaxHeight="320" PlaceholderText="Ask anything…" Background="Transparent" BorderThickness="0" Foreground="#283b41" TextChanged="PromptTextChanged" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer." />
             <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,8,0,0">
               <Button Content="＋" Click="AttachClick" Style="{StaticResource ComposerButtonStyle}" AutomationProperties.Name="Attach a file" />
               <Button Grid.Column="1" Content="/" Click="CommandsClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Slash commands" />

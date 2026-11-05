@@ -188,6 +188,7 @@ public sealed partial class MainPage : Page
         UpdateModelLabel();
         UpdateWebSearchButton();
         UpdateTemporaryControls();
+        RuntimeStatus.Text = "New chat ready.";
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
 
