@@ -936,6 +936,19 @@ try
     var normalizedProject = new ProjectStore(nullableProjectPath).Load().Single();
     Check(!string.IsNullOrWhiteSpace(normalizedProject.Id) && normalizedProject.Name == "New project" && normalizedProject.Instructions == "" && normalizedProject.FolderPaths is not null,
         "nullable project fields recover to usable native defaults");
+    var duplicateProjectFilePath = Path.Combine(settingsDirectory, "duplicate-projects.json");
+    const string duplicateProjectJson = "[{\"id\":\"duplicate-project\",\"name\":\"First\",\"instructions\":\"\",\"folderPaths\":[]},{\"id\":\"duplicate-project\",\"name\":\"Second\",\"instructions\":\"\",\"folderPaths\":[]}]";
+    File.WriteAllText(duplicateProjectFilePath, duplicateProjectJson);
+    try
+    {
+        _ = new ProjectStore(duplicateProjectFilePath).Load();
+        throw new Exception("Expected duplicate saved project IDs to be rejected.");
+    }
+    catch (InvalidDataException)
+    {
+        Check(File.ReadAllText(duplicateProjectFilePath) == duplicateProjectJson,
+            "duplicate project data is rejected without replacing the recovery file");
+    }
     var healthyProjectsBeforeRejectedSave = File.ReadAllBytes(projectsPath);
     try
     {

@@ -37,6 +37,11 @@ public sealed class ProjectStore
                 project.Instructions ??= "";
                 project.FolderPaths ??= [];
             }
+            // A valid JSON document can still contain duplicate identities or
+            // unsafe values. Reject it before the UI maps a project action to
+            // the wrong saved project, and leave the source file available for
+            // recovery just as we do for malformed JSON.
+            ValidateForSave(projects);
             return projects;
         }
         catch (JsonException error)
