@@ -201,6 +201,7 @@ public sealed partial class MainPage
             repositoryAccessHint.Visibility = Visibility.Collapsed;
             repoPanel.Visibility = Visibility.Visible;
             refreshRepositories.IsEnabled = false;
+            signInStatus.Text = "Loading repositories from GitHub…";
             var repositoryRefreshFailed = false;
             try
             {

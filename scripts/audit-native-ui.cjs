@@ -72,6 +72,7 @@ const requiredGitHubCode = [
   ['GitHub canceled sign-in clears one-time controls', 'code.Text = string.Empty;\n            code.Visibility = Visibility.Collapsed;\n            verification.Visibility = Visibility.Collapsed;\n            cancelSignIn.Visibility = Visibility.Collapsed;'],
   ['GitHub sign-in recovery keyboard focus', 'connect.Focus(FocusState.Programmatic);'],
   ['GitHub repository refresh failure focus recovery', 'if (repositoryRefreshFailed) repositoryReference.Focus(FocusState.Programmatic);\n                    else FocusRepositoryEntry();'],
+  ['GitHub repository refresh loading announcement', 'signInStatus.Text = "Loading repositories from GitHub…";'],
   ['GitHub repository focus after successful refresh', 'else FocusRepositoryEntry();'],
   ['GitHub clone readiness guard', 'clone.IsEnabled = _githubCredential is not null && hasValidRepository && destinationReady && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;'],
   ['GitHub clone destination collision preflight', 'Directory.EnumerateFileSystemEntries(destination).Any()'],
