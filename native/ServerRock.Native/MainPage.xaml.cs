@@ -3830,7 +3830,12 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private async void SettingsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SettingsDialogAsync); }
+    private async void SettingsClick(object sender, RoutedEventArgs e)
+    {
+        CloseCompactSidebar();
+        RuntimeStatus.Text = "Opening connection setup…";
+        await RunUiActionAsync(SettingsDialogAsync);
+    }
 
     private async void ImageStudioClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(ImageStudioAsync);
 
@@ -3922,26 +3927,71 @@ public sealed partial class MainPage : Page
     {
         var endpoint = new TextBox { Header = "OpenAI-compatible endpoint", Text = _settings.Endpoint, PlaceholderText = "http://localhost:11434/v1" };
         var model = new TextBox { Header = "Model ID", Text = _settings.Model, PlaceholderText = "Model ID reported by the server" };
-        var note = new TextBlock { Text = "Use a local Ollama, LM Studio, Jan, GPT4All, or LocalAI server. API-key and hosted-provider connections are not enabled in the native app yet.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var note = new TextBlock { Text = "Connect a local Ollama, LM Studio, Jan, GPT4All, LocalAI, or another OpenAI-compatible server. API-key and hosted-provider connections are not enabled in the native app yet.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
         visionFormat.Items.Add("OpenAI-compatible image_url object");
         visionFormat.Items.Add("Ollama-compatible image_url string");
         visionFormat.SelectedIndex = _settings.VisionApiFormat.ToLowerInvariant() switch { "openai" => 1, "ollama" => 2, _ => 0 };
         var visionNote = new TextBlock { Text = "Choose a vision-capable model. Automatic selects Ollama format for its standard local port and OpenAI format for other endpoints.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.75 };
+        var checkConnection = new Button { Content = "Check connection", MinWidth = 132 };
+        var checkStatus = new TextBlock
+        {
+            Text = "Save to make this connection the active model server. Use Models in the navigation to browse and install compatible local models.",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 78, 105, 111))
+        };
+        AutomationProperties.SetName(checkConnection, "Check model connection");
+        AutomationProperties.SetHelpText(checkConnection, "Probe the entered local endpoint without saving changes.");
+        AutomationProperties.SetName(checkStatus, "Connection check status");
         var panel = new StackPanel { Spacing = 10 };
         panel.Children.Add(endpoint);
         panel.Children.Add(model);
         panel.Children.Add(note);
         panel.Children.Add(visionFormat);
         panel.Children.Add(visionNote);
+        panel.Children.Add(checkConnection);
+        panel.Children.Add(checkStatus);
         var dialog = new ContentDialog
         {
-            Title = "Model connection",
+            Title = "Connection setup",
             Content = panel,
             PrimaryButtonText = "Save",
             CloseButtonText = "Cancel",
             XamlRoot = XamlRoot
+        };
+        checkConnection.Click += async (_, _) =>
+        {
+            var candidateEndpoint = endpoint.Text.Trim().TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(candidateEndpoint))
+            {
+                checkStatus.Text = "Enter a server address before checking the connection.";
+                return;
+            }
+
+            checkConnection.IsEnabled = false;
+            checkStatus.Text = "Checking local model servers…";
+            try
+            {
+                var models = await _modelLibrary.DiscoverLocalModelsAsync(candidateEndpoint);
+                var directMatches = models.Where(item => item.Endpoint.TrimEnd('/').Equals(candidateEndpoint, StringComparison.OrdinalIgnoreCase)).ToArray();
+                var shownModels = directMatches.Length > 0 ? directMatches : models.ToArray();
+                checkStatus.Text = shownModels.Length switch
+                {
+                    0 => "No local models responded. Start the server, confirm its address, then check again. Models in navigation can help you find compatible downloads.",
+                    1 => $"Connected: found {shownModels[0].Model} on {shownModels[0].Provider}.",
+                    _ => $"Connected: found {shownModels.Length} local models. Save this connection, or use Models in navigation to browse the catalog."
+                };
+            }
+            catch (Exception ex)
+            {
+                checkStatus.Text = $"Could not check this connection: {ex.Message}";
+            }
+            finally
+            {
+                checkConnection.IsEnabled = true;
+            }
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
