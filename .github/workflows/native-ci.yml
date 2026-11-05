@@ -40,6 +40,9 @@ jobs:
       - name: Verify hygiene check entry point
         run: node --check scripts/check-repo-hygiene.cjs
 
+      - name: Audit native UI contracts
+        run: npm run audit:native-ui
+
       - name: Restore native solution
         run: dotnet restore native/ServerRock.Native.sln
 
