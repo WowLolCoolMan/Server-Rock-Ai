@@ -78,6 +78,7 @@ public sealed partial class MainPage : Page
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
     private bool _compactComposerToolbar;
+    private bool _compactCodingWorkspaceToolbar;
     private bool _companionPersistenceAvailable = true;
     private bool _isCompanionDragging;
     private Point _companionDragOffset;
@@ -100,6 +101,7 @@ public sealed partial class MainPage : Page
     // conversation area stays comfortable beside the navigation controls.
     private const double CompactNavigationBreakpoint = 1320;
     private const double CompactComposerToolbarBreakpoint = 620;
+    private const double CompactCodingWorkspaceToolbarBreakpoint = 820;
 
     public MainPage()
     {
@@ -229,6 +231,46 @@ public sealed partial class MainPage : Page
             UpdateWebSearchButton();
             UpdateTemporaryControls();
             UpdateProjectFilesControls();
+        }
+    }
+
+    private void CodingWorkspaceToolbarSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var compact = e.NewSize.Width > 0 && e.NewSize.Width < CompactCodingWorkspaceToolbarBreakpoint;
+        if (_compactCodingWorkspaceToolbar == compact) return;
+
+        _compactCodingWorkspaceToolbar = compact;
+        if (compact)
+        {
+            // Move project identity above the action groups, which then occupy
+            // two short rows. This keeps every project action reachable on phones.
+            Grid.SetColumnSpan(CodingWorkspaceSummary, 2);
+            Grid.SetColumn(CodingWorkspaceSummary, 0);
+            Grid.SetRow(CodingWorkspaceSummary, 0);
+            Grid.SetColumnSpan(CodingWorkspaceActions, 2);
+            Grid.SetColumn(CodingWorkspaceActions, 0);
+            Grid.SetRow(CodingWorkspaceActions, 1);
+            Grid.SetColumnSpan(CodingWorkspaceProjectActions, 2);
+            Grid.SetColumn(CodingWorkspaceProjectActions, 0);
+            Grid.SetRow(CodingWorkspaceProjectActions, 0);
+            Grid.SetColumnSpan(CodingWorkspaceTools, 2);
+            Grid.SetColumn(CodingWorkspaceTools, 0);
+            Grid.SetRow(CodingWorkspaceTools, 1);
+        }
+        else
+        {
+            Grid.SetColumnSpan(CodingWorkspaceSummary, 1);
+            Grid.SetColumn(CodingWorkspaceSummary, 0);
+            Grid.SetRow(CodingWorkspaceSummary, 0);
+            Grid.SetColumnSpan(CodingWorkspaceActions, 1);
+            Grid.SetColumn(CodingWorkspaceActions, 1);
+            Grid.SetRow(CodingWorkspaceActions, 0);
+            Grid.SetColumnSpan(CodingWorkspaceProjectActions, 1);
+            Grid.SetColumn(CodingWorkspaceProjectActions, 0);
+            Grid.SetRow(CodingWorkspaceProjectActions, 0);
+            Grid.SetColumnSpan(CodingWorkspaceTools, 1);
+            Grid.SetColumn(CodingWorkspaceTools, 1);
+            Grid.SetRow(CodingWorkspaceTools, 0);
         }
     }
 
