@@ -41,6 +41,8 @@ const requiredCode = [
   ['Project file selection focus restoration', 'finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }'],
   ['Terminal input opening focus', 'dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);'],
   ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
+  ['Command review accessible preview', 'AutomationProperties.SetName(commandText, "Exact project command to run")'],
+  ['Command review opening focus', 'dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);'],
 ];
 
 const missing = [

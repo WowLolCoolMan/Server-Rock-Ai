@@ -2892,6 +2892,8 @@ public sealed partial class MainPage : Page
             FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
             MaxHeight = 150
         };
+        AutomationProperties.SetName(commandText, "Exact project command to run");
+        AutomationProperties.SetHelpText(commandText, "Read-only command preview. Review this exact command before selecting Run once.");
         var content = new StackPanel { Spacing = 9 };
         content.Children.Add(new TextBlock { Text = "Review the exact command and project folder. Nothing runs until you approve this command.", TextWrapping = TextWrapping.Wrap });
         content.Children.Add(selectedFolder);
@@ -2921,6 +2923,7 @@ public sealed partial class MainPage : Page
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot
         };
+        dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary || selectedFolder.SelectedIndex < 0) return;
         var root = availableFolders[selectedFolder.SelectedIndex];
         RuntimeStatus.Text = "Running approved project command…";
