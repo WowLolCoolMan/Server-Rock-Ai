@@ -72,6 +72,7 @@ public sealed partial class MainPage : Page
     private string? _activeChatFolder;
     private int? _editingMessageIndex;
     private readonly HashSet<string> _collapsedChatFolders = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Button> _recentActionButtons = new(StringComparer.Ordinal);
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
@@ -1553,6 +1554,7 @@ public sealed partial class MainPage : Page
     private void RenderRecent()
     {
         RecentList.Children.Clear();
+        _recentActionButtons.Clear();
         _settings.ChatFolders ??= [];
         var modeSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
         var visibleSessions = modeSessions.Where(item => !item.Archived).ToArray();
@@ -1674,10 +1676,16 @@ public sealed partial class MainPage : Page
         };
         AutomationProperties.SetName(actions, $"More actions for {session.Title}");
         actions.Click += RecentActionsClick;
+        _recentActionButtons[session.Id] = actions;
         var row = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto } } };
         row.Children.Add(button);
         Grid.SetColumn(actions, 1);
         row.Children.Add(actions);
+        row.RightTapped += (_, args) =>
+        {
+            args.Handled = true;
+            ShowRecentActionsMenu(session, actions, row, args.GetPosition(row));
+        };
         return row;
     }
 
@@ -1819,22 +1827,49 @@ public sealed partial class MainPage : Page
     private void RecentActionsClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string sessionId }) return;
+        var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
+        if (session is null) return;
+        ShowRecentActionsMenu(session, (Button)sender);
+    }
+
+    private void ShowRecentActionsMenu(ChatSession session, Button focusTrigger, FrameworkElement? contextAnchor = null, Point? contextPosition = null)
+    {
+        var sessionId = session.Id;
         if (_requestCancellation is not null)
         {
             RuntimeStatus.Text = "Wait for the current response to finish before organizing chats.";
             return;
         }
-        var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
-        if (session is null) return;
         var menu = new MenuFlyout();
+        var actionSelected = false;
+
+        void RestoreFocus()
+        {
+            DispatcherQueue.TryEnqueue(() => FocusRecentActionOrFallback(sessionId));
+        }
+
+        void Run(Action action)
+        {
+            actionSelected = true;
+            try { action(); }
+            finally { RestoreFocus(); }
+        }
+
+        async Task RunAsync(Func<Task> action)
+        {
+            actionSelected = true;
+            try { await action(); }
+            finally { RestoreFocus(); }
+        }
+
         var rename = new MenuFlyoutItem { Text = "Rename chat", Tag = sessionId };
-        rename.Click += async (_, _) => await RenameSessionAsync(sessionId);
+        rename.Click += async (_, _) => await RunAsync(() => RenameSessionAsync(sessionId));
         var archive = new MenuFlyoutItem { Text = session.Archived ? "Restore from archive" : "Archive chat", Tag = sessionId };
-        archive.Click += (_, _) => ToggleSessionArchive(sessionId);
+        archive.Click += (_, _) => Run(() => ToggleSessionArchive(sessionId));
         var fork = new MenuFlyoutItem { Text = "Fork from here", Tag = sessionId };
-        fork.Click += (_, _) => ForkSession(sessionId);
+        fork.Click += (_, _) => Run(() => ForkSession(sessionId));
         var delete = new MenuFlyoutItem { Text = "Delete chat", Tag = sessionId };
-        delete.Click += async (_, _) => await DeleteSessionAsync(sessionId);
+        delete.Click += async (_, _) => await RunAsync(() => DeleteSessionAsync(sessionId));
         menu.Items.Add(rename);
         menu.Items.Add(archive);
         menu.Items.Add(fork);
@@ -1844,20 +1879,34 @@ public sealed partial class MainPage : Page
             foreach (var folder in _settings.ChatFolders)
             {
                 var move = new MenuFlyoutItem { Text = $"Move to {folder}", Tag = (sessionId, folder) };
-                move.Click += (_, _) =>
+                move.Click += (_, _) => Run(() =>
                 {
                     if (move.Tag is ValueTuple<string, string> selection) MoveChatToFolder(selection.Item1, selection.Item2);
-                };
+                });
                 menu.Items.Add(move);
             }
             var unfiled = new MenuFlyoutItem { Text = "Move to Unfiled", Tag = sessionId };
-            unfiled.Click += (_, _) => MoveChatToFolder(sessionId, null);
+            unfiled.Click += (_, _) => Run(() => MoveChatToFolder(sessionId, null));
             menu.Items.Add(unfiled);
         }
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(delete);
-        menu.Closed += (_, _) => ((FrameworkElement)sender).Focus(FocusState.Programmatic);
-        menu.ShowAt((FrameworkElement)sender);
+        menu.Closed += (_, _) =>
+        {
+            if (!actionSelected) RestoreFocus();
+        };
+        if (contextAnchor is not null && contextPosition is Point position) menu.ShowAt(contextAnchor, position);
+        else menu.ShowAt(focusTrigger);
+    }
+
+    private void FocusRecentActionOrFallback(string sessionId)
+    {
+        if (_recentActionButtons.TryGetValue(sessionId, out var trigger) && trigger.Visibility == Visibility.Visible && trigger.IsEnabled && trigger.Focus(FocusState.Programmatic))
+            return;
+
+        var fallback = _recentActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (fallback?.Focus(FocusState.Programmatic) == true) return;
+        NewConversationButton.Focus(FocusState.Programmatic);
     }
 
     private void ToggleSessionArchive(string sessionId)
