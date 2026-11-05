@@ -138,6 +138,7 @@ public sealed partial class MainPage : Page
         }
         try
         {
+            App.Log.Info("Chat", $"Request started mode={_mode} model={_settings.Model} endpoint={_settings.Endpoint}");
             _sessions = _conversationStore.Load();
         }
         catch (Exception ex)
@@ -2767,6 +2768,7 @@ public sealed partial class MainPage : Page
         }
         catch (Exception ex)
         {
+            App.Log.Error("Chat", ex, "Model request failed");
             _messages.RemoveAt(assistantIndex);
             if (response.Parent is FrameworkElement stack && stack.Parent is Border bubble)
                 ConversationMessages.Children.Remove(bubble);
