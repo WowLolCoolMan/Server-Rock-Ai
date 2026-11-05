@@ -3599,6 +3599,17 @@ public sealed partial class MainPage : Page
         AutomationProperties.SetName(benchmark, "Benchmark selected model on this PC");
         AutomationProperties.SetHelpText(benchmark, "Measure response speed for the selected model using this device.");
         var stopBenchmark = new Button { Content = "Stop", MinWidth = 66, IsEnabled = false };
+        var sort = new ComboBox { Header = "Sort", MinWidth = 150 };
+        sort.Items.Add("Popular");
+        sort.Items.Add("Name");
+        sort.Items.Add("Downloads");
+        sort.Items.Add("Size");
+        sort.SelectedIndex = 0;
+        var previousPage = new Button { Content = "‹", MinWidth = 42, IsEnabled = false };
+        var nextPage = new Button { Content = "›", MinWidth = 42, IsEnabled = false };
+        var pageStatus = new TextBlock { Text = "Page 1", VerticalAlignment = VerticalAlignment.Center, FontSize = 11 };
+        var page = 0;
+        var pageCount = 1;
         AutomationProperties.SetName(stopBenchmark, "Stop model benchmark");
         AutomationProperties.SetHelpText(stopBenchmark, "Cancel the model benchmark currently running on this device.");
         var list = new ListView { MinHeight = 220, MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = "Id" };
@@ -3625,6 +3636,7 @@ public sealed partial class MainPage : Page
                     source,
                     catalogMode,
                     actionRow,
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { sort, previousPage, pageStatus, nextPage } },
                     list,
                     new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { pin, benchmark, stopBenchmark } },
                     status
@@ -3651,7 +3663,6 @@ public sealed partial class MainPage : Page
                 _ => ""
             };
             list.ItemsSource = null;
-            list.Items.Clear();
             list.SelectedItem = null;
             list.DisplayMemberPath = "Id";
             try
@@ -3661,7 +3672,7 @@ public sealed partial class MainPage : Page
                 {
                     var models = await _modelLibrary.DiscoverLocalModelsAsync(_settings.Endpoint, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
-                    var choices = models.Select(model =>
+                    var allChoices = models.Select(model =>
                     {
                         var key = LocalModelPerformanceKey(model.Endpoint, model.Model);
                         var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(key);
@@ -3674,8 +3685,10 @@ public sealed partial class MainPage : Page
                         var display = $"{model.Model}   ·   {model.Provider}   ·   {measurement}" + (details.Length == 0 ? "" : $"   ·   {details}");
                         return new InstalledModelChoice(model.Provider, model.Model, model.Endpoint, display);
                     }).OrderByDescending(choice => (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformanceKey(choice.Endpoint, choice.Model))?.EstimatedTokensPerSecond ?? -1).ToArray();
+                    var choices = ApplyModelPage(allChoices, sort.SelectedIndex, ref pageCount, ref page, out var shownCount);
                     list.DisplayMemberPath = nameof(InstalledModelChoice.Display);
                     list.ItemsSource = choices;
+                    pageStatus.Text = $"Page {page + 1} of {pageCount} · {shownCount:N0} shown";
                     var hostCount = choices.Select(choice => choice.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).Count();
                     status.Text = $"{choices.Length} installed model(s) found across {hostCount} local runtime(s). Performance is measured from completed responses on this device; tokens/second is estimated from response length.";
                 }
@@ -3685,10 +3698,12 @@ public sealed partial class MainPage : Page
                     var uncensored = catalogMode.SelectedIndex == 1;
                     var models = await _modelLibrary.SearchHuggingFaceAsync(searchText, uncensored, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
-                    var choices = models.Select(model => new CatalogModelChoice(model,
+                    var allChoices = models.Select(model => new CatalogModelChoice(model,
                         $"{model.Id}   ·   {model.Downloads:N0} downloads" + (model.IsUncensored ? "   ·   Explicit uncensored / abliterated label" : ""))).ToArray();
+                    var choices = ApplyModelPage(allChoices, sort.SelectedIndex, ref pageCount, ref page, out var shownCount);
                     list.DisplayMemberPath = nameof(CatalogModelChoice.Display);
                     list.ItemsSource = choices;
+                    pageStatus.Text = $"Page {page + 1} of {pageCount} · {shownCount:N0} shown";
                     status.Text = uncensored
                         ? $"Found {models.Count} GGUF repositories with explicit uncensored/abliterated labels. Labels come from repository IDs and tags and do not guarantee model behavior."
                         : string.IsNullOrWhiteSpace(query.Text)
@@ -3701,12 +3716,14 @@ public sealed partial class MainPage : Page
                     var uncensored = catalogMode.SelectedIndex == 1;
                     var packages = await _modelLibrary.SearchModelScopeGgufAsync(query.Text, uncensored, cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
-                    var choices = packages.Select(package => new ModelScopeGgufPackageChoice(package,
+                    var allChoices = packages.Select(package => new ModelScopeGgufPackageChoice(package,
                         $"{package.Repository}   ·   {package.Name}   ·   {(package.SizeBytes > 0 ? $"{package.SizeBytes / 1073741824d:0.#} GB" : "size unknown")}" +
                         (package.Files.Count > 1 ? $"   ·   {package.Files.Count} split files" : "") +
                         $"   ·   {package.Downloads:N0} downloads" + (package.IsUncensored ? "   ·   Explicit uncensored / abliterated label" : ""))).ToArray();
+                    var choices = ApplyModelPage(allChoices, sort.SelectedIndex, ref pageCount, ref page, out var shownCount);
                     list.DisplayMemberPath = nameof(ModelScopeGgufPackageChoice.Display);
                     list.ItemsSource = choices;
+                    pageStatus.Text = $"Page {page + 1} of {pageCount} · {shownCount:N0} shown";
                     status.Text = uncensored
                         ? $"Found {packages.Count} ModelScope GGUF package(s) with explicit uncensored/abliterated labels. Files are SHA-256 checked and imported into the local Ollama runtime."
                         : $"Found {packages.Count} regular ModelScope GGUF package(s); explicitly labeled uncensored/abliterated repositories are excluded. Downloads are SHA-256 checked and imported into the local Ollama runtime.";
@@ -3717,6 +3734,8 @@ public sealed partial class MainPage : Page
                     list.ItemsSource = string.IsNullOrWhiteSpace(query.Text) ? Array.Empty<string>() : new[] { query.Text.Trim() };
                     status.Text = "Ollama Library names are entered directly, for example qwen3:8b. Pull downloads the model into the connected local Ollama runtime.";
                 }
+                previousPage.IsEnabled = page > 0;
+                nextPage.IsEnabled = page + 1 < pageCount;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex)
@@ -3730,8 +3749,11 @@ public sealed partial class MainPage : Page
             }
         }
         search.Click += async (_, _) => await RefreshOrSearchAsync();
-        source.SelectionChanged += async (_, _) => await RefreshOrSearchAsync();
-        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 0 or 3) await RefreshOrSearchAsync(); };
+        sort.SelectionChanged += async (_, _) => { page = 0; await RefreshOrSearchAsync(); };
+        previousPage.Click += async (_, _) => { if (page > 0) { page--; await RefreshOrSearchAsync(); } };
+        nextPage.Click += async (_, _) => { if (page + 1 < pageCount) { page++; await RefreshOrSearchAsync(); } };
+        source.SelectionChanged += async (_, _) => { page = 0; await RefreshOrSearchAsync(); };
+        catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 0 or 3) { page = 0; await RefreshOrSearchAsync(); } };
         pin.Click += (_, _) =>
         {
             if (list.SelectedItem is not InstalledModelChoice selected) { status.Text = "Select an installed model first."; return; }
@@ -3880,6 +3902,41 @@ public sealed partial class MainPage : Page
             }
             catch (Exception ex) { status.Text = $"Download failed: {ex.Message}"; }
         }
+    }
+
+    private static T[] ApplyModelPage<T>(IEnumerable<T> source, int sortIndex, ref int pageCount, ref int page, out int shownCount)
+    {
+        var objects = source.Cast<object>();
+        var ordered = sortIndex switch
+        {
+            1 => objects.OrderBy(item => item switch
+            {
+                InstalledModelChoice installed => installed.Model,
+                CatalogModelChoice catalog => catalog.Model.Id,
+                ModelScopeGgufPackageChoice package => package.Package.Repository + "/" + package.Package.Name,
+                _ => item.ToString()
+            }, StringComparer.OrdinalIgnoreCase),
+            2 => objects.OrderByDescending(item => item switch
+            {
+                CatalogModelChoice catalog => catalog.Model.Downloads,
+                ModelScopeGgufPackageChoice package => package.Package.Downloads,
+                InstalledModelChoice installed => 0L,
+                _ => 0L
+            }),
+            3 => objects.OrderByDescending(item => item switch
+            {
+                ModelScopeGgufPackageChoice package => package.Package.SizeBytes,
+                InstalledModelChoice installed => installed.Model.Length,
+                _ => 0L
+            }),
+            _ => objects
+        };
+        var orderedArray = ordered.ToArray();
+        pageCount = Math.Max(1, (int)Math.Ceiling(orderedArray.Length / 100d));
+        page = Math.Clamp(page, 0, pageCount - 1);
+        var pageItems = orderedArray.Skip(page * 100).Take(100).Cast<T>().ToArray();
+        shownCount = pageItems.Length;
+        return pageItems;
     }
 
     private async Task<string> GetRuntimeEndpointAsync(string provider)
