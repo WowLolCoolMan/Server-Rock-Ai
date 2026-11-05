@@ -42,7 +42,7 @@ public sealed partial class MainPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(code, "One-time code to enter on GitHub. It expires after a short time.");
         var verification = new Button { Content = "Open GitHub device sign-in", Visibility = Visibility.Collapsed };
         var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#718187") };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(signInStatus, "GitHub sign-in status");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(signInStatus, "GitHub connection and repository status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite);
         var connect = new Button { Content = "Connect GitHub", IsEnabled = storage.Available, HorizontalAlignment = HorizontalAlignment.Left };
         var cancelSignIn = new Button { Content = "Cancel sign-in", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };

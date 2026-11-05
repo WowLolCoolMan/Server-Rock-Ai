@@ -68,6 +68,7 @@ const requiredGitHubCode = [
   ['GitHub dialog focus by connection state', 'if (_githubCredential is not null && repoPanel.Visibility == Visibility.Visible) FocusRepositoryEntry();\n            else clientId.Focus(FocusState.Programmatic);'],
   ['GitHub device code focus after creation', 'code.Focus(FocusState.Programmatic);'],
   ['GitHub repository chooser accessible label', 'AutomationProperties.SetName(repositoryPicker, "GitHub repositories")'],
+  ['GitHub connection and repository status accessible name', 'AutomationProperties.SetName(signInStatus, "GitHub connection and repository status")'],
   ['GitHub sign-in live status', 'AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite)'],
   ['GitHub canceled sign-in clears one-time controls', 'code.Text = string.Empty;\n            code.Visibility = Visibility.Collapsed;\n            verification.Visibility = Visibility.Collapsed;\n            cancelSignIn.Visibility = Visibility.Collapsed;'],
   ['GitHub sign-in recovery keyboard focus', 'connect.Focus(FocusState.Programmatic);'],
