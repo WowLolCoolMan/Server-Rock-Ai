@@ -903,11 +903,10 @@ public sealed partial class MainPage : Page
             Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 224, 235, 237)),
             IsTextSelectionEnabled = true
         };
-        AutomationProperties.SetName(output, "Project terminal output");
-        AutomationProperties.SetHelpText(output, "Read-only output from the shell running in the active project folder.");
         var outputScroll = new ScrollViewer
         {
             Content = output,
+            IsTabStop = true,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             Background = new SolidColorBrush(ColorHelper.FromArgb(255, 20, 27, 30)),
@@ -915,6 +914,8 @@ public sealed partial class MainPage : Page
             MinHeight = 300,
             MaxHeight = 520
         };
+        AutomationProperties.SetName(outputScroll, "Project terminal output pane");
+        AutomationProperties.SetHelpText(outputScroll, "Scrollable, read-only history from the shell running in the active project folder.");
         var input = new TextBox
         {
             PlaceholderText = "Type a command and press Enter",
