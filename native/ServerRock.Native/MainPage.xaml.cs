@@ -1185,11 +1185,20 @@ public sealed partial class MainPage : Page
             return;
         }
         if (!await ConfirmTemporaryDiscardAsync("create a project")) return;
-        var name = new TextBox { PlaceholderText = "Project name" };
-        var instructions = new TextBox { PlaceholderText = "What should the assistant know about this project?", AcceptsReturn = true, Height = 76, TextWrapping = TextWrapping.Wrap };
+        var name = new TextBox { Header = "Project name", PlaceholderText = "Name this workspace" };
+        AutomationProperties.SetName(name, "Project name");
+        AutomationProperties.SetHelpText(name, "Enter a short name for this Coding Agent workspace.");
+        var instructions = new TextBox { Header = "Project instructions", PlaceholderText = "What should the assistant know about this project?", AcceptsReturn = true, Height = 76, TextWrapping = TextWrapping.Wrap };
+        AutomationProperties.SetName(instructions, "Project instructions");
+        AutomationProperties.SetHelpText(instructions, "Optional guidance that will be available in this project’s Coding Agent conversations.");
         var selectedFolders = new List<string>();
         var foldersLabel = new TextBlock { Text = "No folders selected. The agent cannot read local files until you add a folder.", TextWrapping = TextWrapping.Wrap, Opacity = 0.78 };
+        AutomationProperties.SetName(foldersLabel, "Selected project folders");
+        AutomationProperties.SetHelpText(foldersLabel, "Shows which local folders the Coding Agent can use as project context.");
+        AutomationProperties.SetLiveSetting(foldersLabel, AutomationLiveSetting.Polite);
         var addFolder = new Button { Content = "＋ Add local folder" };
+        AutomationProperties.SetName(addFolder, "Add local project folder");
+        AutomationProperties.SetHelpText(addFolder, "Choose a local folder to make its files available as project context.");
         addFolder.Click += async (_, _) =>
         {
             var path = await PickWorkspaceFolderAsync();
@@ -1202,6 +1211,7 @@ public sealed partial class MainPage : Page
         panel.Children.Add(addFolder);
         panel.Children.Add(foldersLabel);
         var dialog = new ContentDialog { Title = "Create project", Content = panel, PrimaryButtonText = "Create", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
+        dialog.Opened += (_, _) => name.Focus(FocusState.Programmatic);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary || string.IsNullOrWhiteSpace(name.Text)) return;
         SaveCurrentSession();
         ClearPendingAttachments();
@@ -1231,6 +1241,7 @@ public sealed partial class MainPage : Page
         WelcomePanel.Visibility = Visibility.Visible;
         ConversationScroll.Visibility = Visibility.Collapsed;
         UpdateTemporaryControls();
+        PromptBox.Focus(FocusState.Programmatic);
     }
 
     private void RenderProjects()
