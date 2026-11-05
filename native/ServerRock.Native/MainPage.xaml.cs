@@ -66,6 +66,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
     private AppSettings _settings;
     private CompanionState _companionState = new();
+    private CompanionWindow? _companionWindow;
     private string _mode = "ChatBot";
     private string? _project;
     private string? _activeProjectId;
@@ -120,6 +121,7 @@ public sealed partial class MainPage : Page
         RuntimeStatus.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
         {
             var message = RuntimeStatus.Text;
+            _companionWindow?.UpdateStatus(string.IsNullOrWhiteSpace(message) ? "Ready for your next prompt." : message);
             RuntimeStatusBanner.Visibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
             _runtimeStatusTimer.Stop();
             if (!string.IsNullOrWhiteSpace(message) && !IsActionableRuntimeStatus(message)) _runtimeStatusTimer.Start();
@@ -288,7 +290,9 @@ public sealed partial class MainPage : Page
         _companionState = _companionState with { PetId = choice.Id };
         CompanionImage.Source = new SvgImageSource { UriSource = new Uri(choice.AssetUri) };
         CompanionName.Text = choice.Name;
-        CompanionOverlay.Visibility = _companionState.IsVisible ? Visibility.Visible : Visibility.Collapsed;
+        // The companion is a separate desktop window; keep the legacy in-app
+        // overlay hidden so there is only one source of truth for its position.
+        CompanionOverlay.Visibility = Visibility.Collapsed;
         CompanionButton.Content = _companionState.IsVisible ? "◉　Hide pet" : "◉　Show pet";
         AutomationProperties.SetName(CompanionButton, _companionState.IsVisible ? "Hide pet companion" : "Show pet companion");
         if (_companionState.IsVisible) PositionCompanion(persistIfChanged: false);
@@ -362,9 +366,33 @@ public sealed partial class MainPage : Page
     private void ToggleCompanionClick(object sender, RoutedEventArgs e)
     {
         _companionState = _companionState with { IsVisible = !_companionState.IsVisible };
+        if (_companionState.IsVisible)
+        {
+            var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
+            _companionWindow ??= CreateCompanionWindow(choice);
+            _companionWindow.Show();
+        }
+        else
+        {
+            _companionWindow?.Close();
+            CompanionOverlay.Visibility = Visibility.Collapsed;
+        }
         UpdateCompanionDisplay();
         SaveCompanionState();
-        RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible in this app window." : "Pet companion hidden.";
+        RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible in its desktop window." : "Pet companion hidden.";
+    }
+
+    private CompanionWindow CreateCompanionWindow(CompanionChoice choice)
+    {
+        var window = new CompanionWindow(choice.Name, choice.AssetUri, "Ready for your next prompt.");
+        window.Closed += (_, _) =>
+        {
+            _companionState = _companionState with { IsVisible = false };
+            CompanionOverlay.Visibility = Visibility.Collapsed;
+            SaveCompanionState();
+            RuntimeStatus.Text = "Pet companion hidden.";
+        };
+        return window;
     }
 
     private void HideCompanionClick(object sender, RoutedEventArgs e)
@@ -1169,6 +1197,12 @@ public sealed partial class MainPage : Page
 
     private async void MainPageLoaded(object sender, RoutedEventArgs e)
     {
+        if (_companionState.IsVisible)
+        {
+            var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
+            _companionWindow ??= CreateCompanionWindow(choice);
+            _companionWindow.Show();
+        }
         if (_connectionCheckRunning) return;
         _connectionCheckRunning = true;
         try { await RefreshModelConnectionAsync(); }
