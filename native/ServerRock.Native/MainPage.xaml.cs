@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -3301,23 +3302,42 @@ public sealed partial class MainPage : Page
     private async Task ModelLibraryClickAsync()
     {
         var source = new ComboBox { MinWidth = 220 };
+        AutomationProperties.SetName(source, "Model source");
+        AutomationProperties.SetHelpText(source, "Choose a model catalog, installed models, or a direct Ollama model ID.");
         source.Items.Add("AI SuperMarket · Hugging Face GGUF");
         source.Items.Add("Installed models");
         source.Items.Add("Ollama Library");
         source.Items.Add("ModelScope · GGUF");
         source.SelectedIndex = 0;
         var catalogMode = new ComboBox { MinWidth = 220, Visibility = Visibility.Collapsed };
+        AutomationProperties.SetName(catalogMode, "Model catalog category");
+        AutomationProperties.SetHelpText(catalogMode, "Choose regular models or repositories explicitly labeled uncensored or abliterated.");
         catalogMode.Items.Add("Regular models");
         catalogMode.Items.Add("Uncensored / abliterated");
         catalogMode.SelectedIndex = 0;
         var query = new TextBox { PlaceholderText = "Search models by name or capability", MinWidth = 280 };
+        AutomationProperties.SetName(query, "Search models");
+        AutomationProperties.SetHelpText(query, "Search model repositories by name or capability, then activate Search or refresh.");
         var search = new Button { Content = "Search / refresh", MinWidth = 108 };
+        AutomationProperties.SetName(search, "Search or refresh model catalog");
+        AutomationProperties.SetHelpText(search, "Find models matching the search text or refresh installed-model results.");
         var pin = new Button { Content = "Pin / unpin", MinWidth = 88 };
+        AutomationProperties.SetName(pin, "Pin selected installed model");
+        AutomationProperties.SetHelpText(pin, "Add or remove this installed model from the composer hotswapper.");
         var benchmark = new Button { Content = "Benchmark selected", MinWidth = 130 };
+        AutomationProperties.SetName(benchmark, "Benchmark selected model on this PC");
+        AutomationProperties.SetHelpText(benchmark, "Measure response speed for the selected model using this device.");
         var stopBenchmark = new Button { Content = "Stop", MinWidth = 66, IsEnabled = false };
+        AutomationProperties.SetName(stopBenchmark, "Stop model benchmark");
+        AutomationProperties.SetHelpText(stopBenchmark, "Cancel the model benchmark currently running on this device.");
         var list = new ListView { MinHeight = 220, MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = "Id" };
+        AutomationProperties.SetName(list, "Model search results");
+        AutomationProperties.SetHelpText(list, "Select a model to use it, pin it in the composer hotswapper, or benchmark it on this PC.");
         CancellationTokenSource? catalogSearchCancellation = null;
         var status = new TextBlock { Text = $"Connected endpoint: {_settings.Endpoint}", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+        AutomationProperties.SetName(status, "Model library status");
+        AutomationProperties.SetHelpText(status, "Reports model search, download, selection and benchmark progress or errors.");
+        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
         var actionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { query, search } };
         var dialog = new ContentDialog
         {
@@ -3470,7 +3490,9 @@ public sealed partial class MainPage : Page
         list.SelectionChanged += (_, _) =>
         {
             var selected = list.SelectedItem as InstalledModelChoice;
-            pin.Content = selected is not null && ((_settings.PinnedModelConnections ?? []).Any(model => model.Model.Equals(selected.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(selected.Endpoint, StringComparison.OrdinalIgnoreCase)) || (selected.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase) && (_settings.PinnedModels ?? []).Contains(selected.Model, StringComparer.OrdinalIgnoreCase))) ? "Unpin" : "Pin";
+            var isPinned = selected is not null && ((_settings.PinnedModelConnections ?? []).Any(model => model.Model.Equals(selected.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(selected.Endpoint, StringComparison.OrdinalIgnoreCase)) || (selected.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase) && (_settings.PinnedModels ?? []).Contains(selected.Model, StringComparer.OrdinalIgnoreCase)));
+            pin.Content = isPinned ? "Unpin" : "Pin";
+            AutomationProperties.SetName(pin, isPinned ? "Unpin selected model" : "Pin selected model");
             benchmark.IsEnabled = source.SelectedIndex == 1 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
         };
         stopBenchmark.Click += (_, _) => _modelBenchmarkCancellation?.Cancel();
