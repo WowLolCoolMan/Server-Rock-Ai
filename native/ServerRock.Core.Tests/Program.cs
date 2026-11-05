@@ -228,6 +228,16 @@ Check(migratedElectronChats.All(session => session.ProjectId is null && session.
 Check(!migratedElectronChats[0].Archived && migratedElectronChats[0].BaseMessages.Count == 0 && migratedElectronChats[0].Branches.Count == 0 &&
     migratedElectronChats[1].Archived && migratedElectronChats[1].ForkedFrom == "electron-chat-001",
     "Electron archived and fork metadata survives native migration without project context");
+try
+{
+    var oversizedBranches = string.Join(',', Enumerable.Repeat("[]", ConversationArchive.MaxBranchesPerConversation + 1));
+    _ = ConversationArchive.Parse($"[{{\"id\":\"branch-limit\",\"title\":\"Branch limit\",\"messages\":[],\"branches\":[{oversizedBranches}]}}]");
+    throw new Exception("Expected an oversized branch set to be rejected.");
+}
+catch (InvalidDataException)
+{
+    Check(true, "migration rejects oversized Electron branch metadata before import planning");
+}
 var forgedImportMarker = ConversationArchive.Parse("{\"chats\":[{\"id\":\"legacy-forged\",\"importSource\":\"attacker-controlled\",\"importSourceId\":\"untrusted\",\"messages\":[{\"role\":\"user\",\"content\":\"Keep identity local\"}]}]}");
 Check(forgedImportMarker[0].ImportSource == "electron-localstorage" && forgedImportMarker[0].ImportSourceId == "legacy-forged", "import identity is derived locally rather than trusted from the JSON file");
 var electronRoundTrip = ConversationArchive.Parse(ConversationArchive.Serialize(migratedElectronChats));

@@ -49,7 +49,7 @@ public sealed partial class MainPage : Page
     private readonly ComfyImageProvider _comfyImageProvider = new();
     private readonly WebSearchProvider _webSearchProvider = new();
     private readonly JsonSettingsStore _settingsStore = new();
-    private readonly ConversationStore _conversationStore = new();
+    private readonly ConversationStore _conversationStore = new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
     private readonly ProjectStore _projectStore = new();
     private readonly WorkspaceFileEditor _workspaceEditor = new();
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
@@ -59,6 +59,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private List<ChatSession> _sessions = [];
+    private bool _archivedChatsExpanded;
     private List<LocalProject> _projects = [];
     private List<WorkspaceUndoEntry> _workspaceUndoEntries = [];
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
@@ -1552,7 +1553,9 @@ public sealed partial class MainPage : Page
     {
         RecentList.Children.Clear();
         _settings.ChatFolders ??= [];
-        var visibleSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
+        var modeSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
+        var visibleSessions = modeSessions.Where(item => !item.Archived).ToArray();
+        var archivedSessions = modeSessions.Where(item => item.Archived).ToArray();
         ChatFolderList.Children.Clear();
         _settings.ChatFolders = _settings.ChatFolders
             .Where(name => !string.IsNullOrWhiteSpace(name))
@@ -1618,6 +1621,33 @@ public sealed partial class MainPage : Page
                 FontSize = 11,
                 Margin = new Thickness(8, 4, 8, 4)
             });
+
+        if (archivedSessions.Length > 0)
+        {
+            var archivedHeader = new Button
+            {
+                Content = $"{(_archivedChatsExpanded ? "▾" : "▸")}　Archived　{archivedSessions.Length}",
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 231, 245, 247)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 82, 111, 119)),
+                Padding = new Thickness(8, 7, 8, 7),
+                CornerRadius = new CornerRadius(8),
+                Margin = new Thickness(0, 10, 0, 0)
+            };
+            AutomationProperties.SetName(archivedHeader, $"{(_archivedChatsExpanded ? "Collapse" : "Expand")} archived chats, {archivedSessions.Length} chats");
+            archivedHeader.Click += (_, _) =>
+            {
+                _archivedChatsExpanded = !_archivedChatsExpanded;
+                RenderRecent();
+            };
+            RecentList.Children.Add(archivedHeader);
+            if (_archivedChatsExpanded)
+            {
+                var archivedList = new StackPanel { Margin = new Thickness(8, 3, 0, 4), Spacing = 3 };
+                foreach (var session in archivedSessions) archivedList.Children.Add(CreateRecentRow(session));
+                RecentList.Children.Add(archivedList);
+            }
+        }
     }
 
     private Grid CreateRecentRow(ChatSession session)
@@ -1715,10 +1745,13 @@ public sealed partial class MainPage : Page
         var menu = new MenuFlyout();
         var rename = new MenuFlyoutItem { Text = "Rename chat", Tag = sessionId };
         rename.Click += async (_, _) => await RenameSessionAsync(sessionId);
+        var archive = new MenuFlyoutItem { Text = session.Archived ? "Restore from archive" : "Archive chat", Tag = sessionId };
+        archive.Click += (_, _) => ToggleSessionArchive(sessionId);
         var delete = new MenuFlyoutItem { Text = "Delete chat", Tag = sessionId };
         delete.Click += async (_, _) => await DeleteSessionAsync(sessionId);
         menu.Items.Add(rename);
-        if (_settings.ChatFolders.Count > 0)
+        menu.Items.Add(archive);
+        if (!session.Archived && _settings.ChatFolders.Count > 0)
         {
             menu.Items.Add(new MenuFlyoutSeparator());
             foreach (var folder in _settings.ChatFolders)
@@ -1737,6 +1770,29 @@ public sealed partial class MainPage : Page
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(delete);
         menu.ShowAt((FrameworkElement)sender);
+    }
+
+    private void ToggleSessionArchive(string sessionId)
+    {
+        if (_requestCancellation is not null)
+        {
+            RuntimeStatus.Text = "Wait for the current response to finish before archiving or restoring a chat.";
+            return;
+        }
+        var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
+        if (session is null) return;
+        if (_activeSessionId == sessionId) SaveCurrentSession();
+        var wasArchived = session.Archived;
+        session.Archived = !wasArchived;
+        if (!PersistConversationEdits())
+        {
+            session.Archived = wasArchived;
+            RenderRecent();
+            return;
+        }
+        _archivedChatsExpanded = session.Archived;
+        RenderRecent();
+        RuntimeStatus.Text = session.Archived ? "Chat moved to Archived." : "Chat restored to Recents.";
     }
 
     private async void NewChatFolderClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(CreateChatFolderAsync); }
