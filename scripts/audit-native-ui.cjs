@@ -58,6 +58,8 @@ const requiredCode = [
   ['Project terminal state live announcements', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
 ];
 const requiredGitHubCode = [
+  ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
+  ['GitHub review status polite announcements', 'AutomationProperties.SetLiveSetting(actionStatus, AutomationLiveSetting.Polite)'],
   ['GitHub review initial focus registration', 'dialog.Opened += (_, _) => FocusInitialReviewTarget();'],
   ['GitHub review first selectable file focus', 'var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);'],
   ['GitHub commit/push launcher focus return', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],

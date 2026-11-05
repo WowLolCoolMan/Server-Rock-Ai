@@ -523,6 +523,8 @@ public sealed partial class MainPage
         ScrollViewer.SetVerticalScrollBarVisibility(previewDiff, ScrollBarVisibility.Auto);
         var commitMessage = new TextBox { Header = "Commit message", PlaceholderText = "Describe these changes", MaxLength = 256 };
         var actionStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = ThemeBrush("TextFillColorSecondaryBrush", "#718187") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(actionStatus, "GitHub changes status");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(actionStatus, AutomationLiveSetting.Polite);
         var preview = new Button { Content = "Preview selected diff", HorizontalAlignment = HorizontalAlignment.Left };
         var action = new Button { HorizontalAlignment = HorizontalAlignment.Left };
         var cancelOperation = new Button { Content = "Cancel current operation", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
