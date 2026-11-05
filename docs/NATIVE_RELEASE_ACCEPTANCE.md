@@ -6,6 +6,16 @@ This is the release handoff checklist for the Uno/.NET desktop migration. It dis
 
 Run the **Native desktop artifacts** GitHub Actions workflow manually. It publishes self-contained `net10.0-desktop` x64 builds on matching Windows and Ubuntu runners, archives the outputs, generates SHA-256 checksums, and stores the archives as short-lived workflow artifacts. The workflow does not create a GitHub Release, sign binaries, or run installers. Build commands follow the [Uno desktop publishing guide](https://platform.uno/docs/articles/uno-publishing-desktop.html); self-contained RID-specific deployment bundles the .NET runtime, not all native OS libraries.
 
+## Evidence ledger
+
+| Gate | Evidence on this host | Still required before native retirement |
+|---|---|---|
+| Native build and Core behavior | Windows desktop/Windows App SDK builds and the native Core suite pass; the full Electron/Playwright suite passes 95 tests. | Repeat from the exact release artifacts in CI and attach immutable checksums. |
+| Windows runtime | Windows 11 unpackaged and isolated temporary-profile smoke runs have opened the native app; branch navigation and contextual Fork are verified against disposable data. | Run the packaged artifact through clean install, upgrade, uninstall, data-retention, and rollback checks. Verify keyboard focus and narrow layouts from the packaged build. |
+| Linux runtime | Ubuntu 24.04 WSL2/WSLg build and initial launch evidence exists; WSL portal/EWMH warnings remain. | Run the packaged artifact on a real Ubuntu desktop plus Debian, Arch, and Fedora; record native-library prerequisites and clean launch/exit behavior. |
+| Electron history migration | Isolated Playwright export tests and Core importer tests prove chats-only export, secret/path exclusion, bounded parsing, metadata preservation, no-write planning, idempotent re-import, and fork/archive independence. | Use a user-provided real Electron export on Windows and Linux; verify native picker preview, Cancel, confirm, restart, duplicate protection, and edited-chat preservation. The native picker/focus UI automation path is currently unstable. |
+| Signing and recovery | No signing identity, installer, auto-update, rollback mechanism, or reproducible-build attestation is configured. | Choose signing/release credentials, produce trusted installers, define rollback, and verify checksums/signatures from the exact published artifacts. |
+
 Local verification on 2026-11-04 (Windows 11 Pro, x64, .NET SDK 10.0.401):
 
 - `dotnet publish native/ServerRock.Native/ServerRock.Native.csproj -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true --output <temp>` succeeded.
