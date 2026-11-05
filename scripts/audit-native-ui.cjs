@@ -72,6 +72,8 @@ const requiredGitHubCode = [
   ['GitHub manual repository format validation', '_ = GitHubApiClient.ParseRepositoryReference(candidate);'],
   ['GitHub invalid reference feedback on blur', 'repositoryReference.LostFocus += (_, _) => UpdateCloneAvailability(revealRepositoryError: true);'],
   ['GitHub repository validation accessible name', 'AutomationProperties.SetName(repositoryValidation, "Repository format guidance")'],
+  ['GitHub repository error polite announcement', 'AutomationProperties.SetLiveSetting(repositoryValidation, AutomationLiveSetting.Polite)'],
+  ['GitHub validation visible before announcement', 'repositoryValidation.Visibility = Visibility.Visible;\n                repositoryValidation.Text = validationError;'],
   ['GitHub destination readiness update', 'parentPath.TextChanged += (_, _) => UpdateCloneAvailability();'],
   ['GitHub clone progress live status', 'AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite)'],
   ['GitHub clone retry focus recovery', 'if (workspaceDialogOpen)\n                {\n                    DispatcherQueue.TryEnqueue(() =>\n                    {\n                        if (clone.IsEnabled && clone.Focus(FocusState.Programmatic)) return;\n                        FocusRepositoryEntry();'],

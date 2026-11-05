@@ -55,6 +55,7 @@ public sealed partial class MainPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryReference, "Enter owner/name or an HTTPS GitHub repository URL.");
         var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#a64242") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryValidation, "Repository format guidance");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(repositoryValidation, AutomationLiveSetting.Polite);
         var refreshRepositories = new Button { Content = "Refresh repositories", HorizontalAlignment = HorizontalAlignment.Left };
         var parentPath = new TextBox
         {
@@ -123,8 +124,8 @@ public sealed partial class MainPage
             }
             if (validationError is not null && (revealRepositoryError || validationWasVisible))
             {
-                repositoryValidation.Text = validationError;
                 repositoryValidation.Visibility = Visibility.Visible;
+                repositoryValidation.Text = validationError;
             }
             else if (validationError is null)
             {
