@@ -634,8 +634,17 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = destination switch { "images" => "Image generation is not connected yet", "activity" => "Recent conversations are being migrated", _ => $"⌖　{_settings.Endpoint}" };
     }
 
-    private async void ChatModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("ChatBot")); }
-    private async void CodingModeClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(() => SwitchModeAsync("Coding Agent")); }
+    private async void ChatModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("ChatBot");
+    private async void CodingModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("Coding Agent");
+
+    private async Task SwitchModeFromSidebarAsync(string mode)
+    {
+        var returnToComposer = _compactNavigation && Sidebar.Visibility == Visibility.Visible;
+        CloseCompactSidebar();
+        await RunUiActionAsync(() => SwitchModeAsync(mode));
+        if (returnToComposer)
+            DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));
+    }
 
     private void AppKeyDown(object sender, KeyRoutedEventArgs e)
     {

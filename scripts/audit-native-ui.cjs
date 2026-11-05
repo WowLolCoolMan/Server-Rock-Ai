@@ -31,6 +31,9 @@ const requiredCode = [
   ['Model library focus return', 'OpenModelLibraryAndRestoreFocusAsync(returnToCompactSidebar, sender as Control)'],
   ['Model hotswap library focus', 'OpenModelLibraryAndRestoreFocusAsync(false, ModelButton)'],
   ['Slash model library focus', 'OpenModelLibraryAndRestoreFocusAsync(false, PromptBox)'],
+  ['Chat mode drawer focus return', 'SwitchModeFromSidebarAsync("ChatBot")'],
+  ['Coding Agent drawer focus return', 'SwitchModeFromSidebarAsync("Coding Agent")'],
+  ['Compact workspace focus restoration', 'DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
 ];
 
 const missing = [
