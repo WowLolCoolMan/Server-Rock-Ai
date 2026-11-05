@@ -1818,7 +1818,6 @@ public sealed partial class MainPage : Page
 
     private void RecentActionsClick(object sender, RoutedEventArgs e)
     {
-        CloseCompactSidebar();
         if (sender is not Button { Tag: string sessionId }) return;
         if (_requestCancellation is not null)
         {
