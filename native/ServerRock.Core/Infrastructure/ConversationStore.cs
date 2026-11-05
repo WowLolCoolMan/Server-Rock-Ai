@@ -21,7 +21,20 @@ public sealed class ConversationStore
         if (!File.Exists(_path)) return [];
         try
         {
-            return JsonSerializer.Deserialize<List<ChatSession>>(BoundedFileReader.ReadText(_path), Options) ?? [];
+            var sessions = JsonSerializer.Deserialize<List<ChatSession>>(BoundedFileReader.ReadText(_path), Options) ?? [];
+            foreach (var session in sessions)
+            {
+                if (session is null) throw new InvalidDataException("Saved conversations contain an empty entry. The original file was left untouched.");
+                // Older native files and manually recovered JSON can contain
+                // explicit nulls despite the model defaults. Restore only the
+                // fields required by the native UI; import markers stay intact
+                // so Electron migration retries remain idempotent.
+                session.Id ??= Guid.NewGuid().ToString("N");
+                session.Title ??= "New chat";
+                session.Messages ??= [];
+                session.Mode ??= "ChatBot";
+            }
+            return sessions;
         }
         catch (JsonException error)
         {
