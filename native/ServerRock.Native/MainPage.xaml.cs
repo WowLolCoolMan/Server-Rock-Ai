@@ -74,6 +74,7 @@ public sealed partial class MainPage : Page
     private int? _editingMessageIndex;
     private readonly HashSet<string> _collapsedChatFolders = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Button> _recentActionButtons = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Button> _chatFolderActionButtons = new(StringComparer.OrdinalIgnoreCase);
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
@@ -1649,6 +1650,7 @@ public sealed partial class MainPage : Page
     {
         RecentList.Children.Clear();
         _recentActionButtons.Clear();
+        _chatFolderActionButtons.Clear();
         _settings.ChatFolders ??= [];
         var modeSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
         var visibleSessions = modeSessions.Where(item => !item.Archived).ToArray();
@@ -1689,6 +1691,7 @@ public sealed partial class MainPage : Page
             };
             AutomationProperties.SetName(more, $"Actions for chat folder {folder}");
             more.Click += ChatFolderActionsClick;
+            _chatFolderActionButtons[folder] = more;
             var header = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto } } };
             header.Children.Add(open);
             Grid.SetColumn(more, 1);
@@ -2052,35 +2055,67 @@ public sealed partial class MainPage : Page
 
     private void ChatFolderActionsClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string folder }) return;
+        if (sender is not Button { Tag: string folder } trigger) return;
         if (_requestCancellation is not null)
         {
             RuntimeStatus.Text = "Wait for the current response to finish before organizing chats.";
             return;
         }
         var menu = new MenuFlyout();
+        var actionSelected = false;
+
+        void RestoreFolderFocus() => DispatcherQueue.TryEnqueue(() => FocusChatFolderActionOrFallback(folder));
+
+        async Task RunFolderActionAsync(Func<Task> action)
+        {
+            actionSelected = true;
+            try { await action(); }
+            finally { RestoreFolderFocus(); }
+        }
+
         var newChat = new MenuFlyoutItem { Text = "New chat in this folder", Tag = folder };
         newChat.Click += (_, _) =>
         {
+            actionSelected = true;
             if (_requestCancellation is not null)
             {
                 RuntimeStatus.Text = "Wait for the current response to finish before starting a chat in a folder.";
+                RestoreFolderFocus();
                 return;
             }
             NewChatClick(this, new RoutedEventArgs());
             _activeChatFolder = folder;
             UpdateTemporaryControls();
             RuntimeStatus.Text = $"New chat will be filed under “{folder}”.";
+            PromptBox.Focus(FocusState.Programmatic);
         };
         var rename = new MenuFlyoutItem { Text = "Rename folder", Tag = folder };
-        rename.Click += async (_, _) => await RenameChatFolderAsync(folder);
+        rename.Click += async (_, _) => await RunFolderActionAsync(() => RenameChatFolderAsync(folder));
         var delete = new MenuFlyoutItem { Text = "Delete folder", Tag = folder };
-        delete.Click += async (_, _) => await DeleteChatFolderAsync(folder);
+        delete.Click += async (_, _) => await RunFolderActionAsync(() => DeleteChatFolderAsync(folder));
         menu.Items.Add(newChat);
         menu.Items.Add(rename);
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(delete);
-        menu.ShowAt((FrameworkElement)sender);
+        menu.Closed += (_, _) =>
+        {
+            if (!actionSelected) RestoreFolderFocus();
+        };
+        menu.ShowAt(trigger);
+    }
+
+    private void FocusChatFolderActionOrFallback(string folder)
+    {
+        var survivingFolder = _settings.ChatFolders.FirstOrDefault(name => name.Equals(folder, StringComparison.OrdinalIgnoreCase));
+        if (survivingFolder is not null && _chatFolderActionButtons.TryGetValue(survivingFolder, out var trigger) &&
+            trigger.Visibility == Visibility.Visible && trigger.IsEnabled && trigger.Focus(FocusState.Programmatic))
+            return;
+
+        var folderFallback = _chatFolderActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (folderFallback?.Focus(FocusState.Programmatic) == true) return;
+        var chatFallback = _recentActionButtons.Values.FirstOrDefault(button => button.Visibility == Visibility.Visible && button.IsEnabled);
+        if (chatFallback?.Focus(FocusState.Programmatic) == true) return;
+        NewConversationButton.Focus(FocusState.Programmatic);
     }
 
     private async Task RenameChatFolderAsync(string oldName)
