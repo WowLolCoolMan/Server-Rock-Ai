@@ -314,6 +314,14 @@ public sealed partial class MainPage
                 cancelClone.Visibility = Visibility.Collapsed;
                 chooseParent.IsEnabled = true;
                 UpdateCloneAvailability();
+                if (workspaceDialogOpen)
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (clone.IsEnabled && clone.Focus(FocusState.Programmatic)) return;
+                        FocusRepositoryEntry();
+                    });
+                }
             }
         };
 

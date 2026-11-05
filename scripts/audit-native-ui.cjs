@@ -71,6 +71,7 @@ const requiredGitHubCode = [
   ['GitHub manual repository readiness update', 'repositoryReference.TextChanged += (_, _) => UpdateCloneAvailability();'],
   ['GitHub destination readiness update', 'parentPath.TextChanged += (_, _) => UpdateCloneAvailability();'],
   ['GitHub clone progress live status', 'AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite)'],
+  ['GitHub clone retry focus recovery', 'if (workspaceDialogOpen)\n                {\n                    DispatcherQueue.TryEnqueue(() =>\n                    {\n                        if (clone.IsEnabled && clone.Focus(FocusState.Programmatic)) return;\n                        FocusRepositoryEntry();'],
 ];
 
 const missing = [
