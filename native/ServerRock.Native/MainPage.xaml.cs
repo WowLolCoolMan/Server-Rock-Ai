@@ -3795,6 +3795,23 @@ public sealed partial class MainPage : Page
 
     private async void AdvancedClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(AdvancedClickAsync);
 
+    private void ComposerToolsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement anchor) return;
+        var menu = new MenuFlyout();
+        var imageStudio = new MenuFlyoutItem { Text = "Image studio" };
+        AutomationProperties.SetName(imageStudio, "Open local image studio");
+        AutomationProperties.SetHelpText(imageStudio, "Generate images with your configured local ComfyUI workflow.");
+        imageStudio.Click += async (_, _) => await RunUiActionAsync(ImageStudioAsync);
+        var advanced = new MenuFlyoutItem { Text = "Advanced response controls" };
+        AutomationProperties.SetName(advanced, "Open advanced generation controls");
+        AutomationProperties.SetHelpText(advanced, "Adjust response temperature and reset it to the recommended value.");
+        advanced.Click += async (_, _) => await RunUiActionAsync(AdvancedClickAsync);
+        menu.Items.Add(imageStudio);
+        menu.Items.Add(advanced);
+        menu.ShowAt(anchor);
+    }
+
     private async Task AdvancedClickAsync()
     {
         var temperatureValue = new TextBlock
