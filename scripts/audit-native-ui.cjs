@@ -39,6 +39,8 @@ const requiredCode = [
   ['Project folder dialog focus return', 'if (managesExistingProject)\n                RestoreNavigationDialogFocus(false, sender as Control);'],
   ['Project file editor opening focus', 'dialog.Opened += (_, _) => editor.Focus(FocusState.Programmatic);'],
   ['Project file selection focus restoration', 'finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }'],
+  ['Terminal input opening focus', 'dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);'],
+  ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
 ];
 
 const missing = [

@@ -876,7 +876,11 @@ public sealed partial class MainPage : Page
         return endpoint + "\n" + Convert.ToHexString(hash.GetHashAndReset());
     }
 
-    private async void OpenTerminalClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(OpenTerminalClickAsync);
+    private async void OpenTerminalClick(object sender, RoutedEventArgs e)
+    {
+        try { await RunUiActionAsync(OpenTerminalClickAsync); }
+        finally { RestoreNavigationDialogFocus(false, sender as Control); }
+    }
 
     private async Task OpenTerminalClickAsync()
     {
@@ -945,6 +949,7 @@ public sealed partial class MainPage : Page
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot
         };
+        dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);
         var queuedRender = 0;
         void RenderTerminal()
         {
