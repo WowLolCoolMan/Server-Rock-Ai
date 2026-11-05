@@ -828,6 +828,11 @@ try
             ImportSource = "electron-localstorage",
             ImportSourceId = "electron-chat-001",
             Title = "Ollama startup notes",
+            Archived = true,
+            ForkedFrom = "electron-chat-parent",
+            BaseMessages = [new ChatMessage("user", "Original question")],
+            Branches = [[new ChatMessage("user", "Alternative question"), new ChatMessage("assistant", "Alternative answer")]],
+            BranchIndex = 1,
             Messages = [new ChatMessage("user", "How do I check whether Ollama is running?"), new ChatMessage("assistant", "Check the local Ollama service and request its model list.")]
         }
     ]);
@@ -843,6 +848,10 @@ try
     Check(restoredChats[0].FolderName == "Research", "conversation folder assignment survives save and reload");
     Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
     Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
+    Check(restoredChats[2].Archived && restoredChats[2].ForkedFrom == "electron-chat-parent" && restoredChats[2].BranchIndex == 1 &&
+          restoredChats[2].BaseMessages is [{ Role: "user", Content: "Original question" }] &&
+          restoredChats[2].Branches is [[{ Role: "user", Content: "Alternative question" }, { Role: "assistant", Content: "Alternative answer" }]],
+        "archived fork and branch metadata survives native history persistence");
     var nullableConversationPath = Path.Combine(settingsDirectory, "nullable-conversations.json");
     File.WriteAllText(nullableConversationPath, "[{\"id\":null,\"title\":null,\"messages\":null,\"baseMessages\":null,\"branches\":null,\"mode\":null,\"importSource\":\"electron-localstorage\",\"importSourceId\":\"legacy-chat\"}]");
     var normalizedConversation = new ConversationStore(nullableConversationPath).Load().Single();
