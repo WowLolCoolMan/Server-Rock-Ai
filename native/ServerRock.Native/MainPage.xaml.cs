@@ -92,9 +92,9 @@ public sealed partial class MainPage : Page
     private CancellationTokenSource? _modelBenchmarkCancellation;
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
 
-    // Match the minimum practical desktop window width imposed by the current
-    // chat controls, so a split-window layout can still open navigation as a drawer.
-    private const double CompactNavigationBreakpoint = 1200;
+    // A 1280px snapped window is a common working width; use a drawer so the
+    // conversation area stays comfortable beside the navigation controls.
+    private const double CompactNavigationBreakpoint = 1320;
 
     public MainPage()
     {
@@ -537,6 +537,21 @@ public sealed partial class MainPage : Page
 
     private void AppKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        var controlPressed = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var shiftPressed = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        if (controlPressed && shiftPressed && e.Key == Windows.System.VirtualKey.E && _compactNavigation)
+        {
+            e.Handled = true;
+            if (Sidebar.Visibility == Visibility.Visible) CloseCompactSidebar();
+            else ToggleSidebarClick(sender, e);
+            return;
+        }
+
         if (e.Key == Windows.System.VirtualKey.Escape && _compactNavigation && Sidebar.Visibility == Visibility.Visible)
         {
             e.Handled = true;
@@ -544,9 +559,6 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        var controlPressed = Microsoft.UI.Input.InputKeyboardSource
-            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
-            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
         if (controlPressed && e.Key == Windows.System.VirtualKey.L)
         {
             e.Handled = true;
