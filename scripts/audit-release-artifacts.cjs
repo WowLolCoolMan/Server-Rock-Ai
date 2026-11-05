@@ -27,7 +27,11 @@ const files = fs.readdirSync(dist).filter((entry) => {
   return fs.statSync(fullPath).isFile();
 });
 
-const candidates = files.filter((entry) => entry.includes(`-${version}-`) && entry.includes(`-${arch}.`));
+// NSIS setup names intentionally omit the architecture; portable/macOS/Linux
+// artifacts may include it. Match the immutable release version and validate
+// the platform's complete expected extension set instead of assuming one name
+// shape across every electron-builder target.
+const candidates = files.filter((entry) => entry.includes(version));
 const missing = expected[platform].filter((extension) => !candidates.some((entry) => entry.endsWith(extension)));
 if (missing.length > 0) {
   console.error(`Missing expected ${platform}/${arch} artifact(s): ${missing.join(', ')}`);
