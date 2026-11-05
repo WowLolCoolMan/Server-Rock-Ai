@@ -53,6 +53,7 @@ public sealed partial class MainPage : Page
         ("/rename", "Rename the current saved chat"),
         ("/delete", "Delete the current saved chat"),
         ("/project", "Open a local project context"),
+        ("/reverse-engineer", "Analyze the active project and produce a structured architecture report"),
         ("/newproject", "Create a named project and choose its folders"),
         ("/folders", "Manage folders for the active project"),
         ("/settings", "Configure the model connection"),
@@ -4834,6 +4835,7 @@ public sealed partial class MainPage : Page
                 else await DeleteSessionAsync(_activeSessionId);
                 break;
             case "/project": await ChooseProjectAsync(); break;
+            case "/reverse-engineer": case "/reserse-engineer": await ReverseEngineerAsync(); break;
             case "/newproject": await NewProjectClickAsync(); break;
             case "/folders": await ProjectFoldersClickAsync(); break;
             case "/settings": case "/connect": await SettingsDialogAsync(); break;
@@ -4870,6 +4872,22 @@ public sealed partial class MainPage : Page
             default: RuntimeStatus.Text = "Unknown command. Type / to see available commands."; break;
         }
         PromptBox.Focus(FocusState.Programmatic);
+    }
+
+    private async Task ReverseEngineerAsync()
+    {
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        if (project is null || project.FolderPaths.Count == 0)
+        {
+            RuntimeStatus.Text = "Choose a project with at least one local folder before running reverse engineering.";
+            await ChooseProjectAsync();
+            project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+            if (project is null || project.FolderPaths.Count == 0) return;
+        }
+        if (_mode != "Coding Agent") await SwitchModeAsync("Coding Agent");
+        PromptBox.Text = "Reverse-engineer this project as a senior software archaeologist. Inspect the selected project files and produce a clear report with: (1) system purpose and user workflows, (2) architecture and module boundaries, (3) runtime/data flow, (4) persistence and external integrations, (5) entry points and important commands, (6) testing and release posture, (7) risks, inconsistencies, and likely failure points, and (8) a prioritized improvement plan. Cite relevant file paths and distinguish observed facts from reasonable inferences. Do not modify files or run destructive commands.";
+        PromptBox.Focus(FocusState.Programmatic);
+        SendClick(this, new RoutedEventArgs());
     }
 
     private async Task ChooseProjectAsync()
