@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
@@ -31,18 +32,26 @@ public sealed partial class MainPage
             PlaceholderText = "Iv1…",
             MaxLength = 80
         };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clientId, "GitHub App client ID");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(clientId, "Enter the public client ID for the GitHub App configured for device sign-in.");
         var storage = _githubCredentialStore.GetStatus();
         var storageMessage = new TextBlock { Text = storage.Message, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#718187") };
         var connection = new TextBlock { Text = "Not connected", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#35494d") };
         var code = new TextBox { IsReadOnly = true, FontSize = 24, TextAlignment = TextAlignment.Center, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), Visibility = Visibility.Collapsed };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(code, "GitHub device sign-in code");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(code, "One-time code to enter on GitHub. It expires after a short time.");
         var verification = new Button { Content = "Open GitHub device sign-in", Visibility = Visibility.Collapsed };
         var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#718187") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(signInStatus, "GitHub sign-in status");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite);
         var connect = new Button { Content = "Connect GitHub", IsEnabled = storage.Available, HorizontalAlignment = HorizontalAlignment.Left };
         var cancelSignIn = new Button { Content = "Cancel sign-in", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
         var disconnect = new Button { Content = "Remove saved connection", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
         var repositoryPicker = new ComboBox { PlaceholderText = "Choose a repository", HorizontalAlignment = HorizontalAlignment.Stretch, IsTextSearchEnabled = true };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryPicker, "GitHub repositories");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryPicker, "Choose a repository available to this GitHub App. You can also enter its owner and name below.");
         var repositoryReference = new TextBox { Header = "Repository", PlaceholderText = "owner/name or https://github.com/owner/name" };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryReference, "Repository to clone");
         var refreshRepositories = new Button { Content = "Refresh repositories", HorizontalAlignment = HorizontalAlignment.Left };
         var parentPath = new TextBox
         {
@@ -85,9 +94,23 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
 
+        var workspaceDialogOpen = false;
         CancellationTokenSource? cloneCancellation = null;
+        void FocusRepositoryEntry()
+        {
+            if (repositoryPicker.Items.Count > 0 && repositoryPicker.Focus(FocusState.Programmatic)) return;
+            repositoryReference.Focus(FocusState.Programmatic);
+        }
+
+        dialog.Opened += (_, _) =>
+        {
+            workspaceDialogOpen = true;
+            if (_githubCredential is not null && repoPanel.Visibility == Visibility.Visible) FocusRepositoryEntry();
+            else clientId.Focus(FocusState.Programmatic);
+        };
         dialog.Closed += (_, _) =>
         {
+            workspaceDialogOpen = false;
             _githubAuthorizationCancellation?.Cancel();
             cloneCancellation?.Cancel();
         };
@@ -119,7 +142,11 @@ public sealed partial class MainPage
             {
                 signInStatus.Text = $"Repository list could not be loaded: {exception.Message} You can still enter owner/name manually if the app has access.";
             }
-            finally { refreshRepositories.IsEnabled = true; }
+            finally
+            {
+                refreshRepositories.IsEnabled = true;
+                if (workspaceDialogOpen) FocusRepositoryEntry();
+            }
         }
 
         async Task ConnectAccountAsync(GitHubUserCredential credential)
@@ -161,6 +188,7 @@ public sealed partial class MainPage
                 var authorization = await _githubDeviceFlow.BeginAsync(configuredClientId);
                 code.Text = authorization.UserCode;
                 code.Visibility = Visibility.Visible;
+                code.Focus(FocusState.Programmatic);
                 verification.Visibility = Visibility.Visible;
                 cancelSignIn.Visibility = Visibility.Visible;
                 signInStatus.Text = "Enter the code in GitHub. This app will check for approval automatically.";

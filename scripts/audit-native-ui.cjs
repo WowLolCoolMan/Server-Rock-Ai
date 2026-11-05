@@ -61,6 +61,12 @@ const requiredGitHubCode = [
   ['GitHub review initial focus registration', 'dialog.Opened += (_, _) => FocusInitialReviewTarget();'],
   ['GitHub review first selectable file focus', 'var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);'],
   ['GitHub commit/push launcher focus return', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
+  ['GitHub client ID accessible label', 'AutomationProperties.SetName(clientId, "GitHub App client ID")'],
+  ['GitHub dialog focus by connection state', 'if (_githubCredential is not null && repoPanel.Visibility == Visibility.Visible) FocusRepositoryEntry();\n            else clientId.Focus(FocusState.Programmatic);'],
+  ['GitHub device code focus after creation', 'code.Focus(FocusState.Programmatic);'],
+  ['GitHub repository chooser accessible label', 'AutomationProperties.SetName(repositoryPicker, "GitHub repositories")'],
+  ['GitHub sign-in live status', 'AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite)'],
+  ['GitHub repository focus after refresh', 'if (workspaceDialogOpen) FocusRepositoryEntry();'],
 ];
 
 const missing = [
