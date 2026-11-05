@@ -104,6 +104,7 @@ public sealed partial class MainPage
 
         var workspaceDialogOpen = false;
         var cloneInProgress = false;
+        var destinationErrorVisible = false;
         CancellationTokenSource? cloneCancellation = null;
         void UpdateCloneAvailability(bool revealRepositoryError = false)
         {
@@ -112,12 +113,13 @@ public sealed partial class MainPage
                 candidate = selectedRepository;
             var validationWasVisible = repositoryValidation.Visibility == Visibility.Visible;
             var hasValidRepository = false;
+            string? repositoryFullName = null;
             string? validationError = null;
             if (candidate.Length > 0)
             {
                 try
                 {
-                    _ = GitHubApiClient.ParseRepositoryReference(candidate);
+                    repositoryFullName = GitHubApiClient.ParseRepositoryReference(candidate);
                     hasValidRepository = true;
                 }
                 catch (ArgumentException exception) { validationError = exception.Message; }
@@ -132,7 +134,40 @@ public sealed partial class MainPage
                 repositoryValidation.Text = string.Empty;
                 repositoryValidation.Visibility = Visibility.Collapsed;
             }
-            clone.IsEnabled = _githubCredential is not null && hasValidRepository && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;
+
+            var destinationReady = true;
+            if (hasValidRepository && !string.IsNullOrWhiteSpace(parentPath.Text))
+            {
+                try
+                {
+                    var repositoryName = repositoryFullName!.Split('/')[1];
+                    var destination = Path.Combine(Path.GetFullPath(parentPath.Text.Trim()), repositoryName);
+                    var destinationIsNonEmpty = Directory.Exists(destination) && Directory.EnumerateFileSystemEntries(destination).Any();
+                    if (File.Exists(destination) || destinationIsNonEmpty)
+                    {
+                        destinationReady = false;
+                        destinationErrorVisible = true;
+                        cloneStatus.Text = $"A file or non-empty folder already exists at {destination}. Choose another parent folder to retry.";
+                    }
+                    else if (destinationErrorVisible)
+                    {
+                        destinationErrorVisible = false;
+                        cloneStatus.Text = string.Empty;
+                    }
+                }
+                catch (Exception exception) when (exception is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException)
+                {
+                    destinationReady = false;
+                    destinationErrorVisible = true;
+                    cloneStatus.Text = $"Cannot use this clone destination: {exception.Message}";
+                }
+            }
+            else if (destinationErrorVisible)
+            {
+                destinationErrorVisible = false;
+                cloneStatus.Text = string.Empty;
+            }
+            clone.IsEnabled = _githubCredential is not null && hasValidRepository && destinationReady && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;
         }
 
         void FocusRepositoryEntry()
