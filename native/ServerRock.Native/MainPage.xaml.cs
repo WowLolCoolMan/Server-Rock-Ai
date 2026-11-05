@@ -919,6 +919,8 @@ public sealed partial class MainPage : Page
             FontFamily = new FontFamily("Consolas, Cascadia Mono, monospace"),
             IsEnabled = false
         };
+        AutomationProperties.SetName(input, "Project terminal input");
+        AutomationProperties.SetHelpText(input, "Type into the shell running in the active project folder. Commands use your account permissions on this device.");
         var status = new TextBlock { Text = "Starting project shell…", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 122, 127)) };
         var cancel = new CancellationTokenSource();
         WorkspaceTerminalSession? session = null;

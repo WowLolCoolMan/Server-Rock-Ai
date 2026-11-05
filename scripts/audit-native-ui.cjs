@@ -41,6 +41,7 @@ const requiredCode = [
   ['Project file selection focus restoration', 'finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }'],
   ['Terminal input opening focus', 'dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);'],
   ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
+  ['Terminal focused input accessible name', 'AutomationProperties.SetName(input, "Project terminal input")'],
   ['Command review accessible preview', 'AutomationProperties.SetName(commandText, "Exact project command to run")'],
   ['Command review opening focus', 'dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);'],
   ['Command review cancel focus target', 'Control focusAfterReview = reviewButton;'],
