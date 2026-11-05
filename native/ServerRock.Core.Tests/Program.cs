@@ -211,6 +211,14 @@ var portableArchive = ConversationArchive.Parse(ConversationArchive.Serialize([p
 Check(portableArchive.Count == 1 && portableArchive[0].Mode == "Coding Agent" && portableArchive[0].ProjectInstructions == "Keep changes focused." && portableArchive[0].Messages[0].Attachments?[0].Content == "A local note", "conversation archive round-trips local project context and attachments");
 var electronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-export.json");
 var electronState = await File.ReadAllTextAsync(electronExportPath);
+using (var electronExportDocument = System.Text.Json.JsonDocument.Parse(electronState))
+{
+    var electronExportRoot = electronExportDocument.RootElement;
+    Check(electronExportRoot.GetProperty("format").GetString() == "server-rock-electron-localstorage-v1" &&
+        electronExportRoot.GetProperty("exportedAt").ValueKind == System.Text.Json.JsonValueKind.String &&
+        electronExportRoot.GetProperty("chats").ValueKind == System.Text.Json.JsonValueKind.Array,
+        "Electron migration fixture matches the desktop export envelope");
+}
 using var electronExportStream = File.OpenRead(electronExportPath);
 var migratedElectronChats = await ConversationArchive.ParseAsync(electronExportStream);
 Check(migratedElectronChats.Count == 2 && migratedElectronChats[0].Id == "electron-chat-001" && migratedElectronChats[0].Title == "Ollama startup notes" && migratedElectronChats[0].Messages.Count == 2 && migratedElectronChats[0].ImportSource == "electron-localstorage" && migratedElectronChats[0].ImportSourceId == "electron-chat-001",
