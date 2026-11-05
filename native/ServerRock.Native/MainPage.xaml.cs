@@ -1857,6 +1857,7 @@ public sealed partial class MainPage : Page
         }
         menu.Items.Add(new MenuFlyoutSeparator());
         menu.Items.Add(delete);
+        menu.Closed += (_, _) => ((FrameworkElement)sender).Focus(FocusState.Programmatic);
         menu.ShowAt((FrameworkElement)sender);
     }
 
