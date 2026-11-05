@@ -869,6 +869,20 @@ try
     var normalizedProject = new ProjectStore(nullableProjectPath).Load().Single();
     Check(!string.IsNullOrWhiteSpace(normalizedProject.Id) && normalizedProject.Name == "New project" && normalizedProject.Instructions == "" && normalizedProject.FolderPaths is not null,
         "nullable project fields recover to usable native defaults");
+    var healthyProjectsBeforeRejectedSave = File.ReadAllBytes(projectsPath);
+    try
+    {
+        projectStore.Save([
+            new LocalProject { Id = "project-demo", Name = "Duplicate ID" },
+            new LocalProject { Id = "project-demo", Name = "Duplicate ID again" }
+        ]);
+        throw new Exception("Expected invalid project persistence to be rejected.");
+    }
+    catch (InvalidDataException)
+    {
+        Check(File.ReadAllBytes(projectsPath).SequenceEqual(healthyProjectsBeforeRejectedSave),
+            "invalid local projects are rejected without replacing the previous saved projects");
+    }
 
     var workspacePath = Path.Combine(settingsDirectory, "workspace");
     Directory.CreateDirectory(Path.Combine(workspacePath, "src"));
