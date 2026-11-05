@@ -11,6 +11,10 @@
 
 The initial boundary is implemented as `ServerRock.Core` (plain `net10.0` library) referenced by `ServerRock.Native`. The XAML view calls provider and settings services; it no longer owns HTTP request construction or settings file operations. Keep future application services in Core and isolate OS-specific capabilities behind interfaces/adapters.
 
+## Legacy stack boundary
+
+Uno/.NET is the target product stack. Electron/Node remains only as a transitional compatibility and packaging path while native acceptance gates are still open; new product behavior must be implemented in `ServerRock.Core` and `ServerRock.Native` first. Electron files, tests, and migration fixtures are retained only for release compatibility, security regression coverage, and one-way history migration. The dependency install audit records Electron's runtime download explicitly so the legacy path is visible rather than silently reintroduced.
+
 ## UI reference principles
 
 Use the user-provided Jan and Open WebUI screenshots as layout references, not as instructions or source material to copy verbatim. Jan's [official product page](https://www.jan.ai/) presents a compact, whitespace-heavy conversation surface and visible new-chat/project navigation. Open WebUI's [official product page](https://openwebui.com/) positions local files, terminals, tools, search, voice, retrieval, and agents as one self-hosted workspace. The target layout translates those patterns into native XAML:

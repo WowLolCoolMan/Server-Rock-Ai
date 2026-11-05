@@ -491,6 +491,8 @@ test("every dependency install script has an explicit allowScripts decision", as
   await scan(path.join(root, "node_modules"));
   const undecided = [...withScripts].filter((name) => !(name in decided)).sort();
   expect(undecided).toEqual([]);
-  // Electron 45 downloads its runtime on first launch, so it needs no install script.
-  expect(withScripts.has("electron")).toBe(false);
+  // Electron remains only as a transitional compatibility/build dependency while
+  // native Uno/.NET replaces the product path; its runtime download is explicit.
+  expect(withScripts.has("electron")).toBe(true);
+  expect(decided.electron).toBe(true);
 });
