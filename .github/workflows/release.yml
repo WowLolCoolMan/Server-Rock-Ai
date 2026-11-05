@@ -52,8 +52,55 @@ jobs:
       - run: dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore
       - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop --no-restore
 
-  package:
+  release-readiness:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [test, native]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require production release gates
+        env:
+          NATIVE_MIGRATION_COMPLETE: ${{ vars.NATIVE_MIGRATION_COMPLETE }}
+          RELEASE_SIGNING_READY: ${{ vars.RELEASE_SIGNING_READY }}
+          PACKAGED_SMOKE_READY: ${{ vars.PACKAGED_SMOKE_READY }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for gate in NATIVE_MIGRATION_COMPLETE RELEASE_SIGNING_READY PACKAGED_SMOKE_READY; do
+            if [ "${!gate}" != "true" ]; then
+              echo "Release gate ${gate} must be repository variable 'true' before a tag can publish." >&2
+              failed=1
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "Failing closed: no unsigned or pre-migration release will be published." >&2
+            exit 1
+          fi
+      - name: Confirm signing credentials are available
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WIN_CSC_LINK }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          MAC_CERTIFICATE: ${{ secrets.CSC_LINK }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          MAC_APPLE_ID: ${{ secrets.APPLE_ID }}
+          MAC_APP_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          MAC_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in WINDOWS_CERTIFICATE WINDOWS_CERTIFICATE_PASSWORD MAC_CERTIFICATE MAC_CERTIFICATE_PASSWORD MAC_APPLE_ID MAC_APP_PASSWORD MAC_TEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "Missing signing secret: ${name}" >&2
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Failing closed: signing credentials are not configured for every published desktop target." >&2
+            exit 1
+          fi
+
+  package:
+    needs: [test, native, release-readiness]
+    if: ${{ always() && needs.test.result == 'success' && needs.native.result == 'success' && (needs.release-readiness.result == 'success' || needs.release-readiness.result == 'skipped') }}
     strategy:
       fail-fast: false
       matrix:
@@ -85,7 +132,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
-      - run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
+      - name: Build signed desktop artifact
+        env:
+          CSC_LINK: ${{ matrix.platform == 'win' && secrets.WIN_CSC_LINK || secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ matrix.platform == 'win' && secrets.WIN_CSC_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
       - name: Smoke test packaged Windows app
         if: matrix.platform == 'win' && matrix.arch == 'x64'
         shell: pwsh
