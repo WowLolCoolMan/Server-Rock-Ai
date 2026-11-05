@@ -432,6 +432,13 @@ public sealed partial class MainPage
             catch (InvalidOperationException) { }
         }
 
+        void FocusInitialReviewTarget()
+        {
+            var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);
+            if (firstSelectableChange?.Focus(FocusState.Programmatic) == true) return;
+            FocusRetryTarget(preferAction: false);
+        }
+
         void RestoreIdleState()
         {
             var hasSelectedSafeChanges = SelectedChanges().Count > 0;
@@ -491,6 +498,7 @@ public sealed partial class MainPage
                 actionStatus.Text += " Changes under .github may require the GitHub App’s Workflows permission.";
         }
         Render(initialStatus);
+        dialog.Opened += (_, _) => FocusInitialReviewTarget();
 
         cancelOperation.Click += (_, _) =>
         {

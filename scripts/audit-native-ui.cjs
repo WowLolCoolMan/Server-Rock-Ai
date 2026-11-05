@@ -4,8 +4,10 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const xamlPath = path.join(root, "native", "ServerRock.Native", "MainPage.xaml");
 const codePath = path.join(root, "native", "ServerRock.Native", "MainPage.xaml.cs");
+const githubCodePath = path.join(root, "native", "ServerRock.Native", "GitHubWorkspaceUi.cs");
 const xaml = fs.readFileSync(xamlPath, "utf8");
 const code = fs.readFileSync(codePath, "utf8");
+const githubCode = fs.readFileSync(githubCodePath, "utf8");
 
 const requiredXaml = [
   ['Connection setup action', 'AutomationProperties.Name="Connect a model"'],
@@ -55,10 +57,15 @@ const requiredCode = [
   ['Project terminal status accessible name', 'AutomationProperties.SetName(status, "Project terminal status")'],
   ['Project terminal state live announcements', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
 ];
+const requiredGitHubCode = [
+  ['GitHub review initial focus registration', 'dialog.Opened += (_, _) => FocusInitialReviewTarget();'],
+  ['GitHub review first selectable file focus', 'var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);'],
+];
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
   ...requiredCode.filter(([, text]) => !code.includes(text)),
+  ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
 ];
 
 if (missing.length) {
@@ -67,4 +74,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredCode.length} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredCode.length + requiredGitHubCode.length} contracts).`);
