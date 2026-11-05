@@ -3724,8 +3724,22 @@ public sealed partial class MainPage : Page
         panel.Children.Add(note);
         panel.Children.Add(visionFormat);
         panel.Children.Add(visionNote);
-        var dialog = new ContentDialog { Title = "Model connection", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        var dialog = new ContentDialog
+        {
+            Title = "Model connection",
+            Content = panel,
+            PrimaryButtonText = "Save",
+            SecondaryButtonText = "Browse models",
+            CloseButtonText = "Cancel",
+            XamlRoot = XamlRoot
+        };
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Secondary)
+        {
+            await ModelLibraryClickAsync();
+            return;
+        }
+        if (result != ContentDialogResult.Primary) return;
         if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
         {
             RuntimeStatus.Text = "Enter both a server address and model ID.";
