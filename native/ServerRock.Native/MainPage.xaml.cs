@@ -385,6 +385,13 @@ public sealed partial class MainPage : Page
     private CompanionWindow CreateCompanionWindow(CompanionChoice choice)
     {
         var window = new CompanionWindow(choice.Name, choice.AssetUri, "Ready for your next prompt.");
+        window.ChoiceSelected += async (_, option) =>
+        {
+            if (option.Equals("Open settings", StringComparison.OrdinalIgnoreCase))
+                await SettingsDialogAsync();
+            else
+                RuntimeStatus.Text = $"Pet choice received: {option}.";
+        };
         window.Closed += (_, _) =>
         {
             _companionState = _companionState with { IsVisible = false };
@@ -1241,6 +1248,10 @@ public sealed partial class MainPage : Page
             HeaderConnectionDot.Fill = ConnectionDot.Fill;
             ProcessingLabel.Text = "● Model not connected";
             RuntimeStatus.Text = $"Set up your model connection · {ex.Message}";
+            if (_companionState.IsVisible)
+            {
+                _companionWindow?.Ask("Model connection failed. Open settings?", ["Open settings", "Dismiss"]);
+            }
         }
         UpdateModeControls();
     }
