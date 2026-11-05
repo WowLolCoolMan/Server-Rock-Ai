@@ -4491,23 +4491,207 @@ public sealed partial class MainPage : Page
         AutomationProperties.SetName(checkConnection, "Check model connection");
         AutomationProperties.SetHelpText(checkConnection, "Probe the entered local endpoint without saving changes.");
         AutomationProperties.SetName(checkStatus, "Connection check status");
-        var panel = new StackPanel { Spacing = 10 };
-        panel.Children.Add(endpoint);
-        panel.Children.Add(model);
-        panel.Children.Add(note);
-        panel.Children.Add(visionFormat);
-        panel.Children.Add(visionNote);
-        panel.Children.Add(checkConnection);
-        panel.Children.Add(exportLogs);
-        panel.Children.Add(checkStatus);
+        AutomationProperties.SetLiveSetting(checkStatus, AutomationLiveSetting.Polite);
+
+        var search = new TextBox { PlaceholderText = "Find a settings section", Margin = new Thickness(0, 8, 0, 12) };
+        AutomationProperties.SetName(search, "Search settings sections");
+        var navigation = new StackPanel { Spacing = 4 };
+        var pageTitle = new TextBlock { FontSize = 23, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 37, 52, 58)) };
+        var pageDescription = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 108, 125, 130)), Margin = new Thickness(0, 4, 0, 18) };
+        var pageBody = new StackPanel { Spacing = 12 };
+        var pageContent = new StackPanel { Spacing = 0, MaxWidth = 700, HorizontalAlignment = HorizontalAlignment.Left };
+        pageContent.Children.Add(pageTitle);
+        pageContent.Children.Add(pageDescription);
+        pageContent.Children.Add(pageBody);
+        var noSearchMatches = new TextBlock { Text = "No settings sections match that search.", FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 10, 8, 0) };
+        var rootWidth = XamlRoot?.Size.Width ?? 1024;
+        var rootHeight = XamlRoot?.Size.Height ?? 768;
+        var settingsGrid = new Grid
+        {
+            ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(205) }, new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) } },
+            Width = Math.Min(1040, Math.Max(660, rootWidth - 48)),
+            Height = Math.Min(700, Math.Max(440, rootHeight - 190))
+        };
+        var settingsSidebar = new Border
+        {
+            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 247, 246)),
+            BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 228, 235, 233)),
+            BorderThickness = new Thickness(0, 0, 1, 0),
+            Padding = new Thickness(14, 16, 12, 12),
+            Child = new StackPanel { Spacing = 4, Children =
+            {
+                new TextBlock { Text = "Settings", FontSize = 19, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 38, 55, 61)), Margin = new Thickness(5, 0, 0, 0) },
+                search,
+                new TextBlock { Text = "PERSONAL", FontSize = 10, CharacterSpacing = 90, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 116, 133, 137)), Margin = new Thickness(6, 7, 0, 3) },
+                navigation,
+                noSearchMatches
+            } }
+        };
+        settingsGrid.Children.Add(settingsSidebar);
+        var settingsScroll = new ScrollViewer { Content = pageContent, Padding = new Thickness(28, 24, 28, 24), VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        Grid.SetColumn(settingsScroll, 1);
+        settingsGrid.Children.Add(settingsScroll);
         var dialog = new ContentDialog
         {
-            Title = "Connection setup",
-            Content = panel,
-            PrimaryButtonText = "Save",
+            Title = string.Empty,
+            Content = settingsGrid,
+            PrimaryButtonText = "Save changes",
             CloseButtonText = "Cancel",
-            XamlRoot = XamlRoot
+            XamlRoot = XamlRoot,
+            MaxWidth = 1120,
+            MaxHeight = 820
         };
+        Func<Task>? actionAfterClose = null;
+        var chatRestoreButtons = new List<Button>();
+
+        Border MakeSettingsCard(string title, string description, FrameworkElement action)
+        {
+            var copy = new StackPanel { Spacing = 3, Children =
+            {
+                new TextBlock { Text = title, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 43, 59, 64)), TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = description, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), TextWrapping = TextWrapping.Wrap }
+            } };
+            var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 14, VerticalAlignment = VerticalAlignment.Center };
+            row.Children.Add(copy);
+            Grid.SetColumn(action, 1);
+            row.Children.Add(action);
+            return new Border
+            {
+                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 250, 252, 251)),
+                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 226, 234, 232)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(9),
+                Padding = new Thickness(12),
+                Child = row
+            };
+        }
+
+        var sectionButtons = new List<(Button Button, string SearchText)>();
+        void SelectSection(Button selected, string title, string description, Action build)
+        {
+            foreach (var item in sectionButtons)
+            {
+                var active = ReferenceEquals(item.Button, selected);
+                item.Button.Background = new SolidColorBrush(active
+                    ? ColorHelper.FromArgb(255, 230, 238, 237)
+                    : ColorHelper.FromArgb(255, 244, 247, 246));
+                item.Button.Foreground = new SolidColorBrush(active
+                    ? ColorHelper.FromArgb(255, 32, 75, 81)
+                    : ColorHelper.FromArgb(255, 74, 94, 99));
+            }
+            pageTitle.Text = title;
+            pageDescription.Text = description;
+            pageBody.Children.Clear();
+            build();
+        }
+
+        void AddSection(string label, string keywords, string title, string description, Action build)
+        {
+            var button = new Button
+            {
+                Content = label,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 247, 246)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 74, 94, 99)),
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(7),
+                Padding = new Thickness(9, 8, 9, 8)
+            };
+            AutomationProperties.SetName(button, $"Open {label} settings");
+            sectionButtons.Add((button, $"{label} {keywords}"));
+            navigation.Children.Add(button);
+            button.Click += (_, _) => SelectSection(button, title, description, build);
+        }
+
+        void BuildGeneralPage()
+        {
+            pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(endpoint);
+            pageBody.Children.Add(model);
+            pageBody.Children.Add(note);
+            pageBody.Children.Add(checkConnection);
+            pageBody.Children.Add(checkStatus);
+        }
+
+        void BuildChatsPage()
+        {
+            chatRestoreButtons.Clear();
+            var archived = _sessions.Where(session => session.Archived).OrderByDescending(session => session.UpdatedAt).ToArray();
+            var count = new TextBlock { Text = archived.Length == 1 ? "1 archived conversation" : $"{archived.Length} archived conversations", FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 78, 105, 111)), Margin = new Thickness(0, 0, 0, 4) };
+            pageBody.Children.Add(MakeSettingsCard("Archived chats", "Archived chats stay saved on this device and are hidden from the main conversation list until restored.", count));
+            if (archived.Length == 0)
+            {
+                pageBody.Children.Add(new TextBlock { Text = "Nothing is archived yet. Use a chat’s menu to move it out of Recents; it will appear here so you can restore it later.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 8) });
+            }
+            foreach (var session in archived)
+            {
+                var restore = new Button { Content = "Restore", Padding = new Thickness(10, 5, 10, 5) };
+                AutomationProperties.SetName(restore, $"Restore archived chat {session.Title}");
+                restore.Click += (_, _) =>
+                {
+                    ToggleSessionArchive(session.Id);
+                    BuildChatsPage();
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (chatRestoreButtons.FirstOrDefault()?.Focus(FocusState.Programmatic) != true)
+                            sectionButtons[1].Button.Focus(FocusState.Programmatic);
+                    });
+                };
+                chatRestoreButtons.Add(restore);
+                pageBody.Children.Add(MakeSettingsCard(session.Title, $"{session.Mode} · updated {session.UpdatedAt.ToLocalTime():g}", restore));
+            }
+            pageBody.Children.Add(new TextBlock { Text = "CHAT ARCHIVE", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 12, 0, 0) });
+            var import = new Button { Content = "Import chats" };
+            var export = new Button { Content = "Export chats" };
+            import.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(ImportChatsAsync); dialog.Hide(); };
+            export.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(ExportChatsAsync); dialog.Hide(); };
+            pageBody.Children.Add(MakeSettingsCard("Import conversations", "Add chats from a supported local archive.", import));
+            pageBody.Children.Add(MakeSettingsCard("Export conversations", "Create a portable archive of saved chats.", export));
+        }
+
+        void BuildModelsPage()
+        {
+            var manage = new Button { Content = "Open model library" };
+            manage.Click += (_, _) => { actionAfterClose = () => OpenModelLibraryAndRestoreFocusAsync(false, ModelButton); dialog.Hide(); };
+            pageBody.Children.Add(MakeSettingsCard("Models & downloads", "Browse compatible models, manage local downloads, pin frequently used models, and review benchmark results.", manage));
+        }
+
+        void BuildGitHubPage()
+        {
+            var open = new Button { Content = "Open GitHub workspace" };
+            open.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(GitHubWorkspaceDialogAsync); dialog.Hide(); };
+            pageBody.Children.Add(MakeSettingsCard("GitHub workspace", "Sign in, browse or enter a repository, clone it as a project, and review commit or push changes.", open));
+        }
+
+        void BuildAdvancedPage()
+        {
+            pageBody.Children.Add(new TextBlock { Text = "VISION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(visionFormat);
+            pageBody.Children.Add(visionNote);
+            pageBody.Children.Add(new TextBlock { Text = "DIAGNOSTICS", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 14, 0, 2) });
+            pageBody.Children.Add(MakeSettingsCard("Support bundle", "Export a diagnostics archive with sensitive values redacted.", exportLogs));
+        }
+
+        AddSection("General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
+        AddSection("Chats & history", "archive import export conversations", "Chats & history", "Organize, restore, import, and export your local conversations.", BuildChatsPage);
+        AddSection("Models & downloads", "installed library benchmark pin", "Models & downloads", "Manage installed models and the models shown in the composer switcher.", BuildModelsPage);
+        AddSection("GitHub workspace", "repositories coding agent clone push", "GitHub workspace", "Manage repository access and project setup.", BuildGitHubPage);
+        AddSection("Advanced", "vision diagnostics support", "Advanced", "Configure image input behavior and local diagnostics.", BuildAdvancedPage);
+        search.TextChanged += (_, _) =>
+        {
+            var query = search.Text.Trim();
+            var visible = 0;
+            foreach (var item in sectionButtons)
+            {
+                item.Button.Visibility = query.Length == 0 || item.SearchText.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    ? Visibility.Visible : Visibility.Collapsed;
+                if (item.Button.Visibility == Visibility.Visible) visible++;
+            }
+            noSearchMatches.Visibility = visible == 0 ? Visibility.Visible : Visibility.Collapsed;
+        };
+        SelectSection(sectionButtons[0].Button, "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
+        dialog.Opened += (_, _) => sectionButtons[0].Button.Focus(FocusState.Programmatic);
+
         checkConnection.Click += async (_, _) =>
         {
             var candidateEndpoint = endpoint.Text.Trim().TrimEnd('/');
@@ -4552,20 +4736,24 @@ public sealed partial class MainPage : Page
                 checkStatus.Text = $"Could not export diagnostics: {ex.Message}";
             }
         };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-        if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
         {
-            RuntimeStatus.Text = "Enter both a server address and model ID.";
-            return;
+            if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
+            {
+                RuntimeStatus.Text = "Enter both a server address and model ID.";
+                return;
+            }
+            MigrateLegacyPinnedModels();
+            _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
+            _settings.Model = model.Text.Trim();
+            _settings.ModelProvider = "Custom endpoint";
+            _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
+            SaveSettings();
+            UpdateModelLabel();
+            await RefreshModelConnectionAsync();
         }
-        MigrateLegacyPinnedModels();
-        _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
-        _settings.Model = model.Text.Trim();
-        _settings.ModelProvider = "Custom endpoint";
-        _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
-        SaveSettings();
-        UpdateModelLabel();
-        await RefreshModelConnectionAsync();
+        if (actionAfterClose is not null) await actionAfterClose();
     }
 
     private async void AttachClick(object sender, RoutedEventArgs e)
