@@ -37,6 +37,8 @@ public sealed partial class MainPage
         var storage = _githubCredentialStore.GetStatus();
         var storageMessage = new TextBlock { Text = storage.Message, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#718187") };
         var connection = new TextBlock { Text = "Not connected", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#35494d") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(connection, "GitHub connection state");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(connection, AutomationLiveSetting.Polite);
         var code = new TextBox { IsReadOnly = true, FontSize = 24, TextAlignment = TextAlignment.Center, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), Visibility = Visibility.Collapsed };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(code, "GitHub device sign-in code");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(code, "One-time code to enter on GitHub. It expires after a short time.");
