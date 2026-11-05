@@ -852,6 +852,41 @@ try
           restoredChats[2].BaseMessages is [{ Role: "user", Content: "Original question" }] &&
           restoredChats[2].Branches is [[{ Role: "user", Content: "Alternative question" }, { Role: "assistant", Content: "Alternative answer" }]],
         "archived fork and branch metadata survives native history persistence");
+    var branchRoundTripPath = Path.Combine(settingsDirectory, "branch-round-trip.json");
+    var branchSource = new ChatSession
+    {
+        Id = "branch-source",
+        Title = "Branch source",
+        Messages = [new ChatMessage("user", "Main prompt"), new ChatMessage("assistant", "Main answer")],
+        Branches =
+        [
+            [new ChatMessage("user", "First prompt"), new ChatMessage("assistant", "First answer")],
+            [new ChatMessage("user", "Middle prompt"), new ChatMessage("assistant", "Middle answer")],
+            [new ChatMessage("user", "Last prompt"), new ChatMessage("assistant", "Last answer")]
+        ],
+        BranchIndex = 0
+    };
+    var forkedBranch = new ChatSession
+    {
+        Id = "branch-fork",
+        Title = "Branch source · fork",
+        ForkedFrom = branchSource.Id,
+        Messages = [.. branchSource.Branches[1]]
+    };
+    var branchStore = new ConversationStore(branchRoundTripPath);
+    branchStore.Save([branchSource, forkedBranch]);
+    var branchReloaded = branchStore.Load();
+    Check(branchReloaded[0].BranchIndex == 0 && branchReloaded[0].Branches.Count == 3 &&
+          branchReloaded[0].Branches[0][1].Content == "First answer" &&
+          branchReloaded[0].Branches[1][1].Content == "Middle answer" &&
+          branchReloaded[0].Branches[2][1].Content == "Last answer",
+        "main, first, middle, and last conversation branches survive persistence");
+    branchReloaded.RemoveAll(session => session.Id == branchSource.Id);
+    branchStore.Save(branchReloaded);
+    var forkAfterSourceDelete = branchStore.Load().Single();
+    Check(forkAfterSourceDelete.Id == "branch-fork" && forkAfterSourceDelete.ForkedFrom == "branch-source" &&
+          forkAfterSourceDelete.Messages[1].Content == "Middle answer",
+        "forked conversation remains independent when its source is deleted");
     var nullableConversationPath = Path.Combine(settingsDirectory, "nullable-conversations.json");
     File.WriteAllText(nullableConversationPath, "[{\"id\":null,\"title\":null,\"messages\":null,\"baseMessages\":null,\"branches\":null,\"mode\":null,\"importSource\":\"electron-localstorage\",\"importSourceId\":\"legacy-chat\"}]");
     var normalizedConversation = new ConversationStore(nullableConversationPath).Load().Single();

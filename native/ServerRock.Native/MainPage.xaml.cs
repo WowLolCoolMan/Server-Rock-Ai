@@ -502,7 +502,7 @@ public sealed partial class MainPage : Page
             var dialog = new ContentDialog
             {
                 Title = "Import conversations?",
-                Content = $"File: {file.Name}\n\nChats to add: {plan.Conversations.Count}\nAlready present: {plan.SkippedDuplicates}\nID conflicts kept as separate chats: {plan.ReassignedIds}\n\nPreview:\n{previewTitles}\n\nImport accepts native chat archives and Electron localStorage JSON exports. It leaves existing history and the selected file unchanged. Electron exports retain chat titles and messages, but their project links, folder paths, provider settings, credentials, archive flags, and fork metadata are not imported. Native archives retain supported per-chat context. The app does not read an Electron browser profile automatically. Review the added chats before sending them to a model.",
+                Content = $"File: {file.Name}\n\nChats to add: {plan.Conversations.Count}\nAlready present: {plan.SkippedDuplicates}\nID conflicts kept as separate chats: {plan.ReassignedIds}\n\nPreview:\n{previewTitles}\n\nImport accepts native chat archives and Electron localStorage JSON exports. It leaves existing history and the selected file unchanged. Electron exports retain chat titles, messages, archive flags, and fork/branch metadata, while project links, folder paths, provider settings, and credentials are intentionally not imported. Native archives retain supported per-chat context. The app does not read an Electron browser profile automatically. Review the added chats before sending them to a model.",
                 PrimaryButtonText = "Import chats",
                 CloseButtonText = "Cancel",
                 XamlRoot = XamlRoot
@@ -653,6 +653,7 @@ public sealed partial class MainPage : Page
         ConnectionSetupButton.Visibility = chatMode && !_providerConnected ? Visibility.Visible : Visibility.Collapsed;
         UpdateProjectFilesControls();
         UpdateWorkspaceBar();
+        UpdateBranchControls();
     }
 
     private void UpdateWorkspaceBar()
@@ -1705,7 +1706,7 @@ public sealed partial class MainPage : Page
         _editingMessageIndex = null;
         UpdateTemporaryControls();
         _messages.Clear();
-        _messages.AddRange(session.Messages);
+        _messages.AddRange(SelectedBranchMessages(session));
         var project = _projects.FirstOrDefault(item => item.Id == session.ProjectId) ??
             _projects.FirstOrDefault(item => item.Name.Equals(session.ProjectName, StringComparison.CurrentCultureIgnoreCase));
         _activeProjectId = project?.Id ?? session.ProjectId;
@@ -1728,7 +1729,91 @@ public sealed partial class MainPage : Page
         }
         RenderProjects();
         RenderRecent();
+        UpdateBranchControls();
         PromptBox.Focus(FocusState.Programmatic);
+    }
+
+    private IReadOnlyList<ChatMessage> SelectedBranchMessages(ChatSession session)
+    {
+        if (session.BranchIndex > 0 && session.BranchIndex <= session.Branches.Count)
+            return session.Branches[session.BranchIndex - 1];
+        return session.Messages;
+    }
+
+    private void UpdateBranchControls()
+    {
+        var session = _activeSessionId is null ? null : _sessions.FirstOrDefault(item => item.Id == _activeSessionId);
+        var hasBranches = session is not null && session.Branches.Count > 0;
+        BranchControls.Visibility = hasBranches ? Visibility.Visible : Visibility.Collapsed;
+        if (!hasBranches || session is null) return;
+        var index = Math.Clamp(session.BranchIndex, 0, session.Branches.Count);
+        var position = index + 1;
+        BranchPositionText.Text = index == 0 ? $"Main · {position} / {session.Branches.Count + 1}" : $"{position} / {session.Branches.Count + 1}";
+        PreviousBranchButton.IsEnabled = index > 0;
+        NextBranchButton.IsEnabled = index < session.Branches.Count;
+        AutomationProperties.SetName(BranchPositionText, index == 0
+            ? $"Main conversation branch, {position} of {session.Branches.Count + 1}"
+            : $"Conversation branch {position} of {session.Branches.Count + 1}");
+    }
+
+    private void PreviousBranchClick(object sender, RoutedEventArgs e) => SelectConversationBranch(-1);
+    private void NextBranchClick(object sender, RoutedEventArgs e) => SelectConversationBranch(1);
+
+    private void SelectConversationBranch(int delta)
+    {
+        if (_requestCancellation is not null) { RuntimeStatus.Text = "Wait for the current response to finish before changing branches."; return; }
+        if (_activeSessionId is null) return;
+        var session = _sessions.FirstOrDefault(item => item.Id == _activeSessionId);
+        if (session is null || session.Branches.Count == 0) return;
+        SaveCurrentSession();
+        var current = Math.Clamp(session.BranchIndex, 0, session.Branches.Count);
+        var selected = Math.Clamp(current + delta, 0, session.Branches.Count);
+        session.BranchIndex = selected;
+        _messages.Clear();
+        _messages.AddRange(SelectedBranchMessages(session));
+        if (!PersistConversationEdits()) { session.BranchIndex = current; _messages.Clear(); _messages.AddRange(SelectedBranchMessages(session)); return; }
+        RebuildConversationView();
+        UpdateBranchControls();
+        RuntimeStatus.Text = $"Showing conversation branch {selected + 1} of {session.Branches.Count + 1}.";
+    }
+
+    private void ForkSession(string sessionId)
+    {
+        if (_requestCancellation is not null) { RuntimeStatus.Text = "Wait for the current response to finish before creating a fork."; return; }
+        var source = _sessions.FirstOrDefault(item => item.Id == sessionId);
+        if (source is null) return;
+        var sourceMessages = _activeSessionId == sessionId ? _messages : SelectedBranchMessages(source);
+        if (sourceMessages.Count == 0) { RuntimeStatus.Text = "Send at least one message before creating a fork."; return; }
+        if (_activeSessionId == sessionId) SaveCurrentSession();
+        var fork = new ChatSession
+        {
+            Title = $"{source.Title} · fork",
+            Mode = source.Mode,
+            ProjectId = source.ProjectId,
+            ProjectName = source.ProjectName,
+            ProjectInstructions = source.ProjectInstructions,
+            IncludeProjectFilesInChat = source.IncludeProjectFilesInChat,
+            ForkedFrom = source.Id,
+            Messages = [.. sourceMessages.Select(message => message with { Attachments = message.Attachments is null ? null : [.. message.Attachments], Sources = message.Sources is null ? null : [.. message.Sources] })]
+        };
+        _sessions.Add(fork);
+        if (!PersistConversationEdits()) { _sessions.Remove(fork); return; }
+        if (_activeSessionId != sessionId)
+        {
+            RenderRecent();
+            RuntimeStatus.Text = "Fork created from the selected chat.";
+            return;
+        }
+        _activeSessionId = fork.Id;
+        _activeChatFolder = null;
+        _messages.Clear();
+        _messages.AddRange(fork.Messages);
+        PageTitle.Text = fork.Title;
+        ChatFolderBadge.Visibility = Visibility.Collapsed;
+        RenderRecent();
+        RebuildConversationView();
+        UpdateBranchControls();
+        RuntimeStatus.Text = "Fork created from the selected conversation branch.";
     }
 
     private void RecentActionsClick(object sender, RoutedEventArgs e)
@@ -1747,10 +1832,13 @@ public sealed partial class MainPage : Page
         rename.Click += async (_, _) => await RenameSessionAsync(sessionId);
         var archive = new MenuFlyoutItem { Text = session.Archived ? "Restore from archive" : "Archive chat", Tag = sessionId };
         archive.Click += (_, _) => ToggleSessionArchive(sessionId);
+        var fork = new MenuFlyoutItem { Text = "Fork from here", Tag = sessionId };
+        fork.Click += (_, _) => ForkSession(sessionId);
         var delete = new MenuFlyoutItem { Text = "Delete chat", Tag = sessionId };
         delete.Click += async (_, _) => await DeleteSessionAsync(sessionId);
         menu.Items.Add(rename);
         menu.Items.Add(archive);
+        menu.Items.Add(fork);
         if (!session.Archived && _settings.ChatFolders.Count > 0)
         {
             menu.Items.Add(new MenuFlyoutSeparator());
@@ -2113,7 +2201,10 @@ public sealed partial class MainPage : Page
             _sessions.Add(session);
             _activeSessionId = session.Id;
         }
-        session.Messages = [.. _messages];
+        if (session.BranchIndex > 0 && session.BranchIndex <= session.Branches.Count)
+            session.Branches[session.BranchIndex - 1] = [.. _messages];
+        else
+            session.Messages = [.. _messages];
         session.ProjectId = _activeProjectId;
         session.ProjectName = _project;
         session.ProjectInstructions = _settings.ProjectInstructions;
@@ -3551,6 +3642,7 @@ public sealed partial class MainPage : Page
         UpdateEditingControls();
         ChatFolderBadge.Visibility = string.IsNullOrWhiteSpace(_activeChatFolder) || _isTemporaryChat ? Visibility.Collapsed : Visibility.Visible;
         ChatFolderBadgeText.Text = _activeChatFolder is null ? string.Empty : $"▱　{_activeChatFolder}";
+        UpdateBranchControls();
     }
 
     private void UpdateEditingControls() => CancelEditButton.Visibility = _editingMessageIndex is null ? Visibility.Collapsed : Visibility.Visible;

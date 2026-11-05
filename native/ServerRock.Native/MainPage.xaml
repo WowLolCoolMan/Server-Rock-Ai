@@ -65,6 +65,11 @@
           <Border x:Name="ProjectBadge" Visibility="Collapsed" Background="#e8f5f6" BorderBrush="#d5e9eb" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ProjectBadgeText" Text="Project instructions on" FontSize="11" Foreground="#46666c" /></Border>
           <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3" AutomationProperties.Name="Conversation folder"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
           <Border x:Name="TemporaryBadge" Visibility="Collapsed" Background="#fff5e6" BorderBrush="#f1dfc2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock Text="Temporary · not saved" FontSize="11" Foreground="#805d2c" /></Border>
+          <StackPanel x:Name="BranchControls" Visibility="Collapsed" Orientation="Horizontal" Spacing="3" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="Conversation branch controls">
+            <Button x:Name="PreviousBranchButton" Content="‹" Width="26" Height="26" Padding="0" Click="PreviousBranchClick" AutomationProperties.Name="Previous conversation branch" />
+            <TextBlock x:Name="BranchPositionText" Text="1 / 1" VerticalAlignment="Center" FontSize="11" Foreground="#536a70" AutomationProperties.Name="Conversation branch position" />
+            <Button x:Name="NextBranchButton" Content="›" Width="26" Height="26" Padding="0" Click="NextBranchClick" AutomationProperties.Name="Next conversation branch" />
+          </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
           <Button Click="SettingsClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="12" Padding="9,4" AutomationProperties.Name="Model connection settings">
