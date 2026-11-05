@@ -10,7 +10,7 @@ Run the **Native desktop artifacts** GitHub Actions workflow manually. It publis
 
 | Gate | Evidence on this host | Still required before native retirement |
 |---|---|---|
-| Native build and Core behavior | Windows desktop/Windows App SDK builds and the native Core suite pass; the full Electron/Playwright suite passes 95 tests. | Repeat from the exact release artifacts in CI and attach immutable checksums. |
+| Native build and Core behavior | Windows desktop/Windows App SDK builds and the native Core suite pass; the full Electron/Playwright suite passes 97 tests. | Repeat from the exact release artifacts in CI and attach immutable checksums. |
 | Portable artifact reproducibility | Two independent local `dotnet publish -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true` runs produced 281 files each; every filename, byte length, and SHA-256 matched (281/281). | Re-run on clean CI runners from a tagged source commit and publish the resulting checksums through a trusted release channel. |
 | Portable data retention separation | Disposable filesystem smoke placed four profile files outside two extracted app directories, replaced the app directory, and observed all four profile hashes unchanged. | Repeat with a launched clean portable artifact, real resolved Windows/Linux application-data paths, an upgrade, interrupted replacement, and explicit uninstall/data-removal behavior. |
 | Windows runtime | Windows 11 unpackaged and isolated temporary-profile smoke runs have opened the native app; branch navigation and contextual Fork are verified against disposable data. | Run the packaged artifact through clean install, upgrade, uninstall, data-retention, and rollback checks. Verify keyboard focus and narrow layouts from the packaged build. |
@@ -18,7 +18,7 @@ Run the **Native desktop artifacts** GitHub Actions workflow manually. It publis
 | Electron history migration | Isolated Playwright export tests and Core importer tests prove chats-only export, secret/path exclusion, bounded parsing, metadata preservation, no-write planning, idempotent re-import, and fork/archive independence. | Use a user-provided real Electron export on Windows and Linux; verify native picker preview, Cancel, confirm, restart, duplicate protection, and edited-chat preservation. The native picker/focus UI automation path is currently unstable. |
 | Signing and recovery | No signing identity, installer, auto-update, rollback mechanism, or reproducible-build attestation is configured. | Choose signing/release credentials, produce trusted installers, define rollback, and verify checksums/signatures from the exact published artifacts. |
 
-Local verification on 2026-11-04 (Windows 11 Pro, x64, .NET SDK 10.0.401):
+Local verification on 2026-11-05 (Windows 11 Pro, x64, .NET SDK 10.0.401):
 
 - `dotnet publish native/ServerRock.Native/ServerRock.Native.csproj -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true --output <temp>` succeeded.
 - The equivalent `linux-x64` publish from the Windows host also succeeded. This verifies cross-RID compilation/publish only; it is not by itself Linux runtime evidence.
