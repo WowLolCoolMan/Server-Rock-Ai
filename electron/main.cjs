@@ -28,9 +28,14 @@ const {
 } = require("./response-limits.cjs");
 const { createSafeChildEnvironment } = require("./child-environment.cjs");
 const { resolveModelFilePath, ensureNoSymlinkComponents } = require("./model-path-safety.cjs");
-const { validateRequestId, validateChatGPTRequest, validateProviderName } = require("./ipc-validation.cjs");
+const { validateRequestId, validateChatGPTRequest, validateClaudeCodeRequest, validateProviderName } = require("./ipc-validation.cjs");
 const { readTextFileLimited } = require("./bounded-file.cjs");
 const { createTerminalManager } = require("./terminal-sessions.cjs");
+const {
+  resolveClaudeExecutable,
+  launchClaudeLogin,
+  streamClaudeCode,
+} = require("./claude-code-bridge.cjs");
 const { fetchReleaseStatus, releasePageUrl } = require("./github-updates.cjs");
 const MAX_MODEL_BYTES = 10 * 1024 * 1024 * 1024;
 const MAX_GITHUB_DIFF_BYTES = 256 * 1024;
@@ -38,6 +43,7 @@ const localPipelines = new Map();
 const activeGenerations = new Map();
 const activeChatGPTRequests = new Map();
 const activeProviderRequests = new Map();
+const activeClaudeCodeRequests = new Map();
 const githubDeviceRequests = new Map();
 let terminalManager = null;
 let chatGPTJwks = null;
@@ -1201,6 +1207,40 @@ app.whenReady().then(() => {
   });
   ipcMain.on("provider:cancel", (_event, requestId) =>
     activeProviderRequests.get(requestId)?.abort(),
+  );
+  ipcMain.handle("claude-code:status", async () => ({
+    installed: Boolean(await resolveClaudeExecutable()),
+    provider: "Claude Code",
+    requiresApiKey: false,
+  }));
+  ipcMain.handle("claude-code:signin", async () => {
+    const executable = await resolveClaudeExecutable();
+    if (!executable)
+      throw Error("Claude Code is not installed. Install the official Claude Code CLI first.");
+    return launchClaudeLogin({ executable });
+  });
+  ipcMain.handle("claude-code:stream", async (event, request) => {
+    if (!request || typeof request !== "object") throw Error("Invalid Claude Code request.");
+    validateClaudeCodeRequest(request.messages, request.model, request.requestId);
+    const executable = await resolveClaudeExecutable();
+    if (!executable)
+      throw Error("Claude Code is not installed. Install the official Claude Code CLI, then sign in with your Claude account.");
+    const controller = new AbortController();
+    activeClaudeCodeRequests.set(request.requestId, controller);
+    try {
+      return await streamClaudeCode({
+        executable,
+        messages: request.messages,
+        model: request.model,
+        signal: controller.signal,
+        onChunk: (text) => event.sender.send("claude-code:chunk", { requestId: request.requestId, text }),
+      });
+    } finally {
+      activeClaudeCodeRequests.delete(request.requestId);
+    }
+  });
+  ipcMain.on("claude-code:cancel", (_event, requestId) =>
+    activeClaudeCodeRequests.get(requestId)?.abort(),
   );
   ipcMain.handle(
     "models:scan-provider",

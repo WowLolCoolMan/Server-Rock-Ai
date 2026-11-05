@@ -334,6 +334,7 @@
             <option>DeepSeek</option>
             <option>Mistral</option>
             <option>ChatGPT plan</option>
+            <option>Claude Code</option>
           </select>
         </div>
         <div class="setting-row" id="endpointSettingRow">
@@ -355,7 +356,7 @@
         </div>
             </details>
           <details class="settings-group" id="accountConnections">
-            <summary><span><b>Accounts &amp; connections</b><small>ChatGPT sign-in and GitHub repositories</small></span></summary>
+            <summary><span><b>Accounts &amp; connections</b><small>ChatGPT, Claude Code, and GitHub repositories</small></span></summary>
         <div class="setting-row" id="chatgptSettingRow">
           <div>
             <b>ChatGPT account</b
@@ -367,6 +368,12 @@
           <button type="button" id="chatgptConnect">
             Continue with ChatGPT
           </button>
+        </div>
+        <div class="setting-row" id="claudeCodeSettingRow">
+          <div>
+            <b>Claude Code account</b><small id="claudeCodeConnectionStatus">Use the official Claude Code CLI sign-in; no API key is stored by Server Rock: AI.</small>
+          </div>
+          <button type="button" id="claudeCodeConnect">Open Claude Code sign-in</button>
         </div>
         <div class="setting-row">
           <div>
@@ -511,8 +518,9 @@
         <div class="modal-note">
           Server Rock: AI makes no telemetry or analytics requests. Cloud
           providers send prompts to the endpoint you configure. ChatGPT plan
-          sign-in is optional. Claude.ai subscriptions do not include API
-          access; connect Claude with an Anthropic API key. Cloud providers
+          sign-in and Claude Code bridge sign-in are optional. Claude Code
+          uses the official CLI's own subscription login; no API key is stored
+          by this app. Cloud providers
           receive prompts you send.
         </div>
         </details>

@@ -134,6 +134,7 @@ const mediaHfTasks = [
 ];
 const defaults = {
   "ChatGPT plan": ["https://api.openai.com/v1/responses", "gpt-6-luna"],
+  "Claude Code": ["claude-code://official-cli", "sonnet"],
   Ollama: ["http://localhost:11434/v1/chat/completions", "llama3.2"],
   GPT4All: ["http://127.0.0.1:4891/v1/chat/completions", "gpt4all"],
   "OpenAI compatible": [
@@ -985,10 +986,11 @@ function settingLoad() {
   $("#imageWorkflow").value = s.imageWorkflow || "";
   $("#theme").value = s.theme || "dark";
   syncProviderFields();
-  if (s.provider === "ChatGPT plan") $("#accountConnections").open = true;
+  if (s.provider === "ChatGPT plan" || s.provider === "Claude Code") $("#accountConnections").open = true;
   else if (["OpenAI API", "Anthropic API", "OpenRouter", "Groq", "DeepSeek", "Mistral", "Hugging Face"].includes(s.provider))
     $("#providerCredentials").open = true;
   refreshChatGPTStatus();
+  refreshClaudeCodeStatus();
   refreshGitHubStatus();
 }
 function providerUsesLocalInference(settings) {
@@ -1013,11 +1015,13 @@ function providerUsesLocalInference(settings) {
 function syncProviderFields() {
   const provider = $("#providerSelect").value,
     isChatGPT = provider === "ChatGPT plan",
+    isClaudeCode = provider === "Claude Code",
     isHuggingFace = provider === "Hugging Face";
   $("#chatgptSettingRow").hidden = false;
-  $("#endpointSettingRow").hidden = isChatGPT;
-  $("#providerSecretSettingRow").hidden = isChatGPT;
-  $("#providerCredentials").hidden = isChatGPT;
+  $("#claudeCodeSettingRow").hidden = false;
+  $("#endpointSettingRow").hidden = isChatGPT || isClaudeCode;
+  $("#providerSecretSettingRow").hidden = isChatGPT || isClaudeCode;
+  $("#providerCredentials").hidden = isChatGPT || isClaudeCode;
   $("#taskSettingRow").hidden = !isHuggingFace;
   $("#hfDownloads").open = isHuggingFace;
   const keyHelp = {
@@ -1042,6 +1046,23 @@ async function refreshProviderSecretStatus(provider) {
       ? "Key saved in the operating system's secure credential storage."
       : "No key saved. Enter one here to store it securely on this device."
     : "Secure credential storage is unavailable; keys cannot be saved safely on this system.";
+}
+async function refreshClaudeCodeStatus() {
+  try {
+    const status = await window.desktopModels?.claudeCodeStatus?.();
+    $("#claudeCodeConnectionStatus").textContent = status?.installed
+      ? "Claude Code detected. Sign in through its official terminal flow; no API key is stored here."
+      : "Install the official Claude Code CLI to use your Claude account without an API key.";
+    $("#claudeCodeConnect").disabled = !status?.installed;
+    $("#claudeCodeConnect").textContent = status?.installed
+      ? "Open Claude Code sign-in"
+      : "Claude Code not installed";
+    return status || { installed: false };
+  } catch (error) {
+    $("#claudeCodeConnectionStatus").textContent = "Claude Code status unavailable: " + error.message;
+    $("#claudeCodeConnect").disabled = true;
+    return { installed: false };
+  }
 }
 async function refreshGitHubStatus() {
   try {
@@ -1428,6 +1449,19 @@ async function scanModels() {
         local: false,
         configured: true,
       });
+    const claudeCode = await window.desktopModels?.claudeCodeStatus?.();
+    const claudeSettings = state.settings.provider === "Claude Code"
+      ? state.settings
+      : state.settingsByProvider["Claude Code"] || {};
+    if (claudeCode?.installed && claudeSettings.model)
+      addModel({
+        provider: "Claude Code",
+        model: claudeSettings.model,
+        endpoint: "claude-code://official-cli",
+        local: false,
+        configured: true,
+        available: true,
+      });
     const account = await window.desktopModels?.chatgptStatus?.();
     if (account?.sharing) {
       try {
@@ -1499,7 +1533,7 @@ async function saveSettings() {
     showValidation("Enter a model name before saving.", modelInput);
     return;
   }
-  if (p !== "ChatGPT plan") {
+  if (p !== "ChatGPT plan" && p !== "Claude Code") {
     try {
       const url = new URL(endpoint);
       if (!["http:", "https:"].includes(url.protocol)) throw Error("unsupported scheme");
@@ -1923,7 +1957,7 @@ $("#providerSelect").onchange = async () => {
   $("#endpoint").value = v.endpoint || d[0];
   $("#modelInput").value = v.model || d[1];
   syncProviderFields();
-  if (p === "ChatGPT plan") {
+  if (p === "ChatGPT plan" || p === "Claude Code") {
     $("#accountConnections").open = true;
     $("#accountConnections").scrollIntoView({ block: "nearest", behavior: "smooth" });
   } else if (["OpenAI API", "Anthropic API", "OpenRouter", "Groq", "DeepSeek", "Mistral", "Hugging Face"].includes(p)) {
@@ -1932,6 +1966,20 @@ $("#providerSelect").onchange = async () => {
   }
   $("#apiKey").value = "";
   await refreshProviderSecretStatus(p);
+};
+$("#claudeCodeConnect").onclick = async () => {
+  const button = $("#claudeCodeConnect");
+  button.disabled = true;
+  button.textContent = "Opening Claude Code…";
+  try {
+    const result = await window.desktopModels?.claudeCodeSignIn?.();
+    $("#claudeCodeConnectionStatus").textContent = result?.instructions || "Complete sign-in in the Claude Code terminal, then return here.";
+  } catch (error) {
+    $("#claudeCodeConnectionStatus").textContent = error.message;
+  } finally {
+    const status = await refreshClaudeCodeStatus();
+    if (!status?.installed) button.disabled = true;
+  }
 };
 $("#forgetProviderKey").onclick = async () => {
   const provider = $("#providerSelect").value;
@@ -2110,6 +2158,29 @@ async function streamChat(s, messages, out, signal) {
       );
     } finally {
       signal.removeEventListener("abort", cancelChatGPTRequest);
+      activeProviderRequestId = null;
+    }
+    recordModelPerformance(s, started, out.content, first);
+    return;
+  }
+  if (s.provider === "Claude Code") {
+    const started = performance.now();
+    let first = null;
+    const cancelClaudeCodeRequest = () => window.desktopModels.cancelClaudeCode(s.requestId);
+    activeProviderRequestId = s.requestId;
+    signal.addEventListener("abort", cancelClaudeCodeRequest, { once: true });
+    try {
+      await window.desktopModels.claudeCodeStream({
+        requestId: s.requestId,
+        model: s.model,
+        messages,
+      }, (text) => {
+        if (first === null) first = performance.now() - started;
+        out.content += text;
+        renderMessages();
+      });
+    } finally {
+      signal.removeEventListener("abort", cancelClaudeCodeRequest);
       activeProviderRequestId = null;
     }
     recordModelPerformance(s, started, out.content, first);

@@ -26,6 +26,14 @@ function validateChatGPTRequest(messages, model, requestId) {
   return { messages, model, requestId };
 }
 
+function validateClaudeCodeRequest(messages, model, requestId) {
+  validateRequestId(requestId, "Claude Code request ID");
+  if (typeof model !== "string" || model.length < 1 || model.length > MAX_MODEL_NAME_LENGTH || !/^[\w.-]+$/.test(model))
+    throw Error("Invalid Claude Code model.");
+  validateMessagePayload(messages, "Claude Code", MAX_CHAT_PAYLOAD_LENGTH);
+  return { messages, model, requestId };
+}
+
 function validateMessagePayload(messages, label = "chat", maxTotalLength = MAX_PROVIDER_CHAT_PAYLOAD_LENGTH) {
   if (!Array.isArray(messages) || messages.length < 1 || messages.length > MAX_CHAT_MESSAGES)
     throw Error(`A ${label} request must contain between 1 and ${MAX_CHAT_MESSAGES} messages.`);
@@ -66,5 +74,6 @@ module.exports = {
   validateRequestId,
   validateProviderName,
   validateChatGPTRequest,
+  validateClaudeCodeRequest,
   validateMessagePayload,
 };

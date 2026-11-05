@@ -1257,6 +1257,36 @@ test("ChatGPT plan model streams through the protected desktop bridge", async ({
   await page.locator("#send").click();
   await expect(page.locator(".assistant")).toContainText("Created a game plan");
 });
+test("Claude Code provider streams through the official no-key bridge", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "local-studio-v1",
+      JSON.stringify({
+        chats: [],
+        projects: [],
+        settings: {
+          provider: "Claude Code",
+          endpoint: "claude-code://official-cli",
+          model: "sonnet",
+          theme: "dark",
+        },
+      }),
+    );
+    window.desktopModels = {
+      claudeCodeStatus: async () => ({ installed: true, requiresApiKey: false }),
+      claudeCodeStream: async (request, onChunk) => {
+        if (request.model !== "sonnet" || request.messages.at(-1).content !== "make a snake game")
+          throw Error("unexpected Claude Code request");
+        onChunk("Claude Code bridge reply");
+      },
+      cancelClaudeCode: () => {},
+    };
+  });
+  await page.goto("file://" + path.resolve("index.html").replaceAll("\\\\", "/"));
+  await page.locator("#prompt").fill("make a snake game");
+  await page.locator("#send").click();
+  await expect(page.locator(".assistant")).toContainText("Claude Code bridge reply");
+});
 test("GitHub connects, opens a repository project, and reviews changes before pushing", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("local-studio-v1", JSON.stringify({ chats: [], projects: [], settings: { provider: "Ollama", endpoint: "http://127.0.0.1:11434/v1/chat/completions", model: "llama3.2", theme: "dark" } }));

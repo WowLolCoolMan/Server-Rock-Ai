@@ -53,6 +53,18 @@ contextBridge.exposeInMainWorld("desktopModels", {
   },
   cancelProviderChat: (requestId) =>
     ipcRenderer.send("provider:cancel", requestId),
+  claudeCodeStatus: () => ipcRenderer.invoke("claude-code:status"),
+  claudeCodeSignIn: () => ipcRenderer.invoke("claude-code:signin"),
+  claudeCodeStream: (request, onChunk) => {
+    const handler = (_e, data) => {
+      if (data.requestId === request.requestId) onChunk(data.text);
+    };
+    ipcRenderer.on("claude-code:chunk", handler);
+    return ipcRenderer
+      .invoke("claude-code:stream", request)
+      .finally(() => ipcRenderer.removeListener("claude-code:chunk", handler));
+  },
+  cancelClaudeCode: (id) => ipcRenderer.send("claude-code:cancel", id),
   githubBeginSignIn: (clientId) =>
     ipcRenderer.invoke("github:begin-signin", clientId),
   githubDefaultClientId: () => ipcRenderer.invoke("github:default-client-id"),
