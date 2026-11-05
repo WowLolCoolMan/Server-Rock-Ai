@@ -11,6 +11,7 @@ Run the **Native desktop artifacts** GitHub Actions workflow manually. It publis
 | Gate | Evidence on this host | Still required before native retirement |
 |---|---|---|
 | Native build and Core behavior | Windows desktop/Windows App SDK builds and the native Core suite pass; the full Electron/Playwright suite passes 95 tests. | Repeat from the exact release artifacts in CI and attach immutable checksums. |
+| Portable artifact reproducibility | Two independent local `dotnet publish -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true` runs produced 281 files each; every filename, byte length, and SHA-256 matched (281/281). | Re-run on clean CI runners from a tagged source commit and publish the resulting checksums through a trusted release channel. |
 | Windows runtime | Windows 11 unpackaged and isolated temporary-profile smoke runs have opened the native app; branch navigation and contextual Fork are verified against disposable data. | Run the packaged artifact through clean install, upgrade, uninstall, data-retention, and rollback checks. Verify keyboard focus and narrow layouts from the packaged build. |
 | Linux runtime | Ubuntu 24.04 WSL2/WSLg build and initial launch evidence exists; WSL portal/EWMH warnings remain. | Run the packaged artifact on a real Ubuntu desktop plus Debian, Arch, and Fedora; record native-library prerequisites and clean launch/exit behavior. |
 | Electron history migration | Isolated Playwright export tests and Core importer tests prove chats-only export, secret/path exclusion, bounded parsing, metadata preservation, no-write planning, idempotent re-import, and fork/archive independence. | Use a user-provided real Electron export on Windows and Linux; verify native picker preview, Cancel, confirm, restart, duplicate protection, and edited-chat preservation. The native picker/focus UI automation path is currently unstable. |
@@ -20,6 +21,7 @@ Local verification on 2026-11-04 (Windows 11 Pro, x64, .NET SDK 10.0.401):
 
 - `dotnet publish native/ServerRock.Native/ServerRock.Native.csproj -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true --output <temp>` succeeded.
 - The equivalent `linux-x64` publish from the Windows host also succeeded and emitted 269 files (about 154 MiB). This verifies cross-RID compilation/publish only; it is not Linux runtime evidence.
+- Two independent `win-x64` self-contained publishes from the same checkout produced 281 files each with identical filename, length, and SHA-256 manifests. This is local deterministic-output evidence, not a signed or independently reproducible release attestation.
 - The first publish attempt followed the Uno guide's additional `-p:TargetFrameworks=net10.0-desktop` argument. In this multi-project solution that global property also overrode `ServerRock.Core`'s `net10.0` target and failed with `NETSDK1139`. The working command omits that override. Keep this behavior under review if the project target structure changes.
 - Existing native CI runs on Ubuntu 24.04 and Windows 2022; it builds the shared Skia target and runs Core checks. CI is not currently a package installation or GUI acceptance test.
 
