@@ -3336,9 +3336,14 @@ public sealed partial class MainPage : Page
         return panel;
     }
 
-    private async void ModelClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ModelLibraryClickAsync); }
+    private async void ModelClick(object sender, RoutedEventArgs e)
+    {
+        var returnToCompactSidebar = _compactNavigation && Sidebar.Visibility == Visibility.Visible;
+        CloseCompactSidebar();
+        await OpenModelLibraryAndRestoreFocusAsync(returnToCompactSidebar, sender as Control);
+    }
 
-    private async Task ModelClickAsync() => await ModelLibraryClickAsync();
+    private async Task ModelClickAsync() => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox);
 
     private void ModelHotswapClick(object sender, RoutedEventArgs e)
     {
@@ -3371,9 +3376,15 @@ public sealed partial class MainPage : Page
         }
         if (menu.Items.Count > 0) menu.Items.Add(new MenuFlyoutSeparator());
         var manage = new MenuFlyoutItem { Text = "Manage models…" };
-        manage.Click += async (_, _) => await ModelLibraryClickAsync();
+        manage.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, ModelButton);
         menu.Items.Add(manage);
         menu.ShowAt(ModelButton);
+    }
+
+    private async Task OpenModelLibraryAndRestoreFocusAsync(bool returnToCompactSidebar, Control? trigger)
+    {
+        try { await RunUiActionAsync(ModelLibraryClickAsync); }
+        finally { RestoreNavigationDialogFocus(returnToCompactSidebar, trigger); }
     }
 
     private void PinCurrentModel()
@@ -4051,10 +4062,10 @@ public sealed partial class MainPage : Page
         CloseCompactSidebar();
         RuntimeStatus.Text = "Opening connection setup…";
         try { await RunUiActionAsync(SettingsDialogAsync); }
-        finally { RestoreSettingsDialogFocus(returnToCompactSidebar, sender as Control); }
+        finally { RestoreNavigationDialogFocus(returnToCompactSidebar, sender as Control); }
     }
 
-    private void RestoreSettingsDialogFocus(bool returnToCompactSidebar, Control? trigger)
+    private void RestoreNavigationDialogFocus(bool returnToCompactSidebar, Control? trigger)
     {
         DispatcherQueue.TryEnqueue(() =>
         {
