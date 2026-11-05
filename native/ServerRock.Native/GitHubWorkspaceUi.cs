@@ -52,6 +52,9 @@ public sealed partial class MainPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryPicker, "Choose a repository available to this GitHub App. You can also enter its owner and name below.");
         var repositoryReference = new TextBox { Header = "Repository", PlaceholderText = "owner/name or https://github.com/owner/name" };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryReference, "Repository to clone");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryReference, "Enter owner/name or an HTTPS GitHub repository URL.");
+        var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#a64242") };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryValidation, "Repository format guidance");
         var refreshRepositories = new Button { Content = "Refresh repositories", HorizontalAlignment = HorizontalAlignment.Left };
         var parentPath = new TextBox
         {
@@ -79,7 +82,7 @@ public sealed partial class MainPage
         {
             Spacing = 8,
             Visibility = Visibility.Collapsed,
-            Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#35494d") }, repositoryPicker, repositoryReference, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone }
+            Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#35494d") }, repositoryPicker, repositoryReference, repositoryValidation, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone }
         };
         var content = new StackPanel { Spacing = 16, Children =
         {
@@ -101,10 +104,34 @@ public sealed partial class MainPage
         var workspaceDialogOpen = false;
         var cloneInProgress = false;
         CancellationTokenSource? cloneCancellation = null;
-        void UpdateCloneAvailability()
+        void UpdateCloneAvailability(bool revealRepositoryError = false)
         {
-            var hasRepository = !string.IsNullOrWhiteSpace(repositoryReference.Text) || repositoryPicker.SelectedItem is string;
-            clone.IsEnabled = _githubCredential is not null && hasRepository && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;
+            var candidate = repositoryReference.Text.Trim();
+            if (candidate.Length == 0 && repositoryPicker.SelectedItem is string selectedRepository)
+                candidate = selectedRepository;
+            var validationWasVisible = repositoryValidation.Visibility == Visibility.Visible;
+            var hasValidRepository = false;
+            string? validationError = null;
+            if (candidate.Length > 0)
+            {
+                try
+                {
+                    _ = GitHubApiClient.ParseRepositoryReference(candidate);
+                    hasValidRepository = true;
+                }
+                catch (ArgumentException exception) { validationError = exception.Message; }
+            }
+            if (validationError is not null && (revealRepositoryError || validationWasVisible))
+            {
+                repositoryValidation.Text = validationError;
+                repositoryValidation.Visibility = Visibility.Visible;
+            }
+            else if (validationError is null)
+            {
+                repositoryValidation.Text = string.Empty;
+                repositoryValidation.Visibility = Visibility.Collapsed;
+            }
+            clone.IsEnabled = _githubCredential is not null && hasValidRepository && !string.IsNullOrWhiteSpace(parentPath.Text) && !cloneInProgress;
         }
 
         void FocusRepositoryEntry()
@@ -243,7 +270,8 @@ public sealed partial class MainPage
             if (repositoryPicker.SelectedItem is string selectedRepository) repositoryReference.Text = selectedRepository;
             UpdateCloneAvailability();
         };
-        repositoryReference.TextChanged += (_, _) => UpdateCloneAvailability();
+        repositoryReference.TextChanged += (_, _) => UpdateCloneAvailability(repositoryValidation.Visibility == Visibility.Visible);
+        repositoryReference.LostFocus += (_, _) => UpdateCloneAvailability(revealRepositoryError: true);
         parentPath.TextChanged += (_, _) => UpdateCloneAvailability();
         refreshRepositories.Click += async (_, _) =>
         {
