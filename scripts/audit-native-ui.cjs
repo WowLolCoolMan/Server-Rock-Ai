@@ -24,6 +24,8 @@ const requiredCode = [
   ['Folder toggle focus tracking', '_chatFolderToggleButtons[folder] = open;'],
   ['Folder toggle focus restoration', 'FocusChatFolderToggleOrFallback(folder)'],
   ['Archived toggle focus restoration', 'DispatcherQueue.TryEnqueue(FocusArchivedChatsToggleOrFallback);'],
+  ['Compact drawer landing focus', 'ChatModeButton.Focus(FocusState.Programmatic);'],
+  ['Compact drawer close focus', 'ToggleSidebarButton.Focus(FocusState.Programmatic);'],
 ];
 
 const missing = [

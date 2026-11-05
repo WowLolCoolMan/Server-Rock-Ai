@@ -482,7 +482,7 @@ public sealed partial class MainPage : Page
         if (!_compactNavigation) return;
         Sidebar.Visibility = Visibility.Visible;
         SidebarBackdrop.Visibility = Visibility.Visible;
-        NewConversationButton.Focus(FocusState.Programmatic);
+        ChatModeButton.Focus(FocusState.Programmatic);
     }
 
     private void CloseSidebarClick(object sender, RoutedEventArgs e) => CloseCompactSidebar();
