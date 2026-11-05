@@ -722,9 +722,10 @@ public sealed partial class MainPage
             }
             catch (Exception exception) when (!dialogClosed)
             {
-                actionStatus.Text = exception.Message;
                 try { Render(await _githubWorkspaceService.GetStatusAsync(repositoryPath)); }
                 catch { RestoreIdleState(); }
+                actionStatus.Text = exception.Message;
+                FocusRetryTarget(preferAction: true);
             }
             finally
             {
