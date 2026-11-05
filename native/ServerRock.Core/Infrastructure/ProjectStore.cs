@@ -21,7 +21,16 @@ public sealed class ProjectStore
         if (!File.Exists(_path)) return [];
         try
         {
-            return JsonSerializer.Deserialize<List<LocalProject>>(BoundedFileReader.ReadText(_path), Options) ?? [];
+            var projects = JsonSerializer.Deserialize<List<LocalProject>>(BoundedFileReader.ReadText(_path), Options) ?? [];
+            foreach (var project in projects)
+            {
+                if (project is null) throw new InvalidDataException("Saved projects contain an empty entry. The original file was left untouched.");
+                project.Id ??= Guid.NewGuid().ToString("N");
+                project.Name ??= "New project";
+                project.Instructions ??= "";
+                project.FolderPaths ??= [];
+            }
+            return projects;
         }
         catch (JsonException error)
         {

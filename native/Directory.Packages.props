@@ -12,6 +12,8 @@
     <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="Porta.Pty" Version="2.2.3" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+    <PackageVersion Include="Svg.Skia" Version="5.2.3" />
+    <PackageVersion Include="Uno.WinUI.Svg" Version="6.7.135" />
     <PackageVersion Include="XTerm.NET" Version="3.0.0" />
   </ItemGroup>
 </Project>

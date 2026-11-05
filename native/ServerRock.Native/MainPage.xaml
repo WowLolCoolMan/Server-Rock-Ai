@@ -46,8 +46,14 @@
           </StackPanel>
         </StackPanel>
       </ScrollViewer>
-      <Border Grid.Row="9" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,12,5,2">
-        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="#d69a4b" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="#294850" /><TextBlock Text="· local history" FontSize="11" Foreground="#66818a" /></StackPanel>
+      <Border Grid.Row="9" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,10,5,2">
+        <StackPanel Spacing="7">
+          <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="#d69a4b" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="#294850" /><TextBlock Text="· local history" FontSize="11" Foreground="#66818a" /></StackPanel>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+            <Button x:Name="CompanionButton" Content="◉　Show pet" Click="ToggleCompanionClick" Background="#ffffff" Foreground="#294850" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="8,6" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window." />
+            <Button Grid.Column="1" Content="···" Click="CustomizeCompanionClick" Background="Transparent" Foreground="#526a70" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="9,6" AutomationProperties.Name="Customize pet companion" AutomationProperties.HelpText="Choose which local companion to show." />
+          </Grid>
+        </StackPanel>
       </Border>
     </Grid>
 
@@ -143,5 +149,17 @@
       </Grid>
     </Grid>
     <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" Background="#66000000" BorderThickness="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu" />
+    <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
+      <Border x:Name="CompanionCard" Width="218" Background="#fffefe" BorderBrush="#dfe9ea" BorderThickness="1" CornerRadius="15" Padding="9" AutomationProperties.Name="Pet companion">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+          <Image x:Name="CompanionImage" Width="46" Height="46" Stretch="Uniform" VerticalAlignment="Center" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion" AutomationProperties.HelpText="Drag to move, or focus and use the arrow keys. Hold Shift to move farther." />
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2" IsHitTestVisible="False">
+            <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="13" FontWeight="SemiBold" Foreground="#283b41" />
+            <TextBlock Text="Your companion is on this device" FontSize="10" Foreground="#7a898d" TextWrapping="Wrap" />
+          </StackPanel>
+          <Button Grid.Column="2" Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="#6c7a7f" BorderThickness="0" Width="28" Height="28" Padding="0" CornerRadius="7" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
+        </Grid>
+      </Border>
+    </Canvas>
   </Grid>
 </Page>

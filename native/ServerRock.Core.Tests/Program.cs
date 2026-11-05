@@ -856,6 +856,11 @@ try
     var restoredProjects = projectStore.Load();
     Check(restoredProjects.Count == 2, "project store keeps multiple projects");
     Check(restoredProjects[0].Instructions == "Use concise answers." && restoredProjects[1].Instructions == "Prefer bullet points.", "project instructions survive save and reload independently");
+    var nullableProjectPath = Path.Combine(settingsDirectory, "nullable-projects.json");
+    File.WriteAllText(nullableProjectPath, "[{\"id\":null,\"name\":null,\"instructions\":null,\"folderPaths\":null,\"gitHubRepository\":null}]");
+    var normalizedProject = new ProjectStore(nullableProjectPath).Load().Single();
+    Check(!string.IsNullOrWhiteSpace(normalizedProject.Id) && normalizedProject.Name == "New project" && normalizedProject.Instructions == "" && normalizedProject.FolderPaths is not null,
+        "nullable project fields recover to usable native defaults");
 
     var workspacePath = Path.Combine(settingsDirectory, "workspace");
     Directory.CreateDirectory(Path.Combine(workspacePath, "src"));

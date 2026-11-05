@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Foundation;
 using System.Diagnostics;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
@@ -17,6 +18,13 @@ public sealed partial class MainPage : Page
     private sealed record InstalledModelChoice(string Provider, string Model, string Endpoint, string Display);
     private sealed record CatalogModelChoice(HubModel Model, string Display);
     private sealed record ModelScopeGgufPackageChoice(ModelScopeGgufPackage Package, string Display);
+    private sealed record CompanionChoice(string Id, string Name, string Description, string AssetUri);
+    private static readonly CompanionChoice[] CompanionChoices =
+    [
+        new("rocky", "Rocky", "A steady rock when the diff gets large.", "ms-appx:///Assets/Svg/rocky.svg"),
+        new("byte", "Byte", "A tiny blue-screen gremlin.", "ms-appx:///Assets/Svg/byte.svg"),
+        new("sprout", "Sprout", "Small green shoots for new ideas.", "ms-appx:///Assets/Svg/sprout.svg")
+    ];
     private static readonly (string Name, string Description)[] SlashCommandCatalog =
     [
         ("/help", "Show keyboard and workspace help"),
@@ -46,6 +54,7 @@ public sealed partial class MainPage : Page
     private readonly WorkspaceFileEditor _workspaceEditor = new();
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
     private readonly WorkspaceCommandRunner _commandRunner = new();
+    private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
@@ -54,6 +63,7 @@ public sealed partial class MainPage : Page
     private List<WorkspaceUndoEntry> _workspaceUndoEntries = [];
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
     private AppSettings _settings;
+    private CompanionState _companionState = new();
     private string _mode = "ChatBot";
     private string? _project;
     private string? _activeProjectId;
@@ -64,6 +74,9 @@ public sealed partial class MainPage : Page
     private bool _isTemporaryChat;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
+    private bool _companionPersistenceAvailable = true;
+    private bool _isCompanionDragging;
+    private Point _companionDragOffset;
     private bool _historyAvailable = true;
     private bool _projectsAvailable = true;
     private bool _undoHistoryAvailable = true;
@@ -105,6 +118,12 @@ public sealed partial class MainPage : Page
         _settings = _settingsStore.Load();
         var legacyProjectInstructions = _settings.ProjectInstructions;
         var warnings = new List<string>();
+        try { _companionState = _companionStore.Load(); }
+        catch (Exception ex)
+        {
+            _companionPersistenceAvailable = false;
+            warnings.Add($"Pet preferences could not be read and were left untouched: {ex.Message}");
+        }
         try
         {
             _sessions = _conversationStore.Load();
@@ -154,6 +173,7 @@ public sealed partial class MainPage : Page
         _settings.ProjectInstructions = null;
         RenderProjects();
         RenderRecent();
+        UpdateCompanionDisplay();
         UpdateModeControls();
         UpdateModelLabel();
         UpdateWebSearchButton();
@@ -163,7 +183,181 @@ public sealed partial class MainPage : Page
 
     private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
 
-    private void AppRootSizeChanged(object sender, SizeChangedEventArgs e) => ApplyResponsiveNavigation(e.NewSize.Width);
+    private void AppRootSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ApplyResponsiveNavigation(e.NewSize.Width);
+        PositionCompanion(persistIfChanged: true);
+    }
+
+    private void CompanionOverlayLoaded(object sender, RoutedEventArgs e) => PositionCompanion(persistIfChanged: false);
+
+    private void CompanionOverlaySizeChanged(object sender, SizeChangedEventArgs e) => PositionCompanion(persistIfChanged: true);
+
+    private void UpdateCompanionDisplay()
+    {
+        var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
+        _companionState = _companionState with { PetId = choice.Id };
+        CompanionImage.Source = new SvgImageSource { UriSource = new Uri(choice.AssetUri) };
+        CompanionName.Text = choice.Name;
+        CompanionOverlay.Visibility = _companionState.IsVisible ? Visibility.Visible : Visibility.Collapsed;
+        CompanionButton.Content = _companionState.IsVisible ? "◉　Hide pet" : "◉　Show pet";
+        AutomationProperties.SetName(CompanionButton, _companionState.IsVisible ? "Hide pet companion" : "Show pet companion");
+        if (_companionState.IsVisible) PositionCompanion(persistIfChanged: false);
+    }
+
+    private void CompanionImageFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        RuntimeStatus.Text = $"The companion artwork could not be loaded: {e.ErrorMessage}";
+    }
+
+    private void PositionCompanion(bool persistIfChanged)
+    {
+        if (CompanionOverlay.ActualWidth <= 0 || CompanionOverlay.ActualHeight <= 0) return;
+        var width = Math.Min(218, Math.Max(170, CompanionOverlay.ActualWidth - 16));
+        CompanionCard.Width = width;
+        var cardHeight = CompanionCard.ActualHeight > 0 ? CompanionCard.ActualHeight : 68;
+        var maxLeft = Math.Max(8, CompanionOverlay.ActualWidth - width - 8);
+        var maxTop = Math.Max(8, CompanionOverlay.ActualHeight - cardHeight - 8);
+        var left = _companionState.Left < 0 ? maxLeft : Math.Clamp(_companionState.Left, 8, maxLeft);
+        var top = Math.Clamp(_companionState.Top, 8, maxTop);
+        Canvas.SetLeft(CompanionCard, left);
+        Canvas.SetTop(CompanionCard, top);
+        if (persistIfChanged && (Math.Abs(left - _companionState.Left) > 0.5 || Math.Abs(top - _companionState.Top) > 0.5))
+        {
+            _companionState = _companionState with { Left = left, Top = top };
+            SaveCompanionState();
+        }
+        else if (!persistIfChanged && _companionState.Left < 0)
+        {
+            _companionState = _companionState with { Left = left, Top = top };
+        }
+    }
+
+    private void SetCompanionPosition(double left, double top)
+    {
+        if (CompanionOverlay.ActualWidth <= 0 || CompanionOverlay.ActualHeight <= 0) return;
+        var maxLeft = Math.Max(8, CompanionOverlay.ActualWidth - CompanionCard.Width - 8);
+        var maxTop = Math.Max(8, CompanionOverlay.ActualHeight - Math.Max(68, CompanionCard.ActualHeight) - 8);
+        left = Math.Clamp(left, 8, maxLeft);
+        top = Math.Clamp(top, 8, maxTop);
+        Canvas.SetLeft(CompanionCard, left);
+        Canvas.SetTop(CompanionCard, top);
+        _companionState = _companionState with { Left = left, Top = top };
+    }
+
+    private void SaveCompanionState()
+    {
+        if (!_companionPersistenceAvailable)
+        {
+            RuntimeStatus.Text = "Pet preferences are not being saved because the existing preference file could not be read.";
+            return;
+        }
+        try { _companionStore.Save(_companionState); }
+        catch (Exception ex) { RuntimeStatus.Text = $"Pet preference change is active for this session but could not be saved: {ex.Message}"; }
+    }
+
+    private void ToggleCompanionClick(object sender, RoutedEventArgs e)
+    {
+        _companionState = _companionState with { IsVisible = !_companionState.IsVisible };
+        UpdateCompanionDisplay();
+        SaveCompanionState();
+        RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible in this app window." : "Pet companion hidden.";
+    }
+
+    private void HideCompanionClick(object sender, RoutedEventArgs e)
+    {
+        if (!_companionState.IsVisible) return;
+        _companionState = _companionState with { IsVisible = false };
+        UpdateCompanionDisplay();
+        SaveCompanionState();
+        RuntimeStatus.Text = "Pet companion hidden.";
+    }
+
+    private async void CustomizeCompanionClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(CustomizeCompanionAsync);
+
+    private async Task CustomizeCompanionAsync()
+    {
+        string? selectedId = null;
+        var choices = new StackPanel { Spacing = 7 };
+        var dialog = new ContentDialog { Title = "Choose a companion", Content = choices, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        foreach (var choice in CompanionChoices)
+        {
+            var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(54) }, new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 9 };
+            row.Children.Add(new Image { Source = new SvgImageSource { UriSource = new Uri(choice.AssetUri) }, Width = 42, Height = 42, Stretch = Stretch.Uniform, VerticalAlignment = VerticalAlignment.Center });
+            var details = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
+            Grid.SetColumn(details, 1);
+            details.Children.Add(new TextBlock { Text = choice.Name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 40, 59, 65)) });
+            details.Children.Add(new TextBlock { Text = choice.Description, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 112, 128, 133)), TextWrapping = TextWrapping.Wrap });
+            row.Children.Add(details);
+            var selected = new TextBlock { Text = choice.Id == _companionState.PetId ? "Selected" : "", FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 21, 126, 142)), VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(selected, 2);
+            row.Children.Add(selected);
+            var option = new Button { Content = row, HorizontalContentAlignment = HorizontalAlignment.Stretch, Background = choice.Id == _companionState.PetId ? new SolidColorBrush(ColorHelper.FromArgb(255, 235, 247, 247)) : new SolidColorBrush(ColorHelper.FromArgb(255, 255, 255, 255)), BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 220, 231, 232)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 7, 10, 7) };
+            AutomationProperties.SetName(option, $"Choose {choice.Name} companion");
+            AutomationProperties.SetHelpText(option, choice.Description);
+            option.Click += (_, _) => { selectedId = choice.Id; dialog.Hide(); };
+            choices.Children.Add(option);
+        }
+
+        await dialog.ShowAsync();
+        if (selectedId is null) return;
+        _companionState = _companionState with { PetId = selectedId };
+        UpdateCompanionDisplay();
+        SaveCompanionState();
+        RuntimeStatus.Text = $"Selected {CompanionName.Text} as your local companion.";
+    }
+
+    private void CompanionPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(CompanionOverlay).Position;
+        _companionDragOffset = new Point(point.X - Canvas.GetLeft(CompanionCard), point.Y - Canvas.GetTop(CompanionCard));
+        _isCompanionDragging = true;
+        CompanionImage.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void CompanionPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isCompanionDragging) return;
+        var point = e.GetCurrentPoint(CompanionOverlay).Position;
+        SetCompanionPosition(point.X - _companionDragOffset.X, point.Y - _companionDragOffset.Y);
+        e.Handled = true;
+    }
+
+    private void CompanionPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isCompanionDragging) return;
+        _isCompanionDragging = false;
+        CompanionImage.ReleasePointerCapture(e.Pointer);
+        SaveCompanionState();
+        e.Handled = true;
+    }
+
+    private void CompanionPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isCompanionDragging) return;
+        _isCompanionDragging = false;
+        SaveCompanionState();
+    }
+
+    private void CompanionKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var delta = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down) ? 48 : 16;
+        var left = Canvas.GetLeft(CompanionCard);
+        var top = Canvas.GetTop(CompanionCard);
+        switch (e.Key)
+        {
+            case Windows.System.VirtualKey.Left: left -= delta; break;
+            case Windows.System.VirtualKey.Right: left += delta; break;
+            case Windows.System.VirtualKey.Up: top -= delta; break;
+            case Windows.System.VirtualKey.Down: top += delta; break;
+            default: return;
+        }
+        SetCompanionPosition(left, top);
+        SaveCompanionState();
+        e.Handled = true;
+    }
 
     private void ApplyResponsiveNavigation(double width)
     {

@@ -43,7 +43,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\assets\pets\*.svg" Link="Assets\Svg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Markdig" />
+    <PackageReference Include="Uno.WinUI.Svg" Condition="'$(TargetFramework)' == 'net10.0-desktop'" />
+    <PackageReference Include="Svg.Skia" Condition="'$(TargetFramework)' == 'net10.0-desktop'" />
   </ItemGroup>
 
 </Project>
