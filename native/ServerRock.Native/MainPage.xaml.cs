@@ -218,6 +218,18 @@ public sealed partial class MainPage : Page
         var cardHeight = CompanionCard.ActualHeight > 0 ? CompanionCard.ActualHeight : 68;
         var maxLeft = Math.Max(8, CompanionOverlay.ActualWidth - width - 8);
         var maxTop = Math.Max(8, CompanionOverlay.ActualHeight - cardHeight - 8);
+
+        // On compact windows the companion must not sit over the welcome prompt
+        // or the message composer. Keep it in the otherwise-unused strip below
+        // the header for that layout, but retain the person's desktop position
+        // so it returns when the window has room again.
+        if (_compactNavigation)
+        {
+            Canvas.SetLeft(CompanionCard, maxLeft);
+            Canvas.SetTop(CompanionCard, Math.Clamp(Header.ActualHeight + 8, 8, maxTop));
+            return;
+        }
+
         var left = _companionState.Left < 0 ? maxLeft : Math.Clamp(_companionState.Left, 8, maxLeft);
         var top = Math.Clamp(_companionState.Top, 8, maxTop);
         Canvas.SetLeft(CompanionCard, left);
