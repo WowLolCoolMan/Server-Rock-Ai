@@ -3750,6 +3750,10 @@ public sealed partial class MainPage : Page
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Secondary)
         {
+            // Uno's desktop accessibility tree can still be flushing the first
+            // dialog as ShowAsync completes. Yielding one dispatcher turn avoids
+            // opening another dialog against that disappearing visual tree.
+            await Task.Delay(50);
             await ModelLibraryClickAsync();
             return;
         }
