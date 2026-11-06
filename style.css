@@ -27,6 +27,8 @@
   /* Sidebar and rail rows: hover fill, and a slightly stronger fill for the selected item. */
   --nav-hover: #24292f;
   --nav-selected: #2c323a;
+  /* Elevation for menus and popovers: dark needs a much deeper shadow to read at all. */
+  --shadow-pop: 0 0 0 1px #0006, 0 16px 40px #000a;
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "DejaVu Sans Mono", "Noto Sans Mono", Consolas, monospace;
 }
 * {
@@ -653,6 +655,7 @@ dialog::backdrop {
   --link: #2459c0;
   --nav-hover: #e6ebf2;
   --nav-selected: #dce3ec;
+  --shadow-pop: 0 12px 32px rgba(24, 36, 54, .16);
 }
 .light .rail,
 .light .composer,
@@ -2457,19 +2460,24 @@ summary:focus-visible {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface-raised);
-  box-shadow: 0 12px 34px #0007;
+  box-shadow: var(--shadow-pop);
 }
-.account-menu button {
+/* The account menu lives inside the rail, so it picked up the rail's icon-button rule
+   (centered 18px muted text). The .rail prefix wins that fight so items read like a normal menu. */
+.rail .account-menu button {
+  display: block;
   width: 100%;
+  height: auto;
   min-height: 36px;
   padding: 8px 10px;
   border: 0;
   border-radius: 7px;
   background: transparent;
   color: var(--text);
+  font-size: 13px;
   text-align: left;
 }
-.account-menu button:hover { background: var(--surface-soft); }
+.rail .account-menu button:hover { background: var(--surface-soft); }
 .pet-mini {
   position: fixed;
   z-index: 30;
@@ -2695,6 +2703,9 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .send { width: 36px; height: 36px; border-radius: 50%; background: #2459c0 !important; color: #fff !important; }
 .send:hover { background: #1948a8 !important; }
 .stop-generation { min-height: 34px; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+/* ===== Menus and popovers ===== */
+/* Every floating panel shares one surface and the --shadow-pop elevation (the old #0003 shadow
+   was invisible on the dark page, so menus blended into the sidebar). */
 .model-picker,
 .agent-mode-menu,
 .advanced-popover,
@@ -2703,13 +2714,28 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
   border-radius: 14px;
   background: var(--surface-raised);
   color: var(--text);
-  box-shadow: 0 16px 40px #0003;
+  box-shadow: var(--shadow-pop);
 }
 .model-picker { z-index: 30; }
 .agent-mode-menu { z-index: 40; }
-.advanced-popover { z-index: 30; width: min(300px, calc(100vw - 32px)); color: var(--text); }
+/* Mode menu items: the selected and hover fills were hard-coded #3a3a3a, a black block with
+   dark text in the light theme. */
+.agent-mode-menu button { padding: 9px 11px; border-radius: 9px; color: var(--text); }
+.agent-mode-menu button:hover { background: var(--surface-soft); }
+.agent-mode-menu button.selected { background: var(--nav-selected); }
+.agent-mode-menu b { font-size: 13px; font-weight: 650; }
+.agent-mode-menu small { margin-top: 2px; color: var(--muted); font-size: 12px; }
+/* Advanced popover is centered over its button so it no longer covers the sidebar edge or
+   runs off narrow windows (phones pin it to the right edge, where the button sits). */
+.advanced-popover { z-index: 30; right: auto; left: 50%; transform: translateX(-50%); bottom: calc(100% + 8px); width: min(300px, calc(100vw - 32px)); padding: 14px 16px; color: var(--text); }
+.advanced-popover b { font-size: 13px; font-weight: 650; }
 .advanced-popover p,
-.advanced-popover label { color: var(--muted); }
+.advanced-popover label { color: var(--muted); font-size: 12px; }
+.advanced-popover input[type="range"] { accent-color: var(--accent); }
+.advanced-popover output { color: var(--text); font-variant-numeric: tabular-nums; }
+@media (max-width: 700px) {
+  .advanced-popover { left: auto; right: 0; transform: none; }
+}
 .slash-menu {
   position: absolute;
   z-index: 60;

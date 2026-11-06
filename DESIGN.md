@@ -30,6 +30,7 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 | `--inline-code-bg` | Inline `code` chip |
 | `--link` | Links inside messages |
 | `--nav-hover` / `--nav-selected` | Rail and sidebar rows: hover fill / selected fill (selected is one step stronger) |
+| `--shadow-pop` | Elevation for every menu and popover (dark needs a much deeper shadow) |
 | `--font-mono` | All code, in every theme: portable stack, never Windows-only faces |
 
 ## Contrast
@@ -59,6 +60,14 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 - The account avatar is a 32px circle: `--surface-soft` fill, `--border-strong` border, `--text`.
 - Menus opened from the sidebar use `--surface-raised`, a `--line` border, and `--danger`
   for destructive items.
+
+### Menus and popovers
+- Mode menu, account menu, Advanced, model picker and slash menu share one surface:
+  `--surface-raised`, 1px `--line` border, 14px radius (10–12px for small menus), `--shadow-pop`.
+- Items are left-aligned 13px `--text`; secondary lines are 12px `--muted`.
+  Hover is `--surface-soft`; the current choice is `--nav-selected`.
+- Popovers stay inside the window: Advanced is centered over its button, pinned right on phones.
+- Elements nested in the rail must override the rail's icon-button rule (`.rail button`).
 
 ### States (every interactive element)
 - Hover: `--surface-raised` or `--surface-soft` fill, `--border-strong` border where bordered.

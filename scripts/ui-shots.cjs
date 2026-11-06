@@ -85,6 +85,11 @@ async function openChatMenu(p) {
   await p.locator(".chat-row .chat-item-actions").first().click();
 }
 
+async function openAccountMenu(p) {
+  if (await p.locator("#accountMenuToggle").isVisible()) await p.locator("#accountMenuToggle").click();
+  else await p.locator("#mobileMenu").click();
+}
+
 // Each state: which seed to use and what to do after load.
 const states = {
   "empty-dark": { theme: "dark" },
@@ -99,6 +104,12 @@ const states = {
   "settings-light": { theme: "light", run: (p) => p.locator("#settings").click() },
   "coding-agent": { theme: "dark", mode: "code", chat: true },
   "mode-menu": { theme: "dark", run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#agentModeToggle").click(); } },
+  // Light versions of the popovers, plus the rail's account menu (on phones the drawer's
+  // account buttons stand in for it, since the rail is hidden there).
+  "mode-menu-light": { theme: "light", run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#agentModeToggle").click(); } },
+  "advanced-light": { theme: "light", run: (p) => p.locator(".advanced-menu summary").click() },
+  "account-menu": { theme: "dark", run: openAccountMenu },
+  "account-menu-light": { theme: "light", run: openAccountMenu },
   "slash-command": { theme: "dark", run: async (p) => { await p.locator("#prompt").fill("/fast summarise this"); await p.locator("#prompt").dispatchEvent("input"); } },
   "advanced": { theme: "dark", run: (p) => p.locator(".advanced-menu summary").click() },
 };
