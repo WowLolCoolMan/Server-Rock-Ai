@@ -22,7 +22,7 @@ public sealed partial class MainPage : Page
     private sealed record CompanionChoice(string Id, string Name, string Description, string AssetUri);
     private static readonly CompanionChoice[] CompanionChoices =
     [
-        new("rocky", "Rocky", "A steady rock when the diff gets large.", "ms-appx:///Assets/Svg/rocky.svg"),
+        new("rocky", "Rocky", "A steady rock when the diff gets large.", "ms-appx:///Assets/Svg/rocky-idle.png"),
         new("byte", "Byte", "A tiny blue-screen gremlin.", "ms-appx:///Assets/Svg/byte.svg"),
         new("sprout", "Sprout", "Small green shoots for new ideas.", "ms-appx:///Assets/Svg/sprout.svg")
     ];
@@ -44,6 +44,7 @@ public sealed partial class MainPage : Page
         ("/research", "Turn on web research for the next Chat prompt"),
         ("/tools", "Open the available local tools menu"),
         ("/status", "Show the current model, workspace, and privacy status"),
+        ("/pet", "Open the smart desktop companion"),
         ("/newproject", "Create a named project and choose its folders"),
         ("/folders", "Manage folders for the active project"),
         ("/settings", "Configure the model connection"),
@@ -75,6 +76,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
     private AppSettings _settings;
     private CompanionState _companionState = new();
+    private CompanionWindow? _companionWindow;
     private string _mode = "ChatBot";
     private string? _project;
     private string? _activeProjectId;
@@ -319,7 +321,9 @@ public sealed partial class MainPage : Page
             }
             catch { }
         }
-        return new SvgImageSource { UriSource = new Uri(choice.AssetUri) };
+        return choice.AssetUri.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+            ? new SvgImageSource { UriSource = new Uri(choice.AssetUri) }
+            : new BitmapImage { UriSource = new Uri(choice.AssetUri) };
     }
 
     private void SetCompanionState(string state)
@@ -340,6 +344,7 @@ public sealed partial class MainPage : Page
         var safe = string.IsNullOrWhiteSpace(message) ? "Ready for your next prompt." : message.Trim();
         if (safe.Length > 240) safe = safe[..237].TrimEnd() + "…";
         CompanionSpeech.Text = safe;
+        _companionWindow?.UpdateStatus(safe);
     }
 
     private void ApplySavedCustomization()
@@ -454,6 +459,16 @@ public sealed partial class MainPage : Page
         UpdateCompanionDisplay();
         SaveCompanionState();
         RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible as a draggable sprite." : "Pet companion hidden.";
+    }
+
+    private void ShowCompanionPopout()
+    {
+        var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
+        _companionWindow?.Close();
+        _companionWindow = new CompanionWindow(choice.Name, choice.AssetUri, CompanionSpeech.Text);
+        _companionWindow.Closed += (_, _) => _companionWindow = null;
+        _companionWindow.Show();
+        RuntimeStatus.Text = $"{choice.Name} is open in a transparent desktop pop-out.";
     }
 
     private void HideCompanionClick(object sender, RoutedEventArgs e)
@@ -4866,6 +4881,9 @@ public sealed partial class MainPage : Page
             var customize = new Button { Content = "Choose pet" };
             customize.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(CustomizeCompanionAsync); dialog.Hide(); };
             pageBody.Children.Add(MakeSettingsCard("Pet companion", $"Current pet: {CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId)?.Name ?? "Rocky"}. Choose a character and keep it available while you work.", customize));
+            var popout = new Button { Content = "Open desktop pet" };
+            popout.Click += (_, _) => { actionAfterClose = () => { ShowCompanionPopout(); return Task.CompletedTask; }; dialog.Hide(); };
+            pageBody.Children.Add(MakeSettingsCard("Desktop pop-out", "Keep your companion visible above the app with a transparent background while Server Rock: AI is minimized.", popout));
             pageBody.Children.Add(showPet);
             pageBody.Children.Add(petCompletion);
             pageBody.Children.Add(petErrors);
@@ -5425,6 +5443,7 @@ public sealed partial class MainPage : Page
             case "/research": EnableResearchMode(); break;
             case "/tools": ComposerToolsClick(this, new RoutedEventArgs()); break;
             case "/status": ShowWorkspaceStatus(); break;
+            case "/pet": ShowCompanionPopout(); break;
             case "/newproject": await NewProjectClickAsync(); break;
             case "/folders": await ProjectFoldersClickAsync(); break;
             case "/settings": case "/connect": await SettingsDialogAsync(); break;

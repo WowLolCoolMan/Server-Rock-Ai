@@ -44,6 +44,7 @@
 
   <ItemGroup>
     <Content Include="..\..\assets\pets\*.svg" Link="Assets\Svg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\assets\pets\*.png" Link="Assets\Svg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
