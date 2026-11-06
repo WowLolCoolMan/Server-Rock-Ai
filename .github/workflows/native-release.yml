@@ -31,7 +31,7 @@ jobs:
       - run: npm run audit:native-ui
       - run: dotnet restore native/ServerRock.Native.sln
       - run: npm test -- --no-restore
-      - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop --no-restore
+      - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop -c Release --no-restore
 
   package:
     name: Package native ${{ matrix.rid }}
@@ -129,6 +129,13 @@ jobs:
           merge-multiple: true
       - name: Generate release checksums
         run: find release-assets -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS.txt
+      - name: Require signed artifact evidence
+        run: |
+          set -euo pipefail
+          if [ ! -s release-assets/SIGNATURES.txt ]; then
+            echo "Release blocked: SIGNATURES.txt is missing. The current portable archives are unsigned." >&2
+            exit 1
+          fi
       - uses: softprops/action-gh-release@v2
         with:
           files: release-assets/*

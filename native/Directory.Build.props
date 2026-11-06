@@ -16,5 +16,6 @@
          graph. Keep release/publish builds buildable until that SDK package is
          upgraded to honor conditional DevServer assets. -->
     <Optimize Condition="'$(Configuration)' == 'Release'">false</Optimize>
+    <PublishTrimmed Condition="'$(Configuration)' == 'Release'">false</PublishTrimmed>
   </PropertyGroup>
 </Project>
