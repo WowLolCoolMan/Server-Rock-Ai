@@ -2,15 +2,11 @@
 
 ## Current gap
 
-The Electron app's Hugging Face downloader currently accepts repositories with an
-`onnx/` directory and downloads Transformers.js-compatible files. The local
-Transformers.js task list does not include text-to-image. As a result, selecting
-text-to-image goes to hosted Hugging Face inference, while the generic local
-image-generation command requires a user-configured ComfyUI workflow. Neither is
-the built-in, local Stable Diffusion experience the product needs.
-
-The Uno desktop client also currently labels image generation as not connected.
-Both clients should ultimately use one shared local image-generation service.
+The native desktop client currently supports a user-configured local ComfyUI
+workflow for image generation. It does not yet bundle a Stable Diffusion
+runtime or provide a built-in local image-model downloader. Hosted inference is
+kept separate and clearly labeled. The delivery plan below describes the native
+runtime boundary that should replace the current workflow.
 
 ## Recommended approach
 
@@ -86,8 +82,8 @@ Do not support pickle-based `.ckpt`/`.pt` downloads in the first release.
 3. **Image generation:** local text-to-image and image-to-image execution,
    progress/stop, image history, and no-ComfyUI first-run behavior.
 4. **Product fit:** simple Images page, optional advanced controls, empty/loading/
-   offline/error states, keyboard/accessibility review, and shared Uno/Electron
-   service integration.
+   offline/error states, keyboard/accessibility review, and native service
+   integration.
 5. **Verification:** mocked worker and Hub tests, real small permissively licensed
    smoke model on CPU, GPU checks where hardware is available, desktop packaging,
    and Windows/Linux runtime matrix evidence.

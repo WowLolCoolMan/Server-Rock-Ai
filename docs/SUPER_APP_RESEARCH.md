@@ -30,7 +30,7 @@ The model catalog and picker are a router-facing surface. A provider adapter adv
 
 - Host discovery includes Ollama, GPT4All, LM Studio, Jan, LocalAI, llama.cpp, vLLM, KoboldCpp, and text-generation-webui compatible endpoints.
 - The UI has ChatBot and Coding Agent modes, local project folders, a searchable model selector, and local image/voice workflows.
-- ChatGPT account authorization is an optional desktop flow. Other providers use configured API endpoints; provider keys are being moved into Electron OS-backed secure storage.
+- ChatGPT account authorization is not currently exposed by the native client. Other providers use configured API endpoints; hosted-provider credential flows remain gated until native OS-backed storage and recovery UX are complete.
 - No telemetry or analytics are included. Model discovery, downloads, and hosted inference only contact their configured services when the user invokes them.
 
 ## Upstream references

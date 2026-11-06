@@ -4,12 +4,12 @@ This is the current release roadmap. It records what remains before Server Rock:
 
 ## P0 — release blockers
 
-- Complete the Uno/.NET migration capability map and keep Electron transitional until every required workflow has native parity.
+- Maintain the native capability map and close the remaining native release gates; the legacy Electron runtime has been removed.
 - Run the final smoke, bug-check, accessibility, and UI checklist against the exact packaged artifacts, not only development builds.
 - Configure and verify code signing for every published desktop target, including certificate provenance, timestamping, notarization where applicable, and published checksums.
 - Produce trusted native installers/uninstallers and verify clean install, upgrade, data retention, uninstall, and rollback behavior.
 - Validate packaged runtime behavior on Windows 11, supported Windows 10 editions, Ubuntu, Debian, Fedora, and Arch; record architecture and runtime versions separately.
-- Complete a real Electron-profile export/import round trip on Windows and Linux, including preview, cancel/no-write, restart, duplicate protection, edited-chat preservation, interruption recovery, and keyboard focus restoration.
+- Validate import of a user-provided legacy chat archive on Windows and Linux, including preview, cancel/no-write, restart, duplicate protection, edited-chat preservation, interruption recovery, and keyboard focus restoration.
 - Establish a signed update channel with an explicit rollback strategy and verify the published artifact URL and digest from a clean machine.
 
 ## P1 — native parity and reliability
@@ -28,7 +28,7 @@ This is the current release roadmap. It records what remains before Server Rock:
 - Visually verify the native Settings redesign in a running packaged build.
 - Finish the companion/pet presentation: transparent rendering, activity bubble, positioning, and collision behavior across workspace sizes.
 - Consolidate transient success/error feedback into a consistent status system while keeping actionable failures visible until dismissed.
-- Keep Electron and native visual behavior aligned while both stacks exist, or retire the transitional path only after the migration gates close.
+- Keep all visual and interaction behavior native; no second UI stack is permitted.
 
 ## P2 — polish and product quality
 

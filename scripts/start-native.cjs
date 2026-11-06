@@ -21,7 +21,7 @@ process.on("SIGTERM", () => forwardSignal("SIGTERM"));
 
 child.on("error", (error) => {
   console.error(`Unable to start the native app with dotnet: ${error.message}`);
-  console.error("Install the .NET 10 SDK or run the transitional Electron path with: npm run start:electron");
+  console.error("Install the .NET 10 SDK and confirm that dotnet is available on PATH.");
   process.exitCode = 1;
 });
 

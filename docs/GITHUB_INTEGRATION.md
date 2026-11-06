@@ -2,15 +2,13 @@
 
 The native Uno/.NET app exposes GitHub sign-in, repository selection/manual resolution, clone-as-project, and guarded commit/push in its Coding Agent workspace. It requires a real GitHub App Client ID configured by the distributor or entered in Settings → GitHub; the app owner must enable Device Flow and grant the minimum required repository permissions. Windows stores credentials with DPAPI; Linux uses Secret Service and requires an available desktop keyring plus `secret-tool`.
 
-The remaining instructions below describe the legacy Electron app's configuration and UI. Do not treat its setup-file locations or exact labels as native-app instructions. The GitHub App and least-privilege requirements apply to both clients.
-
 Server Rock: AI connects directly to GitHub from the desktop app. The GitHub access and refresh tokens are kept in the operating system credential store. Repository browsing, cloning, and pushing happen only when the user asks for them.
 
 ## Configure the app once
 
 The application publisher needs to register a GitHub App, enable **Device flow**, and configure **Metadata: read-only** plus **Contents: read and write**. Do not request account-wide repository administration. GitHub's device authorization grant is intended for desktop clients; device flow must be enabled in the app settings. The desktop client uses the GitHub App's **Client ID** (not its App ID or client secret); IDs may contain punctuation such as the `Iv1.` prefix.
 
-For development builds, enter the GitHub App public Client ID in Settings → GitHub. A distributor can preconfigure it in electron/github-app.json or with SERVER_ROCK_GITHUB_APP_CLIENT_ID. The client ID is not a secret; no GitHub private key or client secret belongs in this desktop app. Users must install the GitHub App on the account or organization and grant it access to the repositories they want to use.
+For development builds, enter the GitHub App public Client ID in the native Settings → GitHub page or provide `SERVER_ROCK_GITHUB_APP_CLIENT_ID` at process launch. The client ID is not a secret; no GitHub private key or client secret belongs in this desktop app. Users must install the GitHub App on the account or organization and grant it access to the repositories they want to use.
 
 The app requests offline_access so expiring GitHub App user tokens can be refreshed. The client ID must belong to a GitHub App with Device flow enabled.
 
