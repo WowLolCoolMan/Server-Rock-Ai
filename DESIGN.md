@@ -29,6 +29,7 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 | `--code-text` / `--code-muted` | Code text / code language label |
 | `--inline-code-bg` | Inline `code` chip |
 | `--link` | Links inside messages |
+| `--nav-hover` / `--nav-selected` | Rail and sidebar rows: hover fill / selected fill (selected is one step stronger) |
 | `--font-mono` | All code, in every theme: portable stack, never Windows-only faces |
 
 ## Contrast
@@ -47,6 +48,17 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 - Reply actions (Regenerate) sit left-aligned under the reply, 28px tall, 12px text,
   `--muted` text that turns `--text` on hover.
 - The message list fades out over its last 20px where it scrolls under the composer.
+
+### Rail and sidebar
+- Rows (New chat, projects, library links, chats) are 38px, 9px radius, left-aligned.
+  Hover is `--nav-hover`; the selected row or rail icon is `--nav-selected` with `--text`.
+  Never use `--surface-raised` here: it is white in light mode, the same as the rail.
+- A selected chat fills the whole row, including its ⋯ button. The name is 600 weight.
+- Section labels (PROJECTS, LIBRARY, RECENTS) have 18px above and 4px below, with any
+  action (Clear) centered on the label.
+- The account avatar is a 32px circle: `--surface-soft` fill, `--border-strong` border, `--text`.
+- Menus opened from the sidebar use `--surface-raised`, a `--line` border, and `--danger`
+  for destructive items.
 
 ### States (every interactive element)
 - Hover: `--surface-raised` or `--surface-soft` fill, `--border-strong` border where bordered.
