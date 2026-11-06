@@ -1704,8 +1704,23 @@ function setMobileSidebar(open, returnFocus = false) {
   $("#mobileMenu").setAttribute("aria-expanded", String(open));
   $("#mobileMenu").setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
   if (!open && returnFocus && wasOpen) {
+    // Return focus to the menu button only if nothing outside the drawer has
+    // been focused since it closed. Taking focus back from a control focused
+    // in the meantime made the marketplace focus test flaky on slow CI runners
+    // and could pull focus away from the user. (A focused control that is then
+    // disabled drops focus to <body>, so the check has to happen at focus
+    // time, not just when the frame runs.)
+    let focusMovedOn = false;
+    const noteFocus = (event) => {
+      if (!sidebar.contains(event.target)) focusMovedOn = true;
+    };
+    document.addEventListener("focusin", noteFocus);
     requestAnimationFrame(() => {
-      if (!sidebar.classList.contains("mobile-open")) $("#mobileMenu").focus();
+      document.removeEventListener("focusin", noteFocus);
+      const focused = document.activeElement;
+      const focusLost = !focused || focused === document.body || sidebar.contains(focused);
+      if (!sidebar.classList.contains("mobile-open") && focusLost && !focusMovedOn)
+        $("#mobileMenu").focus();
     });
   }
 }
