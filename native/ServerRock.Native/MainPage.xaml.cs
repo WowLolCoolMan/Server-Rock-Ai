@@ -4329,8 +4329,12 @@ public sealed partial class MainPage : Page
                 .Select(message => new ChatMessage(message.Role,
                     message.Content.Length > 12_000 ? message.Content[..12_000] + "\n[context truncated]" : message.Content))
                 .ToList();
-            contextMessages.Insert(0, new ChatMessage("system",
-                "You are a professional prompt editor between a user and an AI agent. Rewrite only the user's latest draft into a clear, specific, actionable prompt. Preserve intent, constraints, names, paths, and uncertainty; do not invent requirements or claim work was done. For coding requests, make the desired outcome, scope, acceptance criteria, and safety constraints explicit. Return only the rewritten prompt, with no preamble, critique, markdown fences, or commentary."));
+            const string rewriteInstruction = "You are a professional prompt editor between a user and an AI agent. Rewrite only the user's latest draft into a clear, specific, actionable prompt. Preserve intent, constraints, names, paths, and uncertainty; do not invent requirements or claim work was done. For coding requests, make the desired outcome, scope, acceptance criteria, and safety constraints explicit. Return only the rewritten prompt, with no preamble, critique, markdown fences, or commentary.";
+            var systemIndex = contextMessages.FindIndex(message => message.Role.Equals("system", StringComparison.OrdinalIgnoreCase));
+            if (systemIndex >= 0)
+                contextMessages[systemIndex] = new ChatMessage("system", rewriteInstruction + "\n\n" + contextMessages[systemIndex].Content);
+            else
+                contextMessages.Insert(0, new ChatMessage("system", rewriteInstruction));
             contextMessages.Add(new ChatMessage("user", draft));
             var rewritten = new System.Text.StringBuilder();
             var rewriteSettings = new AppSettings
