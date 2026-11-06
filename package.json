@@ -8,7 +8,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "check:syntax": "node --check app.js && node --check commands.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/github-updates.cjs && node --check electron/provider-bridge.cjs && node --check electron/workspace.cjs && node --check electron/ipc-validation.cjs && node --check electron/bounded-file.cjs && node --check electron/terminal-sessions.cjs && node --check scripts/audit-ui.cjs && node --check scripts/audit-electron.cjs",
+    "check:syntax": "node --check app.js && node --check commands.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/github-updates.cjs && node --check electron/provider-bridge.cjs && node --check electron/workspace.cjs && node --check electron/ipc-validation.cjs && node --check electron/bounded-file.cjs && node --check electron/terminal-sessions.cjs && node --check electron/secure-store.cjs && node --check electron/ipc/secrets.cjs && node --check electron/ipc/chatgpt.cjs && node --check scripts/audit-ui.cjs && node --check scripts/audit-electron.cjs",
     "check:hygiene": "node scripts/check-repo-hygiene.cjs",
     "audit:ui": "node scripts/audit-ui.cjs",
     "audit:electron": "node scripts/audit-electron.cjs",
