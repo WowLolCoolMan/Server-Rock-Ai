@@ -365,6 +365,8 @@ public sealed partial class MainPage : Page
             "orange" => ColorHelper.FromArgb(255, 214, 125, 42),
             _ => ColorHelper.FromArgb(255, 14, 175, 200)
         };
+        if (Application.Current.Resources["AccentBrush"] is SolidColorBrush accentBrush) accentBrush.Color = accent;
+        if (Application.Current.Resources["AccentSoftBrush"] is SolidColorBrush accentSoftBrush) accentSoftBrush.Color = ColorHelper.FromArgb(32, accent.R, accent.G, accent.B);
         SendButton.Background = new SolidColorBrush(accent);
         ConnectionSetupButton.Background = new SolidColorBrush(accent);
         var compact = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase);

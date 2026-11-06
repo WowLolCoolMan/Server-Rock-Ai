@@ -1,9 +1,9 @@
 <Page x:Class="ServerRock.Native.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Background="#fbfcfb" Loaded="MainPageLoaded" KeyDown="AppKeyDown">
-  <Grid x:Name="AppRoot" ColumnDefinitions="276,*" Background="#fbfcfb" SizeChanged="AppRootSizeChanged">
-    <Grid x:Name="Sidebar" Grid.Column="0" Background="#f2f6f5" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
+      Background="{StaticResource CanvasBrush}" Loaded="MainPageLoaded" KeyDown="AppKeyDown">
+  <Grid x:Name="AppRoot" ColumnDefinitions="276,*" Background="{StaticResource CanvasBrush}" SizeChanged="AppRootSizeChanged">
+    <Grid x:Name="Sidebar" Grid.Column="0" Background="{StaticResource SidebarBrush}" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
       <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="4,0,4,18">
         <Border Width="34" Height="34" CornerRadius="11" Background="#183844">
           <TextBlock Text="◈" Foreground="#dff7fa" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -58,8 +58,8 @@
       </Border>
     </Grid>
 
-    <Grid x:Name="MainContent" Grid.Column="1" RowDefinitions="58,Auto,*" Background="#ffffff">
-      <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto" Padding="22,0" Background="#ffffff" BorderBrush="#e9eff0" BorderThickness="0,0,0,1">
+    <Grid x:Name="MainContent" Grid.Column="1" RowDefinitions="58,Auto,*" Background="{StaticResource SurfaceBrush}">
+      <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto" Padding="22,0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
           <Button x:Name="ToggleSidebarButton" Content="☰" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close." />
           <TextBlock x:Name="PageTitle" Text="New chat" FontSize="14" FontWeight="SemiBold" Foreground="#26373d" />
@@ -103,12 +103,12 @@
         </Grid>
       </Border>
 
-      <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="#ffffff">
+      <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="{StaticResource SurfaceBrush}">
         <StackPanel x:Name="WelcomePanel" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="14" MaxWidth="660" Margin="28,28,28,20">
           <TextBlock Text="◈" FontSize="29" Foreground="#20a9c0" HorizontalAlignment="Center" />
           <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#26373d" />
           <TextBlock x:Name="WelcomeSubtitle" Text="Chat with a model running on your computer, or turn on web search when you need current sources." FontSize="15" TextWrapping="Wrap" Foreground="#74858a" HorizontalAlignment="Center" TextAlignment="Center" />
-          <Button x:Name="ConnectionSetupButton" Content="Connect a model" Click="SettingsClick" Background="#0eafc8" Foreground="#ffffff" CornerRadius="10" Padding="14,9" HorizontalAlignment="Center" Visibility="Collapsed" AutomationProperties.Name="Connect a model" AutomationProperties.HelpText="Open connection settings to choose and check a local or hosted model endpoint." />
+          <Button x:Name="ConnectionSetupButton" Content="Connect a model" Click="SettingsClick" Style="{StaticResource PrimaryActionButtonStyle}" HorizontalAlignment="Center" Visibility="Collapsed" AutomationProperties.Name="Connect a model" AutomationProperties.HelpText="Open connection settings to choose and check a local or hosted model endpoint." />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,12,0,0">
             <Button x:Name="SuggestionOne" Content="Help me write" Click="SuggestionClick" Tag="Help me write" Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use writing prompt suggestion" />
             <Button x:Name="SuggestionTwo" Content="Plan a project" Click="SuggestionClick" Tag="Help me plan a project" Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use project planning prompt suggestion" />

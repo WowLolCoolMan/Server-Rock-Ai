@@ -9,14 +9,47 @@
         <!-- Load WinUI resources -->
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
       </ResourceDictionary.MergedDictionaries>
+      <!-- Server Rock design tokens: a single calm surface system shared by every native view. -->
+      <Color x:Key="CanvasColor">#F7FAF9</Color>
+      <Color x:Key="SurfaceColor">#FFFFFF</Color>
+      <Color x:Key="SidebarColor">#EEF5F3</Color>
+      <Color x:Key="LineColor">#D8E5E2</Color>
+      <Color x:Key="InkColor">#18333B</Color>
+      <Color x:Key="MutedInkColor">#647A7F</Color>
+      <Color x:Key="AccentColor">#0E9FB8</Color>
+      <Color x:Key="AccentSoftColor">#E5F5F6</Color>
+      <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+      <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+      <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
+      <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}" />
+      <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
+      <SolidColorBrush x:Key="MutedInkBrush" Color="{StaticResource MutedInkColor}" />
+      <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+      <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}" />
       <Style x:Key="RailButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="38" /><Setter Property="Height" Value="38" /><Setter Property="Margin" Value="0,3" /><Setter Property="CornerRadius" Value="11" /><Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="#a3a49c" /><Setter Property="FontSize" Value="18" />
+      </Style>
+      <Style x:Key="PrimaryActionButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </Style>
+      <Style x:Key="SidebarActionButtonStyle" TargetType="Button">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="11,9" />
       </Style>
       <Style x:Key="SuggestionButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="#f5fafb" /><Setter Property="Foreground" Value="#3f555b" /><Setter Property="BorderBrush" Value="#dce9eb" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /><Setter Property="Padding" Value="12,9" />
       </Style>
       <Style x:Key="ContextButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#ffffff" /><Setter Property="Foreground" Value="#53696f" /><Setter Property="BorderBrush" Value="#dce6e8" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="9,5" /><Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="10,6" /><Setter Property="FontSize" Value="12" />
       </Style>
       <Style x:Key="ComposerButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="#688087" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="8,5" />
