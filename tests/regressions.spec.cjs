@@ -582,3 +582,51 @@ test("attaching a file says when the selected provider won't receive it", async 
   await expect(page.locator("#prompt")).toHaveAttribute("placeholder", "Ask about dog.png");
   await expect(page.locator("#runtimeStatus")).not.toContainText("isn't sent");
 });
+
+// CI flake (ui.spec "marketplace search restores keyboard focus"): closing the
+// mobile drawer returned focus to the menu button one animation frame later,
+// even if focus had already moved elsewhere. On a slow runner that frame
+// landed after the test focused Search, so focus was taken away. Slowing
+// animation frames reproduces it every time.
+test("closing the mobile drawer doesn't take focus back from a control focused since", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    const realRaf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (callback) => setTimeout(() => realRaf(callback), 300);
+    window.desktopModels = {
+      searchHuggingFace: async () => [],
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+    };
+  });
+  await page.goto(appUrl);
+
+  // Focus moves on before the delayed frame: it must stay where it was put.
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  await page.locator("#marketSearch").focus();
+  await page.waitForTimeout(700);
+  await expect(page.locator("#marketSearch")).toBeFocused();
+
+  // The exact steps of the flaky marketplace test: focus Search, press Enter,
+  // the button is disabled while searching, then focus must come back to it.
+  await page.evaluate(() => {
+    window.desktopModels.searchHuggingFace = () => new Promise((resolve) => { window.finishSearch = () => resolve([]); });
+  });
+  await page.locator("#mobileMenu").click();
+  await page.locator("#openModelLibrary").click();
+  const searchButton = page.locator("#marketSearchButton");
+  await searchButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(searchButton).toBeDisabled();
+  await page.waitForTimeout(700);
+  await page.evaluate(() => window.finishSearch());
+  await expect(searchButton).toBeEnabled();
+  await expect(searchButton).toBeFocused();
+
+  // Focus left inside the closed drawer would be lost, so it still returns to the menu button.
+  await page.locator("#mobileMenu").click();
+  await expect(page.locator(".sidebar")).toHaveClass(/mobile-open/);
+  await page.locator("#openModelLibrary").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#mobileMenu")).toBeFocused({ timeout: 3000 });
+});
