@@ -327,10 +327,16 @@ function renderProjects() {
       (state.activeProjectId === project.id ? " selected" : "");
     const title = document.createElement("span");
     title.className = "project-title";
-    title.textContent = "▱　" + project.name;
-    const meta = document.createElement("small");
-    meta.textContent = `${project.folders.length} local source ${project.folders.length === 1 ? "folder" : "folders"}`;
-    b.append(title, meta);
+    // The folder icon is drawn by CSS (.project-title::before); it used to be a "▱　" text glyph.
+    title.textContent = project.name;
+    b.append(title);
+    // Only say how many source folders a project has when it has some ("0 local source folders"
+    // under every new project was noise).
+    if (project.folders.length) {
+      const meta = document.createElement("small");
+      meta.textContent = `${project.folders.length} local source ${project.folders.length === 1 ? "folder" : "folders"}`;
+      b.append(meta);
+    }
     b.onclick = () => {
       state.activeProjectId = project.id;
       persist();
