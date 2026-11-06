@@ -24,6 +24,14 @@ try
 }
 finally { if (System.IO.Directory.Exists(logDirectory)) System.IO.Directory.Delete(logDirectory, recursive: true); }
 
+var pluginCatalog = PluginCatalogService.Catalog;
+Check(pluginCatalog.Count >= 12 && pluginCatalog.Select(item => item.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() == pluginCatalog.Count,
+    "plugin catalog exposes unique supported integrations");
+Check(PluginCatalogService.Search("github").Count == 1 && PluginCatalogService.Search("github")[0].Id == "github",
+    "plugin catalog search finds a matching integration");
+Check(PluginCatalogService.Search(category: "Skills").All(item => item.Category == "Skills") && PluginCatalogService.Categories().Contains("Developer tools"),
+    "plugin catalog filters by category and exposes sorted categories");
+
 var discoveryHandler = new StubHandler((request, _) =>
 {
     Check(request.RequestUri?.AbsoluteUri == "http://localhost:11434/v1/models", "model discovery uses the configured /v1 route");
