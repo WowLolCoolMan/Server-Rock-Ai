@@ -31,6 +31,7 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 | `--link` | Links inside messages |
 | `--nav-hover` / `--nav-selected` | Rail and sidebar rows: hover fill / selected fill (selected is one step stronger) |
 | `--shadow-pop` | Elevation for every menu and popover (dark needs a much deeper shadow) |
+| `--icon-mic` / `--icon-stop` | SVG masks drawn in `currentColor`, for buttons whose text glyph app.js writes |
 | `--font-mono` | All code, in every theme: portable stack, never Windows-only faces |
 
 ## Contrast
@@ -60,6 +61,16 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 - The account avatar is a 32px circle: `--surface-soft` fill, `--border-strong` border, `--text`.
 - Menus opened from the sidebar use `--surface-raised`, a `--line` border, and `--danger`
   for destructive items.
+
+### Composer
+- One surface in both themes: `--surface-raised`, 1px `--line` border, 18px radius.
+- Focus shows once, on the composer: `--accent` border plus a soft 3px `--focus` ring.
+  The textarea itself draws no outline.
+- Tool buttons (+, mic, /) are 34px ghost buttons in `--muted`, with `--surface-soft` on hover.
+  No filled tool buttons; only Send is filled.
+- Never rely on emoji glyphs (Linux has no color emoji font). Hide the text and draw the icon
+  with a mask (`--icon-*`) in `currentColor`. Recording uses `--danger`.
+- Command and queue chips use an `--accent` tint with `--link` text.
 
 ### Menus and popovers
 - Mode menu, account menu, Advanced, model picker and slash menu share one surface:

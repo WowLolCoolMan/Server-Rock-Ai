@@ -29,6 +29,9 @@
   --nav-selected: #2c323a;
   /* Elevation for menus and popovers: dark needs a much deeper shadow to read at all. */
   --shadow-pop: 0 0 0 1px #0006, 0 16px 40px #000a;
+  /* Icon masks drawn in currentColor (used where app.js writes a text glyph into a button). */
+  --icon-mic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='3' width='6' height='12' rx='3'/%3E%3Cpath d='M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8'/%3E%3C/svg%3E");
+  --icon-stop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='6' width='12' height='12' rx='2.5'/%3E%3C/svg%3E");
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "DejaVu Sans Mono", "Noto Sans Mono", Consolas, monospace;
 }
 * {
@@ -1251,9 +1254,7 @@ dialog {
 .light dialog {
   background: #fff;
 }
-.light .composer {
-  background: #f4f4f4;
-}
+/* The light composer used to be a flat #f4f4f4 box here; it now uses --surface-raised (Composer section). */
 @media (max-width: 740px) {
   .sidebar {
     width: 210px;
@@ -2649,6 +2650,7 @@ h1 { color: var(--text); font-family: inherit; font-weight: 650; letter-spacing:
 .bubble.user { background: var(--user); color: var(--text); }
 .bubble.assistant { background: transparent; border: 0; color: var(--text); }
 /* Code block and blockquote colors now live in the Messages section above. */
+/* ===== Composer ===== */
 .composer-wrap {
   position: relative;
   inset: auto;
@@ -2682,9 +2684,12 @@ h1 { color: var(--text); font-family: inherit; font-weight: 650; letter-spacing:
   box-shadow: 0 8px 28px #0002;
   padding: 13px 14px 10px;
 }
+/* One focus ring for the whole composer. The textarea used to draw its own box inside it,
+   which showed as a double ring while typing. */
 .composer:focus-within,
-.image-page-composer:focus-within { border-color: var(--accent); }
+.image-page-composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 24%, transparent), 0 8px 28px #0002; }
 #prompt { min-height: 58px; background: transparent; color: var(--text); }
+#prompt:focus-visible { outline: none; }
 #prompt::placeholder,
 input::placeholder,
 textarea::placeholder { color: var(--muted); opacity: 1; }
@@ -2699,6 +2704,43 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
   color: var(--muted);
 }
 .tools button:not(.send):not(.stop-generation):hover { background: var(--surface-soft); color: var(--text); }
+/* Size the "＋" and "/" text glyphs so they match the 18px voice icon next to them. */
+#attach { font-size: 18px; line-height: 1; }
+#slashHelp { font: 600 14px/1 var(--font-mono); }
+/* Voice button: app.js writes "🎙" (no emoji font on Linux, so it drew a black blob on a filled
+   #3d3d3d square) or "■" while recording. The text is hidden and the icon is drawn from
+   currentColor instead, so it matches + and / in both themes. */
+.tools #voice {
+  position: relative;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0;
+}
+.tools #voice svg { display: none; }
+.tools #voice::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  mask: var(--icon-mic) center / 18px no-repeat;
+}
+.tools #voice:hover { background: var(--surface-soft); color: var(--text); }
+.tools #voice.recording { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.tools #voice.recording::before { mask-image: var(--icon-stop); }
+/* "Use fast model" and queue chips: accent tint on tokens (were hard-coded dark pills, so
+   they stayed dark in the light theme). */
+.command-hint,
+.queue-hint {
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--link);
+  font-size: 12px;
+}
 .privacy { max-width: min(40vw, 260px); overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .send { width: 36px; height: 36px; border-radius: 50%; background: #2459c0 !important; color: #fff !important; }
 .send:hover { background: #1948a8 !important; }

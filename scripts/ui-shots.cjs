@@ -110,6 +110,10 @@ const states = {
   "advanced-light": { theme: "light", run: (p) => p.locator(".advanced-menu summary").click() },
   "account-menu": { theme: "dark", run: openAccountMenu },
   "account-menu-light": { theme: "light", run: openAccountMenu },
+  // Composer states: typing in light, and the voice button while recording. Recording is
+  // faked with the same class and glyph app.js sets, since headless Chromium has no microphone.
+  "slash-command-light": { theme: "light", run: async (p) => { await p.locator("#prompt").fill("/fast summarise this"); await p.locator("#prompt").dispatchEvent("input"); } },
+  "voice-recording": { theme: "dark", run: (p) => p.evaluate(() => { const v = document.querySelector("#voice"); v.textContent = "■"; v.classList.add("recording"); }) },
   "slash-command": { theme: "dark", run: async (p) => { await p.locator("#prompt").fill("/fast summarise this"); await p.locator("#prompt").dispatchEvent("input"); } },
   "advanced": { theme: "dark", run: (p) => p.locator(".advanced-menu summary").click() },
 };
