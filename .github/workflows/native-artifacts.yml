@@ -27,6 +27,11 @@ jobs:
           -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true
           -o ${{ runner.temp }}/serverrock-ai-native/win-x64
 
+      - name: Smoke test the published Windows artifact
+        env:
+          NATIVE_SMOKE_SECONDS: 8
+        run: node scripts/smoke-native-artifact.cjs "${{ runner.temp }}/serverrock-ai-native/win-x64/ServerRock.Native.exe"
+
       - name: Create portable archive and checksum
         shell: pwsh
         run: |
@@ -69,6 +74,11 @@ jobs:
           dotnet publish native/ServerRock.Native/ServerRock.Native.csproj
           -c Release -f net10.0-desktop -r linux-x64 -p:SelfContained=true
           -o "$RUNNER_TEMP/serverrock-ai-native/linux-x64"
+
+      - name: Smoke test the published Linux artifact
+        env:
+          NATIVE_SMOKE_SECONDS: 8
+        run: xvfb-run -a node scripts/smoke-native-artifact.cjs "$RUNNER_TEMP/serverrock-ai-native/linux-x64/ServerRock.Native"
 
       - name: Create portable archive and checksum
         shell: bash
