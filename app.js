@@ -2035,6 +2035,17 @@ document.addEventListener("click", (e) => {
     $("#agentModeToggle").setAttribute("aria-expanded", "false");
   }
 });
+// Only Hugging Face image and audio tasks receive attachments. Chat providers
+// (Ollama, OpenAI-compatible, Anthropic, ...) and ComfyUI never see them, so
+// say so instead of dropping the file silently.
+function attachmentReachesModel(settings) {
+  return settings.provider === "Hugging Face" &&
+    mediaHfTasks.includes(settings.hfTask || "text-generation");
+}
+function attachmentIgnoredNote(name, settings) {
+  return name + " isn't sent to " + settings.provider +
+    ": only Hugging Face image and audio tasks use attachments.";
+}
 $("#attach").onclick = () => $("#file").click();
 $("#file").onchange = (e) => {
   const f = e.target.files[0];
@@ -2052,6 +2063,9 @@ $("#file").onchange = (e) => {
     pendingImageData = reader.result;
     pendingImageName = f.name;
     $("#prompt").placeholder = "Ask about " + f.name;
+    if (!attachmentReachesModel(state.settings))
+      $("#runtimeStatus").textContent =
+        attachmentIgnoredNote(f.name, state.settings) + " It will be left out when you send.";
   };
   reader.readAsDataURL(f);
 };
@@ -2587,7 +2601,13 @@ async function send() {
   }
   active.messages.push({
     role: "user",
-    content: raw + (imageName ? " [Image attached: " + imageName + "]" : ""),
+    // Mark attachments the provider won't receive, so neither the user nor the
+    // model (which sees this text in later turns) assumes the file was read.
+    content: raw + (imageName
+      ? attachmentReachesModel(state.settings)
+        ? " [Image attached: " + imageName + "]"
+        : " [Image attached: " + imageName + " — not sent to " + state.settings.provider + "]"
+      : ""),
   });
   $("#projectContextBadge").hidden = !active.projectId;
   persist();

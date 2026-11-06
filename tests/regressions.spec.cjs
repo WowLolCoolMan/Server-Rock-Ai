@@ -554,3 +554,33 @@ test("sidebar Clear asks before deleting chat history", async ({ page }) => {
   expect(dialogs).toHaveLength(3);
   await expect(page.locator("#runtimeStatus")).toHaveText("There is no chat history to clear.");
 });
+
+// Smoke-test item 11: chat providers never receive attachments (only Hugging
+// Face image/audio tasks do), but the app said nothing, and the user's message
+// still read "[Image attached: ...]" as if the model had seen it.
+test("attaching a file says when the selected provider won't receive it", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      streamProviderChat: async (request, onChunk) => { window.lastRequest = request; onChunk("I can't see images here."); },
+      cancelProviderChat: () => {},
+    };
+  });
+  await page.goto(appUrl);
+  const png = Buffer.from("89504e470d0a1a0a", "hex");
+  await page.locator("#file").setInputFiles({ name: "cat.png", mimeType: "image/png", buffer: png });
+  await expect(page.locator("#runtimeStatus")).toContainText("cat.png isn't sent to Ollama");
+
+  await page.locator("#prompt").fill("What is in this picture?");
+  await page.locator("#send").click();
+  await expect(page.locator(".bubble.user").last()).toContainText("cat.png — not sent to Ollama");
+  const request = await page.evaluate(() => window.lastRequest);
+  expect(JSON.stringify(request.messages)).not.toContain("data:image");
+
+  // A Hugging Face image task does use the attachment, so no warning.
+  await page.evaluate(() => { state.settings.provider = "Hugging Face"; state.settings.hfTask = "image-to-text"; });
+  await page.locator("#runtimeStatus").evaluate((el) => (el.textContent = ""));
+  await page.locator("#file").setInputFiles({ name: "dog.png", mimeType: "image/png", buffer: png });
+  await expect(page.locator("#prompt")).toHaveAttribute("placeholder", "Ask about dog.png");
+  await expect(page.locator("#runtimeStatus")).not.toContainText("isn't sent");
+});
