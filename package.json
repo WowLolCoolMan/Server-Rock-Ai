@@ -8,8 +8,9 @@
   "scripts": {
     "start": "node scripts/start-native.cjs",
     "start:native": "node scripts/start-native.cjs",
-    "check:syntax": "node --check scripts/start-native.cjs && node --check scripts/check-repo-hygiene.cjs && node --check scripts/audit-native-ui.cjs && node --check scripts/smoke-native-artifact.cjs",
+    "check:syntax": "node --check scripts/start-native.cjs && node --check scripts/check-repo-hygiene.cjs && node --check scripts/audit-native-ui.cjs && node --check scripts/smoke-native-artifact.cjs && node --check scripts/validate-release-config.cjs",
     "check:hygiene": "node scripts/check-repo-hygiene.cjs",
+    "check:release-config": "node scripts/validate-release-config.cjs",
     "audit:native-ui": "node scripts/audit-native-ui.cjs",
     "smoke:native:artifact": "node scripts/smoke-native-artifact.cjs",
     "test": "dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj"

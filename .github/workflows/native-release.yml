@@ -28,6 +28,7 @@ jobs:
       - run: npm ci
       - run: npm run check:syntax
       - run: npm run check:hygiene
+      - run: npm run check:release-config
       - run: npm run audit:native-ui
       - run: dotnet restore native/ServerRock.Native.sln
       - run: npm test -- --no-restore
@@ -47,6 +48,8 @@ jobs:
             rid: linux-x64
             executable: ServerRock.Native
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_SIGNING_READY: ${{ vars.RELEASE_SIGNING_READY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -62,6 +65,16 @@ jobs:
           dotnet publish native/ServerRock.Native/ServerRock.Native.csproj
           -c Release -f net10.0-desktop -r ${{ matrix.rid }} -p:SelfContained=true
           -o "$RUNNER_TEMP/serverrock-native/${{ matrix.rid }}"
+      - name: Stage versioned installer and rollback scripts
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          publish="$RUNNER_TEMP/serverrock-native/${{ matrix.rid }}"
+          mkdir -p "$publish/packaging"
+          cp packaging/native/install.ps1 packaging/native/uninstall.ps1 packaging/native/rollback.ps1 packaging/native/README.md "$publish/packaging/"
+          version="${RELEASE_VERSION#v}"
+          sed "s/\"version\": \"0.0.0\"/\"version\": \"$version\"/" packaging/native/release-manifest.json > "$publish/release-manifest.json"
       - name: Smoke-test exact published artifact
         shell: bash
         env:
@@ -74,6 +87,32 @@ jobs:
           else
             NATIVE_SMOKE_REQUIRE_WINDOW=1 node scripts/smoke-native-artifact.cjs "$executable"
           fi
+      - name: Run Windows interactive UI acceptance
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\scripts\native-ui-acceptance.ps1 -Executable "$env:RUNNER_TEMP\serverrock-native\win-x64\ServerRock.Native.exe"
+      - name: Sign Windows executable
+        if: runner.os == 'Windows' && env.RELEASE_SIGNING_READY == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_CODESIGN_CERT_BASE64: ${{ secrets.WINDOWS_CODESIGN_CERT_BASE64 }}
+          WINDOWS_CODESIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_CERT_PASSWORD }}
+          WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ vars.WINDOWS_CODESIGN_TIMESTAMP_URL }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_CERT_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_CERT_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) { throw 'Windows signing is enabled but certificate, password, or timestamp URL is missing.' }
+          $publish = Join-Path $env:RUNNER_TEMP 'serverrock-native\win-x64'
+          $cert = Join-Path $env:RUNNER_TEMP 'serverrock-signing.pfx'
+          [IO.File]::WriteAllBytes($cert, [Convert]::FromBase64String($env:WINDOWS_CODESIGN_CERT_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Filter signtool.exe -Recurse | Where-Object FullName -Match '\\x64\\signtool.exe$' | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw 'signtool.exe was not found on the Windows runner.' }
+          & $signtool.FullName sign /fd SHA256 /f $cert /p $env:WINDOWS_CODESIGN_CERT_PASSWORD /tr $env:WINDOWS_CODESIGN_TIMESTAMP_URL /td SHA256 (Join-Path $publish 'ServerRock.Native.exe')
+          if ($LASTEXITCODE -ne 0) { throw 'Authenticode signing failed.' }
+          Get-AuthenticodeSignature (Join-Path $publish 'ServerRock.Native.exe') | Format-List | Out-File -Encoding utf8 (Join-Path $publish 'SIGNATURES-win-x64.txt')
+      - name: Require Windows signing evidence
+        if: runner.os == 'Windows' && env.RELEASE_SIGNING_READY == 'true'
+        shell: pwsh
+        run: if (-not (Test-Path "$env:RUNNER_TEMP/serverrock-native/win-x64/SIGNATURES-win-x64.txt")) { throw 'Windows signing evidence was not produced.' }
       - name: Archive Windows artifact
         if: runner.os == 'Windows'
         shell: pwsh
@@ -82,6 +121,7 @@ jobs:
           $publish = Join-Path $root '${{ matrix.rid }}'
           Copy-Item 'docs/NATIVE_RELEASE_ACCEPTANCE.md' $publish
           Compress-Archive -Path (Join-Path $publish '*') -DestinationPath (Join-Path $root 'Server-Rock-AI-native-win-x64.zip')
+          if (Test-Path (Join-Path $publish 'SIGNATURES-win-x64.txt')) { Copy-Item (Join-Path $publish 'SIGNATURES-win-x64.txt') (Join-Path $root 'SIGNATURES-win-x64.txt') }
           (Get-FileHash -Algorithm SHA256 (Join-Path $root 'Server-Rock-AI-native-win-x64.zip')).Hash.ToLowerInvariant() + '  Server-Rock-AI-native-win-x64.zip' | Set-Content -Encoding ascii (Join-Path $root 'SHA256SUMS.txt')
       - name: Archive Linux artifact
         if: runner.os == 'Linux'
@@ -93,11 +133,25 @@ jobs:
           chmod +x "$publish/${{ matrix.executable }}"
           tar -czf "$root/Server-Rock-AI-native-linux-x64.tar.gz" -C "$publish" .
           (cd "$root" && sha256sum Server-Rock-AI-native-linux-x64.tar.gz > SHA256SUMS.txt)
+      - name: Sign Linux archive
+        if: runner.os == 'Linux' && env.RELEASE_SIGNING_READY == 'true'
+        shell: bash
+        env:
+          RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_GPG_PRIVATE_KEY" ]; then echo 'Linux signing is enabled but RELEASE_GPG_PRIVATE_KEY is missing.' >&2; exit 1; fi
+          root="$RUNNER_TEMP/serverrock-native"
+          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --yes --armor --detach-sign --output "$root/Server-Rock-AI-native-linux-x64.tar.gz.asc" "$root/Server-Rock-AI-native-linux-x64.tar.gz"
+          gpg --batch --list-secret-keys --with-colons | awk -F: '$1 == "sec" { print "keyid=" $5; exit }' > "$root/SIGNATURES-linux-x64.txt"
+          printf 'signature=Server-Rock-AI-native-linux-x64.tar.gz.asc\n' >> "$root/SIGNATURES-linux-x64.txt"
       - uses: actions/upload-artifact@v4
         with:
           name: Server-Rock-AI-native-${{ matrix.rid }}-${{ github.sha }}
           path: |
             ${{ runner.temp }}/serverrock-native/Server-Rock-AI-native-*
+            ${{ runner.temp }}/serverrock-native/SIGNATURES-*.txt
             ${{ runner.temp }}/serverrock-native/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
@@ -132,10 +186,12 @@ jobs:
       - name: Require signed artifact evidence
         run: |
           set -euo pipefail
-          if [ ! -s release-assets/SIGNATURES.txt ]; then
-            echo "Release blocked: SIGNATURES.txt is missing. The current portable archives are unsigned." >&2
+          signatures=$(find release-assets -maxdepth 1 -type f -name 'SIGNATURES-*.txt' -size +0c -print)
+          if [ -z "$signatures" ]; then
+            echo "Release blocked: no per-artifact signing evidence was produced." >&2
             exit 1
           fi
+          cat $signatures > release-assets/SIGNATURES.txt
       - uses: softprops/action-gh-release@v2
         with:
           files: release-assets/*

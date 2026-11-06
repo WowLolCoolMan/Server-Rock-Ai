@@ -4,7 +4,7 @@ This is the release handoff checklist for the Uno/.NET desktop migration. It dis
 
 ## Current artifact path
 
-Run the **Native desktop artifacts** GitHub Actions workflow manually. It publishes self-contained `net10.0-desktop` x64 builds on matching Windows and Ubuntu runners, archives the outputs, generates SHA-256 checksums, and stores the archives as short-lived workflow artifacts. The workflow does not create a GitHub Release, sign binaries, or run installers. Build commands follow the [Uno desktop publishing guide](https://platform.uno/docs/articles/uno-publishing-desktop.html); self-contained RID-specific deployment bundles the .NET runtime, not all native OS libraries.
+Run the **Native desktop artifacts** GitHub Actions workflow manually for diagnostic bundles, or the tagged **Build native desktop release artifacts** workflow for release candidates. Every bundle now includes `packaging/native/install.ps1`, `uninstall.ps1`, `rollback.ps1`, and a versioned `release-manifest.json`. The installer keeps profile data outside the versioned application directory, preserves the previous version, and supports an explicit rollback. The diagnostic workflow does not sign binaries or create a GitHub Release. Tagged releases fail closed unless real Authenticode and GPG signing material is supplied.
 
 ## Evidence ledger
 
@@ -17,7 +17,7 @@ Run the **Native desktop artifacts** GitHub Actions workflow manually. It publis
 | Windows runtime | Windows 11 unpackaged and isolated temporary-profile smoke runs have opened the native app; branch navigation and contextual Fork are verified against disposable data. | Run the packaged artifact through clean install, upgrade, uninstall, data-retention, and rollback checks. Verify keyboard focus and narrow layouts from the packaged build. |
 | Linux runtime | Ubuntu 24.04 WSL2/WSLg build and initial launch evidence exists; WSL portal/EWMH warnings remain. The corrected `linux-x64` self-contained publish pins `Svg.Skia 4.9.1` to Uno 6.7's SkiaSharp 3.119.2 ABI and produced 306 files (175,768,323 bytes). Under disposable HOME/XDG/application-data paths, the published process remained alive for an 8-second WSLg smoke window without a startup crash; only disposable profile/Mesa cache locations were used. | Run the packaged artifact on a real Ubuntu desktop plus Debian, Arch, and Fedora; record native-library prerequisites and clean launch/exit behavior. This WSLg check is initial runtime evidence, not distro acceptance. |
 | Legacy chat archive import | Core importer tests prove bounded parsing, metadata preservation, no-write planning, idempotent re-import, and fork/archive independence for the legacy envelope. | Use a user-provided legacy archive on Windows and Linux; verify native picker preview, Cancel, confirm, restart, duplicate protection, and edited-chat preservation. |
-| Signing and recovery | No signing identity, installer, auto-update, rollback mechanism, or reproducible-build attestation is configured. | Choose signing/release credentials, produce trusted installers, define rollback, and verify checksums/signatures from the exact published artifacts. |
+| Signing and recovery | Versioned install, uninstall, rollback, and data-retention scripts are shipped and smoke-tested. Release CI has Authenticode/GPG signing hooks and refuses to publish without evidence. | Configure the real Windows certificate/timestamp service and Linux release key in repository secrets; then run the tagged workflow and retain its signature evidence. |
 
 Local verification on 2026-11-05 (Windows 11 Pro, x64, .NET SDK 10.0.401):
 
@@ -32,9 +32,9 @@ The published-artifact smoke check is run with `npm run smoke:native:artifact --
 
 ## Platform prerequisites and limits
 
-- Windows portable archive is x64 and self-contained for .NET. It is unsigned and has no installer/uninstaller. Windows 11 build/test evidence is recorded in `docs/NATIVE_MIGRATION.md`; it does not establish Windows 8/8.1 compatibility. Windows 10 support must be verified against specific editions/builds and actual host runs.
+- Windows portable archive is x64 and self-contained for .NET. It includes a versioned PowerShell installer/uninstaller/rollback contract; it remains unsigned until the release certificate secrets are configured. Windows 11 build/test evidence is recorded in `docs/NATIVE_MIGRATION.md`; it does not establish Windows 8/8.1 compatibility. Windows 10 support must be verified against specific editions/builds and actual host runs.
 - Linux archive is x64 and self-contained for .NET, but still depends on native desktop libraries. Uno's [Skia Desktop requirements](https://platform.uno/docs/articles/features/using-skia-desktop.html) currently list X11/graphics/font dependencies, including Mesa/OpenGL, DBus, fontconfig, XRandR, and XI libraries. The published archive is not yet a DEB, RPM, or AppImage, and the workflow has not verified those dependencies on Debian, Ubuntu desktop, Arch, or Fedora.
-- No ARM64 artifacts are produced. No code-signing identity, reproducible-build attestation, rollback mechanism, or auto-updater is configured.
+- No ARM64 artifacts are produced. The release workflow has signing and rollback implementation, but no private signing identity is present in this repository. A trusted release still requires the owner to configure those secrets and execute the platform acceptance workflow on real machines.
 - Unsigned archives and their checksum file provide transport integrity checking only when the checksum itself is obtained through a trusted channel. They do not prove publisher identity.
 
 ## Data retention contract to verify

@@ -1,0 +1,7 @@
+{
+  "version": "0.0.0",
+  "previousVersion": null,
+  "artifact": "ServerRock.Native.exe",
+  "profilePath": "%LOCALAPPDATA%\\ServerRock\\AI",
+  "installBehavior": "versioned-copy-with-previous-rollback"
+}
