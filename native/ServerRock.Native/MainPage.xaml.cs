@@ -90,6 +90,7 @@ public sealed partial class MainPage : Page
     private readonly Dictionary<string, Button> _chatFolderToggleButtons = new(StringComparer.OrdinalIgnoreCase);
     private Button? _archivedChatsToggleButton;
     private bool _isTemporaryChat;
+    private bool _temporaryTransitionInProgress;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
     private bool _compactComposerToolbar;
@@ -791,7 +792,11 @@ public sealed partial class MainPage : Page
     private async Task RunUiActionAsync(Func<Task> action)
     {
         try { await action(); }
-        catch (Exception ex) { RuntimeStatus.Text = $"Action failed: {ex.Message}"; }
+        catch (Exception ex)
+        {
+            App.Log.Error("UI", ex, "UI action failed");
+            RuntimeStatus.Text = $"Action failed: {ex.Message}";
+        }
     }
 
     private void NavigateClick(object sender, RoutedEventArgs e)
@@ -4226,7 +4231,18 @@ public sealed partial class MainPage : Page
             : $"Web search off · prompt{(_includeProjectFilesInChat ? " and selected project excerpts" : "")} go to the selected model server.";
     }
 
-    private async void TemporaryClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(() => SetTemporaryModeAsync(!_isTemporaryChat));
+    private async void TemporaryClick(object sender, RoutedEventArgs e)
+    {
+        if (_temporaryTransitionInProgress) return;
+        _temporaryTransitionInProgress = true;
+        TemporaryButton.IsEnabled = false;
+        try { await RunUiActionAsync(() => SetTemporaryModeAsync(!_isTemporaryChat)); }
+        finally
+        {
+            _temporaryTransitionInProgress = false;
+            TemporaryButton.IsEnabled = true;
+        }
+    }
 
     private async Task SetTemporaryModeAsync(bool enabled)
     {
@@ -4245,6 +4261,11 @@ public sealed partial class MainPage : Page
             }
             if (_messages.Count > 0)
             {
+                if (XamlRoot is null)
+                {
+                    RuntimeStatus.Text = "Temporary chat is unavailable until the window is ready. Please try again in a moment.";
+                    return;
+                }
                 var dialog = new ContentDialog
                 {
                     Title = "Start a temporary chat?",
@@ -4294,6 +4315,11 @@ public sealed partial class MainPage : Page
     private async Task<bool> ConfirmTemporaryDiscardAsync(string action)
     {
         if (!_isTemporaryChat || _messages.Count == 0 && _pendingAttachments.Count == 0) return true;
+        if (XamlRoot is null)
+        {
+            RuntimeStatus.Text = "Temporary chat is unavailable until the window is ready. Please try again in a moment.";
+            return false;
+        }
         var dialog = new ContentDialog
         {
             Title = "Discard temporary chat?",
@@ -4536,19 +4562,12 @@ public sealed partial class MainPage : Page
 
     private void ComposerToolsClick(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement anchor) return;
-        var menu = new MenuFlyout();
-        var imageStudio = new MenuFlyoutItem { Text = "Image studio" };
-        AutomationProperties.SetName(imageStudio, "Open local image studio");
-        AutomationProperties.SetHelpText(imageStudio, "Generate images with your configured local ComfyUI workflow.");
-        imageStudio.Click += (_, _) => DispatcherQueue.TryEnqueue(async () => await RunUiActionAsync(ImageStudioAsync));
-        var advanced = new MenuFlyoutItem { Text = "Advanced response controls" };
-        AutomationProperties.SetName(advanced, "Open advanced generation controls");
-        AutomationProperties.SetHelpText(advanced, "Adjust response temperature and reset it to the recommended value.");
-        advanced.Click += (_, _) => DispatcherQueue.TryEnqueue(async () => await RunUiActionAsync(AdvancedClickAsync));
-        menu.Items.Add(imageStudio);
-        menu.Items.Add(advanced);
-        menu.ShowAt(anchor);
+        var isOpen = SecondaryComposerToolbar.Visibility == Visibility.Visible;
+        SecondaryComposerToolbar.Visibility = isOpen ? Visibility.Collapsed : Visibility.Visible;
+        ComposerToolsButton.Content = isOpen ? "Tools　⌄" : "Tools　⌃";
+        AutomationProperties.SetHelpText(ComposerToolsButton, isOpen
+            ? "Show optional composer controls such as web search, temporary chat, project files, and smart rewriting."
+            : "Hide optional composer controls.");
     }
 
     private async Task AdvancedClickAsync()
