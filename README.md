@@ -102,3 +102,4 @@ Image generation can use a ComfyUI API-format workflow pasted into Settings (rep
 - `electron/main.cjs`: desktop window and native menu.
 - `index.html`, `style.css`, `app.js`: interface, styling, local history, and provider client.
 - `.github/workflows/release.yml`: tagged release packaging.
+- `docs/PRODUCTION_READINESS_GAPS.md`: prioritized remaining migration, release, parity, accessibility, and polish work.
