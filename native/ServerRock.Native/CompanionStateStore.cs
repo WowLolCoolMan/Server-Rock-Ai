@@ -5,7 +5,16 @@ using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
-internal sealed record CompanionState(string PetId = "rocky", double Left = -1, double Top = 88, bool IsVisible = false);
+internal sealed record CompanionState(
+    string PetId = "rocky",
+    double Left = -1,
+    double Top = 88,
+    bool IsVisible = false,
+    string CurrentState = "idle",
+    Dictionary<string, string>? StateAssets = null,
+    bool NotifyOnCompletion = true,
+    bool NotifyOnErrors = true,
+    bool AskBeforeActions = true);
 
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web, WriteIndented = true)]
 [JsonSerializable(typeof(CompanionState))]
@@ -14,7 +23,7 @@ internal partial class CompanionStateJsonContext : JsonSerializerContext { }
 /// <summary>Stores the selected local companion and its window-relative position.</summary>
 internal sealed class CompanionStateStore
 {
-    private const int MaxBytes = 4096;
+    private const int MaxBytes = 16 * 1024;
     private readonly string _path;
 
     public CompanionStateStore(string? path = null)
@@ -66,6 +75,16 @@ internal sealed class CompanionStateStore
         var petId = state.PetId is "rocky" or "byte" or "sprout" ? state.PetId : "rocky";
         var left = double.IsFinite(state.Left) && state.Left is >= -1 and <= 100_000 ? state.Left : -1;
         var top = double.IsFinite(state.Top) && state.Top is >= 0 and <= 100_000 ? state.Top : 88;
-        return state with { PetId = petId, Left = left, Top = top };
+        var assets = (state.StateAssets ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
+            .Where(item => AllowedStates.Contains(item.Key, StringComparer.OrdinalIgnoreCase)
+                && item.Value.Length <= 1024
+                && !item.Value.Any(char.IsControl))
+            .ToDictionary(item => item.Key.ToLowerInvariant(), item => item.Value, StringComparer.OrdinalIgnoreCase);
+        var currentState = AllowedStates.Contains(state.CurrentState, StringComparer.OrdinalIgnoreCase)
+            ? state.CurrentState.ToLowerInvariant()
+            : "idle";
+        return state with { PetId = petId, Left = left, Top = top, CurrentState = currentState, StateAssets = assets };
     }
+
+    internal static readonly string[] AllowedStates = ["idle", "thinking", "coding", "coding_malicious", "stuck", "success", "error"];
 }

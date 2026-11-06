@@ -26,6 +26,7 @@ public sealed partial class MainPage : Page
         new("byte", "Byte", "A tiny blue-screen gremlin.", "ms-appx:///Assets/Svg/byte.svg"),
         new("sprout", "Sprout", "Small green shoots for new ideas.", "ms-appx:///Assets/Svg/sprout.svg")
     ];
+    private static readonly string[] CompanionStates = CompanionStateStore.AllowedStates;
     private static readonly (string Name, string Description)[] SlashCommandCatalog =
     [
         ("/help", "Show keyboard and workspace help"),
@@ -74,7 +75,6 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
     private AppSettings _settings;
     private CompanionState _companionState = new();
-    private CompanionWindow? _companionWindow;
     private string _mode = "ChatBot";
     private string? _project;
     private string? _activeProjectId;
@@ -129,7 +129,6 @@ public sealed partial class MainPage : Page
         RuntimeStatus.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
         {
             var message = RuntimeStatus.Text;
-            _companionWindow?.UpdateStatus(string.IsNullOrWhiteSpace(message) ? "Ready for your next prompt." : message);
             RuntimeStatusBanner.Visibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
             _runtimeStatusTimer.Stop();
             if (!string.IsNullOrWhiteSpace(message) && !IsActionableRuntimeStatus(message)) _runtimeStatusTimer.Start();
@@ -200,6 +199,7 @@ public sealed partial class MainPage : Page
         UpdateWebSearchButton();
         UpdateSmartRewriteButton();
         UpdateTemporaryControls();
+        ApplySavedCustomization();
         RuntimeStatus.Text = "New chat ready.";
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
@@ -299,14 +299,80 @@ public sealed partial class MainPage : Page
     {
         var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
         _companionState = _companionState with { PetId = choice.Id };
-        CompanionImage.Source = new SvgImageSource { UriSource = new Uri(choice.AssetUri) };
+        CompanionImage.Source = ResolveCompanionAsset(choice);
         CompanionName.Text = choice.Name;
-        // The companion is a separate desktop window; keep the legacy in-app
-        // overlay hidden so there is only one source of truth for its position.
-        CompanionOverlay.Visibility = Visibility.Collapsed;
+        CompanionOverlay.Visibility = _companionState.IsVisible ? Visibility.Visible : Visibility.Collapsed;
         CompanionButton.Content = _companionState.IsVisible ? "◉　Hide pet" : "◉　Show pet";
         AutomationProperties.SetName(CompanionButton, _companionState.IsVisible ? "Hide pet companion" : "Show pet companion");
         if (_companionState.IsVisible) PositionCompanion(persistIfChanged: false);
+    }
+
+    private ImageSource ResolveCompanionAsset(CompanionChoice choice)
+    {
+        if (_companionState.StateAssets?.TryGetValue(_companionState.CurrentState, out var customPath) == true && File.Exists(customPath))
+        {
+            try
+            {
+                return Path.GetExtension(customPath).Equals(".svg", StringComparison.OrdinalIgnoreCase)
+                    ? new SvgImageSource { UriSource = new Uri(customPath) }
+                    : new BitmapImage { UriSource = new Uri(customPath) };
+            }
+            catch { }
+        }
+        return new SvgImageSource { UriSource = new Uri(choice.AssetUri) };
+    }
+
+    private void SetCompanionState(string state)
+    {
+        var normalized = CompanionStates.Contains(state, StringComparer.OrdinalIgnoreCase) ? state.ToLowerInvariant() : "idle";
+        if (_companionState.CurrentState.Equals(normalized, StringComparison.OrdinalIgnoreCase)) return;
+        _companionState = _companionState with { CurrentState = normalized };
+        UpdateCompanionDisplay();
+    }
+
+    private void UpdateCompanionSpeech(string message)
+    {
+        var normalized = message?.Trim() ?? string.Empty;
+        var looksLikeError = normalized.StartsWith("Error", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("Could not", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("blocked", StringComparison.OrdinalIgnoreCase);
+        if (looksLikeError && !_companionState.NotifyOnErrors) return;
+        var safe = string.IsNullOrWhiteSpace(message) ? "Ready for your next prompt." : message.Trim();
+        if (safe.Length > 240) safe = safe[..237].TrimEnd() + "…";
+        CompanionSpeech.Text = safe;
+    }
+
+    private void ApplySavedCustomization()
+    {
+        var accent = _settings.AccentColor?.ToLowerInvariant() switch
+        {
+            "violet" => ColorHelper.FromArgb(255, 121, 91, 214),
+            "green" => ColorHelper.FromArgb(255, 39, 155, 104),
+            "orange" => ColorHelper.FromArgb(255, 214, 125, 42),
+            _ => ColorHelper.FromArgb(255, 14, 175, 200)
+        };
+        SendButton.Background = new SolidColorBrush(accent);
+        ConnectionSetupButton.Background = new SolidColorBrush(accent);
+        var compact = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase);
+        PromptBox.MinHeight = compact ? 100 : 132;
+        PromptBox.MaxHeight = compact ? 240 : 320;
+    }
+
+    private void SetCompanionCompletionSummary(string response)
+    {
+        if (!_companionState.NotifyOnCompletion) return;
+        var plain = System.Text.RegularExpressions.Regex.Replace(response ?? string.Empty, "[`*_>#]", string.Empty);
+        plain = System.Text.RegularExpressions.Regex.Replace(plain, "\\s+", " ").Trim();
+        if (plain.Length == 0)
+        {
+            SetCompanionState("success");
+            UpdateCompanionSpeech("Done · completed a response.");
+            return;
+        }
+        var sentenceEnd = plain.IndexOfAny(['.', '!', '?']);
+        var summary = sentenceEnd is > 0 and < 180 ? plain[..(sentenceEnd + 1)] : plain;
+        SetCompanionState("success");
+        UpdateCompanionSpeech("Done · " + summary);
     }
 
     private void CompanionImageFailed(object sender, ExceptionRoutedEventArgs e)
@@ -379,38 +445,15 @@ public sealed partial class MainPage : Page
         _companionState = _companionState with { IsVisible = !_companionState.IsVisible };
         if (_companionState.IsVisible)
         {
-            var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
-            _companionWindow ??= CreateCompanionWindow(choice);
-            _companionWindow.Show();
+            UpdateCompanionDisplay();
         }
         else
         {
-            _companionWindow?.Close();
             CompanionOverlay.Visibility = Visibility.Collapsed;
         }
         UpdateCompanionDisplay();
         SaveCompanionState();
-        RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible in its desktop window." : "Pet companion hidden.";
-    }
-
-    private CompanionWindow CreateCompanionWindow(CompanionChoice choice)
-    {
-        var window = new CompanionWindow(choice.Name, choice.AssetUri, "Ready for your next prompt.");
-        window.ChoiceSelected += async (_, option) =>
-        {
-            if (option.Equals("Open settings", StringComparison.OrdinalIgnoreCase))
-                await SettingsDialogAsync();
-            else
-                RuntimeStatus.Text = $"Pet choice received: {option}.";
-        };
-        window.Closed += (_, _) =>
-        {
-            _companionState = _companionState with { IsVisible = false };
-            CompanionOverlay.Visibility = Visibility.Collapsed;
-            SaveCompanionState();
-            RuntimeStatus.Text = "Pet companion hidden.";
-        };
-        return window;
+        RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible as a draggable sprite." : "Pet companion hidden.";
     }
 
     private void HideCompanionClick(object sender, RoutedEventArgs e)
@@ -427,6 +470,7 @@ public sealed partial class MainPage : Page
     private async Task CustomizeCompanionAsync()
     {
         string? selectedId = null;
+        var configureRequested = false;
         var choices = new StackPanel { Spacing = 7 };
         var dialog = new ContentDialog { Title = "Choose a companion", Content = choices, CloseButtonText = "Done", XamlRoot = XamlRoot };
         foreach (var choice in CompanionChoices)
@@ -448,12 +492,69 @@ public sealed partial class MainPage : Page
             choices.Children.Add(option);
         }
 
+        var configure = new Button { Content = "Configure custom state sprites…", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0) };
+        AutomationProperties.SetName(configure, "Configure custom state sprites");
+        configure.Click += (_, _) => { configureRequested = true; dialog.Hide(); };
+        choices.Children.Add(configure);
+
         await dialog.ShowAsync();
+        if (configureRequested)
+        {
+            await ConfigureCompanionStatesAsync();
+            return;
+        }
         if (selectedId is null) return;
         _companionState = _companionState with { PetId = selectedId };
         UpdateCompanionDisplay();
         SaveCompanionState();
         RuntimeStatus.Text = $"Selected {CompanionName.Text} as your local companion.";
+    }
+
+    private async Task ConfigureCompanionStatesAsync()
+    {
+        var statePicker = new ComboBox { Header = "Pet state", MinWidth = 260, ItemsSource = CompanionStates, SelectedIndex = Math.Max(0, Array.IndexOf(CompanionStates, _companionState.CurrentState)) };
+        var choose = new Button { Content = "Choose local sprite…", HorizontalAlignment = HorizontalAlignment.Left };
+        var clear = new Button { Content = "Clear custom sprite", HorizontalAlignment = HorizontalAlignment.Left };
+        var status = new TextBlock { Text = "Choose an SVG or image for the selected state. Changes are stored locally on this device.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var panel = new StackPanel { Spacing = 10 };
+        panel.Children.Add(statePicker); panel.Children.Add(choose); panel.Children.Add(clear); panel.Children.Add(status);
+        var dialog = new ContentDialog { Title = "Custom pet state sprites", Content = panel, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        choose.Click += async (_, _) =>
+        {
+            try
+            {
+                var picker = new Windows.Storage.Pickers.FileOpenPicker { SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary, ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail };
+                foreach (var extension in new[] { ".svg", ".png", ".jpg", ".jpeg", ".webp" }) picker.FileTypeFilter.Add(extension);
+#if WINDOWS
+                var window = (Application.Current as App)?.MainWindow;
+                if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+                var file = await picker.PickSingleFileAsync();
+                if (file is null) return;
+                var state = statePicker.SelectedItem?.ToString() ?? "idle";
+                var assets = _companionState.StateAssets is null
+                    ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, string>(_companionState.StateAssets, StringComparer.OrdinalIgnoreCase);
+                assets[state] = file.Path;
+                _companionState = _companionState with { StateAssets = assets };
+                SaveCompanionState();
+                UpdateCompanionDisplay();
+                status.Text = $"{state}: {file.Name} · saved locally";
+            }
+            catch (Exception ex) { status.Text = $"Could not choose a sprite: {ex.Message}"; }
+        };
+        clear.Click += (_, _) =>
+        {
+            var state = statePicker.SelectedItem?.ToString() ?? "idle";
+            var assets = _companionState.StateAssets is null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(_companionState.StateAssets, StringComparer.OrdinalIgnoreCase);
+            assets.Remove(state);
+            _companionState = _companionState with { StateAssets = assets };
+            SaveCompanionState(); UpdateCompanionDisplay(); status.Text = $"{state}: using the built-in fallback sprite.";
+        };
+        await dialog.ShowAsync();
     }
 
     private void CompanionPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -1217,9 +1318,7 @@ public sealed partial class MainPage : Page
     {
         if (_companionState.IsVisible)
         {
-            var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
-            _companionWindow ??= CreateCompanionWindow(choice);
-            _companionWindow.Show();
+            UpdateCompanionDisplay();
         }
         if (_connectionCheckRunning) return;
         _connectionCheckRunning = true;
@@ -1260,9 +1359,7 @@ public sealed partial class MainPage : Page
             ProcessingLabel.Text = "● Model not connected";
             RuntimeStatus.Text = $"Set up your model connection · {ex.Message}";
             if (_companionState.IsVisible)
-            {
-                _companionWindow?.Ask("Model connection failed. Open settings?", ["Open settings", "Dismiss"]);
-            }
+                UpdateCompanionSpeech("Model connection failed · open Settings to reconnect.");
         }
         UpdateModeControls();
     }
@@ -2725,6 +2822,8 @@ public sealed partial class MainPage : Page
         var assistantIndex = _messages.Count - 1;
         var response = AddMessage(_mode == "Coding Agent" ? "Coding Agent" : "Server Rock", "", false, messageIndex: assistantIndex);
         _requestCancellation = new CancellationTokenSource();
+        SetCompanionState(_mode == "Coding Agent" ? "coding" : "thinking");
+        UpdateCompanionSpeech(_mode == "Coding Agent" ? "Coding…" : "Thinking…");
         SendButton.Visibility = Visibility.Collapsed;
         StopButton.Visibility = Visibility.Visible;
             RuntimeStatus.Text = _historyAvailable
@@ -2763,6 +2862,7 @@ public sealed partial class MainPage : Page
             await StreamChatAsync(response, assistantIndex, requestMessages, _requestCancellation.Token);
             if (_mode == "Coding Agent") AttachWorkspaceProposals(response, assistantIndex);
             RenderAssistantMessage(response, _messages[assistantIndex].Content, _messages[assistantIndex].Sources);
+            SetCompanionCompletionSummary(_messages[assistantIndex].Content);
             RuntimeStatus.Text = _historyAvailable
                 ? $"⌖　{_settings.Model}"
                 : "Response complete · conversation not saved";
@@ -2781,6 +2881,8 @@ public sealed partial class MainPage : Page
                     : "Response stopped · conversation not saved";
             }
             else RuntimeStatus.Text = "The model request timed out after five minutes.";
+            SetCompanionState("stuck");
+            UpdateCompanionSpeech("Stuck · the response timed out.");
         }
         catch (Exception ex)
         {
@@ -2791,6 +2893,8 @@ public sealed partial class MainPage : Page
             var hasImages = _messages.Any(message => message.Attachments?.Any(attachment => attachment.IsImage) == true);
             AddMessage("Connection error", FriendlyError(ex, hasImages), false);
             RuntimeStatus.Text = "Connection failed · check Settings";
+            SetCompanionState("error");
+            UpdateCompanionSpeech("Error · the model request failed.");
         }
         finally
         {
@@ -4591,6 +4695,19 @@ public sealed partial class MainPage : Page
         var smartRewrite = new CheckBox { Content = "Show a smart prompt rewrite before sending", IsChecked = _settings.SmartPromptRewritingEnabled };
         AutomationProperties.SetName(smartRewrite, "Enable smart prompt rewriting");
         AutomationProperties.SetHelpText(smartRewrite, "Use the selected model to rewrite your draft using the current conversation, then review it before sending.");
+        var accent = new ComboBox { Header = "Accent color", MinWidth = 220 };
+        accent.Items.Add("Cyan"); accent.Items.Add("Violet"); accent.Items.Add("Green"); accent.Items.Add("Orange");
+        accent.SelectedIndex = _settings.AccentColor.ToLowerInvariant() switch { "violet" => 1, "green" => 2, "orange" => 3, _ => 0 };
+        var density = new ComboBox { Header = "Interface density", MinWidth = 220 };
+        density.Items.Add("Comfortable"); density.Items.Add("Compact");
+        density.SelectedIndex = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        var hostLabel = new TextBox { Header = "Host label", Text = _settings.HostLabel, PlaceholderText = "This device" };
+        var localOnly = new CheckBox { Content = "Only allow local model endpoints", IsChecked = _settings.RequireLocalModelEndpoints };
+        AutomationProperties.SetHelpText(localOnly, "When enabled, saving a remote endpoint is rejected. OpenRouter remains available when this is off.");
+        var showPet = new CheckBox { Content = "Show pet when the app starts", IsChecked = _companionState.IsVisible };
+        var petCompletion = new CheckBox { Content = "Let the pet announce completed responses", IsChecked = _companionState.NotifyOnCompletion };
+        var petErrors = new CheckBox { Content = "Let the pet announce errors and blocked actions", IsChecked = _companionState.NotifyOnErrors };
+        var petQuestions = new CheckBox { Content = "Let the pet ask for approval before risky actions", IsChecked = _companionState.AskBeforeActions };
         var note = new TextBlock { Text = "OpenRouter provides an OpenAI-compatible endpoint. Its openrouter/free router selects an available free model, but OpenRouter still requires your own API key and applies free-tier rate limits. Smart rewriting sends the draft and conversation context to the selected endpoint for a reviewable rewrite; it never changes your original text automatically.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
@@ -4733,6 +4850,36 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(note);
             pageBody.Children.Add(checkConnection);
             pageBody.Children.Add(checkStatus);
+        }
+
+        void BuildAppearancePage()
+        {
+            pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(MakeSettingsCard("Accent color", "Choose the highlight color used for send and connection actions.", accent));
+            pageBody.Children.Add(MakeSettingsCard("Interface density", "Use comfortable spacing for readability or compact spacing for smaller screens.", density));
+            pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
+        }
+
+        void BuildPetsPage()
+        {
+            pageBody.Children.Add(new TextBlock { Text = "COMPANION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            var customize = new Button { Content = "Choose pet" };
+            customize.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(CustomizeCompanionAsync); dialog.Hide(); };
+            pageBody.Children.Add(MakeSettingsCard("Pet companion", $"Current pet: {CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId)?.Name ?? "Rocky"}. Choose a character and keep it available while you work.", customize));
+            pageBody.Children.Add(showPet);
+            pageBody.Children.Add(petCompletion);
+            pageBody.Children.Add(petErrors);
+            pageBody.Children.Add(petQuestions);
+            pageBody.Children.Add(new TextBlock { Text = "The pet stays local. These notifications update its speech and state without sending telemetry.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 6, 4, 0) });
+        }
+
+        void BuildHostPage()
+        {
+            pageBody.Children.Add(new TextBlock { Text = "HOST CONFIGURATION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(MakeSettingsCard("Host identity", "Give this local workspace a recognizable label in status messages and support diagnostics.", hostLabel));
+            pageBody.Children.Add(localOnly);
+            pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), VerticalAlignment = VerticalAlignment.Center }));
+            pageBody.Children.Add(new TextBlock { Text = "Model endpoint and credentials remain in General. Local-only mode is a safety guard for environments where remote model hosts are not allowed.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
         }
 
         void BuildChatsPage()
@@ -4889,6 +5036,9 @@ public sealed partial class MainPage : Page
         }
 
         AddSection("General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
+        AddSection("Appearance", "accent color density customize interface", "Appearance", "Tune the workspace colors and spacing for the way you work.", BuildAppearancePage);
+        AddSection("Pets", "companion mascot notifications approval", "Pets", "Choose your companion and decide when it should speak up.", BuildPetsPage);
+        AddSection("Host configuration", "device runtime local only safety", "Host configuration", "Name this workspace and control whether remote model endpoints are allowed.", BuildHostPage);
         AddSection("Chats & history", "archive import export conversations", "Chats & history", "Organize, restore, import, and export your local conversations.", BuildChatsPage);
         AddSection("Models & downloads", "installed library benchmark pin", "Models & downloads", "Manage installed models and the models shown in the composer switcher.", BuildModelsPage);
         AddSection("GitHub workspace", "repositories coding agent clone push", "GitHub workspace", "Manage repository access and project setup.", BuildGitHubPage);
@@ -4969,12 +5119,32 @@ public sealed partial class MainPage : Page
             }
             MigrateLegacyPinnedModels();
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
+            var endpointIsLocal = Uri.TryCreate(_settings.Endpoint, UriKind.Absolute, out var savedEndpoint) && savedEndpoint.IsLoopback;
+            if (localOnly.IsChecked == true && !endpointIsLocal)
+            {
+                RuntimeStatus.Text = "Local-only mode is enabled, but the endpoint is not a local address. No connection changes were saved.";
+                return;
+            }
             _settings.Model = model.Text.Trim();
             _settings.ModelProvider = _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) ? "OpenRouter" : "Custom endpoint";
             _openRouterApiKey = _settings.ModelProvider == "OpenRouter" ? openRouterKey.Password.Trim() : string.Empty;
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
+            _settings.AccentColor = accent.SelectedIndex switch { 1 => "violet", 2 => "green", 3 => "orange", _ => "cyan" };
+            _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
+            _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
+            _settings.RequireLocalModelEndpoints = localOnly.IsChecked == true;
+            _companionState = _companionState with
+            {
+                IsVisible = showPet.IsChecked == true,
+                NotifyOnCompletion = petCompletion.IsChecked == true,
+                NotifyOnErrors = petErrors.IsChecked == true,
+                AskBeforeActions = petQuestions.IsChecked == true
+            };
             SaveSettings();
+            SaveCompanionState();
+            ApplySavedCustomization();
+            UpdateCompanionDisplay();
             UpdateModelLabel();
             UpdateSmartRewriteButton();
             await RefreshModelConnectionAsync();

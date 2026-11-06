@@ -166,15 +166,15 @@
     </Grid>
     <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" Background="#66000000" BorderThickness="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu" />
     <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
-      <Border x:Name="CompanionCard" Width="218" Background="#fffefe" BorderBrush="#dfe9ea" BorderThickness="1" CornerRadius="15" Padding="9" AutomationProperties.Name="Pet companion">
-        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
-          <Image x:Name="CompanionImage" Width="46" Height="46" Stretch="Uniform" VerticalAlignment="Center" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion" AutomationProperties.HelpText="Drag to move, or focus and use the arrow keys. Hold Shift to move farther." />
-          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2" IsHitTestVisible="False">
-            <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="13" FontWeight="SemiBold" Foreground="#283b41" />
-            <TextBlock Text="Your companion is on this device" FontSize="10" Foreground="#7a898d" TextWrapping="Wrap" />
-          </StackPanel>
-          <Button Grid.Column="2" Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="#6c7a7f" BorderThickness="0" Width="28" Height="28" Padding="0" CornerRadius="7" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
-        </Grid>
+      <Border x:Name="CompanionCard" Width="230" Background="Transparent" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
+        <StackPanel HorizontalAlignment="Center" Spacing="4">
+          <TextBlock x:Name="CompanionSpeech" Text="Ready for your next prompt." FontSize="11" Foreground="#28474e" TextWrapping="Wrap" MaxWidth="210" HorizontalAlignment="Center" AutomationProperties.Name="Pet completion summary" />
+          <Grid Width="84" Height="84" HorizontalAlignment="Center">
+            <Image x:Name="CompanionImage" Width="72" Height="72" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion sprite" AutomationProperties.HelpText="Drag the sprite to move it, or focus it and use the arrow keys. Hold Shift to move farther." />
+            <Button Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="#527177" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
+          </Grid>
+          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="10" Foreground="#6f878c" HorizontalAlignment="Center" Opacity="0.85" />
+        </StackPanel>
       </Border>
     </Canvas>
   </Grid>
