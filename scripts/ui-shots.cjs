@@ -75,7 +75,25 @@ function installBridge() {
     onUpdateState: () => () => {},
     readProjectFiles: async () => ({ roots: [], files: [] }),
     searchHuggingFace: async () => [],
+    // The Activity page lists terminal sessions; GitHub dialogs ask for project status.
+    terminalList: async () => [],
+    terminalOnEvent: () => () => {},
+    githubProjectStatus: async () => ({ repository: false }),
   };
+}
+
+// Pages and dialogs. On phones the rail is hidden, so pages open from the drawer's nav.
+async function openPage(p, page) {
+  if (await p.locator("#mobileMenu").isVisible()) {
+    await p.locator("#mobileMenu").click();
+    await p.locator(`.mobile-nav [data-page="${page}"]`).click();
+  } else {
+    await p.locator(`.rail [data-page="${page}"]`).click();
+  }
+}
+async function fromDrawer(p, selector) {
+  if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click();
+  await p.locator(selector).click();
 }
 
 async function openChatMenu(p) {
@@ -116,6 +134,24 @@ const states = {
   "voice-recording": { theme: "dark", run: (p) => p.evaluate(() => { const v = document.querySelector("#voice"); v.textContent = "■"; v.classList.add("recording"); }) },
   "slash-command": { theme: "dark", run: async (p) => { await p.locator("#prompt").fill("/fast summarise this"); await p.locator("#prompt").dispatchEvent("input"); } },
   "advanced": { theme: "dark", run: (p) => p.locator(".advanced-menu summary").click() },
+  // Screens added for the 10-chunk UI plan: every page and dialog, in both themes.
+  "model-picker-light": { theme: "light", run: async (p) => { await p.locator("#model").click(); await p.waitForTimeout(400); } },
+  "coding-agent-light": { theme: "light", mode: "code", chat: true },
+  "slash-menu": { theme: "dark", run: (p) => p.locator("#slashHelp").click() },
+  "slash-menu-light": { theme: "light", run: (p) => p.locator("#slashHelp").click() },
+  "images": { theme: "dark", run: (p) => openPage(p, "images") },
+  "images-light": { theme: "light", run: (p) => openPage(p, "images") },
+  "activity": { theme: "dark", chat: true, run: (p) => openPage(p, "activity") },
+  "activity-light": { theme: "light", chat: true, run: (p) => openPage(p, "activity") },
+  "models-page": { theme: "dark", run: (p) => p.locator("#welcomeMarketplace").click() },
+  "models-page-light": { theme: "light", run: (p) => p.locator("#welcomeMarketplace").click() },
+  "github-dialog": { theme: "dark", run: (p) => fromDrawer(p, "#openGitHub") },
+  "github-dialog-light": { theme: "light", run: (p) => fromDrawer(p, "#openGitHub") },
+  "project-dialog": { theme: "dark", run: (p) => fromDrawer(p, "#newProject") },
+  "project-dialog-light": { theme: "light", run: (p) => fromDrawer(p, "#newProject") },
+  // The push review normally needs a connected GitHub project; it's opened directly to check its layout.
+  "push-review": { theme: "dark", run: (p) => p.evaluate(() => document.querySelector("#githubPushDialog").showModal()) },
+  "push-review-light": { theme: "light", run: (p) => p.evaluate(() => document.querySelector("#githubPushDialog").showModal()) },
 };
 
 const only = process.env.STATES !== undefined

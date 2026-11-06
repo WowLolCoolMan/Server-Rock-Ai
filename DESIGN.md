@@ -11,6 +11,10 @@ adds the tokens and rules it needs here.
 
 All colors come from CSS custom properties defined twice in `style.css`: `:root` (dark, default)
 and `:root.light`. Never hard-code a hex value in a component rule; add a token to both blocks.
+There are no hex values outside the two token blocks. Tints use `color-mix()` on a token
+(e.g. `color-mix(in srgb, var(--danger) 14%, transparent)`) instead of a new hex.
+Neutral surfaces are the blue-gray scale `--bg` < `--surface`/`--side` < `--card` < `--surface-raised`,
+with `--surface-soft` and `--nav-selected` for hover and selected fills. Don't add standalone grays.
 
 | Token | Use |
 |---|---|
@@ -33,6 +37,11 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
 | `--shadow-pop` | Elevation for every menu and popover (dark needs a much deeper shadow) |
 | `--icon-mic` / `--icon-stop` | SVG masks drawn in `currentColor`, for buttons whose text glyph app.js writes |
 | `--font-mono` | All code, in every theme: portable stack, never Windows-only faces |
+| `--primary` / `--primary-hover` / `--on-primary` | The one filled-button color (Send and every `.save` button) and its white text |
+| `--warning` | Status color between success and danger (e.g. a remote host dot) |
+| `--overlay` | Backdrop behind dialogs and the mobile drawer |
+| `--shadow-color-sm` / `-md` / `-lg` | Shadow colors used inside `box-shadow` values (lighter and bluer in light) |
+| `--art-*` | Illustration palette for the Images page thumbnails (`.art-*`). Drawings, not UI: same in both themes, set only in `:root` |
 
 ## Contrast
 
@@ -79,6 +88,12 @@ and `:root.light`. Never hard-code a hex value in a component rule; add a token 
   Hover is `--surface-soft`; the current choice is `--nav-selected`.
 - Popovers stay inside the window: Advanced is centered over its button, pinned right on phones.
 - Elements nested in the rail must override the rail's icon-button rule (`.rail button`).
+
+### Buttons
+- One primary style: `--primary` fill, `--on-primary` text, `--primary-hover` on hover. Used by Send and
+  every `.save` button (Save settings, Browse AI SuperMarket, Download, Create project, Commit and push…).
+- Never use `--accent` as a button fill: it's for selection, focus, links and small tints.
+- Text inputs, selects and lists inside dialogs use `--input-bg` with `--text`, in both themes.
 
 ### States (every interactive element)
 - Hover: `--surface-raised` or `--surface-soft` fill, `--border-strong` border where bordered.
