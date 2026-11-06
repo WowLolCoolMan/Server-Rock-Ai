@@ -91,5 +91,5 @@ Image generation can use a ComfyUI API-format workflow pasted into Settings (rep
 
 - `native/ServerRock.Native`: Uno/XAML desktop UI and platform shell.
 - `native/ServerRock.Core`: provider adapters, persistence, model library, projects, workspace tools, and migration parsing.
-- `.github/workflows/release.yml`: tagged release packaging.
+- `.github/workflows/native-release.yml`: tagged native release packaging.
 - `docs/PRODUCTION_READINESS_GAPS.md`: prioritized remaining migration, release, parity, accessibility, and polish work.
