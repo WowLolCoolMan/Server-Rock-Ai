@@ -72,7 +72,7 @@ jobs:
             sudo apt-get update && sudo apt-get install --yes xvfb
             xvfb-run -a node scripts/smoke-native-artifact.cjs "$executable"
           else
-            node scripts/smoke-native-artifact.cjs "$executable"
+            NATIVE_SMOKE_REQUIRE_WINDOW=1 node scripts/smoke-native-artifact.cjs "$executable"
           fi
       - name: Archive Windows artifact
         if: runner.os == 'Windows'

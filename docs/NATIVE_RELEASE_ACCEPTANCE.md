@@ -21,7 +21,7 @@ Run the **Native desktop artifacts** GitHub Actions workflow manually. It publis
 
 Local verification on 2026-11-05 (Windows 11 Pro, x64, .NET SDK 10.0.401):
 
-The published-artifact startup check is run with `npm run smoke:native:artifact -- <path-to-published-executable>` (the workflow uses `NATIVE_SMOKE_SECONDS=8`). It fails if the process cannot start or exits before the bounded window; it is intentionally only an artifact startup check.
+The published-artifact smoke check is run with `npm run smoke:native:artifact -- <path-to-published-executable>` (the workflow uses `NATIVE_SMOKE_SECONDS=8`). Windows release smoke also sets `NATIVE_SMOKE_REQUIRE_WINDOW=1` and requires the exact artifact to expose a top-level window; Linux remains a bounded startup check under Xvfb. The check fails if the process cannot start, exits early, or (on Windows) never creates a window. It is still not a substitute for full interaction acceptance.
 
 - `dotnet publish native/ServerRock.Native/ServerRock.Native.csproj -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true --output <temp>` succeeded.
 - The equivalent `linux-x64` publish from the Windows host also succeeded. This verifies cross-RID compilation/publish only; it is not by itself Linux runtime evidence.

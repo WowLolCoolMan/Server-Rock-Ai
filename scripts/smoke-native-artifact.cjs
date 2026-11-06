@@ -9,6 +9,7 @@ const path = require('node:path');
 
 const executable = process.argv[2];
 const holdSeconds = Number(process.env.NATIVE_SMOKE_SECONDS || '8');
+const requireWindow = process.env.NATIVE_SMOKE_REQUIRE_WINDOW === '1';
 
 if (!executable) {
   console.error('Usage: node scripts/smoke-native-artifact.cjs <published-executable>');
@@ -48,9 +49,23 @@ const stop = () => {
 };
 
 const timer = setTimeout(() => {
+  if (requireWindow && process.platform === 'win32') {
+    try {
+      const handle = execFileSync('powershell.exe', ['-NoProfile', '-Command', `(Get-Process -Id ${child.pid} -ErrorAction Stop).MainWindowHandle`], { encoding: 'utf8' }).trim();
+      if (!handle || handle === '0') {
+        console.error(`Native artifact stayed alive but did not expose a top-level window: ${resolved}`);
+        stop();
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error(`Native artifact window check failed: ${error.message}`);
+      stop();
+      process.exit(1);
+    }
+  }
   smokePassed = true;
   stop();
-  console.log(`Native artifact stayed alive for ${holdSeconds}s: ${resolved}`);
+  console.log(`Native artifact passed startup${requireWindow ? ' and window' : ''} smoke for ${holdSeconds}s: ${resolved}`);
   process.exit(0);
 }, holdSeconds * 1000);
 
