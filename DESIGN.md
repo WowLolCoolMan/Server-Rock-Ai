@@ -43,6 +43,33 @@ with `--surface-soft` and `--nav-selected` for hover and selected fills. Don't a
 | `--shadow-color-sm` / `-md` / `-lg` | Shadow colors used inside `box-shadow` values (lighter and bluer in light) |
 | `--art-*` | Illustration palette for the Images page thumbnails (`.art-*`). Drawings, not UI: same in both themes, set only in `:root` |
 
+## Type
+
+- One bundled pair, loaded offline from `node_modules/@fontsource` at the top of `style.css`:
+  `--font-sans` = IBM Plex Sans (UI, headings) and `--font-mono` = IBM Plex Mono (code, terminal, `/`).
+  Never name a system font (Segoe UI, Inter, Arial, system-ui) in a rule.
+- Weights: 400 body, 500 small emphasis, 600 headings and labels, 700 strong headings. The bundle ships
+  only these four (plus 400–600 for mono), so don't use 650, 750 or `bold`.
+- Every `font-size` uses the scale; no px sizes in rules:
+
+| Token | Size | Use |
+|---|---|---|
+| `--text-xs` | 11px | Eyebrow labels, sidebar section labels, badges (never smaller) |
+| `--text-sm` | 12px | Secondary lines, hints, chips |
+| `--text-ui` | 13px | Menu items, compact controls, code |
+| `--text-base` | 14px | Body and most controls |
+| `--text-md` | 16px | Large controls, reply `h3` |
+| `--text-lg` | 18px | Icon glyphs, reply `h2` |
+| `--text-xl` | 20px | Dialog titles |
+| `--text-2xl` | 24px | Small page titles, the phone welcome heading |
+| `--text-3xl` | 30px | Page titles (Images, Activity, AI SuperMarket) |
+
+## Labels
+
+- Every small label above a heading uses `.eyebrow`: 600 `--text-xs`, `.08em` tracking, uppercase via CSS
+  (so the markup can say "Projects"), `--accent`.
+- Sidebar section labels (PROJECTS, LIBRARY, RECENTS) use the same type in `--muted`.
+
 ## Contrast
 
 - Text must meet WCAG AA in both themes: 4.5:1 for body text, 3:1 for large text and icons.
