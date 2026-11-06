@@ -630,3 +630,47 @@ test("closing the mobile drawer doesn't take focus back from a control focused s
   await page.keyboard.press("Enter");
   await expect(page.locator("#mobileMenu")).toBeFocused({ timeout: 3000 });
 });
+
+// Smoke-test item 12: voice input errors showed raw codes ("Voice input
+// unavailable: network"), and after a few seconds of silence listening ended
+// but the mic button kept showing "recording", so voice silently stopped.
+test("voice input explains errors and keeps listening through silence", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.recognitionStarts = 0;
+    window.recognitionErrors = [];
+    // Fake recognizer: each start() reports the next queued error (or silence
+    // via "no-speech") and then ends; with nothing queued it just keeps listening.
+    window.SpeechRecognition = class {
+      start() {
+        window.recognitionStarts++;
+        if (!window.recognitionErrors.length) return;
+        const error = window.recognitionErrors.shift();
+        setTimeout(() => { this.onerror?.({ error }); this.onend?.(); }, 20);
+      }
+      stop() { setTimeout(() => this.onend?.(), 0); }
+    };
+  });
+  await page.goto(appUrl);
+  const voice = page.locator("#voice");
+  const status = page.locator("#runtimeStatus");
+
+  // Electron has no speech service, so real recognition fails with "network".
+  await page.evaluate(() => { window.recognitionErrors = ["network"]; });
+  await voice.click();
+  await expect(status).toContainText("online speech service");
+  await expect(voice).not.toHaveClass(/recording/);
+
+  // A blocked microphone gets its own explanation.
+  await page.evaluate(() => { window.recognitionErrors = ["not-allowed"]; });
+  await voice.click();
+  await expect(status).toContainText("Microphone access was blocked");
+  await expect(voice).not.toHaveClass(/recording/);
+
+  // Silence ends one listening session; voice mode must start listening again.
+  await page.evaluate(() => { window.recognitionStarts = 0; window.recognitionErrors = ["no-speech"]; });
+  await voice.click();
+  await expect.poll(() => page.evaluate(() => window.recognitionStarts)).toBe(2);
+  await expect(voice).toHaveClass(/recording/);
+  await voice.click();
+  await expect(voice).not.toHaveClass(/recording/);
+});
