@@ -40,6 +40,9 @@ public sealed partial class MainPage : Page
         ("/reverse-engineer", "Analyze the active project and produce a structured architecture report"),
         ("/skills", "Browse built-in read-only workflow skills"),
         ("/plugins", "Browse supported plugins, extensions, and skills"),
+        ("/research", "Turn on web research for the next Chat prompt"),
+        ("/tools", "Open the available local tools menu"),
+        ("/status", "Show the current model, workspace, and privacy status"),
         ("/newproject", "Create a named project and choose its folders"),
         ("/folders", "Manage folders for the active project"),
         ("/settings", "Configure the model connection"),
@@ -5010,6 +5013,9 @@ public sealed partial class MainPage : Page
             case "/reverse-engineer": case "/reserse-engineer": await ReverseEngineerAsync(); break;
             case "/plugins": await PluginStoreClickAsync(); break;
             case "/skills": await SkillsDialogAsync(); break;
+            case "/research": EnableResearchMode(); break;
+            case "/tools": ComposerToolsClick(this, new RoutedEventArgs()); break;
+            case "/status": ShowWorkspaceStatus(); break;
             case "/newproject": await NewProjectClickAsync(); break;
             case "/folders": await ProjectFoldersClickAsync(); break;
             case "/settings": case "/connect": await SettingsDialogAsync(); break;
@@ -5062,6 +5068,26 @@ public sealed partial class MainPage : Page
         PromptBox.Text = "Reverse-engineer this project as a senior software archaeologist. Inspect the selected project files and produce a clear report with: (1) system purpose and user workflows, (2) architecture and module boundaries, (3) runtime/data flow, (4) persistence and external integrations, (5) entry points and important commands, (6) testing and release posture, (7) risks, inconsistencies, and likely failure points, and (8) a prioritized improvement plan. Cite relevant file paths and distinguish observed facts from reasonable inferences. Do not modify files or run destructive commands.";
         PromptBox.Focus(FocusState.Programmatic);
         SendClick(this, new RoutedEventArgs());
+    }
+
+    private void EnableResearchMode()
+    {
+        if (_mode != "ChatBot")
+        {
+            RuntimeStatus.Text = "Research mode is available in ChatBot. Switch to ChatBot before researching.";
+            return;
+        }
+        _settings.WebSearchEnabled = true;
+        SaveSettings();
+        UpdateWebSearchButton();
+        RuntimeStatus.Text = "Research mode on · the next Chat prompt will include bounded web search snippets and source links.";
+    }
+
+    private void ShowWorkspaceStatus()
+    {
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        var projectLabel = project is null ? "No project" : $"Project: {project.Name} ({project.FolderPaths.Count} folder(s))";
+        RuntimeStatus.Text = $"{_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")}";
     }
 
     private async Task SkillsDialogAsync()
