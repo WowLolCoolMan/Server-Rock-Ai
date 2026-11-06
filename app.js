@@ -3297,7 +3297,11 @@ renderHistory();
 setPage(state.activePage);
 
 function speakReply(text) {
-  if (!("speechSynthesis" in window)) return;
+  // Without speech output, go straight back to listening.
+  if (!("speechSynthesis" in window)) {
+    if (voiceOn) startRecognition();
+    return;
+  }
   window.speechSynthesis.cancel();
   let u = new SpeechSynthesisUtterance(text);
   u.onend = () => {
@@ -3333,7 +3337,16 @@ function startRecognition() {
   };
   recognition.onerror = (e) => {
     if (e.error !== "no-speech" && e.error !== "aborted") {
-      $("#runtimeStatus").textContent = "Voice input unavailable: " + e.error;
+      // Explain the speech error codes instead of showing them raw.
+      // Electron ships no speech service, so real recognition fails with "network".
+      const reasons = {
+        network: "Voice input isn't available in this build: speech recognition needs an online speech service that the desktop app doesn't include.",
+        "not-allowed": "Microphone access was blocked. Allow microphone access for Server Rock: AI in your system settings, then try again.",
+        "service-not-allowed": "Microphone access was blocked. Allow microphone access for Server Rock: AI in your system settings, then try again.",
+        "audio-capture": "No microphone was found. Connect one and try again.",
+        "language-not-supported": "Speech recognition doesn't support the current language.",
+      };
+      $("#runtimeStatus").textContent = reasons[e.error] || "Voice input stopped (" + e.error + ").";
       voiceOn = false;
       voiceReply = false;
       $("#voice").textContent = "🎙";
@@ -3341,7 +3354,12 @@ function startRecognition() {
     }
   };
   recognition.onend = () => {
-    if (voiceOn && !voiceReply) startRecognition();
+    // A listening session ends after silence ("no-speech") or after a result.
+    // Keep listening unless a reply is being generated: speakReply() restarts
+    // listening once the reply has been spoken. (This used to check
+    // !voiceReply, which is never true while voice is on, so listening
+    // stopped after silence while the button still showed "recording".)
+    if (voiceOn && !activeRequest && !window.speechSynthesis?.speaking) startRecognition();
   };
   try {
     recognition.start();

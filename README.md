@@ -34,7 +34,7 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 - Activity includes a terminal that starts in an authorized project folder. Commands run with the user's normal account permissions; live output, bounded input, cancellation, and resumable session snapshots stay in the desktop process, and secret-shaped environment variables are removed.
 - Live response streaming with a Stop control for active provider, image, and local text-generation requests.
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
-- Voice turn-taking with microphone speech recognition and spoken replies; click the mic again to interrupt audio and stop listening. Speech recognition availability and whether transcription is offline depend on the installed Electron/OS speech service.
+- Voice turn-taking with microphone speech recognition and spoken replies; click the mic again to interrupt audio and stop listening. Speech recognition depends on a speech service that Electron doesn't include, so in the desktop app the mic currently reports that voice input isn't available.
 - Attach an image for offline captioning/OCR or local image-to-image processing with compatible downloaded ONNX models.
 - No analytics or telemetry. Core release checks are user initiated; the app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you explicitly search the catalog or download a selected model.
 
