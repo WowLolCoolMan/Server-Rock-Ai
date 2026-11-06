@@ -2836,6 +2836,12 @@ document.addEventListener("keydown", (event) => {
       closeSlashMenu();
       $("#slashHelp").focus();
     }
+    // Escape also dismisses the model picker (it used to need a click
+    // elsewhere) and puts focus back on the button that opened it.
+    if (!$("#modelPicker").hidden) {
+      closeModelPicker();
+      $("#model").focus();
+    }
     if ($(".sidebar").classList.contains("mobile-open")) setMobileSidebar(false);
   }
 });

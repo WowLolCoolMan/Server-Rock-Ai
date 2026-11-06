@@ -674,3 +674,22 @@ test("voice input explains errors and keeps listening through silence", async ({
   await voice.click();
   await expect(voice).not.toHaveClass(/recording/);
 });
+
+// Smoke-test item 16: Escape closed the slash menu and chat menus but not the
+// model picker, so keyboard users had to click elsewhere to dismiss it.
+test("Escape closes the model picker and returns focus to the model button", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.desktopModels = {
+      getProviderSecretStatus: async () => ({ saved: false, secureStorage: true }),
+      scanHosts: async () => ({ models: [], hosts: [] }),
+    };
+  });
+  await page.goto(appUrl);
+  await page.locator("#model").click();
+  await expect(page.locator("#modelPicker")).toBeVisible();
+  await page.locator("#modelSearch").focus();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#modelPicker")).toBeHidden();
+  await expect(page.locator("#model")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#model")).toBeFocused();
+});
