@@ -52,6 +52,51 @@ jobs:
       - run: dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore
       - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop --no-restore
 
+  native-package-smoke:
+    name: Native packaged startup smoke (${{ matrix.os }})
+    needs: native
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            rid: win-x64
+            executable: ServerRock.Native.exe
+          - os: ubuntu-24.04
+            rid: linux-x64
+            executable: ServerRock.Native
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Linux display smoke dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+      - name: Publish exact native artifact
+        shell: bash
+        run: >-
+          dotnet publish native/ServerRock.Native/ServerRock.Native.csproj
+          -c Release -f net10.0-desktop -r ${{ matrix.rid }} -p:SelfContained=true
+          -o "$RUNNER_TEMP/serverrock-native/${{ matrix.rid }}"
+      - name: Launch-test exact native artifact
+        shell: bash
+        env:
+          NATIVE_SMOKE_SECONDS: 8
+        run: |
+          executable="$RUNNER_TEMP/serverrock-native/${{ matrix.rid }}/${{ matrix.executable }}"
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run -a node scripts/smoke-native-artifact.cjs "$executable"
+          else
+            node scripts/smoke-native-artifact.cjs "$executable"
+          fi
+
   release-readiness:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [test, native]
@@ -99,8 +144,8 @@ jobs:
           fi
 
   package:
-    needs: [test, native, release-readiness]
-    if: ${{ always() && needs.test.result == 'success' && needs.native.result == 'success' && (needs.release-readiness.result == 'success' || needs.release-readiness.result == 'skipped') }}
+    needs: [test, native, native-package-smoke, release-readiness]
+    if: ${{ always() && needs.test.result == 'success' && needs.native.result == 'success' && needs.native-package-smoke.result == 'success' && (needs.release-readiness.result == 'success' || needs.release-readiness.result == 'skipped') }}
     strategy:
       fail-fast: false
       matrix:
