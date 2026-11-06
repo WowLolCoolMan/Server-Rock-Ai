@@ -38,6 +38,8 @@ public sealed partial class MainPage : Page
         ("/delete", "Delete the current saved chat"),
         ("/project", "Open a local project context"),
         ("/reverse-engineer", "Analyze the active project and produce a structured architecture report"),
+        ("/skills", "Browse built-in read-only workflow skills"),
+        ("/plugins", "Browse supported plugins, extensions, and skills"),
         ("/newproject", "Create a named project and choose its folders"),
         ("/folders", "Manage folders for the active project"),
         ("/settings", "Configure the model connection"),
@@ -5006,6 +5008,8 @@ public sealed partial class MainPage : Page
                 break;
             case "/project": await ChooseProjectAsync(); break;
             case "/reverse-engineer": case "/reserse-engineer": await ReverseEngineerAsync(); break;
+            case "/plugins": await PluginStoreClickAsync(); break;
+            case "/skills": await SkillsDialogAsync(); break;
             case "/newproject": await NewProjectClickAsync(); break;
             case "/folders": await ProjectFoldersClickAsync(); break;
             case "/settings": case "/connect": await SettingsDialogAsync(); break;
@@ -5058,6 +5062,48 @@ public sealed partial class MainPage : Page
         PromptBox.Text = "Reverse-engineer this project as a senior software archaeologist. Inspect the selected project files and produce a clear report with: (1) system purpose and user workflows, (2) architecture and module boundaries, (3) runtime/data flow, (4) persistence and external integrations, (5) entry points and important commands, (6) testing and release posture, (7) risks, inconsistencies, and likely failure points, and (8) a prioritized improvement plan. Cite relevant file paths and distinguish observed facts from reasonable inferences. Do not modify files or run destructive commands.";
         PromptBox.Focus(FocusState.Programmatic);
         SendClick(this, new RoutedEventArgs());
+    }
+
+    private async Task SkillsDialogAsync()
+    {
+        var list = new ListView { MinHeight = 260, MaxHeight = 420, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(SkillDefinition.Name) };
+        list.ItemsSource = SkillCatalogService.BuiltIns;
+        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+        var run = new Button { Content = "Use skill", IsEnabled = false, MinWidth = 100 };
+        var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+        list.SelectionChanged += (_, _) =>
+        {
+            if (list.SelectedItem is not SkillDefinition skill) { run.IsEnabled = false; details.Text = string.Empty; return; }
+            details.Text = $"{skill.Name}\n\n{skill.Description}\n\nPermissions: {string.Join(", ", skill.RequiredPermissions)}";
+            run.IsEnabled = true;
+        };
+        run.Click += (_, _) =>
+        {
+            if (list.SelectedItem is not SkillDefinition skill) return;
+            PromptBox.Text = skill.Prompt;
+            PromptBox.Focus(FocusState.Programmatic);
+            status.Text = $"Loaded {skill.Name}. Review the prompt, then send it when ready.";
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "Skills",
+            PrimaryButtonText = "Done",
+            CloseButtonText = "Close",
+            XamlRoot = XamlRoot,
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new TextBlock { Text = "Built-in skills are read-only workflow templates. Review the requested permissions before using one.", TextWrapping = TextWrapping.Wrap },
+                    list,
+                    details,
+                    run,
+                    status
+                }
+            }
+        };
+        await dialog.ShowAsync();
     }
 
     private async Task ChooseProjectAsync()

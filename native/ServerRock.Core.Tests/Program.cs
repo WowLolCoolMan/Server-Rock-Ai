@@ -31,6 +31,10 @@ Check(PluginCatalogService.Search("github").Count == 1 && PluginCatalogService.S
     "plugin catalog search finds a matching integration");
 Check(PluginCatalogService.Search(category: "Skills").All(item => item.Category == "Skills") && PluginCatalogService.Categories().Contains("Developer tools"),
     "plugin catalog filters by category and exposes sorted categories");
+Check(SkillCatalogService.BuiltIns.Count >= 3 && SkillCatalogService.Find("reverse-engineer")?.RequiredPermissions.SequenceEqual(["project.read"]) == true,
+    "built-in skills expose explicit read-only permissions");
+Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
+    "skill catalog lookup is case-insensitive and rejects unknown skills");
 
 var discoveryHandler = new StubHandler((request, _) =>
 {
