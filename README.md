@@ -34,7 +34,7 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 - Activity includes a terminal that starts in an authorized project folder. Commands run with the user's normal account permissions; live output, bounded input, cancellation, and resumable session snapshots stay in the desktop process, and secret-shaped environment variables are removed.
 - Live response streaming with a Stop control for active provider, image, and local text-generation requests.
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
-- Voice turn-taking is planned behind a native speech-service capability check; unsupported hosts report the limitation without pretending that voice is available.
+- Voice turn-taking is model-agnostic: the Windows build uses the system speech recognizer for dictation and speech synthesizer for spoken responses, so it works with every selected local, hosted, or OpenRouter-compatible model. Dictation is inserted as a reviewable draft before sending, and spoken output is opt-in.
 - Attach an image for offline captioning/OCR or local image-to-image processing with compatible downloaded ONNX models.
 - No analytics or telemetry. Core release checks are user initiated; the app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you explicitly search the catalog or download a selected model.
 
