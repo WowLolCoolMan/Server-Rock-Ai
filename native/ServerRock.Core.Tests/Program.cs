@@ -35,6 +35,19 @@ Check(SkillCatalogService.BuiltIns.Count >= 3 && SkillCatalogService.Find("rever
     "built-in skills expose explicit read-only permissions");
 Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
     "skill catalog lookup is case-insensitive and rejects unknown skills");
+var healthRoot = Path.Combine(Path.GetTempPath(), "server-rock-health-test-" + Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(healthRoot);
+try
+{
+    await File.WriteAllTextAsync(Path.Combine(healthRoot, "package.json"), "{\"name\":\"fixture\"}");
+    await File.WriteAllTextAsync(Path.Combine(healthRoot, "Program.cs"), "// TODO: cover this path\nvar api_key=\"test\";\n");
+    var health = new LocalProjectHealthAnalyzer().Analyze([healthRoot]);
+    Check(health.Files == 2 && health.DependencyManifests.Contains("package.json") && health.EntryPoints.Contains("Program.cs") &&
+        health.Findings.Any(item => item.Title == "Deferred work marker") && health.Findings.Any(item => item.Title == "Possible credential or secret") &&
+        health.ToCompactMarkdown("fixture").Contains("No model or network request was used", StringComparison.Ordinal),
+        "local project health analyzer produces bounded token-free evidence");
+}
+finally { if (Directory.Exists(healthRoot)) Directory.Delete(healthRoot, recursive: true); }
 HttpRequestMessage? deleteRequest = null;
 var deleteService = new ModelLibraryService(new HttpClient(new StubHandler((request, _) =>
 {

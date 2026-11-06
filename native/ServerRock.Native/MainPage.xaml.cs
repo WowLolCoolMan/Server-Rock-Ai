@@ -41,6 +41,8 @@ public sealed partial class MainPage : Page
         ("/delete", "Delete the current saved chat"),
         ("/project", "Open a local project context"),
         ("/reverse-engineer", "Analyze the active project and produce a structured architecture report"),
+        ("/health", "Run a free, offline project health scan with bounded evidence"),
+        ("/map", "Show a compact local architecture and dependency map"),
         ("/skills", "Browse built-in read-only workflow skills"),
         ("/plugins", "Browse supported plugins, extensions, and skills"),
         ("/research", "Turn on web research for the next Chat prompt"),
@@ -67,6 +69,7 @@ public sealed partial class MainPage : Page
     private readonly WorkspaceFileEditor _workspaceEditor = new();
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
     private readonly WorkspaceCommandRunner _commandRunner = new();
+    private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer = new();
     private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
@@ -5227,6 +5230,8 @@ public sealed partial class MainPage : Page
                 break;
             case "/project": await ChooseProjectAsync(); break;
             case "/reverse-engineer": case "/reserse-engineer": await ReverseEngineerAsync(); break;
+            case "/health": case "/audit": await ShowLocalHealthAsync(includeMap: false); break;
+            case "/map": await ShowLocalHealthAsync(includeMap: true); break;
             case "/plugins": await PluginStoreClickAsync(); break;
             case "/skills": await SkillsDialogAsync(); break;
             case "/research": EnableResearchMode(); break;
@@ -5285,6 +5290,65 @@ public sealed partial class MainPage : Page
         PromptBox.Text = "Reverse-engineer this project as a senior software archaeologist. Inspect the selected project files and produce a clear report with: (1) system purpose and user workflows, (2) architecture and module boundaries, (3) runtime/data flow, (4) persistence and external integrations, (5) entry points and important commands, (6) testing and release posture, (7) risks, inconsistencies, and likely failure points, and (8) a prioritized improvement plan. Cite relevant file paths and distinguish observed facts from reasonable inferences. Do not modify files or run destructive commands.";
         PromptBox.Focus(FocusState.Programmatic);
         SendClick(this, new RoutedEventArgs());
+    }
+
+    private async Task ShowLocalHealthAsync(bool includeMap)
+    {
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        if (project is null || project.FolderPaths.Count == 0)
+        {
+            RuntimeStatus.Text = "Choose a project with at least one local folder before running an offline health scan.";
+            await ChooseProjectAsync();
+            project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+            if (project is null || project.FolderPaths.Count == 0) return;
+        }
+        if (XamlRoot is null)
+        {
+            RuntimeStatus.Text = "The project health panel is unavailable until the window is ready.";
+            return;
+        }
+
+        RuntimeStatus.Text = "Running bounded offline health scan…";
+        var report = await Task.Run(() => _localHealthAnalyzer.Analyze(project.FolderPaths));
+        var markdown = report.ToCompactMarkdown(project.Name);
+        if (includeMap)
+            markdown = markdown.Replace("## Local project health", "## Local architecture and dependency map", StringComparison.Ordinal);
+
+        var preview = new TextBox
+        {
+            Text = markdown,
+            IsReadOnly = true,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            MinHeight = 320,
+            MaxHeight = 540,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas")
+        };
+        AutomationProperties.SetName(preview, includeMap ? "Local architecture map" : "Local project health report");
+        var dialog = new ContentDialog
+        {
+            Title = includeMap ? "Local architecture map" : "Offline project health",
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new TextBlock { Text = "This scan is local, bounded, and token-free. It uses file names and small text samples; no repository contents were sent to a model.", TextWrapping = TextWrapping.Wrap },
+                    preview
+                }
+            },
+            PrimaryButtonText = "Add compact report",
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            PromptBox.Text = string.IsNullOrWhiteSpace(PromptBox.Text) ? markdown : PromptBox.Text.TrimEnd() + "\n\n" + markdown;
+            PromptBox.Focus(FocusState.Programmatic);
+            PromptBox.SelectionStart = PromptBox.Text.Length;
+            RuntimeStatus.Text = "Compact local report added to the composer. Review it before sending.";
+        }
+        else RuntimeStatus.Text = $"Offline scan complete · {report.Files:N0} files checked without using model tokens.";
     }
 
     private void EnableResearchMode()
