@@ -78,12 +78,22 @@ function installBridge() {
   };
 }
 
+async function openChatMenu(p) {
+  if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click();
+  await p.locator("#history .chat-item").first().click();
+  if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click();
+  await p.locator(".chat-row .chat-item-actions").first().click();
+}
+
 // Each state: which seed to use and what to do after load.
 const states = {
   "empty-dark": { theme: "dark" },
   "empty-light": { theme: "light" },
   "chat-dark": { theme: "dark", chat: true, run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#history .chat-item").first().click(); } },
   "chat-light": { theme: "light", chat: true, run: async (p) => { if (await p.locator("#mobileMenu").isVisible()) await p.locator("#mobileMenu").click(); await p.locator("#history .chat-item").first().click(); } },
+  // The chat row's ⋯ menu, so sidebar polish can be checked in both themes.
+  "chat-menu": { theme: "dark", chat: true, run: openChatMenu },
+  "chat-menu-light": { theme: "light", chat: true, run: openChatMenu },
   "model-picker": { theme: "dark", run: async (p) => { await p.locator("#model").click(); await p.waitForTimeout(400); } },
   "settings": { theme: "dark", run: (p) => p.locator("#settings").click() },
   "settings-light": { theme: "light", run: (p) => p.locator("#settings").click() },

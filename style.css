@@ -24,6 +24,9 @@
   --code-muted: #a4adb8;
   --inline-code-bg: #262b31;
   --link: #9bbaff;
+  /* Sidebar and rail rows: hover fill, and a slightly stronger fill for the selected item. */
+  --nav-hover: #24292f;
+  --nav-selected: #2c323a;
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "DejaVu Sans Mono", "Noto Sans Mono", Consolas, monospace;
 }
 * {
@@ -648,6 +651,8 @@ dialog::backdrop {
   --code-muted: #4f5b6b;
   --inline-code-bg: #e9edf3;
   --link: #2459c0;
+  --nav-hover: #e6ebf2;
+  --nav-selected: #dce3ec;
 }
 .light .rail,
 .light .composer,
@@ -2238,6 +2243,9 @@ summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+/* ===== Rail and sidebar ===== */
+/* Hover and selected fills use --nav-hover / --nav-selected so they stay visible in both themes
+   (the light rail is white, so --surface-raised made the selected icon disappear). */
 .rail {
   flex: 0 0 54px;
   width: 54px;
@@ -2260,8 +2268,24 @@ summary:focus-visible {
   place-items: center;
   color: var(--muted);
 }
-.rail button:hover,
-.rail button.selected { color: var(--text); background: var(--surface-raised); }
+.rail button:hover { color: var(--text); background: var(--nav-hover); }
+.rail button.selected { color: var(--text); background: var(--nav-selected); }
+/* Account avatar: was muted text on a fixed slate disc (about 1.3:1 in light). Now a neutral
+   token circle that matches the SR brand mark above it. */
+.rail .avatar {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.rail .avatar:hover,
+.rail .avatar[aria-expanded="true"] { background: var(--nav-selected); }
 .brand {
   display: grid;
   place-items: center;
@@ -2301,8 +2325,14 @@ summary:focus-visible {
 }
 .mode-switch:hover { background: var(--surface-raised); }
 .mode-caret { color: var(--muted); font-size: 12px; }
+/* Section labels get the same 18px gap above each one (RECENTS used to sit 10px under
+   GitHub repositories), and Clear is centered on the label instead of hanging low. */
 .section {
-  margin: 10px 7px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  margin: 18px 7px 4px 10px;
   color: var(--muted);
   font-size: 11px;
   font-weight: 650;
@@ -2320,7 +2350,7 @@ summary:focus-visible {
   color: var(--text);
   text-align: left;
 }
-.new { display: flex; align-items: center; gap: 10px; margin: 16px 0 20px; padding: 9px 10px; }
+.new { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; padding: 9px 10px; }
 .icon-plus { width: 18px; color: var(--muted); text-align: center; font-size: 18px; line-height: 1; }
 .project { display: flex; align-items: center; gap: 9px; padding: 8px 10px; }
 .project.library-link { justify-content: flex-start; }
@@ -2329,9 +2359,14 @@ summary:focus-visible {
 .new:hover,
 .project:hover,
 .chat-item:hover,
-#clear:hover { background: var(--surface-raised); }
+#clear:hover { background: var(--nav-hover); }
+#clear:hover { color: var(--text); }
 .project-item.selected,
-.chat-item.selected { background: var(--surface-raised); border-color: var(--line); }
+.chat-item.selected { background: var(--nav-selected); }
+/* Project rows were centered by accident (the .project rule above sets align-items:center on a
+   column layout). Left-align them like every other row; the folder count sits under the name. */
+.project-item { align-items: flex-start; }
+.project-item small { padding-left: 0; color: var(--muted); }
 #projectList { flex: 0 1 auto; max-height: 32vh; overflow-y: auto; scrollbar-color: var(--border-strong) transparent; }
 #history { flex: 1; min-height: 0; overflow-y: auto; scrollbar-color: var(--border-strong) transparent; }
 .history-empty { margin: 8px 10px; font-size: 12px; line-height: 1.45; }
@@ -2343,15 +2378,18 @@ summary:focus-visible {
   margin: 1px 0;
   border-radius: 8px;
 }
-.chat-row:hover,
-.chat-row:focus-within { background: #2c2c2c; }
+/* Selected chat: the whole row (name + ⋯) gets one soft fill. It used to be a hard-coded #303030
+   pill on the name only, which showed as a black block in the light theme. */
+.chat-row:hover { background: var(--nav-hover); }
+.chat-row:has(> .chat-item.selected) { background: var(--nav-selected); }
 .chat-row .chat-item {
   min-width: 0;
   margin: 0;
   background: transparent;
   text-align: left;
 }
-.chat-row .chat-item.selected { background: #303030; color: #fff; }
+.chat-row .chat-item.selected,
+.chat-row .chat-item:hover { border-color: transparent; background: transparent; color: var(--text); }
 .chat-row .chat-item[aria-current="page"] { font-weight: 600; }
 .chat-row .chat-item-actions {
   width: 28px;
@@ -2359,14 +2397,14 @@ summary:focus-visible {
   padding: 0;
   border: 0;
   border-radius: 6px;
-  color: #aaa;
+  color: var(--muted);
   background: transparent;
   opacity: 0;
 }
 .chat-row:hover .chat-item-actions,
 .chat-row:focus-within .chat-item-actions { opacity: 1; }
-.chat-item-actions:hover { background: #414141; color: #fff; }
-.archived-chats { margin: 8px 8px 12px; color: #aaa; font-size: 12px; }
+.chat-item-actions:hover { background: var(--border-strong); color: var(--text); }
+.archived-chats { margin: 8px 8px 12px; color: var(--muted); font-size: 12px; }
 .archived-chats > summary { cursor: pointer; padding: 7px 2px; }
 .archived-chats .chat-row { font-size: 13px; }
 .chat-context-menu {
@@ -2376,11 +2414,12 @@ summary:focus-visible {
   max-height: min(70vh, 520px);
   overflow-y: auto;
   padding: 5px;
-  border: 1px solid #3a3a3a;
+  /* Chat ⋯ menu on tokens (was dark-only greys, so it stayed dark in the light theme). */
+  border: 1px solid var(--line);
   border-radius: 10px;
-  color: #e5e5e5;
-  background: #242424;
-  box-shadow: 0 12px 32px #0008;
+  color: var(--text);
+  background: var(--surface-raised);
+  box-shadow: 0 12px 32px #0004;
 }
 .chat-context-menu > button,
 .chat-context-menu details > button {
@@ -2398,14 +2437,14 @@ summary:focus-visible {
 .chat-context-menu > button:hover,
 .chat-context-menu details > button:hover,
 .chat-context-menu > button:focus-visible,
-.chat-context-menu details > button:focus-visible { background: #373737; outline: none; }
-.chat-context-menu > button:last-child { color: #ffb4ab; }
-.chat-project-actions { margin: 3px 0; padding: 4px 0; border-top: 1px solid #3a3a3a; border-bottom: 1px solid #3a3a3a; }
+.chat-context-menu details > button:focus-visible { background: var(--surface-soft); outline: none; }
+.chat-context-menu > button:last-child { color: var(--danger); }
+.chat-project-actions { margin: 3px 0; padding: 4px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .chat-project-actions > summary { padding: 7px 10px; cursor: pointer; list-style-position: inside; }
 .chat-project-actions > button { padding-left: 24px; }
 .chat-rename-dialog { width: min(440px, calc(100vw - 32px)); }
 .chat-rename-dialog form { display: grid; gap: 14px; }
-.chat-rename-dialog label { color: #c8c8c8; font-size: 13px; }
+.chat-rename-dialog label { color: var(--muted); font-size: 13px; }
 .chat-rename-dialog input { min-height: 42px; }
 .account-menu-toggle { border: 0; cursor: pointer; }
 .account-menu {
