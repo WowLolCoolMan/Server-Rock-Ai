@@ -4784,7 +4784,7 @@ public sealed partial class MainPage : Page
         settingsGrid.Children.Add(settingsScroll);
         var dialog = new ContentDialog
         {
-            Title = string.Empty,
+            Title = "Settings",
             Content = settingsGrid,
             PrimaryButtonText = "Save changes",
             CloseButtonText = "Cancel",
@@ -4872,6 +4872,9 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Accent color", "Choose the highlight color used for send and connection actions.", accent));
             pageBody.Children.Add(MakeSettingsCard("Interface density", "Use comfortable spacing for readability or compact spacing for smaller screens.", density));
+            var reset = new Button { Content = "Reset appearance" };
+            reset.Click += (_, _) => { accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
+            pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the calm cyan accent and comfortable spacing.", reset));
             pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
         }
 
@@ -4888,6 +4891,9 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(petCompletion);
             pageBody.Children.Add(petErrors);
             pageBody.Children.Add(petQuestions);
+            var reset = new Button { Content = "Reset pet preferences" };
+            reset.Click += (_, _) => { showPet.IsChecked = false; petCompletion.IsChecked = true; petErrors.IsChecked = true; petQuestions.IsChecked = true; RuntimeStatus.Text = "Pet preferences will be restored when you save settings."; };
+            pageBody.Children.Add(MakeSettingsCard("Defaults", "Show the pet only when requested, with helpful notifications enabled.", reset));
             pageBody.Children.Add(new TextBlock { Text = "The pet stays local. These notifications update its speech and state without sending telemetry.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 6, 4, 0) });
         }
 
@@ -4921,7 +4927,10 @@ public sealed partial class MainPage : Page
                     DispatcherQueue.TryEnqueue(() =>
                     {
                         if (chatRestoreButtons.FirstOrDefault()?.Focus(FocusState.Programmatic) != true)
-                            sectionButtons[1].Button.Focus(FocusState.Programmatic);
+                        {
+                            var chatsSection = sectionButtons.FirstOrDefault(item => item.SearchText.Contains("Chats & history", StringComparison.OrdinalIgnoreCase));
+                            chatsSection.Button.Focus(FocusState.Programmatic);
+                        }
                     });
                 };
                 chatRestoreButtons.Add(restore);
@@ -5053,14 +5062,14 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(MakeSettingsCard("Support bundle", "Export a diagnostics archive with sensitive values redacted.", exportLogs));
         }
 
-        AddSection("General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
-        AddSection("Appearance", "accent color density customize interface", "Appearance", "Tune the workspace colors and spacing for the way you work.", BuildAppearancePage);
-        AddSection("Pets", "companion mascot notifications approval", "Pets", "Choose your companion and decide when it should speak up.", BuildPetsPage);
-        AddSection("Host configuration", "device runtime local only safety", "Host configuration", "Name this workspace and control whether remote model endpoints are allowed.", BuildHostPage);
-        AddSection("Chats & history", "archive import export conversations", "Chats & history", "Organize, restore, import, and export your local conversations.", BuildChatsPage);
-        AddSection("Models & downloads", "installed library benchmark pin", "Models & downloads", "Manage installed models and the models shown in the composer switcher.", BuildModelsPage);
-        AddSection("GitHub workspace", "repositories coding agent clone push", "GitHub workspace", "Manage repository access and project setup.", BuildGitHubPage);
-        AddSection("Advanced", "vision diagnostics support", "Advanced", "Configure image input behavior and local diagnostics.", BuildAdvancedPage);
+        AddSection("◌  General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
+        AddSection("✦  Appearance", "accent color density customize interface", "Appearance", "Tune the workspace colors and spacing for the way you work.", BuildAppearancePage);
+        AddSection("◉  Pets", "companion mascot notifications approval", "Pets", "Choose your companion and decide when it should speak up.", BuildPetsPage);
+        AddSection("⌂  Host configuration", "device runtime local only safety", "Host configuration", "Name this workspace and control whether remote model endpoints are allowed.", BuildHostPage);
+        AddSection("▤  Chats & history", "archive import export conversations", "Chats & history", "Organize, restore, import, and export your local conversations.", BuildChatsPage);
+        AddSection("◈  Models & downloads", "installed library benchmark pin", "Models & downloads", "Manage installed models and the models shown in the composer switcher.", BuildModelsPage);
+        AddSection("⌘  GitHub workspace", "repositories coding agent clone push", "GitHub workspace", "Manage repository access and project setup.", BuildGitHubPage);
+        AddSection("⚙  Advanced", "vision diagnostics support", "Advanced", "Configure image input behavior and local diagnostics.", BuildAdvancedPage);
         search.TextChanged += (_, _) =>
         {
             var query = search.Text.Trim();
@@ -5515,7 +5524,7 @@ public sealed partial class MainPage : Page
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
         var projectLabel = project is null ? "No project" : $"Project: {project.Name} ({project.FolderPaths.Count} folder(s))";
-        RuntimeStatus.Text = $"{_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")}";
+        RuntimeStatus.Text = $"{_settings.HostLabel} · {_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")} · {( _settings.RequireLocalModelEndpoints ? "local-only" : "remote endpoints allowed")}";
     }
 
     private async Task SkillsDialogAsync()
