@@ -48,7 +48,7 @@ dotnet run --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.
 dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
 ```
 
-The Node/Electron commands below are retained only for legacy compatibility checks, migration export, and transitional packaging.
+The Node/Electron commands below are retained only for legacy compatibility checks, migration export, and transitional packaging. `npm start` is native-first; use `npm run start:electron` only when you specifically need the transitional Electron client.
 
 Install Node.js 22.12 or newer (required by the transitional Electron 45 path). From this repository:
 
@@ -57,7 +57,7 @@ npm install
 npm start
 ```
 
-The first `npm start` downloads the Electron runtime (about 110 MB) if it isn't already cached. `package.json` records, under `allowScripts`, that the install scripts of `onnxruntime-node` (optional CUDA GPU libraries; the app runs models on the CPU), `protobufjs` (a version warning), and `electron-winstaller` (only used for Squirrel installers, which this app doesn't build) are not needed. npm 11 and newer then skip them without a warning.
+`npm start` launches the Uno/.NET native desktop app through the .NET 10 SDK. Set `SERVER_ROCK_NATIVE_FRAMEWORK` when you need a specific target, such as the Windows App SDK framework on Windows. The transitional Electron client remains available with `npm run start:electron`; its install scripts and runtime are intentionally retained only for migration and compatibility work. `package.json` records, under `allowScripts`, that the install scripts of `onnxruntime-node` (optional CUDA GPU libraries; the app runs models on the CPU), `protobufjs` (a version warning), and `electron-winstaller` (only used for Squirrel installers, which this app doesn't build) are not needed. npm 11 and newer then skip them without a warning.
 
 Configure a provider using the gear button. Ollama is commonly available at `http://localhost:11434/v1/chat/completions`; GPT4All's local API is `http://127.0.0.1:4891/v1/chat/completions`. Start the local host first, scan for models in the model picker, and select an installed model.
 

@@ -7,7 +7,9 @@
   "private": false,
   "main": "electron/main.cjs",
   "scripts": {
-    "start": "electron .",
+    "start": "node scripts/start-native.cjs",
+    "start:native": "node scripts/start-native.cjs",
+    "start:electron": "electron .",
     "check:syntax": "node --check app.js && node --check commands.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/github-updates.cjs && node --check electron/provider-bridge.cjs && node --check electron/workspace.cjs && node --check electron/ipc-validation.cjs && node --check electron/bounded-file.cjs && node --check electron/terminal-sessions.cjs && node --check scripts/audit-ui.cjs && node --check scripts/audit-electron.cjs && node --check scripts/audit-release-artifacts.cjs && node --check scripts/smoke-native-artifact.cjs",
     "check:hygiene": "node scripts/check-repo-hygiene.cjs",
     "audit:ui": "node scripts/audit-ui.cjs",
