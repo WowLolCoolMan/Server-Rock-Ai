@@ -196,6 +196,7 @@ public sealed partial class MainPage : Page
         UpdateModeControls();
         UpdateModelLabel();
         UpdateWebSearchButton();
+        UpdateSmartRewriteButton();
         UpdateTemporaryControls();
         RuntimeStatus.Text = "New chat ready.";
         RuntimeStatus.Text = string.Join(" · ", warnings);
@@ -242,6 +243,7 @@ public sealed partial class MainPage : Page
         {
             UpdateModelLabel();
             UpdateWebSearchButton();
+            UpdateSmartRewriteButton();
             UpdateTemporaryControls();
             UpdateProjectFilesControls();
         }
@@ -2620,6 +2622,12 @@ public sealed partial class MainPage : Page
             await ExecuteSlashCommandAsync(text);
             return;
         }
+        if (_settings.SmartPromptRewritingEnabled)
+        {
+            var rewritten = await RewritePromptForReviewAsync(text);
+            if (rewritten is null) return;
+            text = rewritten;
+        }
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
         if (_mode == "Coding Agent")
         {
@@ -4275,6 +4283,110 @@ public sealed partial class MainPage : Page
                     : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
     }
 
+    private void UpdateSmartRewriteButton()
+    {
+        SmartRewriteButton.Content = _compactComposerToolbar
+            ? _settings.SmartPromptRewritingEnabled ? "Rewrite on" : "Rewrite off"
+            : _settings.SmartPromptRewritingEnabled ? "✦　Rewrite on" : "✧　Rewrite off";
+        AutomationProperties.SetHelpText(SmartRewriteButton,
+            _settings.SmartPromptRewritingEnabled
+                ? "Your draft and current conversation are sent to the selected model for a rewrite preview before sending."
+                : "Ask the selected model to rewrite your draft using the conversation context before sending. You review the rewrite before it is sent.");
+        UpdateWebSearchButton();
+    }
+
+    private void SmartRewriteClick(object sender, RoutedEventArgs e)
+    {
+        _settings.SmartPromptRewritingEnabled = !_settings.SmartPromptRewritingEnabled;
+        SaveSettings();
+        UpdateSmartRewriteButton();
+        RuntimeStatus.Text = _settings.SmartPromptRewritingEnabled
+            ? "Smart rewriting on · drafts are previewed before they reach the agent."
+            : "Smart rewriting off · drafts are sent as written.";
+    }
+
+    private async Task<string?> RewritePromptForReviewAsync(string draft)
+    {
+        if (draft.Length > 120_000)
+        {
+            RuntimeStatus.Text = "This draft is too large for smart rewriting. Send it as written or shorten it first.";
+            return draft;
+        }
+        var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        try
+        {
+            RuntimeStatus.Text = "Smart rewriting your draft using this conversation…";
+            var providerMessages = BuildProviderMessages();
+            var contextMessages = providerMessages
+                .Where(message => message.Role == "system" || message.Role == "user" || message.Role == "assistant")
+                .Select(message => new ChatMessage(message.Role,
+                    message.Content.Length > 12_000 ? message.Content[..12_000] + "\n[context truncated]" : message.Content))
+                .ToList();
+            contextMessages.Insert(0, new ChatMessage("system",
+                "You are a professional prompt editor between a user and an AI agent. Rewrite only the user's latest draft into a clear, specific, actionable prompt. Preserve intent, constraints, names, paths, and uncertainty; do not invent requirements or claim work was done. For coding requests, make the desired outcome, scope, acceptance criteria, and safety constraints explicit. Return only the rewritten prompt, with no preamble, critique, markdown fences, or commentary."));
+            contextMessages.Add(new ChatMessage("user", draft));
+            var rewritten = new System.Text.StringBuilder();
+            var rewriteSettings = new AppSettings
+            {
+                Endpoint = _settings.Endpoint,
+                Model = _settings.Model,
+                ModelProvider = _settings.ModelProvider,
+                Temperature = Math.Min(0.4, _settings.Temperature),
+                VisionApiFormat = _settings.VisionApiFormat
+            };
+            await _provider.StreamChatAsync(rewriteSettings, contextMessages, text =>
+            {
+                if (rewritten.Length + text.Length <= 24_000) rewritten.Append(text);
+            }, cancellation.Token, maxTokens: 1024);
+            var candidate = rewritten.ToString().Trim();
+            if (candidate.Length is < 2 or > 24_000) throw new InvalidOperationException("The rewrite was empty or too large.");
+            var preview = new TextBox
+            {
+                Text = candidate,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                MinHeight = 150,
+                MaxHeight = 320,
+                IsSpellCheckEnabled = true
+            };
+            AutomationProperties.SetName(preview, "Rewritten prompt preview");
+            var content = new StackPanel { Spacing = 10, Children =
+            {
+                new TextBlock { Text = "Review the rewritten prompt before it reaches the agent. You can edit it, use your original draft, or cancel.", TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = "Original draft", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                new TextBlock { Text = draft, TextWrapping = TextWrapping.Wrap, MaxHeight = 100, Opacity = 0.78 },
+                new TextBlock { Text = "Rewritten prompt", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                preview
+            }};
+            var dialog = new ContentDialog
+            {
+                Title = "Smart prompt rewrite",
+                Content = content,
+                PrimaryButtonText = "Use rewritten prompt",
+                SecondaryButtonText = "Use original",
+                CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot
+            };
+            AutomationProperties.SetName(dialog, "Review smart prompt rewrite");
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary) return preview.Text.Trim();
+            if (result == ContentDialogResult.Secondary) return draft;
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            RuntimeStatus.Text = "Smart rewriting timed out or was canceled. Your original draft was not sent.";
+            return null;
+        }
+        catch (Exception ex)
+        {
+            App.Log.Error("Chat", ex, "Smart prompt rewrite failed");
+            RuntimeStatus.Text = $"Smart rewriting failed · {ex.Message}. Your original draft was not sent.";
+            return null;
+        }
+        finally { cancellation.Dispose(); }
+    }
+
     private void CancelRequest() => _requestCancellation?.Cancel();
     private void StopClick(object sender, RoutedEventArgs e)
     {
@@ -4459,7 +4571,10 @@ public sealed partial class MainPage : Page
     {
         var endpoint = new TextBox { Header = "OpenAI-compatible endpoint", Text = _settings.Endpoint, PlaceholderText = "http://localhost:11434/v1" };
         var model = new TextBox { Header = "Model ID", Text = _settings.Model, PlaceholderText = "Model ID reported by the server" };
-        var note = new TextBlock { Text = "Connect a local Ollama, LM Studio, Jan, GPT4All, LocalAI, or another OpenAI-compatible server. API-key and hosted-provider connections are not enabled in the native app yet.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var smartRewrite = new CheckBox { Content = "Show a smart prompt rewrite before sending", IsChecked = _settings.SmartPromptRewritingEnabled };
+        AutomationProperties.SetName(smartRewrite, "Enable smart prompt rewriting");
+        AutomationProperties.SetHelpText(smartRewrite, "Use the selected model to rewrite your draft using the current conversation, then review it before sending.");
+        var note = new TextBlock { Text = "Connect a local Ollama, LM Studio, Jan, GPT4All, LocalAI, or another OpenAI-compatible server. Smart rewriting sends the draft and conversation context to this same endpoint for a reviewable rewrite; it never changes your original text automatically.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
         visionFormat.Items.Add("OpenAI-compatible image_url object");
@@ -4595,6 +4710,7 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
+            pageBody.Children.Add(smartRewrite);
             pageBody.Children.Add(note);
             pageBody.Children.Add(checkConnection);
             pageBody.Children.Add(checkStatus);
@@ -4636,11 +4752,105 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(MakeSettingsCard("Export conversations", "Create a portable archive of saved chats.", export));
         }
 
+        async Task RefreshSettingsModelsAsync(StackPanel inventory, TextBlock status, Button refresh)
+        {
+            refresh.IsEnabled = false;
+            status.Text = "Refreshing local model inventory…";
+            try
+            {
+                var models = await _modelLibrary.DiscoverLocalModelsAsync(_settings.Endpoint);
+                inventory.Children.Clear();
+                if (models.Count == 0)
+                {
+                    inventory.Children.Add(new TextBlock { Text = "No downloaded models were found on the configured local runtimes. Start Ollama, LM Studio, or another compatible server, then refresh.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)) });
+                }
+                foreach (var model in models)
+                {
+                    var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformanceKey(model.Endpoint, model.Model));
+                    var isPinned = (_settings.PinnedModelConnections ?? []).Any(item => item.Model.Equals(model.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(model.Endpoint, StringComparison.OrdinalIgnoreCase));
+                    var metrics = performance is null
+                        ? "No live performance sample yet"
+                        : $"LIVE · ≈{performance.EstimatedTokensPerSecond:0.#} tok/s · {performance.TimeToFirstTokenMilliseconds} ms first token · {performance.Samples} sample{(performance.Samples == 1 ? "" : "s")} · updated {performance.LastMeasuredAt.ToLocalTime():g}";
+                    var pin = new Button { Content = isPinned ? "Unpin" : "Pin", Padding = new Thickness(9, 5, 9, 5) };
+                    var remove = new Button { Content = "Delete", Padding = new Thickness(9, 5, 9, 5), IsEnabled = model.Provider.Equals("Ollama", StringComparison.OrdinalIgnoreCase) };
+                    AutomationProperties.SetName(pin, $"{(isPinned ? "Unpin" : "Pin")} {model.Model}");
+                    AutomationProperties.SetName(remove, $"Delete {model.Model}");
+                    pin.Click += (_, _) =>
+                    {
+                        _settings.PinnedModelConnections ??= [];
+                        if (isPinned)
+                            _settings.PinnedModelConnections.RemoveAll(item => item.Model.Equals(model.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(model.Endpoint, StringComparison.OrdinalIgnoreCase));
+                        else if (!_settings.PinnedModelConnections.Any(item => item.Model.Equals(model.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(model.Endpoint, StringComparison.OrdinalIgnoreCase)))
+                            _settings.PinnedModelConnections.Add(new PinnedModelConnection(model.Provider, model.Model, model.Endpoint));
+                        SaveSettings();
+                        _ = RefreshSettingsModelsAsync(inventory, status, refresh);
+                    };
+                    remove.Click += async (_, _) =>
+                    {
+                        if (!model.Provider.Equals("Ollama", StringComparison.OrdinalIgnoreCase)) return;
+                        var confirm = new ContentDialog
+                        {
+                            Title = $"Delete {model.Model}?",
+                            Content = "This removes the model from the local Ollama runtime. Your conversations and settings remain unchanged.",
+                            PrimaryButtonText = "Delete model",
+                            CloseButtonText = "Cancel",
+                            XamlRoot = XamlRoot
+                        };
+                        if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+                        try
+                        {
+                            await _modelLibrary.DeleteOllamaAsync(model.Endpoint, model.Model);
+                            _settings.PinnedModelConnections?.RemoveAll(item => item.Model.Equals(model.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(model.Endpoint, StringComparison.OrdinalIgnoreCase));
+                            SaveSettings();
+                            status.Text = $"Deleted {model.Model}.";
+                            await RefreshSettingsModelsAsync(inventory, status, refresh);
+                        }
+                        catch (Exception ex) { status.Text = $"Could not delete {model.Model}: {ex.Message}"; }
+                    };
+                    var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { pin, remove } };
+                    inventory.Children.Add(MakeSettingsCard($"{model.Model} · {model.Provider}", metrics, actions));
+                }
+                status.Text = $"{models.Count} downloaded model(s) · refreshing live performance every 5 seconds";
+            }
+            catch (Exception ex) { status.Text = $"Could not refresh local models: {ex.Message}"; }
+            finally { refresh.IsEnabled = true; }
+        }
+
+        var modelRefreshTimer = DispatcherQueue.CreateTimer();
+        var modelTimerAttached = false;
+        StackPanel? activeModelInventory = null;
+        TextBlock? activeModelStatus = null;
+        Button? activeModelRefresh = null;
+        modelRefreshTimer.Interval = TimeSpan.FromSeconds(5);
+        dialog.Closed += (_, _) => modelRefreshTimer.Stop();
+
         void BuildModelsPage()
         {
-            var manage = new Button { Content = "Open model library" };
+            var manage = new Button { Content = "Open AI SuperMarket" };
             manage.Click += (_, _) => { actionAfterClose = () => OpenModelLibraryAndRestoreFocusAsync(false, ModelButton); dialog.Hide(); };
-            pageBody.Children.Add(MakeSettingsCard("Models & downloads", "Browse compatible models, manage local downloads, pin frequently used models, and review benchmark results.", manage));
+            var refresh = new Button { Content = "Refresh now" };
+            var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+            var inventory = new StackPanel { Spacing = 8 };
+            pageBody.Children.Add(MakeSettingsCard("Models & downloads", "Downloaded models from local runtimes appear below. Pin models for the composer, delete Ollama models, and watch live performance samples update as you use them.", manage));
+            pageBody.Children.Add(new TextBlock { Text = "DOWNLOADED MODELS", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 12, 0, 2) });
+            pageBody.Children.Add(refresh);
+            pageBody.Children.Add(status);
+            pageBody.Children.Add(inventory);
+            activeModelInventory = inventory;
+            activeModelStatus = status;
+            activeModelRefresh = refresh;
+            refresh.Click += async (_, _) => await RefreshSettingsModelsAsync(inventory, status, refresh);
+            _ = RefreshSettingsModelsAsync(inventory, status, refresh);
+            modelRefreshTimer.Start();
+            if (!modelTimerAttached)
+            {
+                modelTimerAttached = true;
+                modelRefreshTimer.Tick += async (_, _) =>
+                {
+                    if (activeModelInventory is not null && activeModelStatus is not null && activeModelRefresh is not null)
+                        await RefreshSettingsModelsAsync(activeModelInventory, activeModelStatus, activeModelRefresh);
+                };
+            }
         }
 
         void BuildGitHubPage()
@@ -4735,9 +4945,11 @@ public sealed partial class MainPage : Page
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
             _settings.Model = model.Text.Trim();
             _settings.ModelProvider = "Custom endpoint";
+            _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
             SaveSettings();
             UpdateModelLabel();
+            UpdateSmartRewriteButton();
             await RefreshModelConnectionAsync();
         }
         if (actionAfterClose is not null) await actionAfterClose();

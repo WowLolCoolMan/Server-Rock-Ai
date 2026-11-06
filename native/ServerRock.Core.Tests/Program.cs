@@ -35,6 +35,15 @@ Check(SkillCatalogService.BuiltIns.Count >= 3 && SkillCatalogService.Find("rever
     "built-in skills expose explicit read-only permissions");
 Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
     "skill catalog lookup is case-insensitive and rejects unknown skills");
+HttpRequestMessage? deleteRequest = null;
+var deleteService = new ModelLibraryService(new HttpClient(new StubHandler((request, _) =>
+{
+    deleteRequest = request;
+    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+})));
+await deleteService.DeleteOllamaAsync("http://127.0.0.1:11434", "local-model");
+Check(deleteRequest?.Method == HttpMethod.Delete && deleteRequest.RequestUri?.AbsolutePath == "/api/delete",
+    "Ollama model deletion uses the bounded local delete endpoint");
 
 var discoveryHandler = new StubHandler((request, _) =>
 {
@@ -794,9 +803,9 @@ var settingsDirectory = Path.Combine(Path.GetTempPath(), "server-rock-core-check
 try
 {
     var settingsStore = new JsonSettingsStore(Path.Combine(settingsDirectory, "settings.json"));
-    settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", Temperature = 1.2, WebSearchEnabled = true, ComfyEndpoint = "http://127.0.0.1:8188", ImageWorkflow = "{\"workflow\":\"{{prompt}}\"}", GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"] });
+    settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", Temperature = 1.2, WebSearchEnabled = true, SmartPromptRewritingEnabled = true, ComfyEndpoint = "http://127.0.0.1:8188", ImageWorkflow = "{\"workflow\":\"{{prompt}}\"}", GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"] });
     var reloaded = settingsStore.Load();
-    Check(reloaded.Model == "persisted-model" && Math.Abs(reloaded.Temperature - 1.2) < 0.001 && reloaded.WebSearchEnabled, "settings survive save and reload");
+    Check(reloaded.Model == "persisted-model" && Math.Abs(reloaded.Temperature - 1.2) < 0.001 && reloaded.WebSearchEnabled && reloaded.SmartPromptRewritingEnabled, "settings survive save and reload");
     Check(reloaded.PinnedModels.SequenceEqual(["persisted-model", "second-model"]), "pinned model hotswapper selection survives settings save and reload");
     Check(reloaded.ModelProvider == "LM Studio" && reloaded.PinnedModelConnections.Count == 2 && reloaded.PinnedModelConnections[1].Endpoint.EndsWith(":11434/v1", StringComparison.Ordinal), "pinned model endpoints survive settings save and reload");
     Check(reloaded.LocalModelPerformance["http://127.0.0.1:1234/v1\npersisted-model"].Samples == 3, "local model benchmark measurements survive settings save and reload");

@@ -521,6 +521,25 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
         }
         throw new InvalidOperationException("Ollama closed the download stream before confirming completion.");
     }
+
+    public async Task DeleteOllamaAsync(string endpoint, string model, CancellationToken cancellationToken = default)
+    {
+        var modelId = ValidateModelIdentifier(model, "Ollama model");
+        if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/'), UriKind.Absolute, out var endpointUri) || !endpointUri.IsLoopback)
+            throw new InvalidOperationException("Ollama model deletion is supported only from a local Ollama server.");
+        var root = new UriBuilder(endpointUri) { Path = "", Query = "", Fragment = "" }.Uri;
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromMinutes(2));
+        using var response = await _http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, new Uri(root, "/api/delete"))
+        {
+            Content = JsonContent.Create(new { name = modelId })
+        }, timeout.Token);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await BoundedHttpContent.ReadTextAsync(response.Content, timeout.Token, "Ollama delete response");
+            throw new InvalidOperationException($"Ollama could not delete {modelId} ({(int)response.StatusCode}). {body}");
+        }
+    }
 }
 
 public sealed record HubModel(string Id, long Downloads, int Likes, bool IsUncensored = false, string[]? Tags = null);
