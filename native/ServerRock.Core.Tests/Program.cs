@@ -56,6 +56,16 @@ var discoveryHandler = new StubHandler((request, _) =>
 var provider = new OpenAiCompatibleProvider(new HttpClient(discoveryHandler));
 var models = await provider.DiscoverModelsAsync("http://localhost:11434/v1");
 Check(models.SequenceEqual(["local-a", "local-b"]), "model discovery reads model IDs");
+var openRouterAuthHandler = new StubHandler((request, _) =>
+{
+    Check(request.RequestUri?.AbsoluteUri == "https://openrouter.ai/api/v1/models" && request.Headers.Authorization?.Scheme == "Bearer" && request.Headers.Authorization.Parameter == "sk-or-v1-test", "OpenRouter model discovery sends the session API key without persisting it");
+    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent("{\"data\":[{\"id\":\"openrouter/free\"}]}", Encoding.UTF8, "application/json")
+    });
+});
+var openRouterModels = await new OpenAiCompatibleProvider(new HttpClient(openRouterAuthHandler)).DiscoverModelsAsync("https://openrouter.ai/api/v1", apiKey: "sk-or-v1-test");
+Check(openRouterModels.SequenceEqual(["openrouter/free"]), "OpenRouter free router is discoverable through the OpenAI-compatible API");
 var comfyRequests = 0;
 var comfy = new ComfyImageProvider(new HttpClient(new StubHandler((request, _) =>
 {

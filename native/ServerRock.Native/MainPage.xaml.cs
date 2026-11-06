@@ -52,6 +52,8 @@ public sealed partial class MainPage : Page
     ];
     private readonly List<ChatMessage> _messages = [];
     private readonly OpenAiCompatibleProvider _provider = new();
+    // OpenRouter keys are session-only; they are never written to settings.json.
+    private string _openRouterApiKey = string.Empty;
     private readonly ModelLibraryService _modelLibrary = new();
     private readonly ComfyImageProvider _comfyImageProvider = new();
     private readonly WebSearchProvider _webSearchProvider = new();
@@ -1230,7 +1232,7 @@ public sealed partial class MainPage : Page
         ConnectionLabel.Text = "Checking…";
         try
         {
-            var models = await _provider.DiscoverModelsAsync(_settings.Endpoint);
+            var models = await _provider.DiscoverModelsAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
             _providerConnected = true;
             var local = IsLocalEndpoint(_settings.Endpoint);
             ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
@@ -2817,7 +2819,7 @@ public sealed partial class MainPage : Page
             _messages[assistantIndex] = new ChatMessage("assistant", answer.ToString(), Sources: _pendingWebSources);
             output.Text = answer.ToString();
             ConversationScroll.ChangeView(null, double.MaxValue, null);
-        }, cancellationToken);
+        }, cancellationToken, apiKey: GetProviderApiKey());
         timer.Stop();
         if (IsLocalEndpoint(measuredEndpoint) && firstTokenMilliseconds is >= 0 && answer.Length > 0)
             RecordLocalModelPerformance(measuredEndpoint, measuredModel, answer.Length, timer.ElapsedMilliseconds, firstTokenMilliseconds.Value);
@@ -2842,6 +2844,10 @@ public sealed partial class MainPage : Page
     }
 
     private static string LocalModelPerformanceKey(string endpoint, string model) => endpoint.Trim().TrimEnd('/').ToLowerInvariant() + "\n" + model;
+
+    private string? GetProviderApiKey() => _settings.ModelProvider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase)
+        ? _openRouterApiKey
+        : null;
 
     private List<ChatMessage> BuildProviderMessages()
     {
@@ -3925,7 +3931,8 @@ public sealed partial class MainPage : Page
                         if (responseCharacters > 1600) cancellation.Cancel();
                     },
                     cancellation.Token,
-                    maxTokens: 96);
+                    maxTokens: 96,
+                    apiKey: GetProviderApiKey());
                 timer.Stop();
                 if (responseCharacters == 0 || firstToken is null) throw new InvalidOperationException("The model returned no benchmark text.");
                 RecordLocalModelPerformance(endpoint, model, responseCharacters, timer.ElapsedMilliseconds, firstToken.Value);
@@ -4337,7 +4344,7 @@ public sealed partial class MainPage : Page
             await _provider.StreamChatAsync(rewriteSettings, contextMessages, text =>
             {
                 if (rewritten.Length + text.Length <= 24_000) rewritten.Append(text);
-            }, cancellation.Token, maxTokens: 1024);
+            }, cancellation.Token, maxTokens: 1024, apiKey: GetProviderApiKey());
             var candidate = rewritten.ToString().Trim();
             if (candidate.Length is < 2 or > 24_000) throw new InvalidOperationException("The rewrite was empty or too large.");
             var preview = new TextBox
@@ -4571,10 +4578,16 @@ public sealed partial class MainPage : Page
     {
         var endpoint = new TextBox { Header = "OpenAI-compatible endpoint", Text = _settings.Endpoint, PlaceholderText = "http://localhost:11434/v1" };
         var model = new TextBox { Header = "Model ID", Text = _settings.Model, PlaceholderText = "Model ID reported by the server" };
+        var openRouterKey = new PasswordBox { Header = "OpenRouter API key (session only)", PlaceholderText = "sk-or-v1-…", Password = _openRouterApiKey };
+        AutomationProperties.SetName(openRouterKey, "OpenRouter API key");
+        AutomationProperties.SetHelpText(openRouterKey, "Required by OpenRouter, including its free models. The key is used only in memory for this app session and is never saved to settings.");
+        var openRouter = new Button { Content = "Use OpenRouter free models", MinWidth = 190 };
+        AutomationProperties.SetName(openRouter, "Use OpenRouter free models");
+        AutomationProperties.SetHelpText(openRouter, "Set the OpenRouter endpoint and automatic free-model router.");
         var smartRewrite = new CheckBox { Content = "Show a smart prompt rewrite before sending", IsChecked = _settings.SmartPromptRewritingEnabled };
         AutomationProperties.SetName(smartRewrite, "Enable smart prompt rewriting");
         AutomationProperties.SetHelpText(smartRewrite, "Use the selected model to rewrite your draft using the current conversation, then review it before sending.");
-        var note = new TextBlock { Text = "Connect a local Ollama, LM Studio, Jan, GPT4All, LocalAI, or another OpenAI-compatible server. Smart rewriting sends the draft and conversation context to this same endpoint for a reviewable rewrite; it never changes your original text automatically.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var note = new TextBlock { Text = "OpenRouter provides an OpenAI-compatible endpoint. Its openrouter/free router selects an available free model, but OpenRouter still requires your own API key and applies free-tier rate limits. Smart rewriting sends the draft and conversation context to the selected endpoint for a reviewable rewrite; it never changes your original text automatically.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
         visionFormat.Items.Add("OpenAI-compatible image_url object");
@@ -4710,6 +4723,8 @@ public sealed partial class MainPage : Page
             pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
+            pageBody.Children.Add(openRouter);
+            pageBody.Children.Add(openRouterKey);
             pageBody.Children.Add(smartRewrite);
             pageBody.Children.Add(note);
             pageBody.Children.Add(checkConnection);
@@ -4889,6 +4904,13 @@ public sealed partial class MainPage : Page
         SelectSection(sectionButtons[0].Button, "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
         dialog.Opened += (_, _) => sectionButtons[0].Button.Focus(FocusState.Programmatic);
 
+        openRouter.Click += (_, _) =>
+        {
+            endpoint.Text = "https://openrouter.ai/api/v1";
+            model.Text = "openrouter/free";
+            checkStatus.Text = "OpenRouter free-model routing selected. Enter your API key, then check the connection.";
+            openRouterKey.Focus(FocusState.Programmatic);
+        };
         checkConnection.Click += async (_, _) =>
         {
             var candidateEndpoint = endpoint.Text.Trim().TrimEnd('/');
@@ -4902,7 +4924,7 @@ public sealed partial class MainPage : Page
             checkStatus.Text = "Checking local model servers…";
             try
             {
-                var models = await _provider.DiscoverModelsAsync(candidateEndpoint);
+                var models = await _provider.DiscoverModelsAsync(candidateEndpoint, apiKey: openRouterKey.Password.Trim());
                 checkStatus.Text = models.Count switch
                 {
                     0 => "No local models responded. Start the server, confirm its address, then check again. Models in navigation can help you find compatible downloads.",
@@ -4944,7 +4966,8 @@ public sealed partial class MainPage : Page
             MigrateLegacyPinnedModels();
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
             _settings.Model = model.Text.Trim();
-            _settings.ModelProvider = "Custom endpoint";
+            _settings.ModelProvider = _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) ? "OpenRouter" : "Custom endpoint";
+            _openRouterApiKey = _settings.ModelProvider == "OpenRouter" ? openRouterKey.Password.Trim() : string.Empty;
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
             SaveSettings();

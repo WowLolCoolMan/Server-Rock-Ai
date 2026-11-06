@@ -79,7 +79,7 @@ The manual **Native desktop artifacts** workflow now launches the exact publishe
 
 ## Providers and privacy
 
-The chat client uses the OpenAI-compatible `/chat/completions` streaming shape. Local servers should bind to loopback and allow the app origin. Cloud endpoints receive the content you submit, under their own policies. Hosted-provider credential flows are not enabled in the native client yet; no account cookies, session tokens, or provider secrets are imported.
+The chat client uses the OpenAI-compatible `/chat/completions` streaming shape. Native connection setup includes OpenRouter at `https://openrouter.ai/api/v1` with the `openrouter/free` automatic free-model router. OpenRouter still requires the user's own API key and applies its free-tier rate limits; the native client keeps that key session-only and never writes it to settings. Local servers should bind to loopback and allow the app origin. Cloud endpoints receive the content you submit, under their own policies. No account cookies or browser session tokens are imported.
 
 To enable the Claude Code bridge, install the official CLI (`npm install -g @anthropic-ai/claude-code`), run `claude` once, and complete its Claude account sign-in. Return to Server Rock: AI, choose **Claude Code** in Settings, and use **Open Claude Code sign-in** whenever the CLI needs reauthorization. The bridge removes API-key-shaped environment variables before launching the CLI and never imports its credential files into the app.
 

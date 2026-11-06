@@ -23,7 +23,8 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         IReadOnlyList<ChatMessage> messages,
         Action<string> onText,
         CancellationToken cancellationToken,
-        int? maxTokens = null)
+        int? maxTokens = null,
+        string? apiKey = null)
     {
         ValidateRequest(settings, messages);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -47,6 +48,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         {
             Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
         };
+        AddApiKey(request, apiKey);
         using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
         if (!response.IsSuccessStatusCode)
         {
@@ -166,7 +168,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
             endpoint.IsLoopback && endpoint.Port == 11434;
     }
 
-    public async Task<IReadOnlyList<string>> DiscoverModelsAsync(string endpoint, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> DiscoverModelsAsync(string endpoint, CancellationToken cancellationToken = default, string? apiKey = null)
     {
         var root = BuildBaseUri(endpoint);
         var path = root.AbsolutePath.TrimEnd('/');
@@ -175,7 +177,9 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
             : new UriBuilder(root) { Path = path + "/v1/models", Query = "" }.Uri;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
-        using var response = await _http.GetAsync(modelsUri, timeout.Token);
+        using var request = new HttpRequestMessage(HttpMethod.Get, modelsUri);
+        AddApiKey(request, apiKey);
+        using var response = await _http.SendAsync(request, timeout.Token);
         response.EnsureSuccessStatusCode();
         using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, timeout.Token, "Model server model list");
         if (!json.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
@@ -212,5 +216,14 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
             || !string.IsNullOrEmpty(uri.Fragment))
             throw new InvalidOperationException("Enter an HTTP or HTTPS model endpoint without embedded credentials or a URL fragment.");
         return uri;
+    }
+
+    private static void AddApiKey(HttpRequestMessage request, string? apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey)) return;
+        var value = apiKey.Trim();
+        if (value.Length > 512 || value.Any(char.IsControl) || value.Contains(' '))
+            throw new InvalidOperationException("The provider API key has an invalid format.");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", value);
     }
 }
