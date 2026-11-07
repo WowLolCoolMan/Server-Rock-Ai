@@ -112,7 +112,7 @@ public sealed partial class MainPage : Page
         }
         try
         {
-            App.Log.Info("Chat", $"Request started mode={_mode} model={_settings.Model} endpoint={_settings.Endpoint}");
+            App.Log.Info("Startup", $"Loading local history mode={_mode} model={_settings.Model} endpoint={_settings.Endpoint}");
             _sessions = _conversationStore.Load();
         }
         catch (Exception ex)
@@ -167,7 +167,6 @@ public sealed partial class MainPage : Page
         UpdateSmartRewriteButton();
         UpdateTemporaryControls();
         ApplySavedCustomization();
-        RuntimeStatus.Text = "New chat ready.";
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
 

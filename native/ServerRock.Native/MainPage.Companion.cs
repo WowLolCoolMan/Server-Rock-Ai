@@ -175,14 +175,7 @@ public sealed partial class MainPage
     private void ToggleCompanionClick(object sender, RoutedEventArgs e)
     {
         _companionState = _companionState with { IsVisible = !_companionState.IsVisible };
-        if (_companionState.IsVisible)
-        {
-            UpdateCompanionDisplay();
-        }
-        else
-        {
-            CompanionOverlay.Visibility = Visibility.Collapsed;
-        }
+        // UpdateCompanionDisplay also shows or hides the overlay from IsVisible.
         UpdateCompanionDisplay();
         SaveCompanionState();
         RuntimeStatus.Text = _companionState.IsVisible ? $"{CompanionName.Text} is visible as a draggable sprite." : "Pet companion hidden.";
