@@ -1,3 +1,7 @@
+// One chat message (role, text, attachments, web sources).
+// Depends on: ChatAttachment, ChatSource.
+// Used by: ChatSession, OpenAiCompatibleProvider (request body), ConversationArchive, and MainPage chat.
+
 using System.Text.Json.Serialization;
 
 namespace ServerRock.Core.Models;

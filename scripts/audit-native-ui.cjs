@@ -2,12 +2,22 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const xamlPath = path.join(root, "native", "ServerRock.Native", "MainPage.xaml");
-const codePath = path.join(root, "native", "ServerRock.Native", "MainPage.xaml.cs");
-const githubCodePath = path.join(root, "native", "ServerRock.Native", "GitHubWorkspaceUi.cs");
+const nativeDir = path.join(root, "native", "ServerRock.Native");
+const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const xaml = fs.readFileSync(xamlPath, "utf8");
-const code = fs.readFileSync(codePath, "utf8");
-const githubCode = fs.readFileSync(githubCodePath, "utf8");
+
+// MainPage and the GitHub workspace UI are partial classes split across several
+// files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
+// Read every file of each group so a contract still passes after code moves
+// between those files.
+const readPartials = (prefix) =>
+  fs.readdirSync(nativeDir)
+    .filter((name) => name.startsWith(prefix) && name.endsWith(".cs"))
+    .sort()
+    .map((name) => fs.readFileSync(path.join(nativeDir, name), "utf8"))
+    .join("\n");
+const code = readPartials("MainPage.");
+const githubCode = readPartials("MainPage.GitHub");
 
 const requiredXaml = [
   ['Connection setup action', 'AutomationProperties.Name="Connect a model"'],
@@ -39,8 +49,8 @@ const requiredCode = [
   ['Model library focus return', 'OpenModelLibraryAndRestoreFocusAsync(returnToCompactSidebar, sender as Control)'],
   ['Model hotswap library focus', 'OpenModelLibraryAndRestoreFocusAsync(false, ModelButton)'],
   ['Slash model library focus', 'OpenModelLibraryAndRestoreFocusAsync(false, PromptBox)'],
-  ['Chat mode drawer focus return', 'SwitchModeFromSidebarAsync("ChatBot")'],
-  ['Coding Agent drawer focus return', 'SwitchModeFromSidebarAsync("Coding Agent")'],
+  ['Chat mode drawer focus return', 'SwitchModeFromSidebarAsync(WorkspaceModes.Chat)'],
+  ['Coding Agent drawer focus return', 'SwitchModeFromSidebarAsync(WorkspaceModes.CodingAgent)'],
   ['Compact workspace focus restoration', 'DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],
   ['Compact project action focus restoration', 'RunCompactProjectActionAsync'],
   ['Compact project cancellation focus fallback', 'if (restoreComposerFocus)\n                DispatcherQueue.TryEnqueue(() => PromptBox.Focus(FocusState.Programmatic));'],

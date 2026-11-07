@@ -1,3 +1,7 @@
+// Applies one reviewed text-file change inside a selected folder, with path containment,
+// a concurrency hash, and an undo receipt.
+// Used by: MainPage Coding Agent (proposals, file editor), WorkspaceUndoStore, WorkspaceFileContext, GitHubWorkspaceService.
+
 using System.Security.Cryptography;
 using System.Text;
 

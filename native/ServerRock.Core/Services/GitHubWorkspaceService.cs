@@ -1,3 +1,7 @@
+// Local `git` operations for a GitHub repository: clone, status, diff preview, commit, push.
+// Tokens are passed via a credential helper, never on the command line or in the remote URL.
+// Depends on: GitHubApiClient, WorkspaceFileEditor (bounded file read). Used by: MainPage.GitHub.cs.
+
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -52,16 +56,6 @@ public sealed class GitHubWorkspaceService
             TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
         EnsureSuccess(statusResult, "Git could not read the workspace status.");
         return ParseStatus(statusResult.StandardOutput, repository);
-    }
-
-    public async Task<string> CommitAllAsync(string repositoryPath, string message, string accessToken, CancellationToken cancellationToken = default)
-    {
-        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
-        if (status.Changes.Count == 0) throw new InvalidOperationException("There are no file changes to commit.");
-        var unsafePaths = FindUnsafeChangePaths(status.Changes);
-        if (unsafePaths.Count > 0)
-            throw new InvalidOperationException($"Refusing to stage secret-like files: {string.Join(", ", unsafePaths.Take(8))}{(unsafePaths.Count > 8 ? "…" : "")}");
-        return await CommitSelectedCoreAsync(repositoryPath, status.Changes, message, accessToken, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<string> CommitSelectedAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges, string message,

@@ -1,3 +1,6 @@
+// Writes a file via temp-file-then-rename so a crash never leaves a half-written store.
+// Used by: JsonSettingsStore, ConversationStore, ProjectStore, WorkspaceUndoStore.
+
 using System.Text;
 
 namespace ServerRock.Core.Infrastructure;

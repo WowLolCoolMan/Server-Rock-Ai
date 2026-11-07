@@ -1,7 +1,15 @@
+// Composer controls under the prompt box: the Tools toggle (second toolbar row), web search,
+// temporary chat, project files in chat, smart rewrite, the "editing a message" banner, and
+// saved-chat search.
+// Depends on: SaveSettings, SaveCurrentSession, and toolbar elements in MainPage.xaml.
+// Called by: composer buttons in MainPage.xaml, slash commands (/tools, /web, /temporary, /search),
+// and layout/mode code that refreshes the button states.
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Models;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -9,7 +17,7 @@ public sealed partial class MainPage
 {
     private void WebSearchClick(object sender, RoutedEventArgs e)
     {
-        if (_mode != "ChatBot") return;
+        if (_mode != WorkspaceModes.Chat) return;
         _settings.WebSearchEnabled = !_settings.WebSearchEnabled;
         SaveSettings();
         UpdateWebSearchButton();
@@ -73,7 +81,7 @@ public sealed partial class MainPage
             ConversationMessages.Children.Clear();
             WelcomePanel.Visibility = Visibility.Visible;
             ConversationScroll.Visibility = Visibility.Collapsed;
-            PageTitle.Text = _project ?? "New chat";
+            PageTitle.Text = _activeProjectName ?? "New chat";
             _isTemporaryChat = true;
             RuntimeStatus.Text = "Temporary chat started · messages will not be saved.";
         }
@@ -89,7 +97,7 @@ public sealed partial class MainPage
             ConversationMessages.Children.Clear();
             WelcomePanel.Visibility = Visibility.Visible;
             ConversationScroll.Visibility = Visibility.Collapsed;
-            PageTitle.Text = _project ?? "New chat";
+            PageTitle.Text = _activeProjectName ?? "New chat";
             _isTemporaryChat = false;
             RuntimeStatus.Text = "Temporary chat cleared and ended.";
         }
@@ -120,9 +128,11 @@ public sealed partial class MainPage
 
     private void UpdateTemporaryControls()
     {
+        // Tools toggles: plain "<name> on/off" labels (no mixed glyphs) plus a visible on-state.
         TemporaryButton.Content = _compactComposerToolbar
             ? _isTemporaryChat ? "Temp on" : "Temp off"
-            : _isTemporaryChat ? "◉　Temporary on" : "◌　Temporary off";
+            : _isTemporaryChat ? "Temporary on" : "Temporary off";
+        UiTheme.ApplyToggleState(TemporaryButton, _isTemporaryChat);
         TemporaryBadge.Visibility = _isTemporaryChat ? Visibility.Visible : Visibility.Collapsed;
         UpdateEditingControls();
         ChatFolderBadge.Visibility = string.IsNullOrWhiteSpace(_activeChatFolder) || _isTemporaryChat ? Visibility.Collapsed : Visibility.Visible;
@@ -166,12 +176,13 @@ public sealed partial class MainPage
     private void UpdateProjectFilesControls()
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
-        var available = _mode == "ChatBot" && project is not null && project.FolderPaths.Count > 0;
+        var available = _mode == WorkspaceModes.Chat && project is not null && project.FolderPaths.Count > 0;
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _compactComposerToolbar
             ? _includeProjectFilesInChat ? "Files on" : "Files off"
-            : _includeProjectFilesInChat ? "▤　Project files on" : "▤　Project files off";
-        ProjectBadgeText.Text = _mode == "Coding Agent"
+            : _includeProjectFilesInChat ? "Project files on" : "Project files off";
+        UiTheme.ApplyToggleState(ProjectFilesButton, _includeProjectFilesInChat);
+        ProjectBadgeText.Text = _mode == WorkspaceModes.CodingAgent
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
         ProcessingLabel.Text = DescribeDataRoute();
@@ -205,24 +216,25 @@ public sealed partial class MainPage
     {
         WebSearchButton.Content = _compactComposerToolbar
             ? _settings.WebSearchEnabled ? "Web on" : "Web off"
-            : _settings.WebSearchEnabled ? "⌕　Web on" : "⌕　Web off";
-        var local = IsLocalEndpoint(_settings.Endpoint);
-        var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
+            : _settings.WebSearchEnabled ? "Web search on" : "Web search off";
+        UiTheme.ApplyToggleState(WebSearchButton, _settings.WebSearchEnabled);
+        var local = LocalEndpoint.IsLocal(_settings.Endpoint);
+        var projectFiles = _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
         if (_isTemporaryChat)
         {
-            PrivacyFootnote.Text = _mode == "Coding Agent"
+            PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
                 ? local ? "Temporary chat is not saved. Selected project files still go to this on-device model."
                     : "Temporary chat is not saved. Selected project files still go to the configured remote model."
                 : _settings.WebSearchEnabled
-                    ? $"Temporary chat is not saved. Search queries go to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model."
+                    ? $"Temporary chat is not saved. Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model."
                     : local ? $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the on-device model."
                         : $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the configured remote model.";
             return;
         }
-        PrivacyFootnote.Text = _mode == "Coding Agent"
+        PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
             ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
             : _settings.WebSearchEnabled
-                ? $"Search query goes to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model server."
+                ? $"Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model server."
                 : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
                     : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
     }
@@ -231,7 +243,8 @@ public sealed partial class MainPage
     {
         SmartRewriteButton.Content = _compactComposerToolbar
             ? _settings.SmartPromptRewritingEnabled ? "Rewrite on" : "Rewrite off"
-            : _settings.SmartPromptRewritingEnabled ? "✦　Rewrite on" : "✧　Rewrite off";
+            : _settings.SmartPromptRewritingEnabled ? "Smart rewrite on" : "Smart rewrite off";
+        UiTheme.ApplyToggleState(SmartRewriteButton, _settings.SmartPromptRewritingEnabled);
         AutomationProperties.SetHelpText(SmartRewriteButton,
             _settings.SmartPromptRewritingEnabled
                 ? "Your draft and current conversation are sent to the selected model for a rewrite preview before sending."
@@ -247,5 +260,20 @@ public sealed partial class MainPage
         RuntimeStatus.Text = _settings.SmartPromptRewritingEnabled
             ? "Smart rewriting on · drafts are previewed before they reach the agent."
             : "Smart rewriting off · drafts are sent as written.";
+    }
+
+    // The composer card is the focus target users see: accent border while the prompt has
+    // focus, normal line border otherwise (the inner TextBox focus visual is turned off in XAML).
+    private void ComposerGotFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("AccentBrush");
+    private void ComposerLostFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("LineBrush");
+
+    private void ComposerToolsClick(object sender, RoutedEventArgs e)
+    {
+        var isOpen = SecondaryComposerToolbar.Visibility == Visibility.Visible;
+        SecondaryComposerToolbar.Visibility = isOpen ? Visibility.Collapsed : Visibility.Visible;
+        ComposerToolsButton.Content = isOpen ? "Tools　⌄" : "Tools　⌃";
+        AutomationProperties.SetHelpText(ComposerToolsButton, isOpen
+            ? "Show optional composer controls such as web search, temporary chat, project files, and smart rewriting."
+            : "Hide optional composer controls.");
     }
 }

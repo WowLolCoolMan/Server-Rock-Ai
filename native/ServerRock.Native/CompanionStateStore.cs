@@ -72,7 +72,7 @@ internal sealed class CompanionStateStore
 
     private static CompanionState Normalize(CompanionState state)
     {
-        var petId = state.PetId is "rocky" or "byte" or "sprout" ? state.PetId : "rocky";
+        var petId = AllowedPetIds.Contains(state.PetId, StringComparer.Ordinal) ? state.PetId : "rocky";
         var left = double.IsFinite(state.Left) && state.Left is >= -1 and <= 100_000 ? state.Left : -1;
         var top = double.IsFinite(state.Top) && state.Top is >= 0 and <= 100_000 ? state.Top : 88;
         var assets = (state.StateAssets ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
@@ -85,6 +85,10 @@ internal sealed class CompanionStateStore
             : "idle";
         return state with { PetId = petId, Left = left, Top = top, CurrentState = currentState, StateAssets = assets };
     }
+
+    // Must list every pet in CompanionChoices (MainPage.Companion.cs); an unknown ID is
+    // saved back as "rocky".
+    internal static readonly string[] AllowedPetIds = ["rocky", "byte", "sprout", "nova", "ember"];
 
     internal static readonly string[] AllowedStates = ["idle", "thinking", "coding", "coding_malicious", "stuck", "success", "error"];
 }

@@ -9,41 +9,121 @@
         <!-- Load WinUI resources -->
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
       </ResourceDictionary.MergedDictionaries>
-      <!-- Server Rock design tokens: a single calm surface system shared by every native view. -->
+      <!-- Server Rock design tokens: a single calm surface system shared by every native view.
+           See DESIGN.md at the repository root. Code-built UI reads these through UiTheme.cs;
+           add a token here instead of hard-coding a color, size, or font. -->
+
+      <!-- Surfaces and lines -->
       <Color x:Key="CanvasColor">#F7FAF9</Color>
       <Color x:Key="SurfaceColor">#FFFFFF</Color>
+      <Color x:Key="SurfaceAltColor">#F4F8F7</Color>
       <Color x:Key="SidebarColor">#EEF5F3</Color>
       <Color x:Key="LineColor">#D8E5E2</Color>
+      <Color x:Key="LineSoftColor">#E5ECEB</Color>
+      <!-- Text. Ink and MutedInk both pass WCAG AA (4.5:1) on Surface and Sidebar.
+           SubtleInk is for decoration and disabled text only, never for information. -->
       <Color x:Key="InkColor">#18333B</Color>
-      <Color x:Key="MutedInkColor">#647A7F</Color>
-      <Color x:Key="AccentColor">#0E9FB8</Color>
+      <Color x:Key="MutedInkColor">#586D72</Color>
+      <Color x:Key="SubtleInkColor">#8B999D</Color>
+      <!-- Accent. AccentColor is a fill behind white text (4.6:1); AccentInkColor is for
+           accent-colored text and selected states on Surface or AccentSoft (5.2:1+). -->
+      <Color x:Key="AccentColor">#0A8094</Color>
+      <Color x:Key="AccentHoverColor">#08707F</Color>
+      <Color x:Key="AccentPressedColor">#07687A</Color>
+      <Color x:Key="AccentInkColor">#0B6F80</Color>
       <Color x:Key="AccentSoftColor">#E5F5F6</Color>
+      <!-- Scrim behind the compact navigation drawer -->
+      <Color x:Key="ScrimColor">#66000000</Color>
+      <!-- Brand mark (sidebar logo tile) -->
+      <Color x:Key="BrandMarkColor">#183844</Color>
+      <Color x:Key="BrandMarkInkColor">#DFF7FA</Color>
+      <!-- Status -->
+      <Color x:Key="SuccessColor">#3E9B6A</Color>
+      <Color x:Key="WarningColor">#D69A4B</Color>
+      <Color x:Key="WarningSoftColor">#FFF7E6</Color>
+      <Color x:Key="WarningLineColor">#EFDEB8</Color>
+      <Color x:Key="WarningInkColor">#71522A</Color>
+      <Color x:Key="DangerColor">#A64D43</Color>
+
       <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
       <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+      <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
       <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
       <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}" />
+      <SolidColorBrush x:Key="LineSoftBrush" Color="{StaticResource LineSoftColor}" />
       <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
       <SolidColorBrush x:Key="MutedInkBrush" Color="{StaticResource MutedInkColor}" />
+      <SolidColorBrush x:Key="SubtleInkBrush" Color="{StaticResource SubtleInkColor}" />
       <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+      <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+      <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+      <SolidColorBrush x:Key="AccentInkBrush" Color="{StaticResource AccentInkColor}" />
       <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}" />
-      <Style x:Key="RailButtonStyle" TargetType="Button">
-        <Setter Property="Width" Value="38" /><Setter Property="Height" Value="38" /><Setter Property="Margin" Value="0,3" /><Setter Property="CornerRadius" Value="11" /><Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="#a3a49c" /><Setter Property="FontSize" Value="18" />
-      </Style>
-      <Style x:Key="PrimaryActionButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderThickness" Value="0" />
+      <SolidColorBrush x:Key="ScrimBrush" Color="{StaticResource ScrimColor}" />
+      <SolidColorBrush x:Key="BrandMarkBrush" Color="{StaticResource BrandMarkColor}" />
+      <SolidColorBrush x:Key="BrandMarkInkBrush" Color="{StaticResource BrandMarkInkColor}" />
+      <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+      <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+      <SolidColorBrush x:Key="WarningSoftBrush" Color="{StaticResource WarningSoftColor}" />
+      <SolidColorBrush x:Key="WarningLineBrush" Color="{StaticResource WarningLineColor}" />
+      <SolidColorBrush x:Key="WarningInkBrush" Color="{StaticResource WarningInkColor}" />
+      <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+
+      <!-- WinUI accent buttons (dialog primary actions) use the app accent, including hover and
+           pressed states, so every "do it" button looks the same everywhere. -->
+      <SolidColorBrush x:Key="AccentButtonBackground" Color="{StaticResource AccentColor}" />
+      <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="{StaticResource AccentHoverColor}" />
+      <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="{StaticResource AccentPressedColor}" />
+      <SolidColorBrush x:Key="AccentButtonForeground" Color="White" />
+      <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="White" />
+      <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#E8F6F8" />
+
+      <!-- Type scale (font sizes). Use these names in XAML and through UiTheme in code. -->
+      <x:Double x:Key="CaptionFontSize">11</x:Double>
+      <x:Double x:Key="SmallFontSize">12</x:Double>
+      <x:Double x:Key="BodyFontSize">14</x:Double>
+      <x:Double x:Key="ReadingFontSize">15</x:Double>
+      <x:Double x:Key="SubtitleFontSize">19</x:Double>
+      <x:Double x:Key="TitleFontSize">23</x:Double>
+      <x:Double x:Key="DisplayFontSize">30</x:Double>
+      <x:Double x:Key="CodeFontSize">13</x:Double>
+      <!-- Code font: a list so each platform finds a real monospace face. -->
+      <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas, DejaVu Sans Mono, Liberation Mono, monospace</FontFamily>
+      <!-- Layout widths -->
+      <x:Double x:Key="ComposerMaxWidth">820</x:Double>
+      <!-- Corner radii -->
+      <CornerRadius x:Key="ControlCornerRadiusToken">8</CornerRadius>
+      <CornerRadius x:Key="CardCornerRadius">12</CornerRadius>
+
+      <Style x:Key="PrimaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="14,9" />
         <Setter Property="FontWeight" Value="SemiBold" />
       </Style>
+      <!-- Dialog primary action: accent colors only, so it keeps the same size as Cancel. -->
+      <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+      </Style>
       <Style x:Key="SidebarActionButtonStyle" TargetType="Button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="9" />
         <Setter Property="Padding" Value="11,9" />
+      </Style>
+      <!-- One half of a two-option segmented switch (Chatbot / Coding Agent). The selected
+           half is restyled in code with UiTheme.ApplySegmentState. -->
+      <Style x:Key="SegmentButtonStyle" TargetType="Button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="8,8" />
       </Style>
       <Style x:Key="SidebarSectionLabelStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="10" />
@@ -52,7 +132,7 @@
         <Setter Property="Margin" Value="8,8,0,5" />
       </Style>
       <Style x:Key="SuggestionButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#f5fafb" /><Setter Property="Foreground" Value="#3f555b" /><Setter Property="BorderBrush" Value="#dce9eb" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /><Setter Property="Padding" Value="12,9" />
+        <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" /><Setter Property="Foreground" Value="{StaticResource InkBrush}" /><Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /><Setter Property="Padding" Value="12,9" />
       </Style>
       <Style x:Key="ContextButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="10,6" /><Setter Property="FontSize" Value="12" />
@@ -64,7 +144,38 @@
         <Setter Property="CornerRadius" Value="14" />
       </Style>
       <Style x:Key="ComposerButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="#688087" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="8,5" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="8,5" />
+      </Style>
+      <!-- Square icon button in the composer action row (attach, commands, voice). -->
+      <Style x:Key="ComposerIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="34" /><Setter Property="Height" Value="34" /><Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" />
+      </Style>
+      <!-- Sidebar row icon: fixed width so every label starts at the same x. -->
+      <Style x:Key="NavIconStyle" TargetType="FontIcon">
+        <Setter Property="FontSize" Value="15" /><Setter Property="Width" Value="18" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+      </Style>
+      <!-- Small square icon button in sidebar section headers (new folder, import, export). -->
+      <Style x:Key="SidebarIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="28" /><Setter Property="Height" Value="28" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="2,0,0,0" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="CornerRadius" Value="7" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+      </Style>
+      <!-- Every ContentDialog: the primary action uses the accent so "do it" stands out from
+           Cancel/Close (it used to look identical). Only this setter is overridden; the default
+           dialog template still applies. -->
+      <Style TargetType="ContentDialog">
+        <Setter Property="PrimaryButtonStyle" Value="{StaticResource DialogPrimaryButtonStyle}" />
+      </Style>
+      <!-- Text in list rows built from DisplayMemberPath (model and plugin lists): wrap long
+           names and metadata instead of cutting them off at the dialog edge. -->
+      <Style x:Key="WrappingListTextStyle" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap" /><Setter Property="Margin" Value="0,4" />
+      </Style>
+      <!-- Small uppercase section label (sidebar groups, settings groups). -->
+      <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10" /><Setter Property="CharacterSpacing" Value="110" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
       </Style>
 
     </ResourceDictionary>

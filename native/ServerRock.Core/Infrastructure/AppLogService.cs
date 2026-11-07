@@ -1,3 +1,6 @@
+// Diagnostic log file with secret/path redaction and zip export.
+// Depends on: nothing in Core. Used by: App.Log (the single app-wide instance) and the Settings diagnostics export.
+
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;

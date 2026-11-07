@@ -1,3 +1,6 @@
+// Reads HTTP response bodies (JSON, text, bytes, SSE lines) with hard size limits.
+// Used by: every Core class that calls a remote or local server.
+
 using System.Text;
 using System.Text.Json;
 

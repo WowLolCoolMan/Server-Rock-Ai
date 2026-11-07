@@ -1,3 +1,6 @@
+// Static list of built-in read-only workflow skills and their permissions.
+// Used by: MainPage /skills and /reverse-engineer.
+
 namespace ServerRock.Core.Services;
 
 public sealed record SkillDefinition(

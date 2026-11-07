@@ -27,18 +27,18 @@ On Linux, install the system GTK 3 and graphics dependencies documented by [Uno 
 ## Features
 
 - Uno/.NET native desktop app for shared Skia desktop targets and Windows App SDK.
-- Conversation history and preferences stored in the local browser profile.
+- Conversation history and preferences stored locally in your platform application-data folder.
 - Model picker scans known local hosts (Ollama, GPT4All, LM Studio, Jan, LocalAI, llama.cpp, vLLM, KoboldCpp, and Text Generation WebUI), lists available models, and shows measured per-model latency and throughput after use. It also lists models from a configured compatible/cloud endpoint.
 - The native Model Library scans standard local endpoints across common model runtimes, keeps same-named models at different hosts distinct, and offers a pinned subset in the composer hotswapper. It shows per-model local response speed and first-token measurements as samples accumulate. Hugging Face GGUF discovery/download uses LM Studio, and Ollama Library pulls use Ollama. See [Model Library source and runtime support](docs/MODEL_LIBRARY.md) for setup and compatibility limits.
 - Native GitHub credentials use the platform credential mechanism; hosted-provider credential flows are intentionally not enabled until their native privacy and recovery UX is complete.
-- Light and dark themes, attachment picker, and workspace chat history.
+- Light theme with selectable accent colors, attachment picker, and workspace chat history. A dark theme is not available yet.
 - Choose ChatBot or Coding Agent from the Codex-style mode switch. Project source folders are selected with the native folder picker; ChatBot can retrieve relevant local text passages from the selected project, and Coding Agent can inspect project files and save generated files back into that folder.
 - Activity includes a terminal that starts in an authorized project folder. Commands run with the user's normal account permissions; live output, bounded input, cancellation, and resumable session snapshots stay in the desktop process, and secret-shaped environment variables are removed.
 - Live response streaming with a Stop control for active provider, image, and local text-generation requests.
 - Slash actions include `/fast`, `/plan`, `/goal`, `/status`, `/imagegen`, `/review`, `/summarize`, `/explain`, `/translate`, `/models`, `/clear`, and `/help`. Set a fast model in Settings for `/fast`; image generation requires a configured ComfyUI API workflow.
 - Voice turn-taking is model-agnostic: the Windows build uses the system speech recognizer for dictation and speech synthesizer for spoken responses, so it works with every selected local, hosted, or OpenRouter-compatible model. Dictation is inserted as a reviewable draft before sending, and spoken output is opt-in.
 - Attach an image for offline captioning/OCR or local image-to-image processing with compatible downloaded ONNX models.
-- No analytics or telemetry. Core release checks are user initiated; the app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you explicitly search the catalog or download a selected model.
+- No analytics or telemetry. Core release checks are user initiated; the app contacts a configured inference provider only after you send a prompt. Hugging Face is contacted only when you choose its catalog in the Model Library (which opens on your installed models), search it, or download a selected model.
 
 ## Run locally
 
@@ -85,7 +85,7 @@ The manual **Native desktop artifacts** workflow now launches the exact publishe
 
 The chat client uses the OpenAI-compatible `/chat/completions` streaming shape. Native connection setup includes OpenRouter at `https://openrouter.ai/api/v1` with the `openrouter/free` automatic free-model router. OpenRouter still requires the user's own API key and applies its free-tier rate limits; the native client keeps that key session-only and never writes it to settings. Local servers should bind to loopback and allow the app origin. Cloud endpoints receive the content you submit, under their own policies. No account cookies or browser session tokens are imported.
 
-To enable the Claude Code bridge, install the official CLI (`npm install -g @anthropic-ai/claude-code`), run `claude` once, and complete its Claude account sign-in. Return to Server Rock: AI, choose **Claude Code** in Settings, and use **Open Claude Code sign-in** whenever the CLI needs reauthorization. The bridge removes API-key-shaped environment variables before launching the CLI and never imports its credential files into the app.
+A Claude Code bridge is not part of the native app yet; the native Settings screen has no Claude Code option.
 
 Native history and non-secret settings are stored in the user's platform application-data directory using bounded JSON stores. Native GitHub credentials use the platform credential mechanism. Clear app data through the operating system's app-data controls to remove native conversations and settings. Offline chat/inference works with a local provider and already downloaded model. Hub search and downloads require a connection. A cloud endpoint, cloud model, or hosted image generation service sends the request data to that provider.
 

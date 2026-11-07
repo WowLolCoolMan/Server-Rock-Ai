@@ -1,3 +1,8 @@
+// Loads/saves the conversation list (conversations.json). A corrupt file is reported
+// and left untouched, never overwritten.
+// Depends on: ConversationArchive, BoundedFileReader, AtomicFileWriter.
+// Used by: MainPage (history, recents, folders, import).
+
 using System.Text.Json;
 using ServerRock.Core.Models;
 
@@ -34,7 +39,7 @@ public sealed class ConversationStore
                 session.Messages ??= [];
                 session.BaseMessages ??= [];
                 session.Branches ??= [];
-                session.Mode ??= "ChatBot";
+                session.Mode ??= WorkspaceModes.Chat;
             }
             return sessions;
         }

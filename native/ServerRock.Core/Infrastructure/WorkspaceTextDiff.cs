@@ -1,3 +1,6 @@
+// Bounded line diff used to preview a proposed file replacement.
+// Used by: MainPage Coding Agent change review.
+
 namespace ServerRock.Core.Infrastructure;
 
 public enum WorkspaceDiffLineKind

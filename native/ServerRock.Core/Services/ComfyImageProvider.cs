@@ -1,3 +1,7 @@
+// Image Studio back end: queues a user-supplied ComfyUI workflow on a loopback-only
+// endpoint, polls for the result, and returns image URLs.
+// Depends on: HttpClient, BoundedHttpContent. Used by: MainPage Image Studio dialog.
+
 using System.Net.Http.Json;
 using System.Text.Json;
 using ServerRock.Core.Infrastructure;
