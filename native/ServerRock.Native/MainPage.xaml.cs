@@ -626,63 +626,6 @@ public sealed partial class MainPage : Page
         });
     }
 
-    private async void MainPageLoaded(object sender, RoutedEventArgs e)
-    {
-        if (_companionState.IsVisible)
-        {
-            UpdateCompanionDisplay();
-        }
-        if (_connectionCheckRunning) return;
-        _connectionCheckRunning = true;
-        try { await RefreshModelConnectionAsync(); }
-        finally { _connectionCheckRunning = false; }
-    }
-
-    private async Task RefreshModelConnectionAsync()
-    {
-        ConnectionLabel.Text = "Checking…";
-        try
-        {
-            var models = await _provider.DiscoverModelsAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
-            _providerConnected = true;
-            var local = IsLocalEndpoint(_settings.Endpoint);
-            ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
-            HeaderConnectionLabel.Text = ConnectionLabel.Text;
-            ConnectionDot.Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 119, 180, 135));
-            HeaderConnectionDot.Fill = ConnectionDot.Fill;
-            ProcessingLabel.Text = local ? "● On-device model" : "● Remote model server";
-            if (!models.Contains(_settings.Model, StringComparer.Ordinal))
-            {
-                var previouslySelected = _settings.Model;
-                _settings.Model = models[0];
-                SaveSettings();
-                UpdateModelLabel();
-                RuntimeStatus.Text = $"Selected installed model {_settings.Model}; {previouslySelected} was unavailable";
-            }
-            else RuntimeStatus.Text = $"Connected · {_settings.Model}";
-        }
-        catch (Exception ex)
-        {
-            _providerConnected = false;
-            ConnectionLabel.Text = "Not connected";
-            HeaderConnectionLabel.Text = "Not connected";
-            ConnectionDot.Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 193, 142, 92));
-            HeaderConnectionDot.Fill = ConnectionDot.Fill;
-            ProcessingLabel.Text = "● Model not connected";
-            RuntimeStatus.Text = $"Set up your model connection · {ex.Message}";
-            if (_companionState.IsVisible)
-                UpdateCompanionSpeech("Model connection failed · open Settings to reconnect.");
-        }
-        UpdateModeControls();
-    }
-
-    private static bool IsLocalEndpoint(string endpoint)
-    {
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)) return false;
-        return uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-            (System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address));
-    }
-
     private async void NewProjectClick(object sender, RoutedEventArgs e) => await RunCompactProjectActionAsync(NewProjectClickAsync);
 
     private async Task RunCompactProjectActionAsync(Func<Task> action)
