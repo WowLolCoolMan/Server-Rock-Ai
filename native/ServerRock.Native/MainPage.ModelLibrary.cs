@@ -129,11 +129,13 @@ public sealed partial class MainPage
         var source = new ComboBox { MinWidth = 220 };
         AutomationProperties.SetName(source, "Model source");
         AutomationProperties.SetHelpText(source, "Choose a model catalog, installed models, or a direct Ollama model ID.");
-        source.Items.Add("AI SuperMarket · Hugging Face GGUF");
+        source.Items.Add("Hugging Face · GGUF catalog");
         source.Items.Add("Installed models");
         source.Items.Add("Ollama Library");
         source.Items.Add("ModelScope · GGUF");
-        source.SelectedIndex = 0;
+        // Owner decision (2026-11-07): open on Installed models so nothing is sent to Hugging
+        // Face until the user picks the catalog source (matches the README privacy promise).
+        source.SelectedIndex = 1;
         var catalogMode = new ComboBox { MinWidth = 220, Visibility = Visibility.Collapsed };
         AutomationProperties.SetName(catalogMode, "Model catalog category");
         AutomationProperties.SetHelpText(catalogMode, "Choose regular models or repositories explicitly labeled uncensored or abliterated.");
@@ -178,7 +180,7 @@ public sealed partial class MainPage
         var actionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { query, search } };
         var dialog = new ContentDialog
         {
-            Title = "AI SuperMarket",
+            Title = "Model Library",
             PrimaryButtonText = "Use selected",
             CloseButtonText = "Done",
             XamlRoot = XamlRoot,
@@ -187,7 +189,7 @@ public sealed partial class MainPage
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = "Browse popular local models, search by capability, and download compatible GGUF models through a local runtime. Installed models can be pinned for quick switching and benchmarked on this PC.", TextWrapping = TextWrapping.Wrap },
+                    new TextBlock { Text = "Choose, pin, and benchmark the models installed on this PC. Switch the source to browse the Hugging Face, Ollama, or ModelScope catalogs and download compatible GGUF models through a local runtime.", TextWrapping = TextWrapping.Wrap },
                     source,
                     catalogMode,
                     actionRow,

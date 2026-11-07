@@ -427,7 +427,7 @@ public sealed partial class MainPage
 
         void BuildModelsPage()
         {
-            var manage = new Button { Content = "Open AI SuperMarket" };
+            var manage = new Button { Content = "Open Model Library" };
             manage.Click += (_, _) => { actionAfterClose = () => OpenModelLibraryAndRestoreFocusAsync(false, ModelButton); dialog.Hide(); };
             var refresh = new Button { Content = "Refresh now" };
             var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };

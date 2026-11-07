@@ -82,7 +82,7 @@ method name still finds it.
 | `MainPage.Branches.cs` | Conversation branches (‹ ›) and forks. |
 | `MainPage.Composer.cs` | Composer toggles: Tools row, web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
 | `MainPage.Attachments.cs` | Attach picker, attachment limits, attachment chips, remote-upload consent key. |
-| `MainPage.SlashCommands.cs` | `/` command list, suggestion popup, command handlers, `/help`. |
+| `MainPage.SlashCommands.cs` | `/` suggestion popup and command handlers, `/help`. The command list itself is `SlashCommandCatalog` in Core. |
 | `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
 | `MainPage.ModelLibrary.cs` | Model button and pinned-model hotswap menu, Model Library dialog, model selection, composer model label. |
 | `MainPage.Settings.cs` | Settings dialog, Advanced (temperature) dialog, `ApplySavedCustomization`, dialog focus restore. |
@@ -179,6 +179,7 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `Services/GitHubApiClient.cs` | Signed-in account, repository list, repository lookup; parses `owner/name` or GitHub URLs safely. |
 | `Services/GitHubWorkspaceService.cs` | Local `git` clone/status/diff/commit/push for GitHub repos without putting tokens on the command line; blocks committing secret-looking files. |
 | `Services/PluginCatalogService.cs` | Static catalog of supported plugins/integrations (search + categories). |
+| `Services/SlashCommandCatalog.cs` | The `/` command list and the suggestion filter for the composer popup. |
 | `Services/SkillCatalogService.cs` | Static catalog of built-in read-only "skills" (e.g. reverse-engineer) and their permissions. |
 
 ### `Infrastructure/` – local storage, files, processes, safety limits
@@ -194,6 +195,7 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `AtomicFileWriter.cs` | Write-to-temp-then-rename used by the stores. |
 | `BoundedFileReader.cs`, `BoundedHttpContent.cs` | Read files/HTTP bodies with hard byte limits before parsing. |
 | `ConversationArchive.cs` | Import/export chat archives (native format and the old Electron export), with validation and duplicate/ID-collision planning. |
+| `ModelInstructions.cs` | Fixed system-message text: the Chat and Coding Agent prompts and the "untrusted data" warnings. |
 | `LocalEndpoint.cs` | Whether an endpoint is on this device (loopback/localhost only). |
 | `ProviderErrorText.cs` | Plain-language messages for model/image request failures. |
 | `WorkspacePath.cs` | OS-correct path comparison for project folders. |
@@ -268,7 +270,7 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
 | Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
-| The system prompt / what's sent to the model | `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs` |
+| The system prompt / what's sent to the model | `ServerRock.Core/Infrastructure/ModelInstructions.cs` (text), `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs` |
 | Chat streaming HTTP | `ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
 | How messages are drawn, copy/edit/retry | `ServerRock.Native/MainPage.Messages.cs` |
 | Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `ServerRock.Core/Infrastructure/ExternalLinkPolicy.cs` |
@@ -283,7 +285,7 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Error text shown when a model request fails | `ServerRock.Core/Infrastructure/ProviderErrorText.cs` |
 | The mode IDs ("ChatBot" / "Coding Agent") | `ServerRock.Core/Models/WorkspaceModes.cs` |
 | Attachments (+ button, chips, limits) | `ServerRock.Native/MainPage.Attachments.cs`, `ServerRock.Core/Infrastructure/ChatAttachmentPolicy.cs` |
-| Slash commands (`/help`, `/mode`, …) | `ServerRock.Native/MainPage.SlashCommands.cs` |
+| Slash commands (`/help`, `/mode`, …) | `ServerRock.Core/Services/SlashCommandCatalog.cs` (list), `ServerRock.Native/MainPage.SlashCommands.cs` (what each does) |
 | Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
 | Chat / Coding Agent switch, keyboard shortcuts | `ServerRock.Native/MainPage.Navigation.cs` |
 | Narrow-window drawer, toolbar wrapping | `ServerRock.Native/MainPage.Layout.cs` |

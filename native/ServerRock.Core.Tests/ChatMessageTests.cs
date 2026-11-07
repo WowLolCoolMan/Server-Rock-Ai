@@ -37,5 +37,12 @@ internal static class ChatMessageTests
         var pngSignature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
         var modelImageMessage = new ChatMessage("user", "Describe this", [new ChatAttachment("sample.png", Convert.ToBase64String(pngSignature), "image/png")]).ForModel("Describe this");
         Check(modelImageMessage.Attachments is [{ IsImage: true }], "model messages retain image attachments while stripping text attachment metadata");
+
+        // Fixed model instruction text (moved from MainPage into Core).
+        Check(ModelInstructions.CodingAgent.StartsWith("You are the Coding Agent", StringComparison.Ordinal)
+            && ModelInstructions.Chat.StartsWith("You are the Chat assistant", StringComparison.Ordinal)
+            && ModelInstructions.UntrustedAttachments.Contains("untrusted", StringComparison.Ordinal)
+            && ModelInstructions.UntrustedProjectExcerpts.Contains("untrusted project file data", StringComparison.Ordinal),
+            "model instructions keep the workspace prompts and untrusted-data warnings");
     }
 }

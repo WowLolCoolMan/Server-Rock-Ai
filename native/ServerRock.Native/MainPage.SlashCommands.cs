@@ -1,5 +1,5 @@
 // Slash commands typed in the composer (/help, /model, /new, /mode, /web, …).
-// SlashCommandCatalog is the list shown in the suggestion popup; PromptTextChanged filters it as
+// The command list and suggestion filter live in Core (SlashCommandCatalog); PromptTextChanged uses it as
 // you type, and ExecuteSlashCommandAsync runs a command when the prompt is sent.
 // Also holds the small handlers only reached from commands: /help, /status, /research,
 // /reverse-engineer.
@@ -13,37 +13,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
-    private static readonly (string Name, string Description)[] SlashCommandCatalog =
-    [
-        ("/help", "Show keyboard and workspace help"),
-        ("/model", "Open the Model Library to choose, download, or pin models"),
-        ("/new", "Start a fresh conversation in this workspace"),
-        ("/clear", "Clear this conversation and start again"),
-        ("/search", "Search saved chats across both workspaces"),
-        ("/folder", "Organize this conversation in a folder"),
-        ("/rename", "Rename the current saved chat"),
-        ("/delete", "Delete the current saved chat"),
-        ("/project", "Open a local project context"),
-        ("/reverse-engineer", "Analyze the active project and produce a structured architecture report"),
-        ("/skills", "Browse built-in read-only workflow skills"),
-        ("/plugins", "Browse supported plugins, extensions, and skills"),
-        ("/research", "Turn on web research for the next Chat prompt"),
-        ("/tools", "Open the available local tools menu"),
-        ("/status", "Show the current model, workspace, and privacy status"),
-        ("/pet", "Open the smart desktop companion"),
-        ("/newproject", "Create a named project and choose its folders"),
-        ("/folders", "Manage folders for the active project"),
-        ("/settings", "Configure the model connection"),
-        ("/web", "Turn Chat web search on or off: /web on | /web off"),
-        ("/temporary", "Use an unsaved chat: /temporary on | /temporary off"),
-        ("/mode", "Switch screens: /mode chat | /mode code")
-    ];
-
     private void CommandsClick(object sender, RoutedEventArgs e)
     {
         PromptBox.Text = "/";
@@ -63,7 +38,7 @@ public sealed partial class MainPage
         var firstSpace = text.IndexOf(' ');
         var commandName = firstSpace < 0 ? text : text[..firstSpace];
         var argumentPrefix = firstSpace < 0 ? null : text[(firstSpace + 1)..].TrimStart();
-        var matches = GetSlashSuggestions(commandName, argumentPrefix);
+        var matches = SlashCommandCatalog.Suggest(commandName, argumentPrefix);
         if (matches.Length == 0)
         {
             CommandSuggestions.Children.Add(new TextBlock { Text = "No matching commands or options", Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 6, 8, 6) });
@@ -102,24 +77,6 @@ public sealed partial class MainPage
         PromptBox.Focus(FocusState.Programmatic);
         PromptBox.SelectionStart = PromptBox.Text.Length;
         CommandHintPanel.Visibility = Visibility.Collapsed;
-    }
-
-    private static (string Name, string Description)[] GetSlashSuggestions(string commandName, string? argumentPrefix)
-    {
-        if (argumentPrefix is null)
-            return SlashCommandCatalog.Where(item => item.Name.StartsWith(commandName, StringComparison.OrdinalIgnoreCase)).Take(16).ToArray();
-
-        (string Value, string Description)[] options = commandName.ToLowerInvariant() switch
-        {
-            "/mode" => new[] { ("chat", "Switch to the Chat workspace"), ("code", "Switch to Coding Agent") },
-            "/web" => new[] { ("on", "Send a search query to DuckDuckGo for Chat answers"), ("off", "Keep Chat prompts off the web search service") },
-            "/temporary" => new[] { ("on", "Start a chat excluded from Recents and local history"), ("off", "Clear and end the active temporary chat") },
-            _ => []
-        };
-        return options
-            .Where(option => option.Value.StartsWith(argumentPrefix, StringComparison.OrdinalIgnoreCase))
-            .Select(option => ($"{commandName} {option.Value}", option.Description))
-            .ToArray();
     }
 
     private async Task ExecuteSlashCommandAsync(string commandText)

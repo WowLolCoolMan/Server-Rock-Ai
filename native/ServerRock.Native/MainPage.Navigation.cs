@@ -100,11 +100,9 @@ public sealed partial class MainPage
         UpdateWebSearchButton();
         UpdateTemporaryControls();
         RenderRecent();
-        if (_mode == WorkspaceModes.CodingAgent && (_projects.FirstOrDefault(item => item.Id == _activeProjectId)?.FolderPaths.Count ?? 0) == 0)
-        {
-            if (_projects.FirstOrDefault(item => item.Id == _activeProjectId) is null) await NewProjectClickAsync();
-            else await ProjectFoldersClickAsync();
-        }
+        // Owner decision (2026-11-07): switching to Coding Agent no longer pops up the Create
+        // project / folders dialog by itself. The project bar and empty state already offer
+        // "Choose project", so the user opens it when they are ready.
     }
 
     private void UpdateModeControls()

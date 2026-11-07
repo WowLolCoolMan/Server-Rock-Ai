@@ -29,5 +29,15 @@ internal static class CatalogTests
             "built-in skills expose explicit read-only permissions");
         Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
             "skill catalog lookup is case-insensitive and rejects unknown skills");
+
+        // Slash command catalog and suggestion filter (moved from MainPage into Core).
+        Check(SlashCommandCatalog.Commands.Select(item => item.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() == SlashCommandCatalog.Commands.Length
+            && SlashCommandCatalog.Commands.All(item => item.Name.StartsWith('/') && item.Description.Length > 0),
+            "slash command catalog has unique, described commands");
+        Check(SlashCommandCatalog.Suggest("/mo", null).Any(item => item.Name == "/mode") && SlashCommandCatalog.Suggest("/", null).Length <= 16,
+            "slash suggestions match by prefix and show at most 16 commands");
+        Check(SlashCommandCatalog.Suggest("/mode", "c").Select(item => item.Name).SequenceEqual(["/mode chat", "/mode code"])
+            && SlashCommandCatalog.Suggest("/web", "of").Single().Name == "/web off" && SlashCommandCatalog.Suggest("/help", "").Length == 0,
+            "slash argument suggestions complete the full command text");
     }
 }
