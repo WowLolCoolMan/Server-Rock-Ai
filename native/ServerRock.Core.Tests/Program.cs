@@ -3,6 +3,7 @@
 
 await DiagnosticsTests.RunAsync();
 CatalogTests.Run();
+await ProjectHealthTests.RunAsync();
 await ModelLibraryTests.RunAsync();
 await ChatProviderTests.RunAsync();
 await ImageGenerationTests.RunAsync();

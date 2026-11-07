@@ -1,72 +1,10 @@
 <Page x:Class="ServerRock.Native.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:ServerRock.Native"
       Background="{StaticResource CanvasBrush}" Loaded="MainPageLoaded" KeyDown="AppKeyDown">
   <Grid x:Name="AppRoot" ColumnDefinitions="276,*" Background="{StaticResource CanvasBrush}" SizeChanged="AppRootSizeChanged">
-    <Grid x:Name="Sidebar" Grid.Column="0" Background="{StaticResource SidebarBrush}" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
-      <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="4,0,4,18">
-        <Border Width="34" Height="34" CornerRadius="11" Background="{StaticResource BrandMarkBrush}">
-          <TextBlock Text="◈" Foreground="{StaticResource BrandMarkInkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
-        </Border>
-        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-          <TextBlock Text="Server Rock" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
-          <TextBlock Text="Local AI workspace" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" />
-        </StackPanel>
-      </Grid>
-      <!-- Segmented mode switch: the track is a soft line color; the selected half is a raised
-           white segment (UiTheme.ApplySegmentState), the other half is flat muted text. -->
-      <Border Grid.Row="1" Background="{StaticResource LineSoftBrush}" CornerRadius="11" Padding="3" Margin="0,0,0,14">
-        <Grid ColumnDefinitions="*,*">
-          <Button x:Name="ChatModeButton" Content="Chatbot" Click="ChatModeClick" Style="{StaticResource SegmentButtonStyle}" AutomationProperties.Name="Open Chat workspace" AutomationProperties.HelpText="Switch to the general chat workspace." />
-          <Button x:Name="CodingModeButton" Grid.Column="1" Content="Coding Agent" Click="CodingModeClick" Style="{StaticResource SegmentButtonStyle}" AutomationProperties.Name="Open Coding Agent workspace" AutomationProperties.HelpText="Switch to the project-scoped coding workspace." />
-        </Grid>
-      </Border>
-      <!-- Sidebar navigation: every row is an icon (fixed 18 px column, one icon font) plus a label,
-           so labels line up; the old text glyphs had different widths. "New chat" is the one raised
-           row and stretches like the others. Labels that code changes have x:Name (…Label). -->
-      <Button x:Name="NewConversationButton" Grid.Row="2" Style="{StaticResource SidebarActionButtonStyle}" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Margin="0,0,0,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE710;" Style="{StaticResource NavIconStyle}" /><TextBlock x:Name="NewConversationLabel" Text="New chat" /></StackPanel></Button>
-      <Button Grid.Row="3" x:Name="NewProjectButton" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE8F4;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="New project" /></StackPanel></Button>
-      <Button Grid.Row="4" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE721;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Search chats" /></StackPanel></Button>
-      <Button Grid.Row="5" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open the Model Library" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE8F1;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Models" /></StackPanel></Button>
-      <Button Grid.Row="6" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open settings"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE713;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Settings" /></StackPanel></Button>
-      <Button Grid.Row="7" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugins" AutomationProperties.HelpText="See which plugins, extensions, and skills are built in or not available yet."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xEA86;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Plugins" /></StackPanel></Button>
-      <Button Grid.Row="8" x:Name="GitHubButton" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE943;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="GitHub repositories" /></StackPanel></Button>
-      <ScrollViewer Grid.Row="9" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
-        <StackPanel Spacing="5">
-          <StackPanel x:Name="CodingNavigationSection" Spacing="0" Visibility="Collapsed">
-            <TextBlock Text="PROJECTS" Style="{StaticResource SectionLabelStyle}" Margin="8,3,0,4" />
-            <StackPanel x:Name="ProjectList" Spacing="3" />
-          </StackPanel>
-          <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" Style="{StaticResource SectionLabelStyle}" Margin="8,16,0,4" Visibility="Collapsed" />
-          <StackPanel x:Name="ProjectFileList" Spacing="2" />
-          <StackPanel x:Name="ChatNavigationSection" Spacing="0">
-          <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="8,16,4,4">
-            <TextBlock Text="CONVERSATION FOLDERS" Style="{StaticResource SectionLabelStyle}" VerticalAlignment="Center" />
-            <!-- Folder tools: icons with tooltips (the bare ↓ ↑ arrows did not say import/export). -->
-            <Button Grid.Column="1" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="New folder" Click="NewChatFolderClick" AutomationProperties.Name="Create conversation folder" AutomationProperties.HelpText="Create a folder to organize chats and coding conversations."><FontIcon Glyph="&#xE8F4;" FontSize="13" /></Button>
-            <Button x:Name="ImportChatsButton" Grid.Column="2" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="Import chats from a file" Click="ImportChatsClick" AutomationProperties.Name="Import saved chats" AutomationProperties.HelpText="Import a JSON conversation archive into this device."><FontIcon Glyph="&#xE896;" FontSize="13" /></Button>
-            <Button x:Name="ExportChatsButton" Grid.Column="3" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="Export chats to a file" Click="ExportChatsClick" AutomationProperties.Name="Export saved chats" AutomationProperties.HelpText="Save your conversations as a portable JSON archive."><FontIcon Glyph="&#xE898;" FontSize="13" /></Button>
-          </Grid>
-          <StackPanel x:Name="ChatFolderList" Spacing="3" />
-          <TextBlock Text="UNFILED" Style="{StaticResource SectionLabelStyle}" Margin="8,16,0,4" />
-          <StackPanel x:Name="RecentList" Spacing="3" />
-          </StackPanel>
-        </StackPanel>
-      </ScrollViewer>
-      <Border Grid.Row="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="5,10,5,2">
-        <StackPanel Spacing="7">
-          <!-- Connection status lives in the header pill and the composer label; this sidebar
-               copy was a fourth repeat, so it stays collapsed (code still updates it). -->
-          <StackPanel Orientation="Horizontal" Spacing="7" Visibility="Collapsed"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="{StaticResource InkBrush}" /><TextBlock Text="· local history" FontSize="11" Foreground="{StaticResource MutedInkBrush}" /></StackPanel>
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-            <!-- Pet controls: show/hide plus a clearly labelled "choose pet" icon (was a bare ···). -->
-            <Button x:Name="CompanionButton" Click="ToggleCompanionClick" Style="{StaticResource ContextButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window."><StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE76E;" FontSize="14" /><TextBlock x:Name="CompanionButtonLabel" Text="Show pet" /></StackPanel></Button>
-            <Button Grid.Column="1" Click="CustomizeCompanionClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Choose pet" AutomationProperties.Name="Choose pet companion" AutomationProperties.HelpText="Choose which local companion to show."><FontIcon Glyph="&#xE70F;" FontSize="13" /></Button>
-          </Grid>
-        </StackPanel>
-      </Border>
-    </Grid>
-
+    <local:SidebarView x:Name="SidebarView" Grid.Column="0" />
     <Grid x:Name="MainContent" Grid.Column="1" RowDefinitions="58,Auto,*" Background="{StaticResource SurfaceBrush}">
       <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto" Padding="22,0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -115,6 +53,7 @@
       </Border>
 
       <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="{StaticResource SurfaceBrush}">
+        <Border Grid.Row="0" Margin="18,14,18,10" Style="{StaticResource WorkspaceFrameStyle}" />
         <StackPanel x:Name="WelcomePanel" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="14" MaxWidth="660" Margin="28,28,28,20">
           <TextBlock Text="◈" FontSize="29" Foreground="#20a9c0" HorizontalAlignment="Center" />
           <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#26373d" />
@@ -126,7 +65,7 @@
             <Button x:Name="SuggestionThree" Content="Search the web" Click="SuggestionClick" Tag="Search the web for " Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use web search prompt suggestion" />
           </StackPanel>
         </StackPanel>
-        <ScrollViewer Grid.Row="0" x:Name="ConversationScroll" Visibility="Collapsed" Padding="28,20">
+        <ScrollViewer Grid.Row="0" x:Name="ConversationScroll" Visibility="Collapsed" Padding="28,20" Margin="18,14,18,10">
           <StackPanel x:Name="ConversationMessages" Spacing="18" MaxWidth="860" HorizontalAlignment="Center" />
         </ScrollViewer>
 
@@ -166,7 +105,7 @@
             <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="{StaticResource MutedInkBrush}" Margin="8,2,8,3" />
           </StackPanel>
         </Border>
-        <Border x:Name="ComposerBorder" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="17" Padding="14,10">
+        <Border x:Name="ComposerBorder" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1.5" CornerRadius="17" Padding="14,10" Style="{StaticResource WorkspaceFrameStyle}">
           <Grid RowDefinitions="Auto,Auto">
             <!-- The composer card shows focus (accent border, see ComposerFocusChanged); the inner
                  TextBox's own focused/hover background and underline are made transparent so it no

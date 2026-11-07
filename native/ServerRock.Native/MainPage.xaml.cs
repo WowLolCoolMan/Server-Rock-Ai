@@ -33,6 +33,7 @@ public sealed partial class MainPage : Page
     private readonly WorkspaceFileEditor _workspaceEditor = new();
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
     private readonly WorkspaceCommandRunner _commandRunner = new();
+    private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer = new();
     private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
@@ -85,6 +86,27 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
+        SidebarView.ChatModeRequested += ChatModeClick;
+        SidebarView.CodingModeRequested += CodingModeClick;
+        SidebarView.NewChatRequested += NewChatClick;
+        SidebarView.NewProjectRequested += NewProjectClick;
+        SidebarView.SearchRequested += SearchClick;
+        SidebarView.ModelsRequested += ModelClick;
+        SidebarView.SettingsRequested += SettingsClick;
+        SidebarView.PluginsRequested += PluginStoreClick;
+        SidebarView.GitHubRequested += GitHubClick;
+        SidebarView.NewChatFolderRequested += NewChatFolderClick;
+        SidebarView.ImportChatsRequested += ImportChatsClick;
+        SidebarView.ExportChatsRequested += ExportChatsClick;
+        SidebarView.ToggleCompanionRequested += ToggleCompanionClick;
+        SidebarView.CustomizeCompanionRequested += CustomizeCompanionClick;
+        SidebarView.ScheduledTasksRequested += ScheduledTasksClick;
+        SidebarView.ImagesRequested += ImageStudioClick;
+        SidebarView.MoreRequested += MoreClick;
+        SidebarView.UpdateRequested += UpdateClick;
+        if (string.Equals(Environment.GetEnvironmentVariable("SERVER_ROCK_UPDATE_AVAILABLE"), "1", StringComparison.Ordinal))
+            SidebarView.SetUpdateAvailable(true);
         Canvas.SetZIndex(SidebarBackdrop, 1);
         Canvas.SetZIndex(Sidebar, 2);
         ApplyResponsiveNavigation(AppRoot.ActualWidth);

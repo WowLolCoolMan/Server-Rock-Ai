@@ -32,7 +32,7 @@ jobs:
         run: |
           $publish = Join-Path $env:RUNNER_TEMP 'serverrock-ai-native\win-x64'
           New-Item -ItemType Directory -Force (Join-Path $publish 'packaging') | Out-Null
-          Copy-Item packaging/native/install.ps1,packaging/native/uninstall.ps1,packaging/native/rollback.ps1,packaging/native/README.md (Join-Path $publish 'packaging')
+          Copy-Item packaging/native/setup.ps1,packaging/native/setup.sh,packaging/native/install.ps1,packaging/native/uninstall.ps1,packaging/native/rollback.ps1,packaging/native/README.md (Join-Path $publish 'packaging')
           Copy-Item packaging/native/release-manifest.json (Join-Path $publish 'release-manifest.json')
 
       - name: Smoke test the published Windows artifact
@@ -49,7 +49,7 @@ jobs:
           @'
           Server Rock: AI native Windows x64 build
 
-          This is a self-contained portable build. Extract the archive and run ServerRock.Native.exe, or use packaging/install.ps1 for a versioned install with rollback.
+          This is a self-contained portable build. Extract the archive and run packaging/setup.ps1 for a Start Menu install with rollback.
           Keep the user's app data outside this folder when replacing app files. Signing evidence is not included in this diagnostic workflow.
           See NATIVE_RELEASE_ACCEPTANCE.md in this archive for current limitations and verification status.
           '@ | Set-Content -Encoding utf8 (Join-Path $publish 'README-release.txt')
@@ -83,12 +83,13 @@ jobs:
           -c Release -f net10.0-desktop -r linux-x64 -p:SelfContained=true
           -o "$RUNNER_TEMP/serverrock-ai-native/linux-x64"
 
-      - name: Stage packaging documentation
+      - name: Stage matching setup tools
         shell: bash
         run: |
           publish="$RUNNER_TEMP/serverrock-ai-native/linux-x64"
           mkdir -p "$publish/packaging"
-          cp packaging/native/README.md "$publish/packaging/"
+          cp packaging/native/setup.sh packaging/native/setup.ps1 packaging/native/README.md "$publish/packaging/"
+          cp packaging/native/release-manifest.json "$publish/release-manifest.json"
 
       - name: Smoke test the published Linux artifact
         env:
@@ -104,7 +105,7 @@ jobs:
           cat > "$publish/README-release.txt" <<'EOF'
           Server Rock: AI native Linux x64 build
 
-          This is a self-contained portable build. Extract the archive, make ServerRock.Native executable if needed, then run it.
+          This is a self-contained portable build. Extract the archive and run packaging/setup.sh for a desktop-menu install, or launch ServerRock.Native directly.
           The app still requires native desktop libraries from the host OS. See NATIVE_RELEASE_ACCEPTANCE.md in this archive for the current dependency list and limitations.
           Linux package-manager installers remain distro-specific; the archive includes the release packaging contract and data-retention rules.
           EOF

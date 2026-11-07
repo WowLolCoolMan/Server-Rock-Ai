@@ -114,7 +114,8 @@ public sealed partial class MainPage
         UiTheme.ApplySegmentState(CodingModeButton, !chatMode);
         CodingWorkspaceBar.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         CodingNavigationSection.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
-        NewProjectButton.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
+        // NewProjectButton stays hidden: the sidebar moved "New project" under More (main's
+        // SidebarView), and showing the empty placeholder covered the More row.
         GitHubButton.Visibility = Visibility.Visible;
         NewConversationLabel.Text = chatMode ? "New chat" : "New coding task";
         WebSearchButton.Visibility = chatMode ? Visibility.Visible : Visibility.Collapsed;

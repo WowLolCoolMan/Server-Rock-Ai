@@ -125,11 +125,23 @@
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="8,8" />
       </Style>
+      <Style x:Key="SidebarSectionLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="CharacterSpacing" Value="110" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+        <Setter Property="Margin" Value="8,8,0,5" />
+      </Style>
       <Style x:Key="SuggestionButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" /><Setter Property="Foreground" Value="{StaticResource InkBrush}" /><Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /><Setter Property="Padding" Value="12,9" />
       </Style>
       <Style x:Key="ContextButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="10,6" /><Setter Property="FontSize" Value="12" />
+      </Style>
+      <Style x:Key="WorkspaceFrameStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
       </Style>
       <Style x:Key="ComposerButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="8,5" />

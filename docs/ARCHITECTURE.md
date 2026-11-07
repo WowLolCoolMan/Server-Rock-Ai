@@ -72,7 +72,9 @@ method name still finds it.
 
 | File | What it does |
 | --- | --- |
-| `MainPage.xaml` | Page layout: sidebar (modes, projects, recents), header, conversation area, composer, companion overlay. Owned by the UI/design work. |
+| `MainPage.xaml` | Page layout: header, conversation area, composer, companion overlay; the sidebar is `<local:SidebarView>`. Owned by the UI/design work. |
+| `SidebarView.xaml` / `.xaml.cs` | The left sidebar as its own control (from main): mode switch, primary actions, projects, folders, recents, pet controls. Forwards clicks as events and exposes named elements as `*Control` properties. |
+| `MainPage.Sidebar.cs` | Connects MainPage to SidebarView (accessor properties such as `RecentList`, `ChatModeButton`) and the sidebar-only actions: Scheduled tasks, More, Update. |
 | `MainPage.xaml.cs` | Shared page state (fields and Core services), the constructor (loads settings, history, projects, undo history), the status banner, `RunUiActionAsync`, `SaveSettings`. |
 | `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
 | `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
@@ -91,6 +93,8 @@ method name still finds it.
 | `MainPage.ImportExport.cs` | Chat archive export/import. |
 | `MainPage.Projects.cs` | Project list, create/edit/remove, folder manager, `SaveProjects`. |
 | `MainPage.CodingAgent.cs` | Coding Agent project file list, file editor, undo history. |
+| `MainPage.CodeReview.cs` | Code Review Agent intake: pre-fills a review prompt in Coding Agent (from main). |
+| `MainPage.ProjectHealth.cs` | Offline project health scan / architecture map dialog (`/health`, `/map`, More menu; from main). |
 | `MainPage.CodingAgent.Proposals.cs` | Review dialogs for model-proposed file changes and commands. |
 | `MainPage.Terminal.cs` | Project terminal dialog. |
 | `MainPage.ImageStudio.cs` | Image Studio (local ComfyUI). |
@@ -179,6 +183,7 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `Services/GitHubApiClient.cs` | Signed-in account, repository list, repository lookup; parses `owner/name` or GitHub URLs safely. |
 | `Services/GitHubWorkspaceService.cs` | Local `git` clone/status/diff/commit/push for GitHub repos without putting tokens on the command line; blocks committing secret-looking files. |
 | `Services/PluginCatalogService.cs` | Static catalog of supported plugins/integrations (search + categories). |
+| `Services/LocalProjectHealthAnalyzer.cs` | Offline, bounded project health scan: manifests, entry points, risk markers, compact Markdown report. No model or network use. |
 | `Services/SlashCommandCatalog.cs` | The `/` command list and the suggestion filter for the composer popup. |
 | `Services/SkillCatalogService.cs` | Static catalog of built-in read-only "skills" (e.g. reverse-engineer) and their permissions. |
 
@@ -243,7 +248,8 @@ it calls each test area in order and the run stops at the first failure
 | --- | --- |
 | `TestSupport.cs` | `Check`, `RunGit`, `DeleteDirectoryTree`, `ReadElectronFixtureAsync`, and the fakes `StubHandler` (HTTP) and `NonSeekableReadStream`. |
 | `DiagnosticsTests.cs` | Log redaction and export. |
-| `CatalogTests.cs` | Plugin and skill catalogs. |
+| `CatalogTests.cs` | Plugin, skill, and slash-command catalogs. |
+| `ProjectHealthTests.cs` | Offline project health scan bounds and findings. |
 | `ModelLibraryTests.cs` | Local runtime discovery, Hugging Face / ModelScope, GGUF import, Ollama pull/delete. |
 | `ChatProviderTests.cs` | OpenAI-compatible discovery, streaming, request shape, images, limits. |
 | `ImageGenerationTests.cs` | ComfyUI generation and cancellation. |
@@ -267,6 +273,9 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | --- | --- |
 | App startup, single-instance check | `ServerRock.Native/Platforms/Desktop/Program.cs`, `App.xaml.cs` |
 | The page layout | `ServerRock.Native/MainPage.xaml` |
+| The sidebar | `ServerRock.Native/SidebarView.xaml` (layout), `MainPage.Sidebar.cs` (wiring, More menu) |
+| Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `ServerRock.Core/Services/LocalProjectHealthAnalyzer.cs` |
+| Code Review Agent | `ServerRock.Native/MainPage.CodeReview.cs` |
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
 | Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |

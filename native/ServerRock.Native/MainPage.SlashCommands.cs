@@ -101,6 +101,8 @@ public sealed partial class MainPage
                 break;
             case "/project": await ChooseProjectAsync(); break;
             case "/reverse-engineer": case "/reserse-engineer": await ReverseEngineerAsync(); break;
+            case "/health": case "/audit": await ShowLocalHealthAsync(includeMap: false); break;
+            case "/map": await ShowLocalHealthAsync(includeMap: true); break;
             case "/plugins": await PluginStoreClickAsync(); break;
             case "/skills": await SkillsDialogAsync(); break;
             case "/research": EnableResearchMode(); break;

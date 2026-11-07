@@ -10,6 +10,8 @@ The repository includes a C# and XAML app in `native/ServerRock.Native`, built w
 
 The native app saves conversations, selected text/code, PDF text, and image attachments, named projects, and selected folder paths locally. PDF text is extracted on-device and bounded before it is attached. Project files are read as context, then written only after explicit approval; common secret/dependency folders and symbolic links are excluded, edits have guarded undo, and the latest 20 approved changes are available in a local persistent undo history. Web search is opt-in and sends queries to DuckDuckGo and returned excerpts to the configured model endpoint. The Coding Agent has a project-scoped interactive terminal and GitHub commit/push integration. Native limitations and release gates are tracked in `docs/NATIVE_MIGRATION.md` and `docs/NATIVE_RELEASE_ACCEPTANCE.md`.
 
+For a free, token-saving project check, open a project and use `/health` for a bounded offline health scan or `/map` for a compact architecture/dependency map. These commands inspect filenames and small local text samples, never upload the repository, and let you add only the compact report to a prompt when you want model help.
+
 The requested Windows 8 compatibility conflicts with the current .NET 10 target: Microsoft lists Windows 8.1 as unsupported for current .NET releases. Windows 10 support is edition/build-specific in Microsoft's current support table. Treat Windows 8 and general consumer Windows 10 support as unresolved compatibility requirements; do not advertise them based only on a successful compile. Evaluate a legacy runtime/package strategy or explain the support limit before release.
 
 Build the shared desktop target with the .NET 10 SDK:
