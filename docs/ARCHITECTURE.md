@@ -73,14 +73,14 @@ method name still finds it.
 | File | What it does |
 | --- | --- |
 | `MainPage.xaml` | Page layout: sidebar (modes, projects, recents), header, conversation area, composer, companion overlay. Owned by the UI/design work. |
-| `MainPage.xaml.cs` | Shared page state (fields and Core services), the constructor (loads settings, history, projects, undo history), the status banner, `RunUiActionAsync`, `ComposerToolsClick`, `SaveSettings`. |
+| `MainPage.xaml.cs` | Shared page state (fields and Core services), the constructor (loads settings, history, projects, undo history), the status banner, `RunUiActionAsync`, `SaveSettings`. |
 | `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
 | `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
-| `MainPage.Connection.cs` | Model server connection check and Local/Remote status; `IsLocalEndpoint`. |
+| `MainPage.Connection.cs` | Model server connection check and Local/Remote status. |
 | `MainPage.Chat.cs` | Sending a message (`SendClick`), streaming the reply, building the model request, Stop, prompt rewrite, speed measurements, friendly errors. |
 | `MainPage.Messages.cs` | Message bubbles, Markdown replies, copy/edit/retry, web source cards, `RebuildConversationView`. |
 | `MainPage.Branches.cs` | Conversation branches (‹ ›) and forks. |
-| `MainPage.Composer.cs` | Composer toggles: web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
+| `MainPage.Composer.cs` | Composer toggles: Tools row, web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
 | `MainPage.Attachments.cs` | Attach picker, attachment limits, attachment chips, remote-upload consent key. |
 | `MainPage.SlashCommands.cs` | `/` command list, suggestion popup, command handlers, `/help`. |
 | `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
@@ -159,12 +159,13 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 
 | File | What it is |
 | --- | --- |
-| `AppSettings.cs` | Every non-secret preference (endpoint, model, provider, pinned models, per-model speed samples, theme accent, ComfyUI workflow, GitHub App client ID, chat folders, …). |
+| `AppSettings.cs` | Every non-secret preference (endpoint, model, provider, pinned models, per-model speed samples, theme accent, ComfyUI workflow, GitHub App client ID, chat folders, …). Also `LocalModelPerformance.Key/AddSample` (speed averaging). |
 | `ChatSession.cs` | One saved conversation: messages, project snapshot, mode, folder, archive state, branches/forks, import origin. |
 | `ChatMessage.cs` | One message (role, text, attachments, web sources). `ForModel()` strips UI-only data before sending. |
 | `ChatAttachment.cs` | A bounded text file, PDF text, or image attached to a message. |
 | `ChatSource.cs` | One web search result shown under an answer. |
 | `LocalProject.cs` | A named project: instructions + explicitly selected folder paths. |
+| `WorkspaceModes.cs` | The two saved workspace IDs: `Chat` = "ChatBot", `CodingAgent` = "Coding Agent". Never change the values. |
 
 ### `Services/` – talk to the outside world
 
@@ -193,8 +194,12 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `AtomicFileWriter.cs` | Write-to-temp-then-rename used by the stores. |
 | `BoundedFileReader.cs`, `BoundedHttpContent.cs` | Read files/HTTP bodies with hard byte limits before parsing. |
 | `ConversationArchive.cs` | Import/export chat archives (native format and the old Electron export), with validation and duplicate/ID-collision planning. |
+| `LocalEndpoint.cs` | Whether an endpoint is on this device (loopback/localhost only). |
+| `ProviderErrorText.cs` | Plain-language messages for model/image request failures. |
+| `WorkspacePath.cs` | OS-correct path comparison for project folders. |
 | `ExternalLinkPolicy.cs` | Which links in model replies may open (http/https only) and how their real host is shown. |
 | `ConversationTurnEditor.cs` | "Edit an earlier message": replaces that turn and drops what followed. |
+| `ChatAttachmentPrompt.cs` | Appends text/PDF attachments to the user's message as fenced "untrusted" blocks for the model. |
 | `ChatAttachmentPolicy.cs` | Which files may be attached, size limits, image signature checks. |
 | `PdfAttachmentTextExtractor.cs` | On-device PDF text extraction (PdfPig) with page/character bounds. |
 | `WorkspaceFileContext.cs` | Reads a bounded, text-only sample of a project's selected folders for the model (skips secrets, VCS, deps, symlinks). |
@@ -263,7 +268,7 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
 | Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
-| The system prompt / what's sent to the model | `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`, `AppendAttachments`) |
+| The system prompt / what's sent to the model | `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs` |
 | Chat streaming HTTP | `ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
 | How messages are drawn, copy/edit/retry | `ServerRock.Native/MainPage.Messages.cs` |
 | Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `ServerRock.Core/Infrastructure/ExternalLinkPolicy.cs` |
@@ -273,7 +278,10 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | "Local ready / Not connected" status | `ServerRock.Native/MainPage.Connection.cs` |
 | Settings dialog | `ServerRock.Native/MainPage.Settings.cs` (`SettingsDialogAsync`) |
 | Temperature (Advanced) | `ServerRock.Native/MainPage.Settings.cs` (`AdvancedClickAsync`) |
-| Web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
+| Tools row, web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
+| "Is this endpoint local?" | `ServerRock.Core/Infrastructure/LocalEndpoint.cs` |
+| Error text shown when a model request fails | `ServerRock.Core/Infrastructure/ProviderErrorText.cs` |
+| The mode IDs ("ChatBot" / "Coding Agent") | `ServerRock.Core/Models/WorkspaceModes.cs` |
 | Attachments (+ button, chips, limits) | `ServerRock.Native/MainPage.Attachments.cs`, `ServerRock.Core/Infrastructure/ChatAttachmentPolicy.cs` |
 | Slash commands (`/help`, `/mode`, …) | `ServerRock.Native/MainPage.SlashCommands.cs` |
 | Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
