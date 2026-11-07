@@ -58,16 +58,6 @@ public sealed class GitHubWorkspaceService
         return ParseStatus(statusResult.StandardOutput, repository);
     }
 
-    public async Task<string> CommitAllAsync(string repositoryPath, string message, string accessToken, CancellationToken cancellationToken = default)
-    {
-        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
-        if (status.Changes.Count == 0) throw new InvalidOperationException("There are no file changes to commit.");
-        var unsafePaths = FindUnsafeChangePaths(status.Changes);
-        if (unsafePaths.Count > 0)
-            throw new InvalidOperationException($"Refusing to stage secret-like files: {string.Join(", ", unsafePaths.Take(8))}{(unsafePaths.Count > 8 ? "…" : "")}");
-        return await CommitSelectedCoreAsync(repositoryPath, status.Changes, message, accessToken, cancellationToken).ConfigureAwait(false);
-    }
-
     public async Task<string> CommitSelectedAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges, string message,
         string accessToken, CancellationToken cancellationToken = default)
     {

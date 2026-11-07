@@ -223,8 +223,6 @@ public sealed partial class MainPage
         RuntimeStatus.Text = $"{_settings.HostLabel} · {_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")} · {( _settings.RequireLocalModelEndpoints ? "local-only" : "remote endpoints allowed")}";
     }
 
-    private async void HelpClick(object sender, RoutedEventArgs e) => await RunUiActionAsync(HelpClickAsync);
-
     private async Task HelpClickAsync()
     {
         await new ContentDialog
