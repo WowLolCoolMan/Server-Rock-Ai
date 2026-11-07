@@ -43,7 +43,8 @@ Shared build settings:
 
 Windows-only code is wrapped in `#if WINDOWS` (voice input/output in
 `MainPage.Voice.cs`, and window-handle setup for file/folder pickers in
-`MainPage.xaml.cs`). Everything else is shared.
+`MainPage.Attachments.cs`, `MainPage.Companion.cs`, `MainPage.ImportExport.cs`, and
+`MainPage.Projects.cs`). Everything else is shared.
 
 Build and test:
 
@@ -64,23 +65,37 @@ There is one page, `MainPage`. Its layout is in `MainPage.xaml`; nearly all
 dialogs (Settings, Model Library, GitHub, project editor, terminal, review
 dialogs…) are built in C# as `ContentDialog`s rather than in XAML.
 
-`MainPage` is a `partial class` split across several files. Each file covers
-one feature area:
+`MainPage` is a `partial class` split into one file per feature. Every file
+starts with a short comment saying what it does, what it depends on, and what
+calls it. Member names are unchanged from before the split, so a search for a
+method name still finds it.
 
 | File | What it does |
 | --- | --- |
 | `MainPage.xaml` | Page layout: sidebar (modes, projects, recents), header, conversation area, composer, companion overlay. Owned by the UI/design work. |
-| `MainPage.xaml.cs` | The rest of the page (fields, constructor, and – until the split is finished – most features). See the "Where do I find…?" table below for what has already moved out. |
+| `MainPage.xaml.cs` | Shared page state (fields and Core services), the constructor (loads settings, history, projects, undo history), the status banner, `RunUiActionAsync`, `ComposerToolsClick`, `SaveSettings`. |
 | `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
 | `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
 | `MainPage.Connection.cs` | Model server connection check and Local/Remote status; `IsLocalEndpoint`. |
-| `MainPage.Projects.cs` | Project list, create/edit/remove, folder manager, `SaveProjects`. |
-| `MainPage.Recents.cs` | Saved-chat list, chat actions menu, `SaveCurrentSession`. |
+| `MainPage.Chat.cs` | Sending a message (`SendClick`), streaming the reply, building the model request, Stop, prompt rewrite, speed measurements, friendly errors. |
+| `MainPage.Messages.cs` | Message bubbles, Markdown replies, copy/edit/retry, web source cards, `RebuildConversationView`. |
+| `MainPage.Branches.cs` | Conversation branches (‹ ›) and forks. |
+| `MainPage.Composer.cs` | Composer toggles: web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
+| `MainPage.Attachments.cs` | Attach picker, attachment limits, attachment chips, remote-upload consent key. |
+| `MainPage.SlashCommands.cs` | `/` command list, suggestion popup, command handlers, `/help`. |
+| `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
+| `MainPage.ModelLibrary.cs` | Model button and pinned-model hotswap menu, Model Library dialog, model selection, composer model label. |
+| `MainPage.Settings.cs` | Settings dialog, Advanced (temperature) dialog, `ApplySavedCustomization`, dialog focus restore. |
+| `MainPage.Recents.cs` | Saved-chat list, chat actions menu, rename/archive/delete, `SaveCurrentSession`. |
 | `MainPage.ChatFolders.cs` | Sidebar chat folders. |
 | `MainPage.ImportExport.cs` | Chat archive export/import. |
+| `MainPage.Projects.cs` | Project list, create/edit/remove, folder manager, `SaveProjects`. |
+| `MainPage.CodingAgent.cs` | Coding Agent project file list, file editor, undo history. |
+| `MainPage.CodingAgent.Proposals.cs` | Review dialogs for model-proposed file changes and commands. |
+| `MainPage.Terminal.cs` | Project terminal dialog. |
+| `MainPage.ImageStudio.cs` | Image Studio (local ComfyUI). |
+| `MainPage.PluginsAndSkills.cs` | Plugins and Skills dialogs. |
 | `MainPage.Companion.cs` | Desktop pet companion. |
-| `MainPage.Composer.cs` | Composer toggles: web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
-| `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
 | `GitHubWorkspaceUi.cs` | GitHub workspace dialog: client ID, sign-in, repository list, clone into a project. Also a `MainPage` partial despite the name. |
 | `GitHubWorkspaceUi.SignIn.cs` | Device-flow polling and loading/refreshing/saving the GitHub credential. |
 | `GitHubWorkspaceUi.Changes.cs` | Commit/push review dialog for the active project. |
@@ -92,6 +107,7 @@ Other files in the UI project:
 | `App.xaml` / `App.xaml.cs` | Application resources (colors, brushes, styles) and startup. Resources/design tokens are owned by the UI/design work. |
 | `MarkdownUiRenderer.cs` | Turns model replies (Markdown, via Markdig) into native selectable XAML; HTML disabled, links checked before opening. |
 | `CompanionStateStore.cs` | Saves the desktop pet companion's choice, position, and custom sprites to `companion.json`. Lives in the UI project because nothing in Core needs it. |
+| `UiTheme.cs` | Design-token helpers for C#-built UI (colors, brushes, accent, toggle states, dialog sizing). Owned by the UI/design work; see `DESIGN.md`. |
 | `GlobalUsings.cs` | Project-wide `using`s. |
 | `Strings/en/Resources.resw`, `Assets/` | Strings and icons/splash. Pet sprites are linked in from the repo-level `assets/pets/`. |
 
@@ -177,6 +193,7 @@ both `Core/Services/` and `Services/` with the same namespace).
 | `AtomicFileWriter.cs` | Write-to-temp-then-rename used by the stores. |
 | `BoundedFileReader.cs`, `BoundedHttpContent.cs` | Read files/HTTP bodies with hard byte limits before parsing. |
 | `ConversationArchive.cs` | Import/export chat archives (native format and the old Electron export), with validation and duplicate/ID-collision planning. |
+| `ExternalLinkPolicy.cs` | Which links in model replies may open (http/https only) and how their real host is shown. |
 | `ConversationTurnEditor.cs` | "Edit an earlier message": replaces that turn and drops what followed. |
 | `ChatAttachmentPolicy.cs` | Which files may be attached, size limits, image signature checks. |
 | `PdfAttachmentTextExtractor.cs` | On-device PDF text extraction (PdfPig) with page/character bounds. |
@@ -239,30 +256,41 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 
 ## Where do I find…?
 
-This section is kept up to date as `MainPage.xaml.cs` is split into feature
-files.
-
 | I'm looking for… | File |
 | --- | --- |
 | App startup, single-instance check | `ServerRock.Native/Platforms/Desktop/Program.cs`, `App.xaml.cs` |
 | The page layout | `ServerRock.Native/MainPage.xaml` |
-| Colors, brushes, styles | `ServerRock.Native/App.xaml` |
-| Markdown rendering of replies | `ServerRock.Native/MarkdownUiRenderer.cs` |
-| Web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
-| Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
-| GitHub dialog, clone | `ServerRock.Native/GitHubWorkspaceUi.cs` (UI), `ServerRock.Core/Services/GitHub*.cs` |
-| GitHub sign-in polling, saved token | `ServerRock.Native/GitHubWorkspaceUi.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
-| GitHub commit/push review | `ServerRock.Native/GitHubWorkspaceUi.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
+| Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
+| Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
+| What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
+| The system prompt / what's sent to the model | `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`, `AppendAttachments`) |
 | Chat streaming HTTP | `ServerRock.Core/Core/Services/OpenAiCompatibleProvider.cs` |
-| Model discovery and downloads | `ServerRock.Core/Core/Services/ModelLibraryService.cs` |
-| Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
-| Narrow-window drawer, toolbar wrapping | `ServerRock.Native/MainPage.Layout.cs` |
-| Chat / Coding Agent switch, keyboard shortcuts | `ServerRock.Native/MainPage.Navigation.cs` |
+| How messages are drawn, copy/edit/retry | `ServerRock.Native/MainPage.Messages.cs` |
+| Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `ServerRock.Core/Infrastructure/ExternalLinkPolicy.cs` |
+| Branches ‹ › and forks | `ServerRock.Native/MainPage.Branches.cs` |
+| The model picker / hotswap menu | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelClick`, `ModelHotswapClick`) |
+| The Model Library dialog | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelLibraryClickAsync`), `ServerRock.Core/Core/Services/ModelLibraryService.cs` |
 | "Local ready / Not connected" status | `ServerRock.Native/MainPage.Connection.cs` |
-| Projects and their folders | `ServerRock.Native/MainPage.Projects.cs` |
+| Settings dialog | `ServerRock.Native/MainPage.Settings.cs` (`SettingsDialogAsync`) |
+| Temperature (Advanced) | `ServerRock.Native/MainPage.Settings.cs` (`AdvancedClickAsync`) |
+| Web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
+| Attachments (+ button, chips, limits) | `ServerRock.Native/MainPage.Attachments.cs`, `ServerRock.Core/Infrastructure/ChatAttachmentPolicy.cs` |
+| Slash commands (`/help`, `/mode`, …) | `ServerRock.Native/MainPage.SlashCommands.cs` |
+| Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
+| Chat / Coding Agent switch, keyboard shortcuts | `ServerRock.Native/MainPage.Navigation.cs` |
+| Narrow-window drawer, toolbar wrapping | `ServerRock.Native/MainPage.Layout.cs` |
 | Recents list, rename/archive/delete a chat | `ServerRock.Native/MainPage.Recents.cs` |
 | Chat folders | `ServerRock.Native/MainPage.ChatFolders.cs` |
-| Import / export chats | `ServerRock.Native/MainPage.ImportExport.cs` |
-| The pet companion | `ServerRock.Native/MainPage.Companion.cs` |
+| Import / export chats | `ServerRock.Native/MainPage.ImportExport.cs`, `ServerRock.Core/Infrastructure/ConversationArchive.cs` |
+| Projects and their folders | `ServerRock.Native/MainPage.Projects.cs` |
+| Coding Agent file list, file editor, undo history | `ServerRock.Native/MainPage.CodingAgent.cs` |
+| Reviewing a proposed file change or command | `ServerRock.Native/MainPage.CodingAgent.Proposals.cs` |
+| Project terminal | `ServerRock.Native/MainPage.Terminal.cs`, `ServerRock.Core/Infrastructure/WorkspaceTerminalSession.cs` |
+| Image Studio | `ServerRock.Native/MainPage.ImageStudio.cs`, `ServerRock.Core/Services/ComfyImageProvider.cs` |
+| Plugins and Skills dialogs | `ServerRock.Native/MainPage.PluginsAndSkills.cs` |
+| The pet companion | `ServerRock.Native/MainPage.Companion.cs`, `CompanionStateStore.cs` |
+| GitHub dialog, clone | `ServerRock.Native/GitHubWorkspaceUi.cs`, `ServerRock.Core/Services/GitHub*.cs` |
+| GitHub sign-in polling, saved token | `ServerRock.Native/GitHubWorkspaceUi.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
+| GitHub commit/push review | `ServerRock.Native/GitHubWorkspaceUi.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
+| Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
 | Core tests | `ServerRock.Core.Tests/*Tests.cs` (see Tests above) |
-| Everything else (sending/streaming, messages, model picker/library, settings, slash commands, attachments, Coding Agent review, terminal, image studio) | `ServerRock.Native/MainPage.xaml.cs` (not split yet) |
