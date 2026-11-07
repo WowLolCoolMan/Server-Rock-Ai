@@ -117,10 +117,10 @@ public sealed partial class MainPage
     private void UpdateModeControls()
     {
         var chatMode = _mode == "ChatBot";
-        ChatModeButton.Background = new SolidColorBrush(chatMode ? ColorHelper.FromArgb(255, 255, 255, 255) : ColorHelper.FromArgb(255, 230, 238, 236));
-        ChatModeButton.Foreground = new SolidColorBrush(chatMode ? ColorHelper.FromArgb(255, 23, 53, 62) : ColorHelper.FromArgb(255, 69, 99, 107));
-        CodingModeButton.Background = new SolidColorBrush(!chatMode ? ColorHelper.FromArgb(255, 255, 255, 255) : ColorHelper.FromArgb(255, 230, 238, 236));
-        CodingModeButton.Foreground = new SolidColorBrush(!chatMode ? ColorHelper.FromArgb(255, 23, 53, 62) : ColorHelper.FromArgb(255, 69, 99, 107));
+        // Segmented switch: the active workspace is a raised white segment with ink text;
+        // the inactive one is flat muted text (it used to look like the raised one).
+        UiTheme.ApplySegmentState(ChatModeButton, chatMode);
+        UiTheme.ApplySegmentState(CodingModeButton, !chatMode);
         CodingWorkspaceBar.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         CodingNavigationSection.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         NewProjectButton.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;

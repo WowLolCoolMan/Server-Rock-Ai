@@ -475,6 +475,9 @@ public sealed partial class MainPage
             };
             _sessions.Add(session);
             _activeSessionId = session.Id;
+            // The first save names the chat after its first prompt; show that name in the
+            // header right away (it used to stay "New chat" until the chat was reopened).
+            if (_project is null) PageTitle.Text = session.Title;
         }
         if (session.BranchIndex > 0 && session.BranchIndex <= session.Branches.Count)
             session.Branches[session.BranchIndex - 1] = [.. _messages];

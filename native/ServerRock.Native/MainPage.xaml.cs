@@ -199,17 +199,17 @@ public sealed partial class MainPage : Page
 
     private void ApplySavedCustomization()
     {
-        var accent = _settings.AccentColor?.ToLowerInvariant() switch
+        // Accent choices are darkened so white text on them passes WCAG AA (4.5:1); the
+        // default comes from the AccentColor token. UiTheme.ApplyAccent updates every
+        // accent brush in place, so the send button and dialog primary actions follow.
+        var (accent, hover) = _settings.AccentColor?.ToLowerInvariant() switch
         {
-            "violet" => ColorHelper.FromArgb(255, 121, 91, 214),
-            "green" => ColorHelper.FromArgb(255, 39, 155, 104),
-            "orange" => ColorHelper.FromArgb(255, 214, 125, 42),
-            _ => ColorHelper.FromArgb(255, 14, 175, 200)
+            "violet" => (ColorHelper.FromArgb(255, 107, 79, 200), ColorHelper.FromArgb(255, 90, 64, 176)),
+            "green" => (ColorHelper.FromArgb(255, 30, 127, 85), ColorHelper.FromArgb(255, 24, 107, 71)),
+            "orange" => (ColorHelper.FromArgb(255, 168, 90, 18), ColorHelper.FromArgb(255, 143, 76, 15)),
+            _ => (UiTheme.Color("AccentColor"), UiTheme.Color("AccentHoverColor"))
         };
-        if (Application.Current.Resources["AccentBrush"] is SolidColorBrush accentBrush) accentBrush.Color = accent;
-        if (Application.Current.Resources["AccentSoftBrush"] is SolidColorBrush accentSoftBrush) accentSoftBrush.Color = ColorHelper.FromArgb(32, accent.R, accent.G, accent.B);
-        SendButton.Background = new SolidColorBrush(accent);
-        ConnectionSetupButton.Background = new SolidColorBrush(accent);
+        UiTheme.ApplyAccent(accent, hover, hover);
         var compact = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase);
         PromptBox.MinHeight = compact ? 100 : 132;
         PromptBox.MaxHeight = compact ? 240 : 320;
@@ -1591,6 +1591,10 @@ public sealed partial class MainPage : Page
         await RunUiActionAsync(PluginStoreClickAsync);
     }
 
+    // Plugin store, reworked so it is honest: entries that already work are marked "Built in"
+    // and say where to find them; the others read "Not available yet". The old Install/Remove
+    // button only saved a list nothing read, while reporting "Installed Gmail." It also had two
+    // buttons (Done and Close) that did the same thing; it now has one.
     private async Task PluginStoreClickAsync()
     {
         var search = new TextBox { PlaceholderText = "Search plugins, extensions, or skills", MinWidth = 300 };
@@ -1599,68 +1603,49 @@ public sealed partial class MainPage : Page
         foreach (var item in PluginCatalogService.Categories())
             category.Items.Add(item);
         category.SelectedIndex = 0;
-        var list = new ListView { MinHeight = 300, MaxHeight = 460, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(PluginDefinition.Display) };
-        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
-        var install = new Button { Content = "Install", MinWidth = 100, IsEnabled = false };
-        var status = new TextBlock { FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)), TextWrapping = TextWrapping.Wrap };
+        var list = new ListView { MinHeight = 220, MaxHeight = 320, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(PluginDefinition.ListLabel) };
+        AutomationProperties.SetName(list, "Plugins");
+        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true };
+        AutomationProperties.SetLiveSetting(details, AutomationLiveSetting.Polite);
+        var status = new TextBlock { FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextWrapping = TextWrapping.Wrap };
         var dialog = new ContentDialog
         {
-            Title = "Plugin Store",
-            PrimaryButtonText = "Done",
-            CloseButtonText = "Close",
+            Title = "Plugins",
+            CloseButtonText = "Done",
             XamlRoot = XamlRoot,
             Content = new StackPanel
             {
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { Text = "Browse supported plugins, extensions, and skills. Installs are local preferences; each entry states what data it can access.", TextWrapping = TextWrapping.Wrap },
+                    new TextBlock { Text = "Integrations marked Built in already work in this app. The others are not connected in this version; each entry shows what data it would access.", TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") },
                     new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { search, category } },
                     list,
                     details,
-                    install,
                     status
                 }
             }
         };
+        UiTheme.Standardize(dialog);
 
         void Refresh()
         {
-            var term = search.Text.Trim();
-            var selectedCategory = category.SelectedItem as string;
-            var filtered = PluginCatalogService.Search(term, selectedCategory);
+            var filtered = PluginCatalogService.Search(search.Text.Trim(), category.SelectedItem as string);
             list.ItemsSource = filtered;
-            status.Text = $"{filtered.Count} supported plugin(s) · {(_settings.InstalledPlugins ?? []).Count} installed";
-            install.IsEnabled = list.SelectedItem is PluginDefinition;
+            var builtIn = filtered.Count(item => item.IsBuiltIn);
+            status.Text = $"{filtered.Count} listed · {builtIn} built in · {filtered.Count - builtIn} not available yet";
+            details.Text = "Select an entry to see what it does and where to find it.";
         }
 
         search.TextChanged += (_, _) => Refresh();
         category.SelectionChanged += (_, _) => Refresh();
         list.SelectionChanged += (_, _) =>
         {
-            if (list.SelectedItem is not PluginDefinition item) { install.IsEnabled = false; return; }
-            var installed = (_settings.InstalledPlugins ?? []).Contains(item.Id, StringComparer.OrdinalIgnoreCase);
-            details.Text = $"{item.Name}\n\n{item.Description}\n\nAccess: {item.Access}";
-            install.Content = installed ? "Remove" : "Install";
-            install.IsEnabled = true;
-        };
-        install.Click += (_, _) =>
-        {
             if (list.SelectedItem is not PluginDefinition item) return;
-            _settings.InstalledPlugins ??= [];
-            if (_settings.InstalledPlugins.Contains(item.Id, StringComparer.OrdinalIgnoreCase))
-            {
-                _settings.InstalledPlugins.RemoveAll(id => id.Equals(item.Id, StringComparison.OrdinalIgnoreCase));
-                install.Content = "Install";
-                status.Text = $"Removed {item.Name}.";
-            }
-            else
-            {
-                _settings.InstalledPlugins.Add(item.Id);
-                install.Content = "Remove";
-                status.Text = $"Installed {item.Name}.";
-            }
-            SaveSettings();
+            var where = item.IsBuiltIn
+                ? $"Built in. {item.WhereToFind}"
+                : "Not available yet. This integration is not connected in this version of the app.";
+            details.Text = $"{item.Name} · {item.Description}\nAccess: {item.Access}\n{where}";
         };
         Refresh();
         await dialog.ShowAsync();
@@ -2444,10 +2429,12 @@ public sealed partial class MainPage : Page
         var smartRewrite = new CheckBox { Content = "Show a smart prompt rewrite before sending", IsChecked = _settings.SmartPromptRewritingEnabled };
         AutomationProperties.SetName(smartRewrite, "Enable smart prompt rewriting");
         AutomationProperties.SetHelpText(smartRewrite, "Use the selected model to rewrite your draft using the current conversation, then review it before sending.");
-        var accent = new ComboBox { Header = "Accent color", MinWidth = 220 };
+        var accent = new ComboBox { MinWidth = 220 };
+        AutomationProperties.SetName(accent, "Accent color");
         accent.Items.Add("Cyan"); accent.Items.Add("Violet"); accent.Items.Add("Green"); accent.Items.Add("Orange");
         accent.SelectedIndex = _settings.AccentColor.ToLowerInvariant() switch { "violet" => 1, "green" => 2, "orange" => 3, _ => 0 };
-        var density = new ComboBox { Header = "Interface density", MinWidth = 220 };
+        var density = new ComboBox { MinWidth = 220 };
+        AutomationProperties.SetName(density, "Interface density");
         density.Items.Add("Comfortable"); density.Items.Add("Compact");
         density.SelectedIndex = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         var hostLabel = new TextBox { Header = "Host label", Text = _settings.HostLabel, PlaceholderText = "This device" };
@@ -2481,8 +2468,8 @@ public sealed partial class MainPage : Page
         var search = new TextBox { PlaceholderText = "Find a settings section", Margin = new Thickness(0, 8, 0, 12) };
         AutomationProperties.SetName(search, "Search settings sections");
         var navigation = new StackPanel { Spacing = 4 };
-        var pageTitle = new TextBlock { FontSize = 23, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 37, 52, 58)) };
-        var pageDescription = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 108, 125, 130)), Margin = new Thickness(0, 4, 0, 18) };
+        var pageTitle = new TextBlock { FontSize = UiTheme.FontSize("TitleFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush") };
+        var pageDescription = new TextBlock { FontSize = UiTheme.FontSize("SmallFontSize"), TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(0, 4, 0, 18) };
         var pageBody = new StackPanel { Spacing = 12 };
         var pageContent = new StackPanel { Spacing = 0, MaxWidth = 700, HorizontalAlignment = HorizontalAlignment.Left };
         pageContent.Children.Add(pageTitle);
@@ -2491,23 +2478,26 @@ public sealed partial class MainPage : Page
         var noSearchMatches = new TextBlock { Text = "No settings sections match that search.", FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 10, 8, 0) };
         var rootWidth = XamlRoot?.Size.Width ?? 1024;
         var rootHeight = XamlRoot?.Size.Height ?? 768;
+        // The settings grid is sized to the window; the dialog's width cap is lifted to match
+        // (see UiTheme.Standardize below) so section content is no longer clipped at 548 px.
+        var settingsWidth = Math.Min(1040, Math.Max(360, rootWidth - 96));
         var settingsGrid = new Grid
         {
             ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(205) }, new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) } },
-            Width = Math.Min(1040, Math.Max(660, rootWidth - 48)),
-            Height = Math.Min(700, Math.Max(440, rootHeight - 190))
+            Width = settingsWidth,
+            Height = Math.Min(700, Math.Max(360, rootHeight - 190))
         };
         var settingsSidebar = new Border
         {
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 247, 246)),
-            BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 228, 235, 233)),
+            Background = UiTheme.Brush("SurfaceAltBrush"),
+            BorderBrush = UiTheme.Brush("LineSoftBrush"),
             BorderThickness = new Thickness(0, 0, 1, 0),
-            Padding = new Thickness(14, 16, 12, 12),
+            Padding = new Thickness(14, 8, 12, 12),
             Child = new StackPanel { Spacing = 4, Children =
             {
-                new TextBlock { Text = "Settings", FontSize = 19, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 38, 55, 61)), Margin = new Thickness(5, 0, 0, 0) },
+                // No second "Settings" heading here: the dialog title already names it.
                 search,
-                new TextBlock { Text = "PERSONAL", FontSize = 10, CharacterSpacing = 90, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 116, 133, 137)), Margin = new Thickness(6, 7, 0, 3) },
+                new TextBlock { Text = "PERSONAL", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(6, 7, 0, 3) },
                 navigation,
                 noSearchMatches
             } }
@@ -2522,10 +2512,9 @@ public sealed partial class MainPage : Page
             Content = settingsGrid,
             PrimaryButtonText = "Save changes",
             CloseButtonText = "Cancel",
-            XamlRoot = XamlRoot,
-            MaxWidth = 1120,
-            MaxHeight = 820
+            XamlRoot = XamlRoot
         };
+        UiTheme.Standardize(dialog, maxWidth: settingsWidth + 48, maxHeight: 900);
         Func<Task>? actionAfterClose = null;
         var chatRestoreButtons = new List<Button>();
 
@@ -2533,8 +2522,8 @@ public sealed partial class MainPage : Page
         {
             var copy = new StackPanel { Spacing = 3, Children =
             {
-                new TextBlock { Text = title, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 43, 59, 64)), TextWrapping = TextWrapping.Wrap },
-                new TextBlock { Text = description, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), TextWrapping = TextWrapping.Wrap }
+                new TextBlock { Text = title, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush"), TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = description, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextWrapping = TextWrapping.Wrap }
             } };
             var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 14, VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(copy);
@@ -2542,8 +2531,8 @@ public sealed partial class MainPage : Page
             row.Children.Add(action);
             return new Border
             {
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 250, 252, 251)),
-                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 226, 234, 232)),
+                Background = UiTheme.Brush("SurfaceAltBrush"),
+                BorderBrush = UiTheme.Brush("LineSoftBrush"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(9),
                 Padding = new Thickness(12),
@@ -2554,16 +2543,10 @@ public sealed partial class MainPage : Page
         var sectionButtons = new List<(Button Button, string SearchText)>();
         void SelectSection(Button selected, string title, string description, Action build)
         {
+            // The open section gets the accent-soft selected state (it was almost the same
+            // grey as idle rows, so you could not tell which section you were in).
             foreach (var item in sectionButtons)
-            {
-                var active = ReferenceEquals(item.Button, selected);
-                item.Button.Background = new SolidColorBrush(active
-                    ? ColorHelper.FromArgb(255, 230, 238, 237)
-                    : ColorHelper.FromArgb(255, 244, 247, 246));
-                item.Button.Foreground = new SolidColorBrush(active
-                    ? ColorHelper.FromArgb(255, 32, 75, 81)
-                    : ColorHelper.FromArgb(255, 74, 94, 99));
-            }
+                UiTheme.ApplyNavItemState(item.Button, ReferenceEquals(item.Button, selected));
             pageTitle.Text = title;
             pageDescription.Text = description;
             pageBody.Children.Clear();
@@ -2575,9 +2558,10 @@ public sealed partial class MainPage : Page
             var button = new Button
             {
                 Content = label,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 247, 246)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 74, 94, 99)),
+                Background = new SolidColorBrush(Colors.Transparent),
+                Foreground = UiTheme.Brush("MutedInkBrush"),
                 BorderThickness = new Thickness(0),
                 CornerRadius = new CornerRadius(7),
                 Padding = new Thickness(9, 8, 9, 8)
@@ -2590,7 +2574,7 @@ public sealed partial class MainPage : Page
 
         void BuildGeneralPage()
         {
-            pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
             pageBody.Children.Add(openRouter);
@@ -2603,7 +2587,7 @@ public sealed partial class MainPage : Page
 
         void BuildAppearancePage()
         {
-            pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Accent color", "Choose the highlight color used for send and connection actions.", accent));
             pageBody.Children.Add(MakeSettingsCard("Interface density", "Use comfortable spacing for readability or compact spacing for smaller screens.", density));
             var reset = new Button { Content = "Reset appearance" };
@@ -2614,7 +2598,7 @@ public sealed partial class MainPage : Page
 
         void BuildPetsPage()
         {
-            pageBody.Children.Add(new TextBlock { Text = "COMPANION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "COMPANION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             var customize = new Button { Content = "Choose pet" };
             customize.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(CustomizeCompanionAsync); dialog.Hide(); };
             pageBody.Children.Add(MakeSettingsCard("Pet companion", $"Current pet: {CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId)?.Name ?? "Rocky"}. Choose a character and keep it available while you work.", customize));
@@ -2630,7 +2614,7 @@ public sealed partial class MainPage : Page
 
         void BuildHostPage()
         {
-            pageBody.Children.Add(new TextBlock { Text = "HOST CONFIGURATION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "HOST CONFIGURATION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Host identity", "Give this local workspace a recognizable label in status messages and support diagnostics.", hostLabel));
             pageBody.Children.Add(localOnly);
             pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), VerticalAlignment = VerticalAlignment.Center }));
@@ -2667,7 +2651,7 @@ public sealed partial class MainPage : Page
                 chatRestoreButtons.Add(restore);
                 pageBody.Children.Add(MakeSettingsCard(session.Title, $"{session.Mode} · updated {session.UpdatedAt.ToLocalTime():g}", restore));
             }
-            pageBody.Children.Add(new TextBlock { Text = "CHAT ARCHIVE", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 12, 0, 0) });
+            pageBody.Children.Add(new TextBlock { Text = "CHAT ARCHIVE", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 12, 0, 0) });
             var import = new Button { Content = "Import chats" };
             var export = new Button { Content = "Export chats" };
             import.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(ImportChatsAsync); dialog.Hide(); };
@@ -2756,7 +2740,7 @@ public sealed partial class MainPage : Page
             var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
             var inventory = new StackPanel { Spacing = 8 };
             pageBody.Children.Add(MakeSettingsCard("Models & downloads", "Downloaded models from local runtimes appear below. Pin models for the composer, delete Ollama models, and watch live performance samples update as you use them.", manage));
-            pageBody.Children.Add(new TextBlock { Text = "DOWNLOADED MODELS", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 12, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "DOWNLOADED MODELS", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 12, 0, 2) });
             pageBody.Children.Add(refresh);
             pageBody.Children.Add(status);
             pageBody.Children.Add(inventory);
@@ -2786,10 +2770,10 @@ public sealed partial class MainPage : Page
 
         void BuildAdvancedPage()
         {
-            pageBody.Children.Add(new TextBlock { Text = "VISION", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "VISION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(visionFormat);
             pageBody.Children.Add(visionNote);
-            pageBody.Children.Add(new TextBlock { Text = "DIAGNOSTICS", FontSize = 10, CharacterSpacing = 85, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 111, 129, 133)), Margin = new Thickness(0, 14, 0, 2) });
+            pageBody.Children.Add(new TextBlock { Text = "DIAGNOSTICS", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 14, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Support bundle", "Export a diagnostics archive with sensitive values redacted.", exportLogs));
         }
 

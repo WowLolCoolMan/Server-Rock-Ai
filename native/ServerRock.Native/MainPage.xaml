@@ -13,10 +13,12 @@
           <TextBlock Text="Local AI workspace" FontSize="11" Foreground="#718187" />
         </StackPanel>
       </Grid>
-      <Border Grid.Row="1" Background="#e6eeec" CornerRadius="11" Padding="3" Margin="0,0,0,14">
+      <!-- Segmented mode switch: the track is a soft line color; the selected half is a raised
+           white segment (UiTheme.ApplySegmentState), the other half is flat muted text. -->
+      <Border Grid.Row="1" Background="{StaticResource LineSoftBrush}" CornerRadius="11" Padding="3" Margin="0,0,0,14">
         <Grid ColumnDefinitions="*,*">
-          <Button x:Name="ChatModeButton" Content="Chatbot" Click="ChatModeClick" Background="#ffffff" Foreground="#17353e" BorderBrush="#d8e3e0" BorderThickness="1" CornerRadius="8" Padding="8,9" AutomationProperties.Name="Open Chat workspace" AutomationProperties.HelpText="Switch to the general chat workspace." />
-          <Button x:Name="CodingModeButton" Grid.Column="1" Content="Coding Agent" Click="CodingModeClick" Background="Transparent" Foreground="#53676b" CornerRadius="8" Padding="8,9" AutomationProperties.Name="Open Coding Agent workspace" AutomationProperties.HelpText="Switch to the project-scoped coding workspace." />
+          <Button x:Name="ChatModeButton" Content="Chatbot" Click="ChatModeClick" Style="{StaticResource SegmentButtonStyle}" AutomationProperties.Name="Open Chat workspace" AutomationProperties.HelpText="Switch to the general chat workspace." />
+          <Button x:Name="CodingModeButton" Grid.Column="1" Content="Coding Agent" Click="CodingModeClick" Style="{StaticResource SegmentButtonStyle}" AutomationProperties.Name="Open Coding Agent workspace" AutomationProperties.HelpText="Switch to the project-scoped coding workspace." />
         </Grid>
       </Border>
       <Button x:Name="NewConversationButton" Grid.Row="2" Content="＋　New chat" HorizontalContentAlignment="Left" Background="#ffffff" Foreground="#253f47" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="9" Padding="11,10" Margin="0,0,0,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation" />
@@ -159,8 +161,8 @@
               <Button Grid.Column="2" x:Name="VoiceButton" Content="♩" Click="VoiceInputClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model." />
               <Button Grid.Column="3" x:Name="VoiceOutputButton" Content="🔊" Click="VoiceOutputClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer." />
               <TextBlock Grid.Column="4" x:Name="ProcessingLabel" Text="● Local model" Foreground="#53818a" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0" />
-              <Button x:Name="StopButton" Grid.Column="5" Content="■" Click="StopClick" Background="#a64d43" Foreground="#ffffff" CornerRadius="10" Width="34" Height="34" Visibility="Collapsed" AutomationProperties.Name="Stop generating response" />
-              <Button x:Name="SendButton" Grid.Column="5" Content="↑" Click="SendClick" Background="#0eafc8" Foreground="#ffffff" CornerRadius="10" Width="34" Height="34" AutomationProperties.Name="Send message" />
+              <Button x:Name="StopButton" Grid.Column="5" Content="■" Click="StopClick" Background="{StaticResource DangerBrush}" Foreground="White" CornerRadius="10" Width="34" Height="34" Visibility="Collapsed" AutomationProperties.Name="Stop generating response" />
+              <Button x:Name="SendButton" Grid.Column="5" Content="↑" Click="SendClick" Style="{StaticResource PrimaryActionButtonStyle}" Padding="0" Width="34" Height="34" AutomationProperties.Name="Send message" />
             </Grid>
           </Grid>
         </Border>
