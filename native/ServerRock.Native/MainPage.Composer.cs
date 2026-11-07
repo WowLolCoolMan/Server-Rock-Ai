@@ -17,7 +17,7 @@ public sealed partial class MainPage
 {
     private void WebSearchClick(object sender, RoutedEventArgs e)
     {
-        if (_mode != "ChatBot") return;
+        if (_mode != WorkspaceModes.Chat) return;
         _settings.WebSearchEnabled = !_settings.WebSearchEnabled;
         SaveSettings();
         UpdateWebSearchButton();
@@ -81,7 +81,7 @@ public sealed partial class MainPage
             ConversationMessages.Children.Clear();
             WelcomePanel.Visibility = Visibility.Visible;
             ConversationScroll.Visibility = Visibility.Collapsed;
-            PageTitle.Text = _project ?? "New chat";
+            PageTitle.Text = _activeProjectName ?? "New chat";
             _isTemporaryChat = true;
             RuntimeStatus.Text = "Temporary chat started · messages will not be saved.";
         }
@@ -97,7 +97,7 @@ public sealed partial class MainPage
             ConversationMessages.Children.Clear();
             WelcomePanel.Visibility = Visibility.Visible;
             ConversationScroll.Visibility = Visibility.Collapsed;
-            PageTitle.Text = _project ?? "New chat";
+            PageTitle.Text = _activeProjectName ?? "New chat";
             _isTemporaryChat = false;
             RuntimeStatus.Text = "Temporary chat cleared and ended.";
         }
@@ -176,13 +176,13 @@ public sealed partial class MainPage
     private void UpdateProjectFilesControls()
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
-        var available = _mode == "ChatBot" && project is not null && project.FolderPaths.Count > 0;
+        var available = _mode == WorkspaceModes.Chat && project is not null && project.FolderPaths.Count > 0;
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _compactComposerToolbar
             ? _includeProjectFilesInChat ? "Files on" : "Files off"
             : _includeProjectFilesInChat ? "Project files on" : "Project files off";
         UiTheme.ApplyToggleState(ProjectFilesButton, _includeProjectFilesInChat);
-        ProjectBadgeText.Text = _mode == "Coding Agent"
+        ProjectBadgeText.Text = _mode == WorkspaceModes.CodingAgent
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
         ProcessingLabel.Text = DescribeDataRoute();
@@ -219,10 +219,10 @@ public sealed partial class MainPage
             : _settings.WebSearchEnabled ? "Web search on" : "Web search off";
         UiTheme.ApplyToggleState(WebSearchButton, _settings.WebSearchEnabled);
         var local = LocalEndpoint.IsLocal(_settings.Endpoint);
-        var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
+        var projectFiles = _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
         if (_isTemporaryChat)
         {
-            PrivacyFootnote.Text = _mode == "Coding Agent"
+            PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
                 ? local ? "Temporary chat is not saved. Selected project files still go to this on-device model."
                     : "Temporary chat is not saved. Selected project files still go to the configured remote model."
                 : _settings.WebSearchEnabled
@@ -231,7 +231,7 @@ public sealed partial class MainPage
                         : $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the configured remote model.";
             return;
         }
-        PrivacyFootnote.Text = _mode == "Coding Agent"
+        PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
             ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
             : _settings.WebSearchEnabled
                 ? $"Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model server."

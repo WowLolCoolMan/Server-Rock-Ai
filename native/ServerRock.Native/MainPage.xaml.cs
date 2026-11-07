@@ -44,8 +44,8 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _persistedUndoIds = new(StringComparer.Ordinal);
     private AppSettings _settings;
     private CompanionState _companionState = new();
-    private string _mode = "ChatBot";
-    private string? _project;
+    private string _mode = WorkspaceModes.Chat;
+    private string? _activeProjectName;
     private string? _activeProjectId;
     private string? _activeSessionId;
     private string? _activeChatFolder;

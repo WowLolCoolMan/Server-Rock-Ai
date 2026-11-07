@@ -521,7 +521,7 @@ public sealed partial class MainPage
     {
         var local = LocalEndpoint.IsLocal(_settings.Endpoint);
         if (!_providerConnected) return "● Model not connected";
-        if (_mode == "Coding Agent") return local ? "● Project context stays on device" : "● Project files go to remote model";
+        if (_mode == WorkspaceModes.CodingAgent) return local ? "● Project context stays on device" : "● Project files go to remote model";
         if (_includeProjectFilesInChat) return local ? "● Prompt + selected project files stay on device" : "● Project excerpts go to remote model";
         return local ? "● On-device model" : "● Remote model server";
     }

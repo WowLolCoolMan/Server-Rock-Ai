@@ -40,8 +40,8 @@ public sealed partial class MainPage
         ConversationMessages.Children.Clear();
         WelcomePanel.Visibility = Visibility.Visible;
         ConversationScroll.Visibility = Visibility.Collapsed;
-        PageTitle.Text = _project ?? "New chat";
-        ProjectBadge.Visibility = _project is null ? Visibility.Collapsed : Visibility.Visible;
+        PageTitle.Text = _activeProjectName ?? "New chat";
+        ProjectBadge.Visibility = _activeProjectName is null ? Visibility.Collapsed : Visibility.Visible;
         UpdateWorkspaceBar();
         UpdateProjectFilesControls();
         UpdateWebSearchButton();
@@ -120,7 +120,7 @@ public sealed partial class MainPage
             RecentList.Children.Add(new TextBlock
             {
                 Text = !_historyAvailable ? "Conversation history is unavailable." : visibleSessions.Length == 0
-                    ? _mode == "Coding Agent" ? "Coding tasks will appear here." : "Your chats will appear here."
+                    ? _mode == WorkspaceModes.CodingAgent ? "Coding tasks will appear here." : "Your chats will appear here."
                     : "All chats are in folders.",
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)),
@@ -213,7 +213,7 @@ public sealed partial class MainPage
         _mode = session.Mode;
         UpdateModeControls();
         UpdateTemporaryControls();
-        PromptBox.PlaceholderText = _mode == "Coding Agent" ? "Describe what you want to change in this project…" : "Ask anything… use / for commands";
+        PromptBox.PlaceholderText = _mode == WorkspaceModes.CodingAgent ? "Describe what you want to change in this project…" : "Ask anything… use / for commands";
         _activeSessionId = session.Id;
         _activeChatFolder = session.FolderName;
         _editingMessageIndex = null;
@@ -223,12 +223,12 @@ public sealed partial class MainPage
         var project = _projects.FirstOrDefault(item => item.Id == session.ProjectId) ??
             _projects.FirstOrDefault(item => item.Name.Equals(session.ProjectName, StringComparison.CurrentCultureIgnoreCase));
         _activeProjectId = project?.Id ?? session.ProjectId;
-        _project = project?.Name ?? session.ProjectName;
-        _includeProjectFilesInChat = _mode == "ChatBot" && session.IncludeProjectFilesInChat;
+        _activeProjectName = project?.Name ?? session.ProjectName;
+        _includeProjectFilesInChat = _mode == WorkspaceModes.Chat && session.IncludeProjectFilesInChat;
         _settings.ProjectInstructions = session.ProjectInstructions;
         SaveSettings();
-        PageTitle.Text = _project ?? session.Title;
-        ProjectBadge.Visibility = _project is null ? Visibility.Collapsed : Visibility.Visible;
+        PageTitle.Text = _activeProjectName ?? session.Title;
+        ProjectBadge.Visibility = _activeProjectName is null ? Visibility.Collapsed : Visibility.Visible;
         UpdateWorkspaceBar();
         UpdateProjectFilesControls();
         UpdateWebSearchButton();
@@ -238,7 +238,7 @@ public sealed partial class MainPage
         for (var index = 0; index < _messages.Count; index++)
         {
             var message = _messages[index];
-            AddMessage(message.Role == "user" ? "You" : _mode == "Coding Agent" ? "Coding Agent" : "Server Rock", message.Content, message.Role == "user", message.Attachments, message.Sources, index, showActions: true);
+            AddMessage(message.Role == "user" ? "You" : _mode == WorkspaceModes.CodingAgent ? "Coding Agent" : "Server Rock", message.Content, message.Role == "user", message.Attachments, message.Sources, index, showActions: true);
         }
         RenderProjects();
         RenderRecent();
@@ -387,7 +387,7 @@ public sealed partial class MainPage
             RenderRecent();
             return;
         }
-        if (_activeSessionId == sessionId && _project is null) PageTitle.Text = updatedTitle;
+        if (_activeSessionId == sessionId && _activeProjectName is null) PageTitle.Text = updatedTitle;
         RuntimeStatus.Text = "Chat renamed.";
     }
 
@@ -429,7 +429,7 @@ public sealed partial class MainPage
             ConversationMessages.Children.Clear();
             WelcomePanel.Visibility = Visibility.Visible;
             ConversationScroll.Visibility = Visibility.Collapsed;
-            PageTitle.Text = _project ?? "New chat";
+            PageTitle.Text = _activeProjectName ?? "New chat";
         }
         RuntimeStatus.Text = "Chat deleted from this device.";
     }
@@ -467,7 +467,7 @@ public sealed partial class MainPage
                 Id = Guid.NewGuid().ToString("N"),
                 Title = firstPrompt.Length > 48 ? firstPrompt[..48].TrimEnd() + "…" : firstPrompt,
                 ProjectId = _activeProjectId,
-                ProjectName = _project,
+                ProjectName = _activeProjectName,
                 ProjectInstructions = _settings.ProjectInstructions,
                 Mode = _mode,
                 IncludeProjectFilesInChat = _includeProjectFilesInChat,
@@ -477,14 +477,14 @@ public sealed partial class MainPage
             _activeSessionId = session.Id;
             // The first save names the chat after its first prompt; show that name in the
             // header right away (it used to stay "New chat" until the chat was reopened).
-            if (_project is null) PageTitle.Text = session.Title;
+            if (_activeProjectName is null) PageTitle.Text = session.Title;
         }
         if (session.BranchIndex > 0 && session.BranchIndex <= session.Branches.Count)
             session.Branches[session.BranchIndex - 1] = [.. _messages];
         else
             session.Messages = [.. _messages];
         session.ProjectId = _activeProjectId;
-        session.ProjectName = _project;
+        session.ProjectName = _activeProjectName;
         session.ProjectInstructions = _settings.ProjectInstructions;
         session.Mode = _mode;
         session.IncludeProjectFilesInChat = _includeProjectFilesInChat;

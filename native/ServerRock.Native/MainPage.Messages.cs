@@ -174,7 +174,7 @@ public sealed partial class MainPage
         for (var index = 0; index < _messages.Count; index++)
         {
             var message = _messages[index];
-            AddMessage(message.Role == "user" ? "You" : _mode == "Coding Agent" ? "Coding Agent" : "Server Rock", message.Content, message.Role == "user", message.Attachments, message.Sources, index, showActions: true);
+            AddMessage(message.Role == "user" ? "You" : _mode == WorkspaceModes.CodingAgent ? "Coding Agent" : "Server Rock", message.Content, message.Role == "user", message.Attachments, message.Sources, index, showActions: true);
         }
         WelcomePanel.Visibility = _messages.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ConversationScroll.Visibility = _messages.Count == 0 ? Visibility.Collapsed : Visibility.Visible;

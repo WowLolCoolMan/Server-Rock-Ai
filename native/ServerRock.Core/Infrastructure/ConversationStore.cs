@@ -39,7 +39,7 @@ public sealed class ConversationStore
                 session.Messages ??= [];
                 session.BaseMessages ??= [];
                 session.Branches ??= [];
-                session.Mode ??= "ChatBot";
+                session.Mode ??= WorkspaceModes.Chat;
             }
             return sessions;
         }

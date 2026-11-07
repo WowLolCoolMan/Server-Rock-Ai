@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
 
@@ -163,12 +164,12 @@ public sealed partial class MainPage
             }
             case "/mode":
                 var mode = commandText.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).Skip(1).FirstOrDefault();
-                if (mode?.Equals("code", StringComparison.OrdinalIgnoreCase) == true || mode?.Equals("coding", StringComparison.OrdinalIgnoreCase) == true) await SwitchModeAsync("Coding Agent");
-                else if (mode?.Equals("chat", StringComparison.OrdinalIgnoreCase) == true) await SwitchModeAsync("ChatBot");
+                if (mode?.Equals("code", StringComparison.OrdinalIgnoreCase) == true || mode?.Equals("coding", StringComparison.OrdinalIgnoreCase) == true) await SwitchModeAsync(WorkspaceModes.CodingAgent);
+                else if (mode?.Equals("chat", StringComparison.OrdinalIgnoreCase) == true) await SwitchModeAsync(WorkspaceModes.Chat);
                 else RuntimeStatus.Text = "Use /mode chat or /mode code.";
                 break;
             case "/web":
-                if (_mode != "ChatBot") RuntimeStatus.Text = "Web search is available in the Chat workspace.";
+                if (_mode != WorkspaceModes.Chat) RuntimeStatus.Text = "Web search is available in the Chat workspace.";
                 else
                 {
                     var argument = commandText.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).Skip(1).FirstOrDefault();
@@ -197,7 +198,7 @@ public sealed partial class MainPage
             project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
             if (project is null || project.FolderPaths.Count == 0) return;
         }
-        if (_mode != "Coding Agent") await SwitchModeAsync("Coding Agent");
+        if (_mode != WorkspaceModes.CodingAgent) await SwitchModeAsync(WorkspaceModes.CodingAgent);
         PromptBox.Text = "Reverse-engineer this project as a senior software archaeologist. Inspect the selected project files and produce a clear report with: (1) system purpose and user workflows, (2) architecture and module boundaries, (3) runtime/data flow, (4) persistence and external integrations, (5) entry points and important commands, (6) testing and release posture, (7) risks, inconsistencies, and likely failure points, and (8) a prioritized improvement plan. Cite relevant file paths and distinguish observed facts from reasonable inferences. Do not modify files or run destructive commands.";
         PromptBox.Focus(FocusState.Programmatic);
         SendClick(this, new RoutedEventArgs());
@@ -205,7 +206,7 @@ public sealed partial class MainPage
 
     private void EnableResearchMode()
     {
-        if (_mode != "ChatBot")
+        if (_mode != WorkspaceModes.Chat)
         {
             RuntimeStatus.Text = "Research mode is available in ChatBot. Switch to ChatBot before researching.";
             return;
@@ -227,8 +228,8 @@ public sealed partial class MainPage
     {
         await new ContentDialog
         {
-            Title = _mode == "Coding Agent" ? "Using Coding Agent" : "Using Chat",
-            Content = _mode == "Coding Agent"
+            Title = _mode == WorkspaceModes.CodingAgent ? "Using Coding Agent" : "Using Chat",
+            Content = _mode == WorkspaceModes.CodingAgent
                 ? "Select a project and folders from the left. The agent reads a bounded set of text files. Ask for a change, inspect the proposed current and replacement contents, then approve or cancel each file. Approved file changes are saved only after review and can be undone from Undo history if no newer edit has changed them. Proposed commands require your review before they run. Use Terminal for an interactive shell in the selected project."
                 : "Enter a prompt and press Enter to send; Shift+Enter adds a line. Type / to browse commands, use Up and Down to choose, and press Enter to complete one. Commands such as /web and /mode show their available options as you type. Web search is off by default. Temporary chats stay in memory and are not saved to Recents or local history.",
             CloseButtonText = "Close",

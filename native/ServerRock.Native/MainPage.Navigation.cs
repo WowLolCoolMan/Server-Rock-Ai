@@ -1,4 +1,4 @@
-// Switching between the two workspaces (Chat = "ChatBot", Coding Agent = "Coding Agent")
+// Switching between the two workspaces (WorkspaceModes.Chat = "ChatBot", WorkspaceModes.CodingAgent)
 // and the page-wide keyboard shortcuts (Ctrl+L focus composer, Ctrl+Shift+E / Esc for the
 // compact sidebar, Esc to close slash suggestions).
 // SwitchModeAsync saves the current chat, clears the conversation, and updates every
@@ -13,13 +13,14 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
-    private async void ChatModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("ChatBot");
-    private async void CodingModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("Coding Agent");
+    private async void ChatModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync(WorkspaceModes.Chat);
+    private async void CodingModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync(WorkspaceModes.CodingAgent);
 
     private async Task SwitchModeFromSidebarAsync(string mode)
     {
@@ -90,8 +91,8 @@ public sealed partial class MainPage
         ConversationMessages.Children.Clear();
         WelcomePanel.Visibility = Visibility.Visible;
         ConversationScroll.Visibility = Visibility.Collapsed;
-        PageTitle.Text = selected == "Coding Agent" ? "Coding Agent" : _project ?? "New chat";
-        PromptBox.PlaceholderText = selected == "Coding Agent"
+        PageTitle.Text = selected == WorkspaceModes.CodingAgent ? "Coding Agent" : _activeProjectName ?? "New chat";
+        PromptBox.PlaceholderText = selected == WorkspaceModes.CodingAgent
             ? "Describe what you want to change in this project…"
             : "Ask anything… use / for commands";
         UpdateModeControls();
@@ -99,7 +100,7 @@ public sealed partial class MainPage
         UpdateWebSearchButton();
         UpdateTemporaryControls();
         RenderRecent();
-        if (_mode == "Coding Agent" && (_projects.FirstOrDefault(item => item.Id == _activeProjectId)?.FolderPaths.Count ?? 0) == 0)
+        if (_mode == WorkspaceModes.CodingAgent && (_projects.FirstOrDefault(item => item.Id == _activeProjectId)?.FolderPaths.Count ?? 0) == 0)
         {
             if (_projects.FirstOrDefault(item => item.Id == _activeProjectId) is null) await NewProjectClickAsync();
             else await ProjectFoldersClickAsync();
@@ -108,7 +109,7 @@ public sealed partial class MainPage
 
     private void UpdateModeControls()
     {
-        var chatMode = _mode == "ChatBot";
+        var chatMode = _mode == WorkspaceModes.Chat;
         // Segmented switch: the active workspace is a raised white segment with ink text;
         // the inactive one is flat muted text (it used to look like the raised one).
         UiTheme.ApplySegmentState(ChatModeButton, chatMode);

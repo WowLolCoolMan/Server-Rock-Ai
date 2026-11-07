@@ -14,7 +14,7 @@ public sealed class ChatSession
     public string? ProjectId { get; set; }
     public string? ProjectName { get; set; }
     public string? ProjectInstructions { get; set; }
-    public string Mode { get; set; } = "ChatBot";
+    public string Mode { get; set; } = WorkspaceModes.Chat;
     public bool IncludeProjectFilesInChat { get; set; }
     public string? FolderName { get; set; }
     /// <summary>Whether this chat was intentionally archived in the source workspace.</summary>

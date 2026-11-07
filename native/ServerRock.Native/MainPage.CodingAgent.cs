@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
@@ -107,7 +108,7 @@ public sealed partial class MainPage
         UpdateWorkspaceBar();
         ProjectFileList.Children.Clear();
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
-        if (_mode != "Coding Agent" || project is null || project.FolderPaths.Count == 0)
+        if (_mode != WorkspaceModes.CodingAgent || project is null || project.FolderPaths.Count == 0)
         {
             CodeFilesHeader.Visibility = Visibility.Collapsed;
             return;

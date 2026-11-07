@@ -3,7 +3,7 @@
 // create/edit/remove dialogs, selecting the active project, the folder manager, and saving
 // projects.json.
 // Depends on: ProjectStore and LocalProject (ServerRock.Core), the folder picker, and page state
-// in MainPage.xaml.cs (_projects, _activeProjectId, _project, _projectsAvailable).
+// in MainPage.xaml.cs (_projects, _activeProjectId, _activeProjectName, _projectsAvailable).
 // Called by: project buttons in MainPage.xaml and the sidebar list built by RenderProjects, the
 // /project, /newproject, and /folders slash commands, SwitchModeAsync (Coding Agent without
 // folders), and GitHub clone (adds the cloned repo as a project).
@@ -81,7 +81,7 @@ public sealed partial class MainPage
             return;
         }
         _activeProjectId = project.Id;
-        _project = project.Name;
+        _activeProjectName = project.Name;
         _activeChatFolder = null;
         _includeProjectFilesInChat = false;
         _settings.ProjectInstructions = project.Instructions;
@@ -180,7 +180,7 @@ public sealed partial class MainPage
                 SaveCurrentSession();
                 ClearPendingAttachments();
                 _activeProjectId = project.Id;
-                _project = project.Name;
+                _activeProjectName = project.Name;
                 _activeChatFolder = null;
                 _includeProjectFilesInChat = false;
                 _settings.ProjectInstructions = project.Instructions;
@@ -267,7 +267,7 @@ public sealed partial class MainPage
         }
         if (_activeProjectId == projectId)
         {
-            _project = project.Name;
+            _activeProjectName = project.Name;
             _settings.ProjectInstructions = project.Instructions;
             SaveSettings();
             PageTitle.Text = project.Name;
@@ -312,7 +312,7 @@ public sealed partial class MainPage
         {
             ClearPendingAttachments();
             _activeProjectId = null;
-            _project = null;
+            _activeProjectName = null;
             _activeChatFolder = null;
             _includeProjectFilesInChat = false;
             _settings.ProjectInstructions = null;
@@ -350,7 +350,7 @@ public sealed partial class MainPage
         SaveCurrentSession();
         ClearPendingAttachments();
         _activeProjectId = project.Id;
-        _project = project.Name;
+        _activeProjectName = project.Name;
         _activeChatFolder = null;
         _includeProjectFilesInChat = false;
         _settings.ProjectInstructions = project.Instructions;
