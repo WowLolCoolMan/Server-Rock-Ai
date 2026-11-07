@@ -152,10 +152,10 @@ cancel it.
 ## ServerRock.Core (no UI)
 
 Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
-`ServerRock.Core.Infrastructure`. The folder layout is slightly uneven (there is
-both `Core/Services/` and `Services/` with the same namespace).
+`ServerRock.Core.Infrastructure`, one folder each (`Models/`, `Services/`,
+`Infrastructure/`).
 
-### `Core/Models/` – plain data
+### `Models/` – plain data
 
 | File | What it is |
 | --- | --- |
@@ -166,13 +166,13 @@ both `Core/Services/` and `Services/` with the same namespace).
 | `ChatSource.cs` | One web search result shown under an answer. |
 | `LocalProject.cs` | A named project: instructions + explicitly selected folder paths. |
 
-### `Core/Services/` and `Services/` – talk to the outside world
+### `Services/` – talk to the outside world
 
 | File | What it does |
 | --- | --- |
-| `Core/Services/OpenAiCompatibleProvider.cs` | Streams `/chat/completions` (SSE) and lists `/models` for any OpenAI-compatible server (Ollama, LM Studio, OpenRouter, …). Handles image content formats. |
-| `Core/Services/ModelLibraryService.cs` | Finds installed models across known local runtimes, searches Hugging Face and ModelScope, downloads/imports GGUF files into Ollama/LM Studio, pulls/deletes Ollama models. |
-| `Core/Services/WebSearchProvider.cs` | Opt-in DuckDuckGo HTML search; returns up to a handful of title/URL/snippet results. |
+| `Services/OpenAiCompatibleProvider.cs` | Streams `/chat/completions` (SSE) and lists `/models` for any OpenAI-compatible server (Ollama, LM Studio, OpenRouter, …). Handles image content formats. |
+| `Services/ModelLibraryService.cs` | Finds installed models across known local runtimes, searches Hugging Face and ModelScope, downloads/imports GGUF files into Ollama/LM Studio, pulls/deletes Ollama models. |
+| `Services/WebSearchProvider.cs` | Opt-in DuckDuckGo HTML search; returns up to a handful of title/URL/snippet results. |
 | `Services/ComfyImageProvider.cs` | Queues a user-supplied ComfyUI workflow on a **loopback-only** endpoint and polls for images. |
 | `Services/GitHubDeviceFlow.cs` | GitHub App OAuth device flow (begin, poll with back-off, refresh). Also `GitHubHttpClientFactory` (no redirects, no cookies). |
 | `Services/GitHubApiClient.cs` | Signed-in account, repository list, repository lookup; parses `owner/name` or GitHub URLs safely. |
@@ -264,12 +264,12 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
 | The system prompt / what's sent to the model | `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`, `AppendAttachments`) |
-| Chat streaming HTTP | `ServerRock.Core/Core/Services/OpenAiCompatibleProvider.cs` |
+| Chat streaming HTTP | `ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
 | How messages are drawn, copy/edit/retry | `ServerRock.Native/MainPage.Messages.cs` |
 | Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `ServerRock.Core/Infrastructure/ExternalLinkPolicy.cs` |
 | Branches ‹ › and forks | `ServerRock.Native/MainPage.Branches.cs` |
 | The model picker / hotswap menu | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelClick`, `ModelHotswapClick`) |
-| The Model Library dialog | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelLibraryClickAsync`), `ServerRock.Core/Core/Services/ModelLibraryService.cs` |
+| The Model Library dialog | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelLibraryClickAsync`), `ServerRock.Core/Services/ModelLibraryService.cs` |
 | "Local ready / Not connected" status | `ServerRock.Native/MainPage.Connection.cs` |
 | Settings dialog | `ServerRock.Native/MainPage.Settings.cs` (`SettingsDialogAsync`) |
 | Temperature (Advanced) | `ServerRock.Native/MainPage.Settings.cs` (`AdvancedClickAsync`) |
