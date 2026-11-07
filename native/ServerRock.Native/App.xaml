@@ -32,6 +32,9 @@
       <Color x:Key="AccentPressedColor">#07687A</Color>
       <Color x:Key="AccentInkColor">#0B6F80</Color>
       <Color x:Key="AccentSoftColor">#E5F5F6</Color>
+      <!-- Brand mark (sidebar logo tile) -->
+      <Color x:Key="BrandMarkColor">#183844</Color>
+      <Color x:Key="BrandMarkInkColor">#DFF7FA</Color>
       <!-- Status -->
       <Color x:Key="SuccessColor">#3E9B6A</Color>
       <Color x:Key="WarningColor">#D69A4B</Color>
@@ -54,6 +57,8 @@
       <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
       <SolidColorBrush x:Key="AccentInkBrush" Color="{StaticResource AccentInkColor}" />
       <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}" />
+      <SolidColorBrush x:Key="BrandMarkBrush" Color="{StaticResource BrandMarkColor}" />
+      <SolidColorBrush x:Key="BrandMarkInkBrush" Color="{StaticResource BrandMarkInkColor}" />
       <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
       <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
       <SolidColorBrush x:Key="WarningSoftBrush" Color="{StaticResource WarningSoftColor}" />
@@ -130,6 +135,16 @@
         <Setter Property="Width" Value="34" /><Setter Property="Height" Value="34" /><Setter Property="Padding" Value="0" />
         <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" />
+      </Style>
+      <!-- Sidebar row icon: fixed width so every label starts at the same x. -->
+      <Style x:Key="NavIconStyle" TargetType="FontIcon">
+        <Setter Property="FontSize" Value="15" /><Setter Property="Width" Value="18" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
+      </Style>
+      <!-- Small square icon button in sidebar section headers (new folder, import, export). -->
+      <Style x:Key="SidebarIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="28" /><Setter Property="Height" Value="28" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="2,0,0,0" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="CornerRadius" Value="7" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
       </Style>
       <!-- Small uppercase section label (sidebar groups, settings groups). -->
       <Style x:Key="SectionLabelStyle" TargetType="TextBlock">

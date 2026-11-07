@@ -125,7 +125,7 @@ public sealed partial class MainPage
         CodingNavigationSection.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         NewProjectButton.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         GitHubButton.Visibility = Visibility.Visible;
-        NewConversationButton.Content = chatMode ? "＋　New chat" : "＋　New coding task";
+        NewConversationLabel.Text = chatMode ? "New chat" : "New coding task";
         WebSearchButton.Visibility = chatMode ? Visibility.Visible : Visibility.Collapsed;
         WelcomeTitle.Text = chatMode ? "What can I help you with?" : "Work on a project together";
         WelcomeSubtitle.Text = chatMode

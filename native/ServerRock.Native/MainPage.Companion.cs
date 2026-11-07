@@ -42,7 +42,7 @@ public sealed partial class MainPage
         CompanionImage.Source = ResolveCompanionAsset(choice);
         CompanionName.Text = choice.Name;
         CompanionOverlay.Visibility = _companionState.IsVisible ? Visibility.Visible : Visibility.Collapsed;
-        CompanionButton.Content = _companionState.IsVisible ? "◉　Hide pet" : "◉　Show pet";
+        CompanionButtonLabel.Text = _companionState.IsVisible ? "Hide pet" : "Show pet";
         AutomationProperties.SetName(CompanionButton, _companionState.IsVisible ? "Hide pet companion" : "Show pet companion");
         if (_companionState.IsVisible) PositionCompanion(persistIfChanged: false);
     }

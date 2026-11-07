@@ -5,12 +5,12 @@
   <Grid x:Name="AppRoot" ColumnDefinitions="276,*" Background="{StaticResource CanvasBrush}" SizeChanged="AppRootSizeChanged">
     <Grid x:Name="Sidebar" Grid.Column="0" Background="{StaticResource SidebarBrush}" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
       <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="4,0,4,18">
-        <Border Width="34" Height="34" CornerRadius="11" Background="#183844">
-          <TextBlock Text="◈" Foreground="#dff7fa" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Border Width="34" Height="34" CornerRadius="11" Background="{StaticResource BrandMarkBrush}">
+          <TextBlock Text="◈" Foreground="{StaticResource BrandMarkInkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-          <TextBlock Text="Server Rock" FontSize="14" FontWeight="SemiBold" Foreground="#18313b" />
-          <TextBlock Text="Local AI workspace" FontSize="11" Foreground="#718187" />
+          <TextBlock Text="Server Rock" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
+          <TextBlock Text="Local AI workspace" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" />
         </StackPanel>
       </Grid>
       <!-- Segmented mode switch: the track is a soft line color; the selected half is a raised
@@ -21,42 +21,47 @@
           <Button x:Name="CodingModeButton" Grid.Column="1" Content="Coding Agent" Click="CodingModeClick" Style="{StaticResource SegmentButtonStyle}" AutomationProperties.Name="Open Coding Agent workspace" AutomationProperties.HelpText="Switch to the project-scoped coding workspace." />
         </Grid>
       </Border>
-      <Button x:Name="NewConversationButton" Grid.Row="2" Content="＋　New chat" HorizontalContentAlignment="Left" Background="#ffffff" Foreground="#253f47" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="9" Padding="11,10" Margin="0,0,0,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation" />
-      <Button x:Name="NewProjectButton" Grid.Row="3" Content="▱　New project" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project" />
-      <Button Grid.Row="4" Content="⌕　Search chats" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
-      <Button Grid.Row="5" Content="◉　Models" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
-      <Button Grid.Row="6" Content="⚙　Settings" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open model connection settings" />
-      <Button Grid.Row="7" Content="✦　Plugins" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
-      <Button Grid.Row="8" x:Name="GitHubButton" Content="⌘　GitHub repositories" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
+      <!-- Sidebar navigation: every row is an icon (fixed 18 px column, one icon font) plus a label,
+           so labels line up; the old text glyphs had different widths. "New chat" is the one raised
+           row and stretches like the others. Labels that code changes have x:Name (…Label). -->
+      <Button x:Name="NewConversationButton" Grid.Row="2" Style="{StaticResource SidebarActionButtonStyle}" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Margin="0,0,0,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE710;" Style="{StaticResource NavIconStyle}" /><TextBlock x:Name="NewConversationLabel" Text="New chat" /></StackPanel></Button>
+      <Button Grid.Row="3" x:Name="NewProjectButton" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE8F4;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="New project" /></StackPanel></Button>
+      <Button Grid.Row="4" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE721;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Search chats" /></StackPanel></Button>
+      <Button Grid.Row="5" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open the Model Library" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE8F1;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Models" /></StackPanel></Button>
+      <Button Grid.Row="6" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open settings"><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE713;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Settings" /></StackPanel></Button>
+      <Button Grid.Row="7" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugins" AutomationProperties.HelpText="See which plugins, extensions, and skills are built in or not available yet."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xEA86;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="Plugins" /></StackPanel></Button>
+      <Button Grid.Row="8" x:Name="GitHubButton" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent."><StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE943;" Style="{StaticResource NavIconStyle}" /><TextBlock Text="GitHub repositories" /></StackPanel></Button>
       <ScrollViewer Grid.Row="9" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
         <StackPanel Spacing="5">
           <StackPanel x:Name="CodingNavigationSection" Spacing="0" Visibility="Collapsed">
-            <TextBlock Text="PROJECTS" FontSize="10" CharacterSpacing="110" Foreground="#798b8e" Margin="8,3,0,4" />
+            <TextBlock Text="PROJECTS" Style="{StaticResource SectionLabelStyle}" Margin="8,3,0,4" />
             <StackPanel x:Name="ProjectList" Spacing="3" />
           </StackPanel>
-          <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" FontSize="10" CharacterSpacing="110" Foreground="#66818a" Margin="8,16,0,4" Visibility="Collapsed" />
+          <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" Style="{StaticResource SectionLabelStyle}" Margin="8,16,0,4" Visibility="Collapsed" />
           <StackPanel x:Name="ProjectFileList" Spacing="2" />
           <StackPanel x:Name="ChatNavigationSection" Spacing="0">
           <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="8,16,4,4">
-            <TextBlock Text="CONVERSATION FOLDERS" FontSize="10" CharacterSpacing="110" Foreground="#66818a" VerticalAlignment="Center" />
-            <Button Grid.Column="1" Content="＋" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="NewChatFolderClick" AutomationProperties.Name="Create conversation folder" AutomationProperties.HelpText="Create a folder to organize chats and coding conversations." />
-            <Button x:Name="ImportChatsButton" Grid.Column="2" Content="↓" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="ImportChatsClick" AutomationProperties.Name="Import saved chats" AutomationProperties.HelpText="Import a JSON conversation archive into this device." />
-            <Button x:Name="ExportChatsButton" Grid.Column="3" Content="↑" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="ExportChatsClick" AutomationProperties.Name="Export saved chats" AutomationProperties.HelpText="Save your conversations as a portable JSON archive." />
+            <TextBlock Text="CONVERSATION FOLDERS" Style="{StaticResource SectionLabelStyle}" VerticalAlignment="Center" />
+            <!-- Folder tools: icons with tooltips (the bare ↓ ↑ arrows did not say import/export). -->
+            <Button Grid.Column="1" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="New folder" Click="NewChatFolderClick" AutomationProperties.Name="Create conversation folder" AutomationProperties.HelpText="Create a folder to organize chats and coding conversations."><FontIcon Glyph="&#xE8F4;" FontSize="13" /></Button>
+            <Button x:Name="ImportChatsButton" Grid.Column="2" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="Import chats from a file" Click="ImportChatsClick" AutomationProperties.Name="Import saved chats" AutomationProperties.HelpText="Import a JSON conversation archive into this device."><FontIcon Glyph="&#xE896;" FontSize="13" /></Button>
+            <Button x:Name="ExportChatsButton" Grid.Column="3" Style="{StaticResource SidebarIconButtonStyle}" ToolTipService.ToolTip="Export chats to a file" Click="ExportChatsClick" AutomationProperties.Name="Export saved chats" AutomationProperties.HelpText="Save your conversations as a portable JSON archive."><FontIcon Glyph="&#xE898;" FontSize="13" /></Button>
           </Grid>
           <StackPanel x:Name="ChatFolderList" Spacing="3" />
-          <TextBlock Text="UNFILED" FontSize="10" CharacterSpacing="110" Foreground="#66818a" Margin="8,16,0,4" />
+          <TextBlock Text="UNFILED" Style="{StaticResource SectionLabelStyle}" Margin="8,16,0,4" />
           <StackPanel x:Name="RecentList" Spacing="3" />
           </StackPanel>
         </StackPanel>
       </ScrollViewer>
-      <Border Grid.Row="10" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,10,5,2">
+      <Border Grid.Row="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="5,10,5,2">
         <StackPanel Spacing="7">
           <!-- Connection status lives in the header pill and the composer label; this sidebar
                copy was a fourth repeat, so it stays collapsed (code still updates it). -->
           <StackPanel Orientation="Horizontal" Spacing="7" Visibility="Collapsed"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="{StaticResource InkBrush}" /><TextBlock Text="· local history" FontSize="11" Foreground="{StaticResource MutedInkBrush}" /></StackPanel>
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-            <Button x:Name="CompanionButton" Content="◉　Show pet" Click="ToggleCompanionClick" Background="#ffffff" Foreground="#294850" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="8,6" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window." />
-            <Button Grid.Column="1" Content="···" Click="CustomizeCompanionClick" Background="Transparent" Foreground="#526a70" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="9,6" AutomationProperties.Name="Customize pet companion" AutomationProperties.HelpText="Choose which local companion to show." />
+            <!-- Pet controls: show/hide plus a clearly labelled "choose pet" icon (was a bare ···). -->
+            <Button x:Name="CompanionButton" Click="ToggleCompanionClick" Style="{StaticResource ContextButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window."><StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE76E;" FontSize="14" /><TextBlock x:Name="CompanionButtonLabel" Text="Show pet" /></StackPanel></Button>
+            <Button Grid.Column="1" Click="CustomizeCompanionClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Choose pet" AutomationProperties.Name="Choose pet companion" AutomationProperties.HelpText="Choose which local companion to show."><FontIcon Glyph="&#xE70F;" FontSize="13" /></Button>
           </Grid>
         </StackPanel>
       </Border>
@@ -65,8 +70,8 @@
     <Grid x:Name="MainContent" Grid.Column="1" RowDefinitions="58,Auto,*" Background="{StaticResource SurfaceBrush}">
       <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto" Padding="22,0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <Button x:Name="ToggleSidebarButton" Content="☰" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close." />
-          <TextBlock x:Name="PageTitle" Text="New chat" FontSize="14" FontWeight="SemiBold" Foreground="#26373d" />
+          <Button x:Name="ToggleSidebarButton" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close."><FontIcon Glyph="&#xE700;" FontSize="14" /></Button>
+          <TextBlock x:Name="PageTitle" Text="New chat" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="520" />
           <Border x:Name="ProjectBadge" Visibility="Collapsed" Background="#e8f5f6" BorderBrush="#d5e9eb" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ProjectBadgeText" Text="Project instructions on" FontSize="11" Foreground="#46666c" /></Border>
           <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3" AutomationProperties.Name="Conversation folder"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
           <Border x:Name="TemporaryBadge" Visibility="Collapsed" Background="#fff5e6" BorderBrush="#f1dfc2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock Text="Temporary · not saved" FontSize="11" Foreground="#805d2c" /></Border>
@@ -77,10 +82,12 @@
           </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Button Click="SettingsClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="12" Padding="9,4" AutomationProperties.Name="Model connection settings">
+          <Button Click="SettingsClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="9,4" ToolTipService.ToolTip="Model connection settings" AutomationProperties.Name="Model connection settings">
             <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
           </Button>
-          <Button Content="＋" Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Add window · start a new chat" AutomationProperties.Name="Add window" AutomationProperties.HelpText="Start a fresh chat without closing the current app window." />
+          <!-- Header shortcut for a new chat (handy when the sidebar is collapsed). It was labelled
+               "Add window" but never opened a window, so it is now named for what it does. -->
+          <Button Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" Padding="8,6" ToolTipService.ToolTip="New chat" AutomationProperties.Name="Start a new chat" AutomationProperties.HelpText="Start a fresh chat in the current workspace."><FontIcon Glyph="&#xE710;" FontSize="12" /></Button>
         </StackPanel>
       </Grid>
 

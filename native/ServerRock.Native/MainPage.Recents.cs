@@ -113,7 +113,7 @@ public sealed partial class MainPage
             }
         }
         if (_settings.ChatFolders.Count == 0)
-            ChatFolderList.Children.Add(new TextBlock { Text = "Group chats into folders with ＋.", TextWrapping = TextWrapping.Wrap, FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)), Margin = new Thickness(8, 2, 8, 5) });
+            ChatFolderList.Children.Add(new TextBlock { Text = "No folders yet. Use the folder button above to create one.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 2, 8, 5) });
         var unfiled = visibleSessions.Where(item => string.IsNullOrWhiteSpace(item.FolderName) || !_settings.ChatFolders.Contains(item.FolderName, StringComparer.OrdinalIgnoreCase)).ToArray();
         foreach (var session in unfiled) RecentList.Children.Add(CreateRecentRow(session));
         if (unfiled.Length == 0)
