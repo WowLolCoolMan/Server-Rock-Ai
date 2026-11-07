@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using Markdig;
+using ServerRock.Core.Infrastructure;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -141,16 +142,21 @@ internal static class MarkdownUiRenderer
             case "a":
             {
                 var label = element.Value;
-                if (Uri.TryCreate((string?)element.Attribute("href"), UriKind.Absolute, out var target)
-                    && target.Scheme is "http" or "https")
+                // Security: links from model output open only in the system
+                // browser and only for http/https (see ExternalLinkPolicy).
+                // NavigateUri is left unset so the click handler is the single
+                // launch path (setting both opened the page twice), and the
+                // label shows the real host when the text names another site.
+                var target = ExternalLinkPolicy.TryGetTarget((string?)element.Attribute("href"));
+                if (target is not null)
                 {
-                    var link = new Hyperlink { NavigateUri = target };
+                    var link = new Hyperlink();
                     link.Click += async (_, _) =>
                     {
                         try { await Windows.System.Launcher.LaunchUriAsync(target); }
                         catch { }
                     };
-                    link.Inlines.Add(new Run { Text = label });
+                    link.Inlines.Add(new Run { Text = ExternalLinkPolicy.DisplayLabel(label, target) });
                     output.Add(link);
                 }
                 else output.Add(new Run { Text = label, Foreground = Brush(38, 56, 62) });
