@@ -1,13 +1,17 @@
-using Microsoft.UI;
+// MainPage – the app's only page. This file holds the shared pieces every feature uses:
+// the page state (fields), the Core services the page talks to, the constructor (loads
+// settings, history, projects, and undo history, then renders the sidebar), the status
+// banner, RunUiActionAsync (error wrapper for async click handlers), and SaveSettings.
+//
+// Each feature lives in its own partial file, MainPage.<Feature>.cs (Chat, Messages,
+// ModelLibrary, Settings, Projects, Recents, ChatFolders, SlashCommands, CodingAgent, …).
+// See docs/ARCHITECTURE.md ("Where do I find…?") for the full map.
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
-using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
-using System.Diagnostics;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 using ServerRock.Core.Infrastructure;
