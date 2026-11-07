@@ -18,14 +18,6 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
-    // Not wired to any element in MainPage.xaml at the moment (kept as-is; see the refactor notes).
-    private void NavigateClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string destination }) return;
-        PageTitle.Text = destination switch { "images" => "Images", "activity" => "Activity", _ => _project ?? "New chat" };
-        RuntimeStatus.Text = destination switch { "images" => "Image generation is not connected yet", "activity" => "Recent conversations are being migrated", _ => $"⌖　{_settings.Endpoint}" };
-    }
-
     private async void ChatModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("ChatBot");
     private async void CodingModeClick(object sender, RoutedEventArgs e) => await SwitchModeFromSidebarAsync("Coding Agent");
 
