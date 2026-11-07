@@ -33,9 +33,7 @@ public sealed partial class MainPage
             _ => (UiTheme.Color("AccentColor"), UiTheme.Color("AccentHoverColor"))
         };
         UiTheme.ApplyAccent(accent, hover, hover);
-        var compact = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase);
-        PromptBox.MinHeight = compact ? 100 : 132;
-        PromptBox.MaxHeight = compact ? 240 : 320;
+        ApplyComposerHeight();
         // Voice output is an icon toggle (speaker on / muted) with a tooltip, matching the other
         // composer icons; the on state also gets the accent color.
         VoiceOutputIcon.Glyph = _settings.VoiceOutputEnabled ? "\uE767" : "\uE74F";

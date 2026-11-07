@@ -21,7 +21,22 @@ public sealed partial class MainPage
     private void AppRootSizeChanged(object sender, SizeChangedEventArgs e)
     {
         ApplyResponsiveNavigation(e.NewSize.Width);
+        ApplyComposerHeight();
         PositionCompanion(persistIfChanged: true);
+    }
+
+    // Below this window height the prompt box starts shorter so the conversation keeps room.
+    private const double ShortWindowHeight = 720;
+
+    // Prompt box height follows Interface density, but on short windows it starts at about two
+    // lines (it grows as you type), because the 132 px default plus the toolbars used to fill
+    // most of a 560 px window.
+    private void ApplyComposerHeight()
+    {
+        var compactDensity = _settings?.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase) == true;
+        var shortWindow = AppRoot.ActualHeight is > 0 and < ShortWindowHeight;
+        PromptBox.MinHeight = shortWindow ? 56 : compactDensity ? 100 : 132;
+        PromptBox.MaxHeight = shortWindow ? 160 : compactDensity ? 240 : 320;
     }
 
     private void ComposerToolbarSizeChanged(object sender, SizeChangedEventArgs e)

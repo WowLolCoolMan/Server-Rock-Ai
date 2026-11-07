@@ -154,9 +154,13 @@ public sealed partial class MainPage
             : _workspaceUndoEntries.Count == 0 ? "Undo history" : $"Undo history · {_workspaceUndoEntries.Count}";
         ProjectFoldersButton.Content = project is null ? "Choose project" : "Manage folders";
         WorkspaceProjectName.Text = project?.Name ?? "No project selected";
+        // The folder-count badge only appears with a project (it used to float "Coding workspace"
+        // beside the buttons), and Undo history only when there is a project or a recorded change.
+        WorkspaceFolderBadge.Visibility = project is null ? Visibility.Collapsed : Visibility.Visible;
         WorkspaceFolderCount.Text = project is null
-            ? "Coding workspace"
+            ? string.Empty
             : project.FolderPaths.Count == 1 ? "1 folder" : $"{project.FolderPaths.Count} folders";
+        UndoHistoryButton.Visibility = project is not null || _workspaceUndoEntries.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         WorkspaceProjectPath.Text = project is null
             ? _projects.Count == 0 ? "Create a project to give the Coding Agent a local workspace." : "Choose a project from the sidebar or create a new one."
             : project.FolderPaths.Count == 0 ? "No local folders connected · add a folder before asking the agent to inspect files."

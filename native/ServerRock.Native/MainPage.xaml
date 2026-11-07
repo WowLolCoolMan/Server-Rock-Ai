@@ -97,7 +97,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
               <TextBlock Text="⌂" FontSize="15" Foreground="#15849a" VerticalAlignment="Center" />
               <TextBlock x:Name="WorkspaceProjectName" Grid.Column="1" Text="Choose a project" FontSize="13" FontWeight="SemiBold" Foreground="#273a3d" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-              <Border Grid.Column="2" Background="#edf5f2" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="10" Foreground="#527068" /></Border>
+              <Border x:Name="WorkspaceFolderBadge" Grid.Column="2" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource AccentInkBrush}" /></Border>
             </Grid>
             <TextBlock x:Name="WorkspaceProjectPath" Text="Select a local folder to give the Coding Agent project context." FontSize="11" Foreground="#7b8b8d" TextTrimming="CharacterEllipsis" />
           </StackPanel>
@@ -145,7 +145,9 @@
             <Button x:Name="ModelButton" Content="◉　Ollama　·　llama3.2　⌄" Click="ModelHotswapClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="Switch pinned model" AutomationProperties.HelpText="Choose a pinned model for this chat. Use Manage models to pin or unpin models." />
             <Button x:Name="ComposerToolsButton" Grid.Column="1" Content="Tools　⌄" Click="ComposerToolsClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open composer tools" AutomationProperties.HelpText="Show optional composer controls such as web search, temporary chat, project files, and smart rewriting." />
           </Grid>
-          <Grid x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+          <!-- Optional switches scroll sideways on narrow windows instead of being clipped. -->
+          <ScrollViewer x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <Button x:Name="WebSearchButton" Content="⌕　Web off" Click="WebSearchClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle web search" AutomationProperties.HelpText="Turn optional DuckDuckGo web search on or off. Search result excerpts and your prompt are sent to the selected model server." />
             <Button x:Name="TemporaryButton" Grid.Column="1" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" AutomationProperties.HelpText="Start or end a temporary chat. Temporary messages are kept only in memory and are not written to Recents or local history." />
             <Button x:Name="ProjectFilesButton" Grid.Column="2" Content="▤　Project files off" Click="ProjectFilesClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Toggle project files in Chat" AutomationProperties.HelpText="Include or exclude bounded, secret-filtered excerpts from the active project's selected folders. A remote model requires consent before files are sent." />
@@ -154,6 +156,7 @@
             <Button Grid.Column="5" Content="Image studio" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
             <Button Grid.Column="6" Content="Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open advanced generation controls" AutomationProperties.HelpText="Adjust response temperature and reset it to the recommended value." />
           </Grid>
+          </ScrollViewer>
         </Grid>
         <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
           <StackPanel Spacing="4">
@@ -194,7 +197,14 @@
       </StackPanel>
       </Grid>
     </Grid>
-    <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" Background="#66000000" BorderThickness="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu" />
+    <!-- Drawer scrim: must stretch over the whole window. Without Stretch alignment the Button
+         sized to nothing, so the content was never dimmed and clicking outside did not close it. -->
+    <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{StaticResource ScrimBrush}" BorderThickness="0" CornerRadius="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu">
+      <Button.Resources>
+        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ScrimColor}" />
+        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource ScrimColor}" />
+      </Button.Resources>
+    </Button>
     <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
       <Border x:Name="CompanionCard" Width="230" Background="Transparent" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
         <StackPanel HorizontalAlignment="Center" Spacing="4">
