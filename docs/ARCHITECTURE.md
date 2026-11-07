@@ -71,6 +71,14 @@ one feature area:
 | --- | --- |
 | `MainPage.xaml` | Page layout: sidebar (modes, projects, recents), header, conversation area, composer, companion overlay. Owned by the UI/design work. |
 | `MainPage.xaml.cs` | The rest of the page (fields, constructor, and – until the split is finished – most features). See the "Where do I find…?" table below for what has already moved out. |
+| `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
+| `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
+| `MainPage.Connection.cs` | Model server connection check and Local/Remote status; `IsLocalEndpoint`. |
+| `MainPage.Projects.cs` | Project list, create/edit/remove, folder manager, `SaveProjects`. |
+| `MainPage.Recents.cs` | Saved-chat list, chat actions menu, `SaveCurrentSession`. |
+| `MainPage.ChatFolders.cs` | Sidebar chat folders. |
+| `MainPage.ImportExport.cs` | Chat archive export/import. |
+| `MainPage.Companion.cs` | Desktop pet companion. |
 | `MainPage.Composer.cs` | Composer toggles: web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
 | `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
 | `GitHubWorkspaceUi.cs` | GitHub workspace dialog: client ID, sign-in, repository list, clone into a project. Also a `MainPage` partial despite the name. |
@@ -248,4 +256,13 @@ files.
 | Chat streaming HTTP | `ServerRock.Core/Core/Services/OpenAiCompatibleProvider.cs` |
 | Model discovery and downloads | `ServerRock.Core/Core/Services/ModelLibraryService.cs` |
 | Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
-| Everything else in the page | `ServerRock.Native/MainPage.xaml.cs` (being split) |
+| Narrow-window drawer, toolbar wrapping | `ServerRock.Native/MainPage.Layout.cs` |
+| Chat / Coding Agent switch, keyboard shortcuts | `ServerRock.Native/MainPage.Navigation.cs` |
+| "Local ready / Not connected" status | `ServerRock.Native/MainPage.Connection.cs` |
+| Projects and their folders | `ServerRock.Native/MainPage.Projects.cs` |
+| Recents list, rename/archive/delete a chat | `ServerRock.Native/MainPage.Recents.cs` |
+| Chat folders | `ServerRock.Native/MainPage.ChatFolders.cs` |
+| Import / export chats | `ServerRock.Native/MainPage.ImportExport.cs` |
+| The pet companion | `ServerRock.Native/MainPage.Companion.cs` |
+| Core tests | `ServerRock.Core.Tests/*Tests.cs` (see Tests above) |
+| Everything else (sending/streaming, messages, model picker/library, settings, slash commands, attachments, Coding Agent review, terminal, image studio) | `ServerRock.Native/MainPage.xaml.cs` (not split yet) |
