@@ -5310,9 +5310,7 @@ public sealed partial class MainPage : Page
 
         RuntimeStatus.Text = "Running bounded offline health scan…";
         var report = await Task.Run(() => _localHealthAnalyzer.Analyze(project.FolderPaths));
-        var markdown = report.ToCompactMarkdown(project.Name);
-        if (includeMap)
-            markdown = markdown.Replace("## Local project health", "## Local architecture and dependency map", StringComparison.Ordinal);
+        var markdown = report.ToCompactMarkdown(project.Name, includeMap);
 
         var preview = new TextBox
         {

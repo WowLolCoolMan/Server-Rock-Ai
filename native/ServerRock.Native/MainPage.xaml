@@ -19,30 +19,31 @@
           <Button x:Name="CodingModeButton" Grid.Column="1" Content="Coding Agent" Click="CodingModeClick" Background="Transparent" Foreground="#53676b" CornerRadius="8" Padding="8,9" AutomationProperties.Name="Open Coding Agent workspace" AutomationProperties.HelpText="Switch to the project-scoped coding workspace." />
         </Grid>
       </Border>
-      <Button x:Name="NewConversationButton" Grid.Row="2" Content="＋　New chat" HorizontalContentAlignment="Left" Background="#ffffff" Foreground="#253f47" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="9" Padding="11,10" Margin="0,0,0,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation" />
-      <Button x:Name="NewProjectButton" Grid.Row="3" Content="▱　New project" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project" />
-      <Button Grid.Row="4" Content="⌕　Search chats" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
-      <Button Grid.Row="5" Content="◉　Models" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
-      <Button Grid.Row="6" Content="⚙　Settings" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open model connection settings" />
-      <Button Grid.Row="7" Content="✦　Plugins" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
-      <Button Grid.Row="8" x:Name="GitHubButton" Content="⌘　GitHub repositories" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
+      <Border Grid.Row="2" Grid.RowSpan="7" Background="#e8f1ef" BorderBrush="#dbe8e4" BorderThickness="1" CornerRadius="12" Padding="4,5" />
+      <Button x:Name="NewConversationButton" Grid.Row="2" Content="＋　New conversation" HorizontalContentAlignment="Left" Background="#ffffff" Foreground="#253f47" BorderBrush="#cfe0dc" BorderThickness="1" CornerRadius="9" Padding="11,10" Margin="8,9,8,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation" />
+      <Button x:Name="NewProjectButton" Grid.Row="3" Content="▱　Projects &amp; folders" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project" />
+      <Button Grid.Row="4" Content="⌕　Search conversations" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
+      <Button Grid.Row="5" Content="◉　Model library" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
+      <Button Grid.Row="6" Content="⚙　Connection &amp; settings" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open model connection settings" />
+      <Button Grid.Row="7" Content="✦　Extensions &amp; skills" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
+      <Button Grid.Row="8" x:Name="GitHubButton" Content="⌘　GitHub &amp; source control" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
       <ScrollViewer Grid.Row="9" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
         <StackPanel Spacing="5">
           <StackPanel x:Name="CodingNavigationSection" Spacing="0" Visibility="Collapsed">
-            <TextBlock Text="PROJECTS" FontSize="10" CharacterSpacing="110" Foreground="#798b8e" Margin="8,3,0,4" />
+            <TextBlock Text="PROJECT CONTEXT" Style="{StaticResource SidebarSectionLabelStyle}" />
             <StackPanel x:Name="ProjectList" Spacing="3" />
           </StackPanel>
-          <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" FontSize="10" CharacterSpacing="110" Foreground="#66818a" Margin="8,16,0,4" Visibility="Collapsed" />
+          <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" Style="{StaticResource SidebarSectionLabelStyle}" Visibility="Collapsed" />
           <StackPanel x:Name="ProjectFileList" Spacing="2" />
           <StackPanel x:Name="ChatNavigationSection" Spacing="0">
           <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="8,16,4,4">
-            <TextBlock Text="CONVERSATION FOLDERS" FontSize="10" CharacterSpacing="110" Foreground="#66818a" VerticalAlignment="Center" />
+            <TextBlock Text="CONVERSATIONS" Style="{StaticResource SidebarSectionLabelStyle}" VerticalAlignment="Center" Margin="0" />
             <Button Grid.Column="1" Content="＋" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="NewChatFolderClick" AutomationProperties.Name="Create conversation folder" AutomationProperties.HelpText="Create a folder to organize chats and coding conversations." />
             <Button x:Name="ImportChatsButton" Grid.Column="2" Content="↓" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="ImportChatsClick" AutomationProperties.Name="Import saved chats" AutomationProperties.HelpText="Import a JSON conversation archive into this device." />
             <Button x:Name="ExportChatsButton" Grid.Column="3" Content="↑" Width="26" Height="26" Padding="0" CornerRadius="7" Background="Transparent" Foreground="#52727a" Click="ExportChatsClick" AutomationProperties.Name="Export saved chats" AutomationProperties.HelpText="Save your conversations as a portable JSON archive." />
           </Grid>
           <StackPanel x:Name="ChatFolderList" Spacing="3" />
-          <TextBlock Text="UNFILED" FontSize="10" CharacterSpacing="110" Foreground="#66818a" Margin="8,16,0,4" />
+          <TextBlock Text="RECENT · UNFILED" Style="{StaticResource SidebarSectionLabelStyle}" />
           <StackPanel x:Name="RecentList" Spacing="3" />
           </StackPanel>
         </StackPanel>
@@ -104,6 +105,7 @@
       </Border>
 
       <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="{StaticResource SurfaceBrush}">
+        <Border Grid.Row="0" Margin="18,14,18,10" Style="{StaticResource WorkspaceFrameStyle}" />
         <StackPanel x:Name="WelcomePanel" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="14" MaxWidth="660" Margin="28,28,28,20">
           <TextBlock Text="◈" FontSize="29" Foreground="#20a9c0" HorizontalAlignment="Center" />
           <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#26373d" />
@@ -115,7 +117,7 @@
             <Button x:Name="SuggestionThree" Content="Search the web" Click="SuggestionClick" Tag="Search the web for " Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use web search prompt suggestion" />
           </StackPanel>
         </StackPanel>
-        <ScrollViewer Grid.Row="0" x:Name="ConversationScroll" Visibility="Collapsed" Padding="28,20">
+        <ScrollViewer Grid.Row="0" x:Name="ConversationScroll" Visibility="Collapsed" Padding="28,20" Margin="18,14,18,10">
           <StackPanel x:Name="ConversationMessages" Spacing="18" MaxWidth="860" HorizontalAlignment="Center" />
         </ScrollViewer>
 
@@ -150,7 +152,7 @@
             <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="#7a8e94" Margin="8,2,8,3" />
           </StackPanel>
         </Border>
-        <Border x:Name="ComposerBorder" Background="#ffffff" BorderBrush="#dce4e6" BorderThickness="1" CornerRadius="17" Padding="14,10">
+        <Border x:Name="ComposerBorder" Background="#ffffff" BorderBrush="#cbdedd" BorderThickness="1.5" CornerRadius="17" Padding="14,10" Style="{StaticResource WorkspaceFrameStyle}">
           <Grid RowDefinitions="Auto,Auto">
             <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="132" MaxHeight="320" PlaceholderText="Ask anything…" Background="Transparent" BorderThickness="0" Foreground="#283b41" TextChanged="PromptTextChanged" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer." />
             <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="0,8,0,0">

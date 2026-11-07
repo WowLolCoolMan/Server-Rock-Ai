@@ -11,16 +11,23 @@ public sealed record LocalProjectHealthReport(
     IReadOnlyList<string> Languages,
     IReadOnlyList<string> DependencyManifests,
     IReadOnlyList<string> EntryPoints,
+    IReadOnlyList<string> TopLevelDirectories,
     IReadOnlyList<LocalHealthFinding> Findings)
 {
-    public string ToCompactMarkdown(string projectLabel)
+    public string ToCompactMarkdown(string projectLabel, bool includeArchitectureMap = false)
     {
         var output = new StringBuilder();
-        output.AppendLine($"## Local project health · {projectLabel}");
+        output.AppendLine($"## {(includeArchitectureMap ? "Local architecture and dependency map" : "Local project health")} · {projectLabel}");
         output.AppendLine($"Scanned {Files:N0} files in {Directories:N0} directories; sampled {LinesSampled:N0} lines. No model or network request was used.");
         output.AppendLine($"Languages: {(Languages.Count == 0 ? "none detected" : string.Join(", ", Languages))}");
         output.AppendLine($"Dependency manifests: {(DependencyManifests.Count == 0 ? "none detected" : string.Join(", ", DependencyManifests))}");
         output.AppendLine($"Likely entry points: {(EntryPoints.Count == 0 ? "none detected" : string.Join(", ", EntryPoints.Take(8)))}");
+        if (includeArchitectureMap)
+        {
+            output.AppendLine("\n### Architecture map");
+            output.AppendLine($"Top-level areas: {(TopLevelDirectories.Count == 0 ? "none detected" : string.Join(", ", TopLevelDirectories))}");
+            output.AppendLine("Dependencies are represented by the discovered manifest files; inspect those manifests for package-level relationships.");
+        }
         output.AppendLine("\n### Findings");
         if (Findings.Count == 0) output.AppendLine("- **Info**: No obvious local heuristics were triggered.");
         foreach (var finding in Findings.Take(30))
@@ -37,6 +44,7 @@ public sealed class LocalProjectHealthAnalyzer
 {
     private const int MaxFiles = 2_000;
     private const int MaxLinesPerFile = 1_200;
+    private const int MaxSampleCharacters = 256_000;
     private const int MaxFindings = 80;
     private static readonly HashSet<string> IgnoredDirectories = new(StringComparer.OrdinalIgnoreCase)
         { ".git", "bin", "obj", "node_modules", "dist", "release-check", "test-results", ".vs" };
@@ -50,10 +58,13 @@ public sealed class LocalProjectHealthAnalyzer
 
     public LocalProjectHealthReport Analyze(IEnumerable<string> roots)
     {
+        var normalizedRoots = roots.Where(Directory.Exists).Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var files = new List<string>();
         var directories = 0;
-        foreach (var root in roots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var root in normalizedRoots)
         {
+            if (IsReparsePoint(root)) continue;
             try
             {
                 foreach (var directory in EnumerateDirectories(root))
@@ -62,7 +73,7 @@ public sealed class LocalProjectHealthAnalyzer
                     foreach (var file in Directory.EnumerateFiles(directory))
                     {
                         if (files.Count >= MaxFiles) break;
-                        files.Add(file);
+                        if (!IsReparsePoint(file)) files.Add(file);
                     }
                     if (files.Count >= MaxFiles) break;
                 }
@@ -77,6 +88,10 @@ public sealed class LocalProjectHealthAnalyzer
             .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value).ToArray();
         var entryPoints = files.Where(IsEntryPoint).Select(file => Path.GetFileName(file) ?? string.Empty)
             .Where(name => name.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToArray();
+        var topLevelDirectories = normalizedRoots.Where(root => !IsReparsePoint(root))
+            .SelectMany(EnumerateTopLevelDirectories)
+            .Where(name => name.Length > 0 && !IgnoredDirectories.Contains(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(name => name).Take(40).ToArray();
         var findings = new List<LocalHealthFinding>();
         var lines = 0;
 
@@ -85,16 +100,17 @@ public sealed class LocalProjectHealthAnalyzer
             if (!IsTextFile(file)) continue;
             try
             {
-                var sampled = File.ReadLines(file).Take(MaxLinesPerFile).ToArray();
+                var sampled = ReadBoundedLines(file);
                 lines += sampled.Length;
-                var relative = Path.GetFileName(file);
+                var relative = DisplayPath(file, normalizedRoots);
                 var text = string.Join('\n', sampled);
                 if (text.Contains("TODO", StringComparison.OrdinalIgnoreCase) || text.Contains("FIXME", StringComparison.OrdinalIgnoreCase))
                     Add(findings, new("Info", "Deferred work marker", "TODO/FIXME marker found", relative));
                 if (LooksLikeSecret(text))
                     Add(findings, new("High", "Possible credential or secret", "A bounded scan matched a token-like assignment; verify and rotate if real", relative));
-                if (Path.GetFileName(file).Equals("MainPage.xaml.cs", StringComparison.OrdinalIgnoreCase) && sampled.Length > 2_500)
-                    Add(findings, new("Medium", "Large UI orchestration file", $"{sampled.Length:N0}+ sampled lines in a single page class", relative));
+                if (Path.GetFileName(file).Equals("MainPage.xaml.cs", StringComparison.OrdinalIgnoreCase) &&
+                    (sampled.Length >= MaxLinesPerFile || new FileInfo(file).Length > MaxSampleCharacters))
+                    Add(findings, new("Medium", "Large UI orchestration file", $"At least {MaxLinesPerFile:N0} lines or {MaxSampleCharacters:N0} characters detected in a single page class", relative));
             }
             catch { }
         }
@@ -102,7 +118,49 @@ public sealed class LocalProjectHealthAnalyzer
         if (files.Count >= MaxFiles) Add(findings, new("Info", "Scan limit reached", $"Inspection stopped at {MaxFiles:N0} files to stay responsive and token-efficient."));
         if (manifests.Length == 0) Add(findings, new("Medium", "Dependency inventory unavailable", "No recognized package manifest was found in the selected folders."));
         if (entryPoints.Length == 0) Add(findings, new("Info", "Entry point not obvious", "No conventional application entry point was detected by local heuristics."));
-        return new(files.Count, directories, lines, languages, manifests, entryPoints, findings);
+        return new(files.Count, directories, lines, languages, manifests, entryPoints, topLevelDirectories, findings);
+    }
+
+    private static string[] ReadBoundedLines(string file)
+    {
+        var content = new StringBuilder(Math.Min(MaxSampleCharacters, 16_384));
+        var buffer = new char[8_192];
+        using var reader = new StreamReader(file, detectEncodingFromByteOrderMarks: true);
+        while (content.Length < MaxSampleCharacters)
+        {
+            var count = reader.Read(buffer, 0, Math.Min(buffer.Length, MaxSampleCharacters - content.Length));
+            if (count == 0) break;
+            content.Append(buffer, 0, count);
+        }
+        return content.ToString().Split('\n').Take(MaxLinesPerFile)
+            .Select(line => line.TrimEnd('\r')).ToArray();
+    }
+
+    private static IEnumerable<string> EnumerateTopLevelDirectories(string root)
+    {
+        IEnumerable<string> directories = [];
+        try
+        {
+            directories = Directory.EnumerateDirectories(root).ToArray();
+        }
+        catch { }
+        foreach (var directory in directories)
+            if (!IsReparsePoint(directory))
+                yield return Path.GetFileName(directory) ?? string.Empty;
+    }
+
+    private static string DisplayPath(string file, IEnumerable<string> roots)
+    {
+        foreach (var root in roots)
+        {
+            var relative = Path.GetRelativePath(root, file);
+            if (relative != ".." && !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            {
+                var rootName = Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                return Path.Combine(rootName, relative);
+            }
+        }
+        return Path.GetFileName(file);
     }
 
     private static IEnumerable<string> EnumerateDirectories(string root)
@@ -112,12 +170,13 @@ public sealed class LocalProjectHealthAnalyzer
         while (pending.Count > 0)
         {
             var current = pending.Pop();
+            if (IsReparsePoint(current)) continue;
             yield return current;
             IEnumerable<string> children;
             try { children = Directory.EnumerateDirectories(current); }
             catch { continue; }
             foreach (var child in children)
-                if (!IgnoredDirectories.Contains(Path.GetFileName(child))) pending.Push(child);
+                if (!IgnoredDirectories.Contains(Path.GetFileName(child)) && !IsReparsePoint(child)) pending.Push(child);
         }
     }
 
@@ -134,6 +193,12 @@ public sealed class LocalProjectHealthAnalyzer
     private static bool IsTextFile(string file) => LanguageByExtension.ContainsKey(Path.GetExtension(file)) ||
         Path.GetFileName(file).Contains("lock", StringComparison.OrdinalIgnoreCase) ||
         Path.GetFileName(file).Equals("package.json", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsReparsePoint(string path)
+    {
+        try { return File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint); }
+        catch { return true; }
+    }
 
     private static bool LooksLikeSecret(string text) =>
         text.Contains("api_key=", StringComparison.OrdinalIgnoreCase) || text.Contains("apikey:", StringComparison.OrdinalIgnoreCase) ||
