@@ -31,6 +31,14 @@ if ($PSCmdlet.ShouldProcess($versionRoot, 'Install Server Rock AI')) {
     $shim = Join-Path $InstallRoot 'ServerRock.Native.exe'
     if (Test-Path -LiteralPath $shim) { Remove-Item -LiteralPath $shim -Force }
     Copy-Item -LiteralPath (Join-Path $versionRoot 'ServerRock.Native.exe') -Destination $shim -Force
+    $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Server Rock AI.lnk'
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $startMenu) | Out-Null
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut($startMenu)
+    $shortcut.TargetPath = $shim
+    $shortcut.WorkingDirectory = $InstallRoot
+    $shortcut.Description = 'Local-first AI workspace'
+    $shortcut.Save()
     Write-Host "Installed Server Rock AI $version. User data remains under $env:LOCALAPPDATA\ServerRock\AI."
     if ($Launch) { Start-Process -FilePath $shim }
 }

@@ -72,7 +72,7 @@ jobs:
         run: |
           publish="$RUNNER_TEMP/serverrock-native/${{ matrix.rid }}"
           mkdir -p "$publish/packaging"
-          cp packaging/native/install.ps1 packaging/native/uninstall.ps1 packaging/native/rollback.ps1 packaging/native/README.md "$publish/packaging/"
+          cp packaging/native/setup.ps1 packaging/native/setup.sh packaging/native/install.ps1 packaging/native/uninstall.ps1 packaging/native/rollback.ps1 packaging/native/README.md "$publish/packaging/"
           version="${RELEASE_VERSION#v}"
           sed "s/\"version\": \"0.0.0\"/\"version\": \"$version\"/" packaging/native/release-manifest.json > "$publish/release-manifest.json"
       - name: Smoke-test exact published artifact
