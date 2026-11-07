@@ -1,3 +1,6 @@
+// Loads/saves named projects (projects.json). A corrupt file is reported and left untouched.
+// Depends on: LocalProject, BoundedFileReader, AtomicFileWriter. Used by: MainPage projects.
+
 using System.Text.Json;
 using ServerRock.Core.Models;
 

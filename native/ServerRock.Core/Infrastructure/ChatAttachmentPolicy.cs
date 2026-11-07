@@ -1,3 +1,7 @@
+// Rules for chat attachments: allowed file types, secret-looking names to block,
+// size/character limits, and image signature checks.
+// Depends on: ChatAttachment. Used by: MainPage attachments, OpenAiCompatibleProvider, ConversationArchive.
+
 using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Infrastructure;

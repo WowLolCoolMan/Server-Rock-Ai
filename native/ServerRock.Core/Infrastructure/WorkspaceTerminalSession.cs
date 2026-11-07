@@ -1,3 +1,7 @@
+// Interactive pseudo-terminal (Porta.Pty) plus a VT screen buffer (XTerm.NET),
+// started in a selected project folder.
+// Depends on: WorkspaceCommandRunner (folder resolution). Used by: MainPage project terminal dialog.
+
 using System.Text;
 using Porta.Pty;
 using XTerm;

@@ -1,3 +1,7 @@
+// GitHub App OAuth device flow (begin, poll with back-off, refresh) and the
+// redirect-free GitHub HttpClient factory. Holds no credentials itself.
+// Depends on: BoundedHttpContent. Used by: GitHubWorkspaceUi.cs sign-in.
+
 using System.Net;
 using System.Text.Json;
 using ServerRock.Core.Infrastructure;

@@ -1,3 +1,8 @@
+// Import/export of chat archives (native format and the legacy Electron export).
+// Validates everything before it touches local history and plans duplicate/ID-collision handling.
+// Depends on: ChatSession, ChatMessage, ChatAttachmentPolicy, BoundedFileReader.
+// Used by: ConversationStore (load validation) and MainPage import/export.
+
 using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;

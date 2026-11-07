@@ -1,3 +1,6 @@
+// Static list of supported plugins/integrations with search and categories.
+// Used by: MainPage plugin store dialog.
+
 namespace ServerRock.Core.Services;
 
 public sealed record PluginDefinition(

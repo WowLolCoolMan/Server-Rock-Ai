@@ -1,3 +1,7 @@
+// One saved conversation plus the project context and mode it was created in.
+// Depends on: ChatMessage.
+// Used by: ConversationStore / ConversationArchive (persistence) and MainPage recents, folders, and branches.
+
 namespace ServerRock.Core.Models;
 
 /// <summary>A locally stored conversation and the project context active when it was created.</summary>

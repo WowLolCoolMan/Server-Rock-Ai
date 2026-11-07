@@ -1,3 +1,7 @@
+// Opt-in web search: fetches DuckDuckGo's HTML results page and extracts a few
+// title/URL/snippet results. Does not open the result pages.
+// Depends on: HttpClient, BoundedHttpContent. Used by: MainPage chat sending when web search is on.
+
 using System.Net;
 using System.Text.RegularExpressions;
 using ServerRock.Core.Infrastructure;

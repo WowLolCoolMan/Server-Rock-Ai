@@ -1,3 +1,6 @@
+// Extracts bounded, page-ordered text from a PDF on-device (PdfPig).
+// Used by: MainPage attachments.
+
 using System.Text;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
