@@ -93,7 +93,15 @@ public sealed partial class MainPage
     private void SetCompanionCompletionSummary(string response)
     {
         if (!_companionState.NotifyOnCompletion) return;
-        var plain = System.Text.RegularExpressions.Regex.Replace(response ?? string.Empty, "[`*_>#]", string.Empty);
+        // Summarize from the first prose line: skip headings, code fences, table rows, and
+        // quotes, and turn [text](url) into text. It used to glue the heading onto the first
+        // paragraph ("Done · Quick summary Here is…").
+        var firstLine = (response ?? string.Empty).Split('\n')
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.Length > 0 && !line.StartsWith('#') && !line.StartsWith("```", StringComparison.Ordinal) && !line.StartsWith('|') && !line.StartsWith('>')) ?? string.Empty;
+        firstLine = System.Text.RegularExpressions.Regex.Replace(firstLine, @"\[([^\]]+)\]\([^)]*\)", "$1");
+        firstLine = System.Text.RegularExpressions.Regex.Replace(firstLine, @"^([-*+]|\d+[.)])\s+", string.Empty);
+        var plain = System.Text.RegularExpressions.Regex.Replace(firstLine, "[`*_>#]", string.Empty);
         plain = System.Text.RegularExpressions.Regex.Replace(plain, "\\s+", " ").Trim();
         if (plain.Length == 0)
         {
@@ -102,7 +110,7 @@ public sealed partial class MainPage
             return;
         }
         var sentenceEnd = plain.IndexOfAny(['.', '!', '?']);
-        var summary = sentenceEnd is > 0 and < 180 ? plain[..(sentenceEnd + 1)] : plain;
+        var summary = sentenceEnd is > 0 and < 140 ? plain[..(sentenceEnd + 1)] : plain.Length > 140 ? plain[..137].TrimEnd() + "…" : plain;
         SetCompanionState("success");
         UpdateCompanionSpeech("Done · " + summary);
     }
@@ -201,24 +209,30 @@ public sealed partial class MainPage
         foreach (var choice in CompanionChoices)
         {
             var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(54) }, new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 9 };
-            row.Children.Add(new Image { Source = new SvgImageSource { UriSource = new Uri(choice.AssetUri) }, Width = 42, Height = 42, Stretch = Stretch.Uniform, VerticalAlignment = VerticalAlignment.Center });
+            // The built-in pets are PNG files; loading them as SVG left every card's picture blank.
+            ImageSource preview = choice.AssetUri.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+                ? new SvgImageSource { UriSource = new Uri(choice.AssetUri) }
+                : new BitmapImage { UriSource = new Uri(choice.AssetUri) };
+            row.Children.Add(new Image { Source = preview, Width = 42, Height = 42, Stretch = Stretch.Uniform, VerticalAlignment = VerticalAlignment.Center });
             var details = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
             Grid.SetColumn(details, 1);
-            details.Children.Add(new TextBlock { Text = choice.Name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 40, 59, 65)) });
-            details.Children.Add(new TextBlock { Text = choice.Description, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 112, 128, 133)), TextWrapping = TextWrapping.Wrap });
-            details.Children.Add(new TextBlock { Text = "Includes a 4×4 state sprite sheet", FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 21, 126, 142)) });
+            // Companion cards: full-width, token colors, and no sprite-sheet jargon line; the
+            // current pet uses the selected state (AccentSoft fill, accent border, "Selected").
+            details.Children.Add(new TextBlock { Text = choice.Name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush") });
+            details.Children.Add(new TextBlock { Text = choice.Description, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextWrapping = TextWrapping.Wrap });
             row.Children.Add(details);
-            var selected = new TextBlock { Text = choice.Id == _companionState.PetId ? "Selected" : "", FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 21, 126, 142)), VerticalAlignment = VerticalAlignment.Center };
+            var isCurrent = choice.Id == _companionState.PetId;
+            var selected = new TextBlock { Text = isCurrent ? "Selected" : "", FontSize = UiTheme.FontSize("CaptionFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("AccentInkBrush"), VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(selected, 2);
             row.Children.Add(selected);
-            var option = new Button { Content = row, HorizontalContentAlignment = HorizontalAlignment.Stretch, Background = choice.Id == _companionState.PetId ? new SolidColorBrush(ColorHelper.FromArgb(255, 235, 247, 247)) : new SolidColorBrush(ColorHelper.FromArgb(255, 255, 255, 255)), BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 220, 231, 232)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 7, 10, 7) };
+            var option = new Button { Content = row, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch, Background = UiTheme.Brush(isCurrent ? "AccentSoftBrush" : "SurfaceBrush"), BorderBrush = UiTheme.Brush(isCurrent ? "AccentBrush" : "LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 7, 10, 7) };
             AutomationProperties.SetName(option, $"Choose {choice.Name} companion");
             AutomationProperties.SetHelpText(option, choice.Description);
             option.Click += (_, _) => { selectedId = choice.Id; dialog.Hide(); };
             choices.Children.Add(option);
         }
 
-        var configure = new Button { Content = "Configure custom state sprites…", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0) };
+        var configure = new Button { Content = "Use your own pictures…", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0), Style = UiTheme.Style("ContextButtonStyle") };
         AutomationProperties.SetName(configure, "Configure custom state sprites");
         configure.Click += (_, _) => { configureRequested = true; dialog.Hide(); };
         choices.Children.Add(configure);

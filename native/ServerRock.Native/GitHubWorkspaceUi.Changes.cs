@@ -2,7 +2,7 @@
 // GitHubActionsClick opens a dialog that lists changed files, previews the diff, and lets
 // the user commit selected files and push. Secret-looking files can't be selected.
 // Depends on: GitHubWorkspaceService (git status/diff/commit/push in ServerRock.Core),
-// GetGitHubCredentialAsync (GitHubWorkspaceUi.SignIn.cs), Brush/ThemeBrush (GitHubWorkspaceUi.cs).
+// GetGitHubCredentialAsync (GitHubWorkspaceUi.SignIn.cs).
 // Called by: the GitHub button in the Coding Agent workspace bar (MainPage.xaml).
 
 using Microsoft.UI.Xaml;
@@ -40,15 +40,15 @@ public sealed partial class MainPage
 
     private async Task GitHubChangesDialogAsync(LocalProject project, string repositoryPath, GitWorkspaceStatus initialStatus, GitHubUserCredential credential)
     {
-        var statusLine = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = ThemeBrush("TextFillColorSecondaryBrush", "#526a70") };
-        var protectedNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = ThemeBrush("TextFillColorCautionBrush", "#8a5a22"), Visibility = Visibility.Collapsed };
+        var statusLine = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var protectedNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("WarningInkBrush"), Visibility = Visibility.Collapsed };
         var changedFiles = new StackPanel { Spacing = 4, MaxHeight = 250, HorizontalAlignment = HorizontalAlignment.Stretch };
         var previewDiff = new TextBox
         {
             IsReadOnly = true,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.NoWrap,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
+            FontFamily = UiTheme.CodeFont,
             MinHeight = 160,
             MaxHeight = 360,
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -58,7 +58,7 @@ public sealed partial class MainPage
         ScrollViewer.SetHorizontalScrollBarVisibility(previewDiff, ScrollBarVisibility.Auto);
         ScrollViewer.SetVerticalScrollBarVisibility(previewDiff, ScrollBarVisibility.Auto);
         var commitMessage = new TextBox { Header = "Commit message", PlaceholderText = "Describe these changes", MaxLength = 256 };
-        var actionStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = ThemeBrush("TextFillColorSecondaryBrush", "#718187") };
+        var actionStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(actionStatus, "GitHub changes status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(actionStatus, AutomationLiveSetting.Polite);
         var preview = new Button { Content = "Preview selected diff", HorizontalAlignment = HorizontalAlignment.Left };
@@ -122,7 +122,7 @@ public sealed partial class MainPage
             changedFiles.Children.Clear();
             changeChecks.Clear();
             if (status.Changes.Count == 0)
-                changedFiles.Children.Add(new TextBlock { Text = "No uncommitted file changes.", Foreground = ThemeBrush("TextFillColorSecondaryBrush", "#718187") });
+                changedFiles.Children.Add(new TextBlock { Text = "No uncommitted file changes.", Foreground = UiTheme.Brush("MutedInkBrush") });
             foreach (var change in status.Changes)
             {
                 var protectedPath = GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count > 0;
@@ -136,7 +136,7 @@ public sealed partial class MainPage
                     IsChecked = !protectedPath,
                     IsEnabled = !protectedPath,
                     Tag = change,
-                    FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
+                    FontFamily = UiTheme.CodeFont,
                     HorizontalContentAlignment = HorizontalAlignment.Stretch
                 };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(check, label);

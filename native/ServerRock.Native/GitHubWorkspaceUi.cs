@@ -1,7 +1,7 @@
 // GitHub workspace dialog (a MainPage partial, despite the file name): GitHub App
 // client ID, device-flow sign-in, repository list or manual owner/name entry, and cloning
-// a repository into a new local project. Also holds the GitHub fields and the small
-// Brush/ThemeBrush color helpers used by both GitHub dialogs.
+// a repository into a new local project. Also holds the GitHub fields.
+// Colors come from the App.xaml tokens via UiTheme (the old Brush/ThemeBrush hex helpers were removed).
 // Related files: GitHubWorkspaceUi.SignIn.cs (polling + credential storage) and
 // GitHubWorkspaceUi.Changes.cs (commit/push review).
 // Depends on: GitHubDeviceFlow, GitHubApiClient, GitHubCredentialStore,
@@ -42,16 +42,25 @@ public sealed partial class MainPage
         };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clientId, "GitHub App client ID");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(clientId, "Enter the public client ID for the GitHub App configured for device sign-in.");
+        // Explain the Client ID field in plain words; it is a public app identifier, not a
+        // password, and users get it from whoever set up the GitHub App.
+        var clientIdHelp = new TextBlock
+        {
+            Text = "Sign-in uses a GitHub App. Paste its Client ID from the app's GitHub settings page (it usually starts with Iv1. or Iv23.). It is a public ID, not a password.",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = UiTheme.FontSize("CaptionFontSize"),
+            Foreground = UiTheme.Brush("MutedInkBrush")
+        };
         var storage = _githubCredentialStore.GetStatus();
-        var storageMessage = new TextBlock { Text = storage.Message, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#718187") };
-        var connection = new TextBlock { Text = "Not connected", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = Brush("#35494d") };
+        var storageMessage = new TextBlock { Text = storage.Message, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var connection = new TextBlock { Text = "Not connected", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("InkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(connection, "GitHub connection state");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(connection, AutomationLiveSetting.Polite);
-        var code = new TextBox { IsReadOnly = true, FontSize = 24, TextAlignment = TextAlignment.Center, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), Visibility = Visibility.Collapsed };
+        var code = new TextBox { IsReadOnly = true, FontSize = 24, TextAlignment = TextAlignment.Center, FontFamily = UiTheme.CodeFont, Visibility = Visibility.Collapsed };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(code, "GitHub device sign-in code");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(code, "One-time code to enter on GitHub. It expires after a short time.");
         var verification = new Button { Content = "Open GitHub device sign-in", Visibility = Visibility.Collapsed };
-        var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#718187") };
+        var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(signInStatus, "GitHub connection and repository status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite);
         var connect = new Button { Content = "Connect GitHub", IsEnabled = storage.Available, HorizontalAlignment = HorizontalAlignment.Left };
@@ -63,7 +72,7 @@ public sealed partial class MainPage
         var repositoryReference = new TextBox { Header = "Repository", PlaceholderText = "owner/name or https://github.com/owner/name" };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryReference, "Repository to clone");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryReference, "Enter owner/name or an HTTPS GitHub repository URL.");
-        var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#a64242") };
+        var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("DangerBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryValidation, "Repository format guidance");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(repositoryValidation, AutomationLiveSetting.Polite);
         var refreshRepositories = new Button { Content = "Refresh repositories", HorizontalAlignment = HorizontalAlignment.Left };
@@ -74,41 +83,42 @@ public sealed partial class MainPage
             PlaceholderText = "Choose a local parent folder"
         };
         var chooseParent = new Button { Content = "Choose folder…", HorizontalAlignment = HorizontalAlignment.Left };
-        var cloneStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Brush("#718187") };
+        var cloneStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(cloneStatus, "GitHub clone status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite);
         var clone = new Button { Content = "Clone and open project", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(clone, "Clone repository and open as project");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(clone, "Clone the selected or entered repository into the chosen local folder, then open it in Coding Agent.");
         var cancelClone = new Button { Content = "Cancel clone", Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
-        var signInPanel = new StackPanel { Spacing = 7, Children = { clientId, storageMessage, connection, connect, cancelSignIn, disconnect, code, verification, signInStatus } };
+        var signInPanel = new StackPanel { Spacing = 7, Children = { clientId, clientIdHelp, storageMessage, connection, connect, cancelSignIn, disconnect, code, verification, signInStatus } };
         var repositoryAccessHint = new TextBlock
         {
             Text = "Connect GitHub above to browse repositories or enter a repository to clone.",
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12,
-            Foreground = Brush("#718187")
+            Foreground = UiTheme.Brush("MutedInkBrush")
         };
         var repoPanel = new StackPanel
         {
             Spacing = 8,
             Visibility = Visibility.Collapsed,
-            Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#35494d") }, repositoryPicker, repositoryReference, repositoryValidation, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone }
+            Children = { new TextBlock { Text = "Repositories", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush") }, repositoryPicker, repositoryReference, repositoryValidation, refreshRepositories, parentPath, chooseParent, cloneStatus, clone, cancelClone }
         };
         var content = new StackPanel { Spacing = 16, Children =
         {
-            new TextBlock { Text = "Sign in to browse repositories you can access. Choose one to clone it into a local project. Git credentials stay in your OS keyring.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Brush("#718187") },
+            new TextBlock { Text = "Sign in to browse repositories you can access. Choose one to clone it into a local project. Git credentials stay in your OS keyring.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = UiTheme.Brush("MutedInkBrush") },
             signInPanel,
-            new Border { Height = 1, Background = Brush("#e5ece9"), Margin = new Thickness(0, 0, 0, 1) },
+            new Border { Height = 1, Background = UiTheme.Brush("LineSoftBrush"), Margin = new Thickness(0, 0, 0, 1) },
             repositoryAccessHint,
             repoPanel,
-            new TextBlock { Text = "The app’s GitHub App must have Device Flow enabled and Contents read/write permission for private clone, commit, and push.", TextWrapping = TextWrapping.Wrap, FontSize = 10, Foreground = Brush("#829093") }
+            new TextBlock { Text = "The app’s GitHub App must have Device Flow enabled and Contents read/write permission for private clone, commit, and push.", TextWrapping = TextWrapping.Wrap, FontSize = 10, Foreground = UiTheme.Brush("MutedInkBrush") }
         } };
         var dialog = new ContentDialog
         {
             Title = "GitHub workspace",
             Content = new ScrollViewer { Content = content, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
-            PrimaryButtonText = "Done",
+            // Nothing to confirm here, so the only button is a plain close "Done" (DESIGN.md).
+            CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
 
@@ -422,27 +432,5 @@ public sealed partial class MainPage
 
         await dialog.ShowAsync();
         _githubAuthorizationCancellation?.Cancel();
-    }
-
-    // Parses "#RRGGBB" into an opaque brush. ThemeBrush prefers an app/theme resource and
-    // falls back to that color when the resource is missing.
-    private static Microsoft.UI.Xaml.Media.SolidColorBrush Brush(string color)
-    {
-        var parsed = Microsoft.UI.ColorHelper.FromArgb(
-            255,
-            Convert.ToByte(color.Substring(1, 2), 16),
-            Convert.ToByte(color.Substring(3, 2), 16),
-            Convert.ToByte(color.Substring(5, 2), 16));
-        return new Microsoft.UI.Xaml.Media.SolidColorBrush(parsed);
-    }
-
-    private static Microsoft.UI.Xaml.Media.Brush ThemeBrush(string resourceKey, string fallback)
-    {
-        try
-        {
-            if (Application.Current?.Resources[resourceKey] is Microsoft.UI.Xaml.Media.Brush brush) return brush;
-        }
-        catch (KeyNotFoundException) { }
-        return Brush(fallback);
     }
 }
