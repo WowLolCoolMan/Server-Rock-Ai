@@ -2,7 +2,7 @@
 // GitHubActionsClick opens a dialog that lists changed files, previews the diff, and lets
 // the user commit selected files and push. Secret-looking files can't be selected.
 // Depends on: GitHubWorkspaceService (git status/diff/commit/push in ServerRock.Core),
-// GetGitHubCredentialAsync (GitHubWorkspaceUi.SignIn.cs).
+// GetGitHubCredentialAsync (MainPage.GitHub.SignIn.cs).
 // Called by: the GitHub button in the Coding Agent workspace bar (MainPage.xaml).
 
 using Microsoft.UI.Xaml;

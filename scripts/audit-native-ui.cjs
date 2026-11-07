@@ -7,7 +7,7 @@ const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const xaml = fs.readFileSync(xamlPath, "utf8");
 
 // MainPage and the GitHub workspace UI are partial classes split across several
-// files (MainPage.xaml.cs, MainPage.Chat.cs, GitHubWorkspaceUi.Changes.cs, …).
+// files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
 // Read every file of each group so a contract still passes after code moves
 // between those files.
 const readPartials = (prefix) =>
@@ -17,7 +17,7 @@ const readPartials = (prefix) =>
     .map((name) => fs.readFileSync(path.join(nativeDir, name), "utf8"))
     .join("\n");
 const code = readPartials("MainPage.");
-const githubCode = readPartials("GitHubWorkspaceUi");
+const githubCode = readPartials("MainPage.GitHub");
 
 const requiredXaml = [
   ['Connection setup action', 'AutomationProperties.Name="Connect a model"'],

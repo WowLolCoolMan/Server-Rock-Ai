@@ -1,6 +1,6 @@
 // Stores the GitHub OAuth token: Windows DPAPI-encrypted file, or the Linux
 // desktop keyring through the `secret-tool` CLI. Other platforms report "unavailable".
-// Depends on: nothing in Core. Used by: MainPage GitHub workspace UI (GitHubWorkspaceUi.cs).
+// Depends on: nothing in Core. Used by: MainPage GitHub workspace UI (MainPage.GitHub.cs).
 
 using System.Diagnostics;
 using System.Security.Cryptography;

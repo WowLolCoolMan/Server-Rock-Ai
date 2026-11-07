@@ -52,7 +52,7 @@ Build and test:
 dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run   --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run   --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
-node scripts/audit-native-ui.cjs   # accessibility/focus "contracts" grepped from all MainPage.* and GitHubWorkspaceUi* files
+node scripts/audit-native-ui.cjs   # accessibility/focus "contracts" grepped from all MainPage.* files
 ```
 
 ## ServerRock.Native (UI)
@@ -96,9 +96,9 @@ method name still finds it.
 | `MainPage.ImageStudio.cs` | Image Studio (local ComfyUI). |
 | `MainPage.PluginsAndSkills.cs` | Plugins and Skills dialogs. |
 | `MainPage.Companion.cs` | Desktop pet companion. |
-| `GitHubWorkspaceUi.cs` | GitHub workspace dialog: client ID, sign-in, repository list, clone into a project. Also a `MainPage` partial despite the name. |
-| `GitHubWorkspaceUi.SignIn.cs` | Device-flow polling and loading/refreshing/saving the GitHub credential. |
-| `GitHubWorkspaceUi.Changes.cs` | Commit/push review dialog for the active project. |
+| `MainPage.GitHub.cs` | GitHub workspace dialog: client ID, sign-in, repository list, clone into a project. |
+| `MainPage.GitHub.SignIn.cs` | Device-flow polling and loading/refreshing/saving the GitHub credential. |
+| `MainPage.GitHub.Changes.cs` | Commit/push review dialog for the active project. |
 
 Other files in the UI project:
 
@@ -289,8 +289,8 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Image Studio | `ServerRock.Native/MainPage.ImageStudio.cs`, `ServerRock.Core/Services/ComfyImageProvider.cs` |
 | Plugins and Skills dialogs | `ServerRock.Native/MainPage.PluginsAndSkills.cs` |
 | The pet companion | `ServerRock.Native/MainPage.Companion.cs`, `CompanionStateStore.cs` |
-| GitHub dialog, clone | `ServerRock.Native/GitHubWorkspaceUi.cs`, `ServerRock.Core/Services/GitHub*.cs` |
-| GitHub sign-in polling, saved token | `ServerRock.Native/GitHubWorkspaceUi.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
-| GitHub commit/push review | `ServerRock.Native/GitHubWorkspaceUi.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
+| GitHub dialog, clone | `ServerRock.Native/MainPage.GitHub.cs`, `ServerRock.Core/Services/GitHub*.cs` |
+| GitHub sign-in polling, saved token | `ServerRock.Native/MainPage.GitHub.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
+| GitHub commit/push review | `ServerRock.Native/MainPage.GitHub.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
 | Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
 | Core tests | `ServerRock.Core.Tests/*Tests.cs` (see Tests above) |

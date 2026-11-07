@@ -1,9 +1,9 @@
-// GitHub workspace dialog (a MainPage partial, despite the file name): GitHub App
+// GitHub workspace dialog (a MainPage partial): GitHub App
 // client ID, device-flow sign-in, repository list or manual owner/name entry, and cloning
 // a repository into a new local project. Also holds the GitHub fields.
 // Colors come from the App.xaml tokens via UiTheme (the old Brush/ThemeBrush hex helpers were removed).
-// Related files: GitHubWorkspaceUi.SignIn.cs (polling + credential storage) and
-// GitHubWorkspaceUi.Changes.cs (commit/push review).
+// Related files: MainPage.GitHub.SignIn.cs (polling + credential storage) and
+// MainPage.GitHub.Changes.cs (commit/push review).
 // Depends on: GitHubDeviceFlow, GitHubApiClient, GitHubCredentialStore,
 // GitHubWorkspaceService (ServerRock.Core).
 // Called by: the sidebar GitHub button, Settings, and GitHubActionsClickAsync when not signed in.
