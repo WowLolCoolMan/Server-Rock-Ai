@@ -1,3 +1,10 @@
+// Composer controls under the prompt box: the Tools toggle (second toolbar row), web search,
+// temporary chat, project files in chat, smart rewrite, the "editing a message" banner, and
+// saved-chat search.
+// Depends on: SaveSettings, SaveCurrentSession, and toolbar elements in MainPage.xaml.
+// Called by: composer buttons in MainPage.xaml, slash commands (/tools, /web, /temporary, /search),
+// and layout/mode code that refreshes the button states.
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -258,4 +265,14 @@ public sealed partial class MainPage
     // focus, normal line border otherwise (the inner TextBox focus visual is turned off in XAML).
     private void ComposerGotFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("AccentBrush");
     private void ComposerLostFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("LineBrush");
+
+    private void ComposerToolsClick(object sender, RoutedEventArgs e)
+    {
+        var isOpen = SecondaryComposerToolbar.Visibility == Visibility.Visible;
+        SecondaryComposerToolbar.Visibility = isOpen ? Visibility.Collapsed : Visibility.Visible;
+        ComposerToolsButton.Content = isOpen ? "Tools　⌄" : "Tools　⌃";
+        AutomationProperties.SetHelpText(ComposerToolsButton, isOpen
+            ? "Show optional composer controls such as web search, temporary chat, project files, and smart rewriting."
+            : "Hide optional composer controls.");
+    }
 }

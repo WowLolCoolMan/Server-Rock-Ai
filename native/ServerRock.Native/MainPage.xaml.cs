@@ -186,16 +186,6 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private void ComposerToolsClick(object sender, RoutedEventArgs e)
-    {
-        var isOpen = SecondaryComposerToolbar.Visibility == Visibility.Visible;
-        SecondaryComposerToolbar.Visibility = isOpen ? Visibility.Collapsed : Visibility.Visible;
-        ComposerToolsButton.Content = isOpen ? "Tools　⌄" : "Tools　⌃";
-        AutomationProperties.SetHelpText(ComposerToolsButton, isOpen
-            ? "Show optional composer controls such as web search, temporary chat, project files, and smart rewriting."
-            : "Hide optional composer controls.");
-    }
-
     private bool SaveSettings()
     {
         try
