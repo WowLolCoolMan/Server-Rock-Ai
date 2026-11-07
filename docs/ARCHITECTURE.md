@@ -51,7 +51,7 @@ Build and test:
 dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run   --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run   --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
-node scripts/audit-native-ui.cjs   # accessibility/focus "contracts" grepped from the UI code
+node scripts/audit-native-ui.cjs   # accessibility/focus "contracts" grepped from all MainPage.* and GitHubWorkspaceUi* files
 ```
 
 ## ServerRock.Native (UI)
@@ -73,7 +73,9 @@ one feature area:
 | `MainPage.xaml.cs` | The rest of the page (fields, constructor, and – until the split is finished – most features). See the "Where do I find…?" table below for what has already moved out. |
 | `MainPage.Composer.cs` | Composer toggles: web search, temporary chat, project-files-in-chat, smart rewrite, edit-message banner, chat search. |
 | `MainPage.Voice.cs` | Voice input (Windows speech recognition) and spoken responses. |
-| `GitHubWorkspaceUi.cs` | GitHub sign-in (device flow), repository list/clone, and the commit/push review dialog. Also a `MainPage` partial despite the name. |
+| `GitHubWorkspaceUi.cs` | GitHub workspace dialog: client ID, sign-in, repository list, clone into a project. Also a `MainPage` partial despite the name. |
+| `GitHubWorkspaceUi.SignIn.cs` | Device-flow polling and loading/refreshing/saving the GitHub credential. |
+| `GitHubWorkspaceUi.Changes.cs` | Commit/push review dialog for the active project. |
 
 Other files in the UI project:
 
@@ -240,7 +242,9 @@ files.
 | Markdown rendering of replies | `ServerRock.Native/MarkdownUiRenderer.cs` |
 | Web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
 | Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
-| GitHub sign-in, clone, commit/push | `ServerRock.Native/GitHubWorkspaceUi.cs` (UI), `ServerRock.Core/Services/GitHub*.cs` |
+| GitHub dialog, clone | `ServerRock.Native/GitHubWorkspaceUi.cs` (UI), `ServerRock.Core/Services/GitHub*.cs` |
+| GitHub sign-in polling, saved token | `ServerRock.Native/GitHubWorkspaceUi.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
+| GitHub commit/push review | `ServerRock.Native/GitHubWorkspaceUi.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
 | Chat streaming HTTP | `ServerRock.Core/Core/Services/OpenAiCompatibleProvider.cs` |
 | Model discovery and downloads | `ServerRock.Core/Core/Services/ModelLibraryService.cs` |
 | Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
