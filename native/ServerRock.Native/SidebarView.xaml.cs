@@ -1,3 +1,7 @@
+// Code-behind for SidebarView (added on main): exposes the named sidebar elements to MainPage as
+// *Control properties and forwards every click as an event that MainPage subscribes to in its
+// constructor. Keeps no state of its own.
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
@@ -22,6 +26,8 @@ public sealed partial class SidebarView : UserControl
     public Button CompanionButtonControl => CompanionButton;
     public Button ImportChatsButtonControl => ImportChatsButton;
     public Button ExportChatsButtonControl => ExportChatsButton;
+    public TextBlock NewConversationLabelControl => NewConversationLabel;
+    public TextBlock CompanionButtonLabelControl => CompanionButtonLabel;
 
     public event RoutedEventHandler? ChatModeRequested;
     public event RoutedEventHandler? CodingModeRequested;

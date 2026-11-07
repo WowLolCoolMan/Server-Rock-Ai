@@ -1,3 +1,7 @@
+// Finds `<workspace-command>` blocks in a Coding Agent reply and strips them
+// from the displayed text.
+// Depends on: WorkspaceCommandRunner (limits). Used by: MainPage Coding Agent proposal review.
+
 using System.Text.RegularExpressions;
 
 namespace ServerRock.Core.Infrastructure;

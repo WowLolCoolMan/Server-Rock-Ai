@@ -8,8 +8,8 @@
     <Grid x:Name="MainContent" Grid.Column="1" RowDefinitions="58,Auto,*" Background="{StaticResource SurfaceBrush}">
       <Grid x:Name="Header" Grid.Row="0" ColumnDefinitions="*,Auto" Padding="22,0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <Button x:Name="ToggleSidebarButton" Content="☰" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close." />
-          <TextBlock x:Name="PageTitle" Text="New chat" FontSize="14" FontWeight="SemiBold" Foreground="#26373d" />
+          <Button x:Name="ToggleSidebarButton" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close."><FontIcon Glyph="&#xE700;" FontSize="14" /></Button>
+          <TextBlock x:Name="PageTitle" Text="New chat" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="520" />
           <Border x:Name="ProjectBadge" Visibility="Collapsed" Background="#e8f5f6" BorderBrush="#d5e9eb" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ProjectBadgeText" Text="Project instructions on" FontSize="11" Foreground="#46666c" /></Border>
           <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3" AutomationProperties.Name="Conversation folder"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
           <Border x:Name="TemporaryBadge" Visibility="Collapsed" Background="#fff5e6" BorderBrush="#f1dfc2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock Text="Temporary · not saved" FontSize="11" Foreground="#805d2c" /></Border>
@@ -20,10 +20,12 @@
           </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Button Click="SettingsClick" Background="#f4f8f8" Foreground="#4d646a" BorderBrush="#e0e9ea" BorderThickness="1" CornerRadius="12" Padding="9,4" AutomationProperties.Name="Model connection settings">
-            <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="#d69a4b" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
+          <Button Click="SettingsClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="9,4" ToolTipService.ToolTip="Model connection settings" AutomationProperties.Name="Model connection settings">
+            <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
           </Button>
-          <Button Content="＋" Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Add window · start a new chat" AutomationProperties.Name="Add window" AutomationProperties.HelpText="Start a fresh chat without closing the current app window." />
+          <!-- Header shortcut for a new chat (handy when the sidebar is collapsed). It was labelled
+               "Add window" but never opened a window, so it is now named for what it does. -->
+          <Button Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" Padding="8,6" ToolTipService.ToolTip="New chat" AutomationProperties.Name="Start a new chat" AutomationProperties.HelpText="Start a fresh chat in the current workspace."><FontIcon Glyph="&#xE710;" FontSize="12" /></Button>
         </StackPanel>
       </Grid>
 
@@ -33,7 +35,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
               <TextBlock Text="⌂" FontSize="15" Foreground="#15849a" VerticalAlignment="Center" />
               <TextBlock x:Name="WorkspaceProjectName" Grid.Column="1" Text="Choose a project" FontSize="13" FontWeight="SemiBold" Foreground="#273a3d" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-              <Border Grid.Column="2" Background="#edf5f2" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="10" Foreground="#527068" /></Border>
+              <Border x:Name="WorkspaceFolderBadge" Grid.Column="2" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource AccentInkBrush}" /></Border>
             </Grid>
             <TextBlock x:Name="WorkspaceProjectPath" Text="Select a local folder to give the Coding Agent project context." FontSize="11" Foreground="#7b8b8d" TextTrimming="CharacterEllipsis" />
           </StackPanel>
@@ -67,7 +69,9 @@
           <StackPanel x:Name="ConversationMessages" Spacing="18" MaxWidth="860" HorizontalAlignment="Center" />
         </ScrollViewer>
 
-      <StackPanel Grid.Row="1" MaxWidth="900" HorizontalAlignment="Center" Margin="24,0,24,18">
+      <!-- Composer column: stretches to a fixed reading width (matches the message column) so it
+           no longer shrinks to its content or jumps when the status banner or Tools row appear. -->
+      <StackPanel Grid.Row="1" MaxWidth="{StaticResource ComposerMaxWidth}" HorizontalAlignment="Stretch" Margin="24,0,24,18">
         <StackPanel x:Name="AttachmentList" Visibility="Collapsed" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8" />
         <Border x:Name="RuntimeStatusBanner" Visibility="Collapsed" Background="#f3f8f9" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="9" Padding="10,7" Margin="0,0,0,8">
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -80,35 +84,51 @@
             <Button x:Name="ModelButton" Content="◉　Ollama　·　llama3.2　⌄" Click="ModelHotswapClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="Switch pinned model" AutomationProperties.HelpText="Choose a pinned model for this chat. Use Manage models to pin or unpin models." />
             <Button x:Name="ComposerToolsButton" Grid.Column="1" Content="Tools　⌄" Click="ComposerToolsClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open composer tools" AutomationProperties.HelpText="Show optional composer controls such as web search, temporary chat, project files, and smart rewriting." />
           </Grid>
-          <Grid x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+          <!-- Optional switches scroll sideways on narrow windows instead of being clipped. -->
+          <ScrollViewer x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <Button x:Name="WebSearchButton" Content="⌕　Web off" Click="WebSearchClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle web search" AutomationProperties.HelpText="Turn optional DuckDuckGo web search on or off. Search result excerpts and your prompt are sent to the selected model server." />
             <Button x:Name="TemporaryButton" Grid.Column="1" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" AutomationProperties.HelpText="Start or end a temporary chat. Temporary messages are kept only in memory and are not written to Recents or local history." />
             <Button x:Name="ProjectFilesButton" Grid.Column="2" Content="▤　Project files off" Click="ProjectFilesClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Toggle project files in Chat" AutomationProperties.HelpText="Include or exclude bounded, secret-filtered excerpts from the active project's selected folders. A remote model requires consent before files are sent." />
             <Button x:Name="CancelEditButton" Grid.Column="3" Content="Cancel edit" Click="CancelEditClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Cancel editing this message" />
             <Button x:Name="SmartRewriteButton" Grid.Column="4" Content="✦　Rewrite off" Click="SmartRewriteClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle smart prompt rewriting" AutomationProperties.HelpText="Ask the selected model to rewrite your draft using the conversation context before sending. You review the rewrite before it is sent." />
-            <Button Grid.Column="5" Content="▧　Image studio" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
-            <Button Grid.Column="6" Content="⚙　Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open advanced generation controls" AutomationProperties.HelpText="Adjust response temperature and reset it to the recommended value." />
+            <Button Grid.Column="5" Content="Image studio" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
+            <Button Grid.Column="6" Content="Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open advanced generation controls" AutomationProperties.HelpText="Adjust response temperature and reset it to the recommended value." />
           </Grid>
+          </ScrollViewer>
         </Grid>
-        <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="#ffffff" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
+        <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
           <StackPanel Spacing="4">
             <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
               <StackPanel x:Name="CommandSuggestions" Spacing="2" />
             </ScrollViewer>
-            <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="#7a8e94" Margin="8,2,8,3" />
+            <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="{StaticResource MutedInkBrush}" Margin="8,2,8,3" />
           </StackPanel>
         </Border>
-        <Border x:Name="ComposerBorder" Background="#ffffff" BorderBrush="#cbdedd" BorderThickness="1.5" CornerRadius="17" Padding="14,10" Style="{StaticResource WorkspaceFrameStyle}">
+        <Border x:Name="ComposerBorder" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1.5" CornerRadius="17" Padding="14,10" Style="{StaticResource WorkspaceFrameStyle}">
           <Grid RowDefinitions="Auto,Auto">
-            <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="132" MaxHeight="320" PlaceholderText="Ask anything…" Background="Transparent" BorderThickness="0" Foreground="#283b41" TextChanged="PromptTextChanged" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer." />
+            <!-- The composer card shows focus (accent border, see ComposerFocusChanged); the inner
+                 TextBox's own focused/hover background and underline are made transparent so it no
+                 longer draws a second box inside the card. -->
+            <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="132" MaxHeight="320" PlaceholderText="Ask anything…" Background="Transparent" BorderThickness="0" Foreground="{StaticResource InkBrush}" TextChanged="PromptTextChanged" GotFocus="ComposerGotFocus" LostFocus="ComposerLostFocus" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer.">
+              <TextBox.Resources>
+                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{StaticResource InkColor}" />
+              </TextBox.Resources>
+            </TextBox>
             <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="0,8,0,0">
-              <Button Content="＋" Click="AttachClick" Style="{StaticResource ComposerButtonStyle}" AutomationProperties.Name="Attach a file" />
-              <Button Grid.Column="1" Content="/" Click="CommandsClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Slash commands" />
-              <Button Grid.Column="2" x:Name="VoiceButton" Content="♩" Click="VoiceInputClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model." />
-              <Button Grid.Column="3" x:Name="VoiceOutputButton" Content="🔊" Click="VoiceOutputClick" Style="{StaticResource ComposerButtonStyle}" Margin="5,0,0,0" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer." />
-              <TextBlock Grid.Column="4" x:Name="ProcessingLabel" Text="● Local model" Foreground="#53818a" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0" />
-              <Button x:Name="StopButton" Grid.Column="5" Content="■" Click="StopClick" Background="#a64d43" Foreground="#ffffff" CornerRadius="10" Width="34" Height="34" Visibility="Collapsed" AutomationProperties.Name="Stop generating response" />
-              <Button x:Name="SendButton" Grid.Column="5" Content="↑" Click="SendClick" Background="#0eafc8" Foreground="#ffffff" CornerRadius="10" Width="34" Height="34" AutomationProperties.Name="Send message" />
+              <!-- Composer actions use one icon font (Fluent symbols ship with Uno) at one size, each
+                   with a tooltip; the old mix of ＋ / ♩ 🔊 text glyphs had different sizes and meanings. -->
+              <Button Click="AttachClick" Style="{StaticResource ComposerIconButtonStyle}" ToolTipService.ToolTip="Attach files (text, code, PDF, PNG or JPEG)" AutomationProperties.Name="Attach a file"><FontIcon Glyph="&#xE723;" FontSize="15" /></Button>
+              <Button Grid.Column="1" Content="/" FontSize="15" FontWeight="SemiBold" Click="CommandsClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Slash commands" AutomationProperties.Name="Slash commands" />
+              <Button Grid.Column="2" x:Name="VoiceButton" Click="VoiceInputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Dictate a message" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model."><FontIcon x:Name="VoiceButtonIcon" Glyph="&#xE720;" FontSize="15" /></Button>
+              <Button Grid.Column="3" x:Name="VoiceOutputButton" Click="VoiceOutputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Read replies aloud: off" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer."><FontIcon x:Name="VoiceOutputIcon" Glyph="&#xE74F;" FontSize="15" /></Button>
+              <TextBlock Grid.Column="4" x:Name="ProcessingLabel" Text="● Local model" Foreground="{StaticResource MutedInkBrush}" FontSize="{StaticResource CaptionFontSize}" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" Margin="8,0,12,0" />
+              <Button x:Name="StopButton" Grid.Column="5" Click="StopClick" Background="{StaticResource DangerBrush}" Foreground="White" CornerRadius="10" Width="34" Height="34" Padding="0" Visibility="Collapsed" ToolTipService.ToolTip="Stop generating" AutomationProperties.Name="Stop generating response"><FontIcon Glyph="&#xE71A;" FontSize="13" /></Button>
+              <Button x:Name="SendButton" Grid.Column="5" Click="SendClick" Style="{StaticResource PrimaryActionButtonStyle}" Padding="0" Width="34" Height="34" ToolTipService.ToolTip="Send (Enter)" AutomationProperties.Name="Send message"><FontIcon Glyph="&#xE724;" FontSize="14" /></Button>
             </Grid>
           </Grid>
         </Border>
@@ -116,7 +136,14 @@
       </StackPanel>
       </Grid>
     </Grid>
-    <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" Background="#66000000" BorderThickness="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu" />
+    <!-- Drawer scrim: must stretch over the whole window. Without Stretch alignment the Button
+         sized to nothing, so the content was never dimmed and clicking outside did not close it. -->
+    <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{StaticResource ScrimBrush}" BorderThickness="0" CornerRadius="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu">
+      <Button.Resources>
+        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ScrimColor}" />
+        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource ScrimColor}" />
+      </Button.Resources>
+    </Button>
     <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
       <Border x:Name="CompanionCard" Width="230" Background="Transparent" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
         <StackPanel HorizontalAlignment="Center" Spacing="4">

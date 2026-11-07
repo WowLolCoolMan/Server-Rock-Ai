@@ -10,7 +10,7 @@ public sealed partial class MainPage
         try
         {
             VoiceButton.IsEnabled = false;
-            VoiceButton.Content = "…";
+            VoiceButtonIcon.Glyph = "\uE916"; // stopwatch: listening
             var recognizer = new Windows.Media.SpeechRecognition.SpeechRecognizer();
             await recognizer.CompileConstraintsAsync();
             var result = await recognizer.RecognizeAsync();
@@ -24,7 +24,7 @@ public sealed partial class MainPage
             recognizer.Dispose();
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Voice input unavailable: {ex.Message}"; }
-        finally { VoiceButton.IsEnabled = true; VoiceButton.Content = "♩"; }
+        finally { VoiceButton.IsEnabled = true; VoiceButtonIcon.Glyph = "\uE720"; }
 #else
         RuntimeStatus.Text = "Voice input is available on the Windows packaged build; type your prompt on this host.";
 #endif

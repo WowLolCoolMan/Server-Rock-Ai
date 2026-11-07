@@ -1,3 +1,9 @@
+// Model Library back end: finds installed models on known local runtimes
+// (Ollama, LM Studio, …), searches Hugging Face and ModelScope, downloads/imports GGUF files, and
+// pulls/deletes Ollama models.
+// Depends on: HttpClient, BoundedHttpContent (size-limited responses).
+// Used by: MainPage Model Library dialog and model selection.
+
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;

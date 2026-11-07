@@ -1,3 +1,7 @@
+// Runs one user-approved command in a project folder, with time and output limits
+// and secret-shaped environment variables removed.
+// Used by: MainPage Coding Agent command review; WorkspaceTerminalSession reuses its folder checks.
+
 using System.Diagnostics;
 using System.Text;
 

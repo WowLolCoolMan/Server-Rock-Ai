@@ -1,3 +1,6 @@
+// "Edit an earlier message": replaces that user turn and drops everything after it.
+// Depends on: ChatMessage. Used by: MainPage message edit/retry.
+
 using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Infrastructure;

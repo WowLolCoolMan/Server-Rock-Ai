@@ -1,3 +1,6 @@
+// A named project: instructions plus the folders the user explicitly selected.
+// Used by: ProjectStore (projects.json) and MainPage projects / Coding Agent.
+
 namespace ServerRock.Core.Models;
 
 /// <summary>A named local workspace context with explicitly selected folders.</summary>

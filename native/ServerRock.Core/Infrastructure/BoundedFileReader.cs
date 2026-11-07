@@ -1,3 +1,6 @@
+// Reads local JSON/text files with a hard byte limit before parsing.
+// Used by: every *Store class, ConversationArchive, and CompanionStateStore (UI project).
+
 using System.Text;
 
 namespace ServerRock.Core.Infrastructure;

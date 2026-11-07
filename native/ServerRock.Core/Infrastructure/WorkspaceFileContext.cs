@@ -1,3 +1,7 @@
+// Reads a small, text-only sample of a project's selected folders to send to the model
+// (skips secrets, VCS metadata, dependencies, binaries, and symlinks).
+// Depends on: WorkspaceFileEditor (bounded file read). Used by: MainPage when building the model request.
+
 using System.Text;
 
 namespace ServerRock.Core.Infrastructure;

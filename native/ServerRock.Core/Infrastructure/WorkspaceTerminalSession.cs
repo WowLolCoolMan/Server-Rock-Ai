@@ -1,3 +1,7 @@
+// Interactive pseudo-terminal (Porta.Pty) plus a VT screen buffer (XTerm.NET),
+// started in a selected project folder.
+// Depends on: WorkspaceCommandRunner (folder resolution). Used by: MainPage project terminal dialog.
+
 using System.Text;
 using Porta.Pty;
 using XTerm;
@@ -74,17 +78,6 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
 
     public ValueTask SendTextAsync(string text, CancellationToken cancellationToken = default) =>
         SendInputAsync(Encoding.UTF8.GetBytes(text), cancellationToken);
-
-    public async Task ResizeAsync(int columns, int rows)
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        var safeColumns = Math.Clamp(columns, 40, 240);
-        var safeRows = Math.Clamp(rows, 12, 80);
-        Terminal.Resize(safeColumns, safeRows);
-        var connection = _connection;
-        if (connection is not null) await Task.Run(() => connection.Resize(safeColumns, safeRows)).ConfigureAwait(false);
-        ScreenChanged?.Invoke(this, EventArgs.Empty);
-    }
 
     public async ValueTask DisposeAsync()
     {

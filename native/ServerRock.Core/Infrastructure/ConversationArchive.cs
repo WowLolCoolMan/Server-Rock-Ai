@@ -1,3 +1,8 @@
+// Import/export of chat archives (native format and the legacy Electron export).
+// Validates everything before it touches local history and plans duplicate/ID-collision handling.
+// Depends on: ChatSession, ChatMessage, ChatAttachmentPolicy, BoundedFileReader.
+// Used by: ConversationStore (load validation) and MainPage import/export.
+
 using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
@@ -80,7 +85,7 @@ public static class ConversationArchive
             if (string.IsNullOrWhiteSpace(session.Id) || session.Id.Length > 128) session.Id = Guid.NewGuid().ToString("N");
             if (string.IsNullOrWhiteSpace(session.Title)) session.Title = "Imported chat";
             if (session.Title.Length > 200) session.Title = session.Title[..200];
-            if (session.Mode is not ("ChatBot" or "Coding Agent")) session.Mode = "ChatBot";
+            if (session.Mode is not (WorkspaceModes.Chat or WorkspaceModes.CodingAgent)) session.Mode = WorkspaceModes.Chat;
             if (session.FolderName?.Length > 80) session.FolderName = session.FolderName[..80];
             if (session.ForkedFrom is { Length: > 128 } || session.ForkedFrom?.Any(char.IsControl) == true)
                 throw new InvalidDataException("A conversation fork reference is invalid.");
