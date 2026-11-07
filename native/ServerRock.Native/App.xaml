@@ -83,6 +83,7 @@
       <x:Double x:Key="SubtitleFontSize">19</x:Double>
       <x:Double x:Key="TitleFontSize">23</x:Double>
       <x:Double x:Key="DisplayFontSize">30</x:Double>
+      <x:Double x:Key="CodeFontSize">13</x:Double>
       <!-- Code font: a list so each platform finds a real monospace face. -->
       <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas, DejaVu Sans Mono, Liberation Mono, monospace</FontFamily>
       <!-- Layout widths -->

@@ -26,20 +26,22 @@ public sealed partial class MainPage
         int? messageIndex = null,
         bool showActions = false)
     {
-        var bubble = new Border { MaxWidth = user ? 620 : 800, HorizontalAlignment = user ? HorizontalAlignment.Right : HorizontalAlignment.Left, Background = new SolidColorBrush(user ? ColorHelper.FromArgb(255, 230, 246, 248) : ColorHelper.FromArgb(255, 248, 250, 250)), BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 233, 239, 240)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 13, 16, 13) };
+        // Message bubbles and their actions use tokens: user turns sit on AccentSoft, replies on
+        // SurfaceAlt, and Copy/Retry/Edit use the shared ContextButtonStyle.
+        var bubble = new Border { MaxWidth = user ? 620 : 800, HorizontalAlignment = user ? HorizontalAlignment.Right : HorizontalAlignment.Left, Background = UiTheme.Brush(user ? "AccentSoftBrush" : "SurfaceAltBrush"), BorderBrush = UiTheme.Brush("LineSoftBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 13, 16, 13) };
         var content = new StackPanel { Spacing = 6 };
-        content.Children.Add(new TextBlock { Text = author, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 44, 129, 142)) });
+        content.Children.Add(new TextBlock { Text = author, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("AccentInkBrush") });
         if (attachments is { Count: > 0 })
         {
             content.Children.Add(new TextBlock
             {
                 Text = string.Join(" · ", attachments.Select(item => (item.IsImage ? "▧ " : "▤ ") + item.FileName)),
                 FontSize = 11,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 44, 106, 116)),
+                Foreground = UiTheme.Brush("AccentInkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
         }
-        var body = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 38, 56, 62)), IsTextSelectionEnabled = true };
+        var body = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("ReadingFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true };
         if (!user && !string.IsNullOrWhiteSpace(text)) content.Children.Add(MarkdownUiRenderer.Render(text));
         else content.Children.Add(body);
         if (!user && sources is { Count: > 0 }) content.Children.Add(BuildSourcesPanel(sources));
@@ -71,8 +73,7 @@ public sealed partial class MainPage
             var edit = new Button
             {
                 Content = "Edit & resend", Tag = messageIndex, Padding = new Thickness(8, 4, 8, 4),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 248, 249)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 76, 100, 106)), CornerRadius = new CornerRadius(7)
+                Style = UiTheme.Style("ContextButtonStyle")
             };
             AutomationProperties.SetName(edit, "Edit and resend this message");
             edit.Click += EditMessageClick;
@@ -84,8 +85,7 @@ public sealed partial class MainPage
             var copy = new Button
             {
                 Content = "Copy response", Tag = content, Padding = new Thickness(8, 4, 8, 4),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 248, 249)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 76, 100, 106)), CornerRadius = new CornerRadius(7)
+                Style = UiTheme.Style("ContextButtonStyle")
             };
             AutomationProperties.SetName(copy, "Copy full assistant response");
             copy.Click += CopyMessageClick;
@@ -96,8 +96,7 @@ public sealed partial class MainPage
             var retry = new Button
             {
                 Content = "Retry", Tag = messageIndex, Padding = new Thickness(8, 4, 8, 4),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 244, 248, 249)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 76, 100, 106)), CornerRadius = new CornerRadius(7)
+                Style = UiTheme.Style("ContextButtonStyle")
             };
             AutomationProperties.SetName(retry, "Retry the latest response");
             retry.Click += RetryMessageClick;
@@ -193,7 +192,7 @@ public sealed partial class MainPage
             Text = $"Web search results · {validSources.Length}",
             FontSize = 12,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 63, 92, 99))
+            Foreground = UiTheme.Brush("MutedInkBrush")
         });
         foreach (var source in validSources)
         {
@@ -204,29 +203,29 @@ public sealed partial class MainPage
                 Text = source.Title,
                 FontSize = 13,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 34, 108, 121)),
+                Foreground = UiTheme.Brush("AccentInkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
             sourceContent.Children.Add(new TextBlock
             {
                 Text = uri.Host,
                 FontSize = 10,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 105, 126, 132)),
+                Foreground = UiTheme.Brush("MutedInkBrush"),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
             sourceContent.Children.Add(new TextBlock
             {
                 Text = source.Snippet,
                 FontSize = 12,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 70, 88, 94)),
+                Foreground = UiTheme.Brush("InkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
             var button = new Button
             {
                 Content = new Border
                 {
-                    Background = new SolidColorBrush(ColorHelper.FromArgb(255, 249, 251, 251)),
-                    BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 227, 236, 237)),
+                    Background = UiTheme.Brush("SurfaceAltBrush"),
+                    BorderBrush = UiTheme.Brush("LineSoftBrush"),
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(9),
                     Padding = new Thickness(10, 8, 10, 8),
@@ -236,7 +235,7 @@ public sealed partial class MainPage
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Padding = new Thickness(0),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 255, 255)),
+                Background = UiTheme.Brush("SurfaceBrush"),
                 CornerRadius = new CornerRadius(9)
             };
             AutomationProperties.SetName(button, $"Open web source: {source.Title} · {uri.Host}");
@@ -253,7 +252,7 @@ public sealed partial class MainPage
             {
                 Text = "Search snippets can be incomplete. Open a source to check its full context.",
                 FontSize = 10,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 119, 137, 142)),
+                Foreground = UiTheme.Brush("MutedInkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
         return panel;

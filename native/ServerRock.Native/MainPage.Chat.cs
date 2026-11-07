@@ -52,11 +52,10 @@ public sealed partial class MainPage
                     : (_selectedSlashSuggestion + (isDown ? 1 : -1) + suggestions.Length) % suggestions.Length;
                 for (var i = 0; i < suggestions.Length; i++)
                 {
-                    suggestions[i].Background = new SolidColorBrush(ColorHelper.FromArgb(
-                        255,
-                        i == _selectedSlashSuggestion ? (byte)218 : (byte)238,
-                        i == _selectedSlashSuggestion ? (byte)240 : (byte)248,
-                        i == _selectedSlashSuggestion ? (byte)242 : (byte)249));
+                    // Only the keyboard-selected row is tinted; the rest stay plain.
+                    suggestions[i].Background = i == _selectedSlashSuggestion
+                        ? UiTheme.Brush("AccentSoftBrush")
+                        : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
                     AutomationProperties.SetItemStatus(suggestions[i], i == _selectedSlashSuggestion ? "Selected" : string.Empty);
                 }
                 e.Handled = true;

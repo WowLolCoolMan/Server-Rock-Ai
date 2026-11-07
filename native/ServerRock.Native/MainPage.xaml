@@ -155,12 +155,12 @@
             <Button Grid.Column="6" Content="Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open advanced generation controls" AutomationProperties.HelpText="Adjust response temperature and reset it to the recommended value." />
           </Grid>
         </Grid>
-        <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="#ffffff" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
+        <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
           <StackPanel Spacing="4">
             <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
               <StackPanel x:Name="CommandSuggestions" Spacing="2" />
             </ScrollViewer>
-            <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="#7a8e94" Margin="8,2,8,3" />
+            <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="{StaticResource MutedInkBrush}" Margin="8,2,8,3" />
           </StackPanel>
         </Border>
         <Border x:Name="ComposerBorder" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="17" Padding="14,10">

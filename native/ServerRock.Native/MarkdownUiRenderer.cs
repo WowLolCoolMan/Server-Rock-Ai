@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Media;
 namespace ServerRock.Native;
 
 /// <summary>Turns common Markdown output into native, selectable XAML content.</summary>
+/// Colors, sizes, and the code font come from the App.xaml tokens via UiTheme (see DESIGN.md).
 internal static class MarkdownUiRenderer
 {
     private const int MaxRenderCharacters = 240_000;
@@ -72,7 +73,7 @@ internal static class MarkdownUiRenderer
             foreach (var child in element.Elements()) RenderBlock(child, quote);
             parent.Children.Add(new Border
             {
-                BorderBrush = Brush(106, 177, 188),
+                BorderBrush = UiTheme.Brush("AccentBrush"),
                 BorderThickness = new Thickness(3, 0, 0, 0),
                 Padding = new Thickness(12, 4, 8, 4),
                 Child = quote
@@ -81,7 +82,7 @@ internal static class MarkdownUiRenderer
         }
         if (tag == "hr")
         {
-            parent.Children.Add(new Border { Height = 1, Background = Brush(222, 231, 233), Margin = new Thickness(0, 4, 0, 4) });
+            parent.Children.Add(new Border { Height = 1, Background = UiTheme.Brush("LineSoftBrush"), Margin = new Thickness(0, 4, 0, 4) });
             return;
         }
         if (tag == "table")
@@ -93,7 +94,7 @@ internal static class MarkdownUiRenderer
     }
 
     private static void AddParagraph(Panel parent, string text) =>
-        parent.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = 15, IsTextSelectionEnabled = true, LineHeight = 22 });
+        parent.Children.Add(new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("ReadingFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true, LineHeight = 22 });
 
     private static void AddInlineText(Panel parent, XElement element, double fontSize, bool bold)
     {
@@ -101,7 +102,7 @@ internal static class MarkdownUiRenderer
         {
             FontSize = fontSize,
             FontWeight = bold ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
-            Foreground = Brush(38, 56, 62),
+            Foreground = UiTheme.Brush("InkBrush"),
             TextWrapping = TextWrapping.Wrap,
             IsTextSelectionEnabled = true,
             LineHeight = fontSize * 1.48
@@ -137,7 +138,7 @@ internal static class MarkdownUiRenderer
                 break;
             }
             case "code":
-                output.Add(new Run { Text = element.Value, FontFamily = new FontFamily("monospace"), Foreground = Brush(28, 119, 130) });
+                output.Add(new Run { Text = element.Value, FontFamily = UiTheme.CodeFont, Foreground = UiTheme.Brush("AccentInkBrush") });
                 break;
             case "a":
             {
@@ -159,14 +160,14 @@ internal static class MarkdownUiRenderer
                     link.Inlines.Add(new Run { Text = ExternalLinkPolicy.DisplayLabel(label, target) });
                     output.Add(link);
                 }
-                else output.Add(new Run { Text = label, Foreground = Brush(38, 56, 62) });
+                else output.Add(new Run { Text = label, Foreground = UiTheme.Brush("InkBrush") });
                 break;
             }
             case "br":
                 output.Add(new LineBreak());
                 break;
             case "img":
-                output.Add(new Run { Text = $"[Image: {(string?)element.Attribute("alt") ?? "preview unavailable"}]", Foreground = Brush(105, 126, 132) });
+                output.Add(new Run { Text = $"[Image: {(string?)element.Attribute("alt") ?? "preview unavailable"}]", Foreground = UiTheme.Brush("MutedInkBrush") });
                 break;
             default:
                 AppendChildren(output, element);
@@ -189,9 +190,9 @@ internal static class MarkdownUiRenderer
         var body = new TextBlock
         {
             Text = source.TrimEnd('\r', '\n'),
-            FontFamily = new FontFamily("monospace"),
-            FontSize = 13,
-            Foreground = Brush(38, 56, 62),
+            FontFamily = UiTheme.CodeFont,
+            FontSize = UiTheme.FontSize("CodeFontSize"),
+            Foreground = UiTheme.Brush("InkBrush"),
             // Preserve code indentation and long tokens. The containing viewer
             // provides horizontal scrolling instead of reflowing source lines.
             TextWrapping = TextWrapping.NoWrap,
@@ -203,12 +204,8 @@ internal static class MarkdownUiRenderer
         {
             Content = "Copy",
             Tag = source,
-            Padding = new Thickness(8, 3, 8, 3),
-            Background = Brush(244, 248, 249),
-            Foreground = Brush(77, 100, 106),
-            BorderBrush = Brush(222, 233, 234),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7)
+            Style = UiTheme.Style("ContextButtonStyle"),
+            Padding = new Thickness(8, 3, 8, 3)
         };
         AutomationProperties.SetName(copy, $"Copy {language} code");
         AutomationProperties.SetHelpText(copy, "Copies the complete code block to the clipboard.");
@@ -222,9 +219,16 @@ internal static class MarkdownUiRenderer
                 copy.Content = "Copied";
             }
             catch { copy.Content = "Copy unavailable"; }
+            // Reset the label so the button can be used again (it used to say "Copied" forever).
+            var reset = copy.DispatcherQueue?.CreateTimer();
+            if (reset is null) return;
+            reset.Interval = TimeSpan.FromSeconds(2);
+            reset.IsRepeating = false;
+            reset.Tick += (_, _) => copy.Content = "Copy";
+            reset.Start();
         };
         var header = new Grid { ColumnDefinitions = { new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto } } };
-        header.Children.Add(new TextBlock { Text = language, FontSize = 11, Foreground = Brush(105, 126, 132), VerticalAlignment = VerticalAlignment.Center });
+        header.Children.Add(new TextBlock { Text = language, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(copy, 1);
         header.Children.Add(copy);
         var codeScroller = new ScrollViewer
@@ -241,8 +245,8 @@ internal static class MarkdownUiRenderer
         var stack = new StackPanel { Spacing = 8, Children = { header, codeScroller } };
         parent.Children.Add(new Border
         {
-            Background = Brush(248, 250, 250),
-            BorderBrush = Brush(229, 236, 237),
+            Background = UiTheme.Brush("SurfaceAltBrush"),
+            BorderBrush = UiTheme.Brush("LineSoftBrush"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(12),
             Padding = new Thickness(12),
@@ -259,12 +263,12 @@ internal static class MarkdownUiRenderer
         {
             var marker = ordered ? $"{index++}." : "•";
             var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(28) }, new ColumnDefinition() } };
-            row.Children.Add(new TextBlock { Text = marker, FontSize = 15, Foreground = Brush(88, 114, 121), VerticalAlignment = VerticalAlignment.Top });
+            row.Children.Add(new TextBlock { Text = marker, FontSize = UiTheme.FontSize("ReadingFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), VerticalAlignment = VerticalAlignment.Top });
             var itemContent = new StackPanel { Spacing = 6 };
             var inlineNodes = item.Nodes().Where(node => node is XText || node is XElement child && child.Name.LocalName is not "ul" and not "ol").ToArray();
             if (inlineNodes.Length > 0)
             {
-                var textBlock = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 15, IsTextSelectionEnabled = true, LineHeight = 22 };
+                var textBlock = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("ReadingFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true, LineHeight = 22 };
                 foreach (var node in inlineNodes) AppendInline(textBlock.Inlines, node);
                 itemContent.Children.Add(textBlock);
             }
@@ -292,16 +296,15 @@ internal static class MarkdownUiRenderer
             for (var index = 0; index < columns; index++)
             {
                 var cell = index < cells.Length ? cells[index] : null;
-                var text = new TextBlock { Text = cell?.Value ?? "", TextWrapping = TextWrapping.Wrap, FontSize = 13, IsTextSelectionEnabled = true, FontWeight = cell?.Name.LocalName == "th" ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal };
-                var border = new Border { BorderBrush = Brush(225, 233, 234), BorderThickness = new Thickness(1), Padding = new Thickness(9, 7, 9, 7), Child = text };
+                var header = cell?.Name.LocalName == "th";
+                var text = new TextBlock { Text = cell?.Value ?? "", TextWrapping = TextWrapping.Wrap, FontSize = 13, Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true, FontWeight = header ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal };
+                // Header cells get a quiet fill so the header row reads as a header.
+                var border = new Border { BorderBrush = UiTheme.Brush("LineSoftBrush"), BorderThickness = new Thickness(1), Padding = new Thickness(9, 7, 9, 7), Background = header ? UiTheme.Brush("SurfaceAltBrush") : null, Child = text };
                 Grid.SetColumn(border, index);
                 row.Children.Add(border);
             }
             tablePanel.Children.Add(row);
         }
-        parent.Children.Add(new Border { BorderBrush = Brush(225, 233, 234), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(9), Child = tablePanel });
+        parent.Children.Add(new Border { BorderBrush = UiTheme.Brush("LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(9), Child = tablePanel });
     }
-
-    private static SolidColorBrush Brush(byte red, byte green, byte blue) =>
-        new(ColorHelper.FromArgb(255, red, green, blue));
 }

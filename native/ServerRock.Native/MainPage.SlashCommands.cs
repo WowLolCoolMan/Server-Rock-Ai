@@ -65,20 +65,25 @@ public sealed partial class MainPage
         var matches = GetSlashSuggestions(commandName, argumentPrefix);
         if (matches.Length == 0)
         {
-            CommandSuggestions.Children.Add(new TextBlock { Text = "No matching commands or options", Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)), Margin = new Thickness(8, 6, 8, 6) });
+            CommandSuggestions.Children.Add(new TextBlock { Text = "No matching commands or options", Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 6, 8, 6) });
         }
         foreach (var (name, description) in matches)
         {
             var button = new Button
             {
                 Tag = name,
+                // Rows span the full popup width (they used to be ragged) and start untinted;
+                // the keyboard-selected row gets the selected state (UiTheme.ApplyNavItemState).
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 238, 248, 249)),
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                BorderThickness = new Thickness(0),
+                CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(10, 7, 10, 7),
                 Content = new StackPanel { Spacing = 2, Children =
                 {
-                    new TextBlock { Text = name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 46, 72, 80)) },
-                    new TextBlock { Text = description, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 103, 126, 133)) }
+                    new TextBlock { Text = name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush") },
+                    new TextBlock { Text = description, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") }
                 } }
             };
             AutomationProperties.SetName(button, name);
