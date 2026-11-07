@@ -120,9 +120,11 @@ public sealed partial class MainPage
 
     private void UpdateTemporaryControls()
     {
+        // Tools toggles: plain "<name> on/off" labels (no mixed glyphs) plus a visible on-state.
         TemporaryButton.Content = _compactComposerToolbar
             ? _isTemporaryChat ? "Temp on" : "Temp off"
-            : _isTemporaryChat ? "◉　Temporary on" : "◌　Temporary off";
+            : _isTemporaryChat ? "Temporary on" : "Temporary off";
+        UiTheme.ApplyToggleState(TemporaryButton, _isTemporaryChat);
         TemporaryBadge.Visibility = _isTemporaryChat ? Visibility.Visible : Visibility.Collapsed;
         UpdateEditingControls();
         ChatFolderBadge.Visibility = string.IsNullOrWhiteSpace(_activeChatFolder) || _isTemporaryChat ? Visibility.Collapsed : Visibility.Visible;
@@ -170,7 +172,8 @@ public sealed partial class MainPage
         ProjectFilesButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
         ProjectFilesButton.Content = _compactComposerToolbar
             ? _includeProjectFilesInChat ? "Files on" : "Files off"
-            : _includeProjectFilesInChat ? "▤　Project files on" : "▤　Project files off";
+            : _includeProjectFilesInChat ? "Project files on" : "Project files off";
+        UiTheme.ApplyToggleState(ProjectFilesButton, _includeProjectFilesInChat);
         ProjectBadgeText.Text = _mode == "Coding Agent"
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
@@ -205,7 +208,8 @@ public sealed partial class MainPage
     {
         WebSearchButton.Content = _compactComposerToolbar
             ? _settings.WebSearchEnabled ? "Web on" : "Web off"
-            : _settings.WebSearchEnabled ? "⌕　Web on" : "⌕　Web off";
+            : _settings.WebSearchEnabled ? "Web search on" : "Web search off";
+        UiTheme.ApplyToggleState(WebSearchButton, _settings.WebSearchEnabled);
         var local = IsLocalEndpoint(_settings.Endpoint);
         var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
         if (_isTemporaryChat)
@@ -214,7 +218,7 @@ public sealed partial class MainPage
                 ? local ? "Temporary chat is not saved. Selected project files still go to this on-device model."
                     : "Temporary chat is not saved. Selected project files still go to the configured remote model."
                 : _settings.WebSearchEnabled
-                    ? $"Temporary chat is not saved. Search queries go to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model."
+                    ? $"Temporary chat is not saved. Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model."
                     : local ? $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the on-device model."
                         : $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the configured remote model.";
             return;
@@ -222,7 +226,7 @@ public sealed partial class MainPage
         PrivacyFootnote.Text = _mode == "Coding Agent"
             ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
             : _settings.WebSearchEnabled
-                ? $"Search query goes to DuckDuckGo; results, your prompt{(projectFiles ? " and selected project files" : "")} go to the selected model server."
+                ? $"Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model server."
                 : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
                     : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
     }
@@ -231,7 +235,8 @@ public sealed partial class MainPage
     {
         SmartRewriteButton.Content = _compactComposerToolbar
             ? _settings.SmartPromptRewritingEnabled ? "Rewrite on" : "Rewrite off"
-            : _settings.SmartPromptRewritingEnabled ? "✦　Rewrite on" : "✧　Rewrite off";
+            : _settings.SmartPromptRewritingEnabled ? "Smart rewrite on" : "Smart rewrite off";
+        UiTheme.ApplyToggleState(SmartRewriteButton, _settings.SmartPromptRewritingEnabled);
         AutomationProperties.SetHelpText(SmartRewriteButton,
             _settings.SmartPromptRewritingEnabled
                 ? "Your draft and current conversation are sent to the selected model for a rewrite preview before sending."
@@ -248,4 +253,9 @@ public sealed partial class MainPage
             ? "Smart rewriting on · drafts are previewed before they reach the agent."
             : "Smart rewriting off · drafts are sent as written.";
     }
+
+    // The composer card is the focus target users see: accent border while the prompt has
+    // focus, normal line border otherwise (the inner TextBox focus visual is turned off in XAML).
+    private void ComposerGotFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("AccentBrush");
+    private void ComposerLostFocus(object sender, RoutedEventArgs e) => ComposerBorder.BorderBrush = UiTheme.Brush("LineBrush");
 }

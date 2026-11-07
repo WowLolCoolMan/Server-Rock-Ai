@@ -63,6 +63,17 @@ internal static class UiTheme
         button.FontWeight = selected ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal;
     }
 
+    /// <summary>
+    /// Styles an on/off toggle that uses ContextButtonStyle: "on" gets the accent-soft fill and
+    /// accent text/border so the state is visible at a glance, not only in its label.
+    /// </summary>
+    public static void ApplyToggleState(Button button, bool on)
+    {
+        button.Background = on ? Brush("AccentSoftBrush") : Brush("SurfaceBrush");
+        button.BorderBrush = on ? Brush("AccentBrush") : Brush("LineBrush");
+        button.Foreground = on ? Brush("AccentInkBrush") : Brush("MutedInkBrush");
+    }
+
     /// <summary>Styles a vertical navigation item (Settings sections) as selected or not.</summary>
     public static void ApplyNavItemState(Button button, bool selected)
     {

@@ -80,6 +80,8 @@
       <x:Double x:Key="DisplayFontSize">30</x:Double>
       <!-- Code font: a list so each platform finds a real monospace face. -->
       <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas, DejaVu Sans Mono, Liberation Mono, monospace</FontFamily>
+      <!-- Layout widths -->
+      <x:Double x:Key="ComposerMaxWidth">820</x:Double>
       <!-- Corner radii -->
       <CornerRadius x:Key="ControlCornerRadiusToken">8</CornerRadius>
       <CornerRadius x:Key="CardCornerRadius">12</CornerRadius>
@@ -122,6 +124,12 @@
       </Style>
       <Style x:Key="ComposerButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="8,5" />
+      </Style>
+      <!-- Square icon button in the composer action row (attach, commands, voice). -->
+      <Style x:Key="ComposerIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="34" /><Setter Property="Height" Value="34" /><Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" /><Setter Property="CornerRadius" Value="8" />
       </Style>
       <!-- Small uppercase section label (sidebar groups, settings groups). -->
       <Style x:Key="SectionLabelStyle" TargetType="TextBlock">

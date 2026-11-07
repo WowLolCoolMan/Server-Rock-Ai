@@ -213,7 +213,11 @@ public sealed partial class MainPage : Page
         var compact = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase);
         PromptBox.MinHeight = compact ? 100 : 132;
         PromptBox.MaxHeight = compact ? 240 : 320;
-        VoiceOutputButton.Content = _settings.VoiceOutputEnabled ? "🔊 on" : "🔊 off";
+        // Voice output is an icon toggle (speaker on / muted) with a tooltip, matching the other
+        // composer icons; the on state also gets the accent color.
+        VoiceOutputIcon.Glyph = _settings.VoiceOutputEnabled ? "\uE767" : "\uE74F";
+        VoiceOutputButton.Foreground = UiTheme.Brush(_settings.VoiceOutputEnabled ? "AccentInkBrush" : "MutedInkBrush");
+        ToolTipService.SetToolTip(VoiceOutputButton, _settings.VoiceOutputEnabled ? "Read replies aloud: on" : "Read replies aloud: off");
         AutomationProperties.SetName(VoiceOutputButton, _settings.VoiceOutputEnabled ? "Disable spoken responses" : "Enable spoken responses");
     }
 
@@ -461,8 +465,10 @@ public sealed partial class MainPage : Page
             RenderAssistantMessage(response, _messages[assistantIndex].Content, _messages[assistantIndex].Sources);
             SetCompanionCompletionSummary(_messages[assistantIndex].Content);
             _ = SpeakResponseAsync(_messages[assistantIndex].Content);
+            // A finished reply needs no banner (it used to show a bare "⌖ model" line every time);
+            // only the unsaved-history case is worth saying.
             RuntimeStatus.Text = _historyAvailable
-                ? $"⌖　{_settings.Model}"
+                ? string.Empty
                 : "Response complete · conversation not saved";
         }
         catch (OperationCanceledException)

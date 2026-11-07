@@ -30,6 +30,7 @@ public sealed partial class MainPage
     private async Task RefreshModelConnectionAsync()
     {
         ConnectionLabel.Text = "Checking…";
+        HeaderConnectionLabel.Text = "Checking…";
         try
         {
             var models = await _provider.DiscoverModelsAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
@@ -37,7 +38,7 @@ public sealed partial class MainPage
             var local = IsLocalEndpoint(_settings.Endpoint);
             ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
             HeaderConnectionLabel.Text = ConnectionLabel.Text;
-            ConnectionDot.Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 119, 180, 135));
+            ConnectionDot.Fill = UiTheme.Brush("SuccessBrush");
             HeaderConnectionDot.Fill = ConnectionDot.Fill;
             ProcessingLabel.Text = local ? "● On-device model" : "● Remote model server";
             if (!models.Contains(_settings.Model, StringComparer.Ordinal))
@@ -55,7 +56,7 @@ public sealed partial class MainPage
             _providerConnected = false;
             ConnectionLabel.Text = "Not connected";
             HeaderConnectionLabel.Text = "Not connected";
-            ConnectionDot.Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 193, 142, 92));
+            ConnectionDot.Fill = UiTheme.Brush("WarningBrush");
             HeaderConnectionDot.Fill = ConnectionDot.Fill;
             ProcessingLabel.Text = "● Model not connected";
             RuntimeStatus.Text = $"Set up your model connection · {ex.Message}";
