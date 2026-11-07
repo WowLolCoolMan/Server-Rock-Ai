@@ -161,6 +161,12 @@ public sealed partial class MainPage : Page
         SidebarView.ExportChatsRequested += ExportChatsClick;
         SidebarView.ToggleCompanionRequested += ToggleCompanionClick;
         SidebarView.CustomizeCompanionRequested += CustomizeCompanionClick;
+        SidebarView.ScheduledTasksRequested += ScheduledTasksClick;
+        SidebarView.ImagesRequested += ImageStudioClick;
+        SidebarView.MoreRequested += MoreClick;
+        SidebarView.UpdateRequested += UpdateClick;
+        if (string.Equals(Environment.GetEnvironmentVariable("SERVER_ROCK_UPDATE_AVAILABLE"), "1", StringComparison.Ordinal))
+            SidebarView.SetUpdateAvailable(true);
         Canvas.SetZIndex(SidebarBackdrop, 1);
         Canvas.SetZIndex(Sidebar, 2);
         ApplyResponsiveNavigation(AppRoot.ActualWidth);
@@ -248,6 +254,87 @@ public sealed partial class MainPage : Page
     }
 
     private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
+
+    private async void ScheduledTasksClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Scheduled tasks",
+            Content = new TextBlock { Text = "Scheduled and recurring task controls are being prepared for this workspace. Nothing runs in the background yet.", TextWrapping = TextWrapping.Wrap },
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
+    private async void MoreClick(object sender, RoutedEventArgs e)
+    {
+        var selected = string.Empty;
+        ContentDialog? dialog = null;
+        var actions = new StackPanel { Spacing = 6 };
+        void AddAction(string label, string value, string description)
+        {
+            var button = new Button
+            {
+                Content = new StackPanel
+                {
+                    Spacing = 2,
+                    Children =
+                    {
+                        new TextBlock { Text = label, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                        new TextBlock { Text = description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Opacity = 0.75 }
+                    }
+                },
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(10, 8, 10, 8),
+                Tag = value
+            };
+            button.Click += (_, _) => { selected = value; dialog?.Hide(); };
+            actions.Children.Add(button);
+        }
+        AddAction("Projects & folders", "projects", "Create a project, choose local folders, and manage project context.");
+        AddAction("Search conversations", "search", "Find saved chats and coding sessions.");
+        AddAction("Code Review Agent", "review", "Review a folder, ZIP, or GitHub repository with your selected model.");
+        AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
+        AddAction("Connection & settings", "settings", "Configure model endpoints, privacy, voice, and local preferences.");
+        dialog = new ContentDialog { Title = "More workspace options", Content = actions, CloseButtonText = "Cancel", XamlRoot = XamlRoot };
+        await dialog.ShowAsync();
+        switch (selected)
+        {
+            case "projects": NewProjectClick(this, new RoutedEventArgs()); break;
+            case "search": SearchClick(this, new RoutedEventArgs()); break;
+            case "review": await OpenCodeReviewAgentAsync(); break;
+            case "health": await ShowLocalHealthAsync(includeMap: false); break;
+            case "settings": SettingsClick(this, new RoutedEventArgs()); break;
+        }
+    }
+
+    private async void UpdateClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Server Rock AI update",
+            Content = new TextBlock { Text = "A newer app build is available. Open Settings to review the signed update channel and choose when to install it.", TextWrapping = TextWrapping.Wrap },
+            PrimaryButtonText = "Open settings",
+            CloseButtonText = "Later",
+            XamlRoot = XamlRoot
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary) SettingsClick(this, new RoutedEventArgs());
+    }
+
+    private async Task OpenCodeReviewAgentAsync()
+    {
+        var source = new TextBox { PlaceholderText = "Folder path, ZIP path, or GitHub repository URL", TextWrapping = TextWrapping.Wrap };
+        var model = new TextBox { Text = _settings.Model, PlaceholderText = "Model ID", TextWrapping = TextWrapping.Wrap };
+        var note = new TextBlock { Text = "The review agent will inspect the supplied source, critique architecture, correctness, security, tests, and release posture, and return findings for your approval. The current native slice prepares the review request; it does not fetch remote repositories automatically.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = 0.82 };
+        var panel = new StackPanel { Spacing = 10, Children = { note, new TextBlock { Text = "Review source", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold }, source, new TextBlock { Text = "Use model", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold }, model } };
+        var dialog = new ContentDialog { Title = "Code Review Agent", Content = panel, PrimaryButtonText = "Prepare review", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary || string.IsNullOrWhiteSpace(source.Text)) return;
+        await SwitchModeAsync("Coding Agent");
+        PromptBox.Text = $"Act as a specialty code review agent. Review this source completely: {source.Text.Trim()}\n\nUse model preference: {model.Text.Trim()}\n\nCritique everything relevant: requirements/spec alignment, correctness, architecture, readability, security, performance, tests, packaging, and release readiness. Separate concrete blockers from optional improvements. Do not modify files without explicit approval.";
+        PromptBox.Focus(FocusState.Programmatic);
+        RuntimeStatus.Text = "Code Review Agent request prepared. Review it before sending.";
+    }
 
     private void AppRootSizeChanged(object sender, SizeChangedEventArgs e)
     {

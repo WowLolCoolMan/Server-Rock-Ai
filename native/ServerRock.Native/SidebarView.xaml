@@ -20,11 +20,13 @@
     </Border>
     <Border Grid.Row="2" Grid.RowSpan="7" Background="#e8f1ef" BorderBrush="#dbe8e4" BorderThickness="1" CornerRadius="12" Padding="4,5" />
     <Button x:Name="NewConversationButton" Grid.Row="2" Content="＋　New conversation" HorizontalContentAlignment="Left" Background="#ffffff" Foreground="#253f47" BorderBrush="#cfe0dc" BorderThickness="1" CornerRadius="9" Padding="11,10" Margin="8,9,8,6" Click="NewChatClick" AutomationProperties.Name="Start a new conversation" />
-    <Button x:Name="NewProjectButton" Grid.Row="3" Content="▱　Projects &amp; folders" Style="{StaticResource SidebarActionButtonStyle}" Click="NewProjectClick" AutomationProperties.Name="Create or select a project" />
-    <Button Grid.Row="4" Content="⌕　Search conversations" Style="{StaticResource SidebarActionButtonStyle}" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
-    <Button Grid.Row="5" Content="◉　Model library" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
-    <Button Grid.Row="6" Content="⚙　Connection &amp; settings" Style="{StaticResource SidebarActionButtonStyle}" Click="SettingsClick" AutomationProperties.Name="Open model connection settings" />
-    <Button Grid.Row="7" Content="✦　Extensions &amp; skills" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
+    <Button x:Name="ScheduledTasksButton" Grid.Row="3" Content="◷　Scheduled tasks" Style="{StaticResource SidebarActionButtonStyle}" Click="ScheduledTasksClick" AutomationProperties.Name="Open scheduled tasks" AutomationProperties.HelpText="Review and manage future or recurring tasks." />
+    <Button x:Name="ImagesButton" Grid.Row="4" Content="▧　Images" Style="{StaticResource SidebarActionButtonStyle}" Click="ImagesClick" AutomationProperties.Name="Open images workspace" AutomationProperties.HelpText="Open Image Studio for local image generation." />
+    <Button Grid.Row="5" Content="✦　Extensions &amp; skills" Style="{StaticResource SidebarActionButtonStyle}" Click="PluginStoreClick" AutomationProperties.Name="Open plugin store" AutomationProperties.HelpText="Browse supported plugins, extensions, and skills." />
+    <Button Grid.Row="6" Content="◉　Model store" Style="{StaticResource SidebarActionButtonStyle}" Click="ModelClick" AutomationProperties.Name="Open AI SuperMarket and installed models" AutomationProperties.HelpText="Browse, download, select, pin, or benchmark compatible local models." />
+    <Button x:Name="MoreButton" Grid.Row="7" Content="···　More" Style="{StaticResource SidebarActionButtonStyle}" Click="MoreClick" ToolTipService.ToolTip="More options · projects, search, Code Review Agent, health scan" AutomationProperties.Name="Open more workspace options" AutomationProperties.HelpText="Show projects, search, Code Review Agent, health tools, and connection settings." />
+    <Button x:Name="NewProjectButton" Grid.Row="7" Visibility="Collapsed" Click="NewProjectClick" AutomationProperties.Name="Create or select a project" />
+    <Button x:Name="SearchButton" Grid.Row="7" Visibility="Collapsed" Click="SearchClick" AutomationProperties.Name="Search saved conversations" />
     <Button Grid.Row="8" x:Name="GitHubButton" Content="⌘　GitHub &amp; source control" Style="{StaticResource SidebarActionButtonStyle}" Click="GitHubClick" AutomationProperties.Name="Connect GitHub and open repositories" AutomationProperties.HelpText="Sign in, choose or enter a repository, and clone it as a project for the Coding Agent." />
     <ScrollViewer Grid.Row="9" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
       <StackPanel Spacing="5">
@@ -50,9 +52,10 @@
     <Border Grid.Row="10" BorderBrush="#dce6e3" BorderThickness="0,1,0,0" Padding="5,10,5,2">
       <StackPanel Spacing="7">
         <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="#d69a4b" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="#294850" /><TextBlock Text="· local history" FontSize="11" Foreground="#66818a" /></StackPanel>
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-          <Button x:Name="CompanionButton" Content="◉　Show pet" Click="ToggleCompanionClick" Background="#ffffff" Foreground="#294850" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="8,6" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window." />
-          <Button Grid.Column="1" Content="···" Click="CustomizeCompanionClick" Background="Transparent" Foreground="#526a70" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="9,6" AutomationProperties.Name="Customize pet companion" AutomationProperties.HelpText="Choose which local companion to show." />
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+          <Button x:Name="UpdateButton" Content="↓　Update available" Visibility="Collapsed" Click="UpdateClick" Background="#e5f5f6" Foreground="#087d91" BorderBrush="#bde0e4" BorderThickness="1" CornerRadius="8" Padding="8,6" HorizontalContentAlignment="Left" AutomationProperties.Name="Open available app update" AutomationProperties.HelpText="Review and install the available Server Rock AI update." />
+          <Button Grid.Column="1" x:Name="CompanionButton" Content="◉　Show pet" Click="ToggleCompanionClick" Background="#ffffff" Foreground="#294850" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="8,6" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window." />
+          <Button Grid.Column="2" Content="···" Click="CustomizeCompanionClick" Background="Transparent" Foreground="#526a70" BorderBrush="#dce6e3" BorderThickness="1" CornerRadius="8" Padding="9,6" AutomationProperties.Name="Customize pet companion" AutomationProperties.HelpText="Choose which local companion to show." />
         </Grid>
       </StackPanel>
     </Border>

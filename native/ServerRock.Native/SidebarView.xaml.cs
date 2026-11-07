@@ -37,6 +37,10 @@ public sealed partial class SidebarView : UserControl
     public event RoutedEventHandler? ExportChatsRequested;
     public event RoutedEventHandler? ToggleCompanionRequested;
     public event RoutedEventHandler? CustomizeCompanionRequested;
+    public event RoutedEventHandler? ScheduledTasksRequested;
+    public event RoutedEventHandler? ImagesRequested;
+    public event RoutedEventHandler? MoreRequested;
+    public event RoutedEventHandler? UpdateRequested;
 
     public SidebarView() => InitializeComponent();
 
@@ -54,4 +58,14 @@ public sealed partial class SidebarView : UserControl
     private void ExportChatsClick(object sender, RoutedEventArgs e) => ExportChatsRequested?.Invoke(sender, e);
     private void ToggleCompanionClick(object sender, RoutedEventArgs e) => ToggleCompanionRequested?.Invoke(sender, e);
     private void CustomizeCompanionClick(object sender, RoutedEventArgs e) => CustomizeCompanionRequested?.Invoke(sender, e);
+    private void ScheduledTasksClick(object sender, RoutedEventArgs e) => ScheduledTasksRequested?.Invoke(sender, e);
+    private void ImagesClick(object sender, RoutedEventArgs e) => ImagesRequested?.Invoke(sender, e);
+    private void MoreClick(object sender, RoutedEventArgs e) => MoreRequested?.Invoke(sender, e);
+    private void UpdateClick(object sender, RoutedEventArgs e) => UpdateRequested?.Invoke(sender, e);
+
+    public void SetUpdateAvailable(bool available, string label = "↓　Update available")
+    {
+        UpdateButton.Content = label;
+        UpdateButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+    }
 }
