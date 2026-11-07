@@ -165,7 +165,8 @@ public sealed partial class MainPage
         var pageCount = 1;
         AutomationProperties.SetName(stopBenchmark, "Stop model benchmark");
         AutomationProperties.SetHelpText(stopBenchmark, "Cancel the model benchmark currently running on this device.");
-        var list = new ListView { MinHeight = 220, MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = "Id" };
+        // Rows carry long repo names plus metadata; wrap them instead of cutting them off.
+        var list = UiTheme.WrapListText(new ListView { MinHeight = 220, MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = "Id" });
         AutomationProperties.SetName(list, "Model search results");
         AutomationProperties.SetHelpText(list, "Select a model to use it, pin it in the composer hotswapper, or benchmark it on this PC.");
         CancellationTokenSource? catalogSearchCancellation = null;

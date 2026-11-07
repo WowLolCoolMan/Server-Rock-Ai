@@ -33,7 +33,7 @@ public sealed partial class MainPage
         foreach (var item in PluginCatalogService.Categories())
             category.Items.Add(item);
         category.SelectedIndex = 0;
-        var list = new ListView { MinHeight = 220, MaxHeight = 320, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(PluginDefinition.ListLabel) };
+        var list = UiTheme.WrapListText(new ListView { MinHeight = 220, MaxHeight = 320, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(PluginDefinition.ListLabel) });
         AutomationProperties.SetName(list, "Plugins");
         var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true };
         AutomationProperties.SetLiveSetting(details, AutomationLiveSetting.Polite);

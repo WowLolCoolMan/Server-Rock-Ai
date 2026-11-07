@@ -54,6 +54,26 @@ internal static class UiTheme
         return dialog;
     }
 
+    /// <summary>Makes DisplayMemberPath rows in a list wrap instead of being cut off.</summary>
+    public static T WrapListText<T>(T list) where T : ListViewBase
+    {
+        // Uno does not apply an implicit TextBlock style to DisplayMemberPath rows, so wrap
+        // each row's text as its container is realized.
+        list.ContainerContentChanging += (_, args) =>
+        {
+            void Wrap(DependencyObject node)
+            {
+                if (node is TextBlock text) { text.TextWrapping = TextWrapping.Wrap; text.Margin = new Thickness(0, 4, 0, 4); }
+                for (var index = 0; index < VisualTreeHelper.GetChildrenCount(node); index++) Wrap(VisualTreeHelper.GetChild(node, index));
+            }
+            var container = args.ItemContainer;
+            if (container is null) return;
+            Wrap(container);
+            container.DispatcherQueue?.TryEnqueue(() => Wrap(container));
+        };
+        return list;
+    }
+
     /// <summary>Styles one half of a segmented switch as selected or not (see SegmentButtonStyle).</summary>
     public static void ApplySegmentState(Button button, bool selected)
     {

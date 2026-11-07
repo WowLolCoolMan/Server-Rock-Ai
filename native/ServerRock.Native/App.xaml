@@ -146,6 +146,17 @@
         <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="CornerRadius" Value="7" />
         <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
       </Style>
+      <!-- Every ContentDialog: the primary action uses the accent so "do it" stands out from
+           Cancel/Close (it used to look identical). Only this setter is overridden; the default
+           dialog template still applies. -->
+      <Style TargetType="ContentDialog">
+        <Setter Property="PrimaryButtonStyle" Value="{StaticResource DialogPrimaryButtonStyle}" />
+      </Style>
+      <!-- Text in list rows built from DisplayMemberPath (model and plugin lists): wrap long
+           names and metadata instead of cutting them off at the dialog edge. -->
+      <Style x:Key="WrappingListTextStyle" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap" /><Setter Property="Margin" Value="0,4" />
+      </Style>
       <!-- Small uppercase section label (sidebar groups, settings groups). -->
       <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="10" /><Setter Property="CharacterSpacing" Value="110" /><Setter Property="Foreground" Value="{StaticResource MutedInkBrush}" />
