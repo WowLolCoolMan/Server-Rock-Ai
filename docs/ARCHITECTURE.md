@@ -201,11 +201,31 @@ untouched (reporting an error) instead of replacing it.
 
 ## Tests
 
-`ServerRock.Core.Tests/Program.cs` is a top-level-statements console app. It
-runs every check in order and stops at the first failure
-(`Check(condition, description)` throws). HTTP is faked with `StubHandler`;
-storage tests use temp folders. Fixtures for the legacy Electron archive format
-are in `ServerRock.Core.Tests/Fixtures/`.
+`ServerRock.Core.Tests` is a plain console app. `Program.cs` is only the runner:
+it calls each test area in order and the run stops at the first failure
+(`Check(condition, description)` throws).
+
+| File | Covers |
+| --- | --- |
+| `TestSupport.cs` | `Check`, `RunGit`, `DeleteDirectoryTree`, `ReadElectronFixtureAsync`, and the fakes `StubHandler` (HTTP) and `NonSeekableReadStream`. |
+| `DiagnosticsTests.cs` | Log redaction and export. |
+| `CatalogTests.cs` | Plugin and skill catalogs. |
+| `ModelLibraryTests.cs` | Local runtime discovery, Hugging Face / ModelScope, GGUF import, Ollama pull/delete. |
+| `ChatProviderTests.cs` | OpenAI-compatible discovery, streaming, request shape, images, limits. |
+| `ImageGenerationTests.cs` | ComfyUI generation and cancellation. |
+| `AttachmentTests.cs` | Attachment rules and PDF text extraction. |
+| `BoundedReadTests.cs` | Size-limited HTTP and file reads. |
+| `ConversationArchiveTests.cs` | Archive import/export, legacy Electron format. |
+| `WebSearchTests.cs` | DuckDuckGo result parsing. |
+| `GitHubTests.cs` | Device flow, credentials, repository parsing, API limits. |
+| `ChatMessageTests.cs` | Editing an earlier turn; model-facing message shape. |
+| `LocalStorageAndWorkspaceTests.cs` | Stores, workspace context, git review, commands, terminal, editor, diff, undo (one shared temp folder). |
+| `ExternalLinkTests.cs` | Which reply links may open and how they are labeled. |
+
+To add a check, put it in the matching `*Tests.cs` file. A new area gets a new
+`internal static class XxxTests` with `Run()`/`RunAsync()` and one line in
+`Program.cs`. HTTP is faked with `StubHandler`; storage tests use temp folders.
+Fixtures for the legacy Electron archive format are in `Fixtures/`.
 
 ## Where do I find…?
 
