@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Foundation;
 using System.Diagnostics;
@@ -119,6 +120,24 @@ public sealed partial class MainPage : Page
 #endif
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
 
+    private FrameworkElement Sidebar => SidebarView;
+    private Button ChatModeButton => SidebarView.ChatModeButtonControl;
+    private Button CodingModeButton => SidebarView.CodingModeButtonControl;
+    private Button NewConversationButton => SidebarView.NewConversationButtonControl;
+    private Button NewProjectButton => SidebarView.NewProjectButtonControl;
+    private Button GitHubButton => SidebarView.GitHubButtonControl;
+    private StackPanel CodingNavigationSection => SidebarView.CodingNavigationSectionControl;
+    private StackPanel ProjectList => SidebarView.ProjectListControl;
+    private TextBlock CodeFilesHeader => SidebarView.CodeFilesHeaderControl;
+    private StackPanel ProjectFileList => SidebarView.ProjectFileListControl;
+    private StackPanel ChatFolderList => SidebarView.ChatFolderListControl;
+    private StackPanel RecentList => SidebarView.RecentListControl;
+    private Ellipse ConnectionDot => SidebarView.ConnectionDotControl;
+    private TextBlock ConnectionLabel => SidebarView.ConnectionLabelControl;
+    private Button CompanionButton => SidebarView.CompanionButtonControl;
+    private Button ImportChatsButton => SidebarView.ImportChatsButtonControl;
+    private Button ExportChatsButton => SidebarView.ExportChatsButtonControl;
+
     // A 1280px snapped window is a common working width; use a drawer so the
     // conversation area stays comfortable beside the navigation controls.
     private const double CompactNavigationBreakpoint = 1320;
@@ -128,6 +147,20 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        SidebarView.ChatModeRequested += ChatModeClick;
+        SidebarView.CodingModeRequested += CodingModeClick;
+        SidebarView.NewChatRequested += NewChatClick;
+        SidebarView.NewProjectRequested += NewProjectClick;
+        SidebarView.SearchRequested += SearchClick;
+        SidebarView.ModelsRequested += ModelClick;
+        SidebarView.SettingsRequested += SettingsClick;
+        SidebarView.PluginsRequested += PluginStoreClick;
+        SidebarView.GitHubRequested += GitHubClick;
+        SidebarView.NewChatFolderRequested += NewChatFolderClick;
+        SidebarView.ImportChatsRequested += ImportChatsClick;
+        SidebarView.ExportChatsRequested += ExportChatsClick;
+        SidebarView.ToggleCompanionRequested += ToggleCompanionClick;
+        SidebarView.CustomizeCompanionRequested += CustomizeCompanionClick;
         Canvas.SetZIndex(SidebarBackdrop, 1);
         Canvas.SetZIndex(Sidebar, 2);
         ApplyResponsiveNavigation(AppRoot.ActualWidth);

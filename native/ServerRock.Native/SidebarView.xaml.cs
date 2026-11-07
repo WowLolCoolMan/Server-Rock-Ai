@@ -1,10 +1,28 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;
 
 public sealed partial class SidebarView : UserControl
 {
+    public Button ChatModeButtonControl => ChatModeButton;
+    public Button CodingModeButtonControl => CodingModeButton;
+    public Button NewConversationButtonControl => NewConversationButton;
+    public Button NewProjectButtonControl => NewProjectButton;
+    public Button GitHubButtonControl => GitHubButton;
+    public StackPanel CodingNavigationSectionControl => CodingNavigationSection;
+    public StackPanel ProjectListControl => ProjectList;
+    public TextBlock CodeFilesHeaderControl => CodeFilesHeader;
+    public StackPanel ProjectFileListControl => ProjectFileList;
+    public StackPanel ChatFolderListControl => ChatFolderList;
+    public StackPanel RecentListControl => RecentList;
+    public Ellipse ConnectionDotControl => ConnectionDot;
+    public TextBlock ConnectionLabelControl => ConnectionLabel;
+    public Button CompanionButtonControl => CompanionButton;
+    public Button ImportChatsButtonControl => ImportChatsButton;
+    public Button ExportChatsButtonControl => ExportChatsButton;
+
     public event RoutedEventHandler? ChatModeRequested;
     public event RoutedEventHandler? CodingModeRequested;
     public event RoutedEventHandler? NewChatRequested;
