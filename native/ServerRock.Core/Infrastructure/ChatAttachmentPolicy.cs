@@ -94,4 +94,24 @@ public static class ChatAttachmentPolicy
     public static long RemainingImageBytes(IEnumerable<ChatAttachment> attachments) =>
         Math.Max(0, MaxTotalImageBytes - attachments.Where(item => item.IsImage)
             .Sum(item => Math.Max(0, item.Content.Length * 3L / 4 - (item.Content.EndsWith("==", StringComparison.Ordinal) ? 2 : item.Content.EndsWith("=", StringComparison.Ordinal) ? 1 : 0))));
+
+    /// <summary>
+    /// Identifies one endpoint + exact set of attachments (names, types, contents), so the
+    /// "send these files to a remote server?" question is asked once per set.
+    /// </summary>
+    public static string ConsentKey(string endpoint, IEnumerable<ChatAttachment> attachments)
+    {
+        using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        var separator = new byte[] { 0 };
+        foreach (var attachment in attachments.OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase))
+        {
+            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.FileName));
+            hash.AppendData(separator);
+            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.MediaType ?? "text"));
+            hash.AppendData(separator);
+            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.Content));
+            hash.AppendData(separator);
+        }
+        return endpoint + "\n" + Convert.ToHexString(hash.GetHashAndReset());
+    }
 }

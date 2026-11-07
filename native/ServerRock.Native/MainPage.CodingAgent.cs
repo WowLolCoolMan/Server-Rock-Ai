@@ -102,12 +102,6 @@ public sealed partial class MainPage
             UndoWorkspaceEdit(selectedEntry);
     }
 
-    private static bool SamePath(string left, string right)
-    {
-        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        return string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(left)), Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)), comparison);
-    }
-
     private void RenderProjectFiles()
     {
         UpdateWorkspaceBar();
@@ -194,7 +188,7 @@ public sealed partial class MainPage
             var receipt = _workspaceEditor.Apply(selection.Item1, selection.Item2, editor.Text, originalHash);
             RenderProjectFiles();
             RuntimeStatus.Text = $"Saved {selection.Item2} in the selected project.";
-            var projectName = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => SamePath(folder, selection.Item1)))?.Name ?? "Project";
+            var projectName = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, selection.Item1)))?.Name ?? "Project";
             var undoEntry = RecordWorkspaceUndo(projectName, selection.Item1, selection.Item2, receipt);
             if (!_persistedUndoIds.Contains(undoEntry.Id))
             {
@@ -224,7 +218,7 @@ public sealed partial class MainPage
         {
             var fileButton = ProjectFileList.Children.OfType<Button>().FirstOrDefault(button =>
                 button.Tag is ValueTuple<string, string> path &&
-                SamePath(path.Item1, root) &&
+                WorkspacePath.AreSame(path.Item1, root) &&
                 path.Item2.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
             if (fileButton?.Focus(FocusState.Programmatic) == true) return;
             if (ProjectFoldersButton.Visibility == Visibility.Visible &&

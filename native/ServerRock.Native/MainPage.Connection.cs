@@ -1,15 +1,16 @@
 // Model server connection status: on page load (and after Settings changes) asks the
 // configured endpoint for its model list, then updates the Local/Remote ready labels, the
 // connection dots, and the data-route label. If the saved model isn't installed, it switches to
-// the first available one. IsLocalEndpoint decides what counts as "on this device" (loopback only).
+// the first available one. LocalEndpoint.IsLocal (Core) decides what counts as "on this device" (loopback only).
 // Depends on: OpenAiCompatibleProvider (_provider), GetProviderApiKey, SaveSettings, header
 // elements in MainPage.xaml.
 // Called by: Loaded in MainPage.xaml, Settings/model selection (RefreshModelConnectionAsync), and
-// chat, model library, and data-route code (IsLocalEndpoint).
+// Model Library and composer code that shows the connection.
 
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -35,7 +36,7 @@ public sealed partial class MainPage
         {
             var models = await _provider.DiscoverModelsAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
             _providerConnected = true;
-            var local = IsLocalEndpoint(_settings.Endpoint);
+            var local = LocalEndpoint.IsLocal(_settings.Endpoint);
             ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
             HeaderConnectionLabel.Text = ConnectionLabel.Text;
             ConnectionDot.Fill = UiTheme.Brush("SuccessBrush");
@@ -66,10 +67,4 @@ public sealed partial class MainPage
         UpdateModeControls();
     }
 
-    private static bool IsLocalEndpoint(string endpoint)
-    {
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)) return false;
-        return uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-            (System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address));
-    }
 }

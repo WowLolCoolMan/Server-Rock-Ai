@@ -19,6 +19,7 @@ using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -57,7 +58,7 @@ public sealed partial class MainPage
         foreach (var model in quickSwitchModels)
         {
             var isCurrent = model.Model.Equals(_settings.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase);
-            var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformanceKey(model.Endpoint, model.Model));
+            var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformance.Key(model.Endpoint, model.Model));
             var rate = performance is null ? "Not benchmarked" : $"≈{performance.EstimatedTokensPerSecond:0.#} tok/s";
             var item = new MenuFlyoutItem { Text = $"{(isCurrent ? "✓  " : "")}{model.Provider} · {model.Model} · {rate}" };
             ToolTipService.SetToolTip(item, performance is null
@@ -228,7 +229,7 @@ public sealed partial class MainPage
                     cancellationToken.ThrowIfCancellationRequested();
                     var allChoices = models.Select(model =>
                     {
-                        var key = LocalModelPerformanceKey(model.Endpoint, model.Model);
+                        var key = LocalModelPerformance.Key(model.Endpoint, model.Model);
                         var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(key);
                         var readiness = model.IsLoaded == false ? "Downloaded · not loaded" : model.IsLoaded == true ? "Loaded" : null;
                         var size = model.SizeBytes is > 0 ? $"{model.SizeBytes.Value / 1073741824d:0.#} GB" : null;
@@ -238,7 +239,7 @@ public sealed partial class MainPage
                             : $"≈{performance.EstimatedTokensPerSecond:0.#} tok/s · {performance.TimeToFirstTokenMilliseconds} ms first token · {performance.Samples} sample{(performance.Samples == 1 ? "" : "s")}";
                         var display = $"{model.Model}   ·   {model.Provider}   ·   {measurement}" + (details.Length == 0 ? "" : $"   ·   {details}");
                         return new InstalledModelChoice(model.Provider, model.Model, model.Endpoint, display);
-                    }).OrderByDescending(choice => (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformanceKey(choice.Endpoint, choice.Model))?.EstimatedTokensPerSecond ?? -1).ToArray();
+                    }).OrderByDescending(choice => (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformance.Key(choice.Endpoint, choice.Model))?.EstimatedTokensPerSecond ?? -1).ToArray();
                     var choices = ApplyModelPage(allChoices, sort.SelectedIndex, ref pageCount, ref page, out var shownCount);
                     list.DisplayMemberPath = nameof(InstalledModelChoice.Display);
                     list.ItemsSource = choices;
@@ -340,12 +341,12 @@ public sealed partial class MainPage
             var isPinned = selected is not null && ((_settings.PinnedModelConnections ?? []).Any(model => model.Model.Equals(selected.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(selected.Endpoint, StringComparison.OrdinalIgnoreCase)) || (selected.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase) && (_settings.PinnedModels ?? []).Contains(selected.Model, StringComparer.OrdinalIgnoreCase)));
             pin.Content = isPinned ? "Unpin" : "Pin";
             AutomationProperties.SetName(pin, isPinned ? "Unpin selected model" : "Pin selected model");
-            benchmark.IsEnabled = source.SelectedIndex == 1 && selected is not null && _modelBenchmarkCancellation is null && IsLocalEndpoint(selected.Endpoint);
+            benchmark.IsEnabled = source.SelectedIndex == 1 && selected is not null && _modelBenchmarkCancellation is null && LocalEndpoint.IsLocal(selected.Endpoint);
         };
         stopBenchmark.Click += (_, _) => _modelBenchmarkCancellation?.Cancel();
         benchmark.Click += async (_, _) =>
         {
-            if (list.SelectedItem is not InstalledModelChoice selected || !IsLocalEndpoint(selected.Endpoint))
+            if (list.SelectedItem is not InstalledModelChoice selected || !LocalEndpoint.IsLocal(selected.Endpoint))
             {
                 status.Text = "Select an installed model connected to a local endpoint to benchmark it.";
                 return;
@@ -404,7 +405,7 @@ public sealed partial class MainPage
                 cancellation.Dispose();
                 _modelBenchmarkCancellation = null;
                 stopBenchmark.IsEnabled = false;
-                benchmark.IsEnabled = source.SelectedIndex == 1 && list.SelectedItem is InstalledModelChoice finalChoice && IsLocalEndpoint(finalChoice.Endpoint);
+                benchmark.IsEnabled = source.SelectedIndex == 1 && list.SelectedItem is InstalledModelChoice finalChoice && LocalEndpoint.IsLocal(finalChoice.Endpoint);
                 source.IsEnabled = true;
                 search.IsEnabled = true;
                 pin.IsEnabled = source.SelectedIndex == 1;
@@ -496,7 +497,7 @@ public sealed partial class MainPage
 
     private async Task<string> GetRuntimeEndpointAsync(string provider)
     {
-        if (_settings.ModelProvider.Equals(provider, StringComparison.OrdinalIgnoreCase) && IsLocalEndpoint(_settings.Endpoint))
+        if (_settings.ModelProvider.Equals(provider, StringComparison.OrdinalIgnoreCase) && LocalEndpoint.IsLocal(_settings.Endpoint))
             return _settings.Endpoint;
         var installed = await _modelLibrary.DiscoverLocalModelsAsync(_settings.Endpoint);
         var discovered = installed.FirstOrDefault(model => model.Provider.Equals(provider, StringComparison.OrdinalIgnoreCase));
@@ -518,7 +519,7 @@ public sealed partial class MainPage
 
     private string DescribeDataRoute()
     {
-        var local = IsLocalEndpoint(_settings.Endpoint);
+        var local = LocalEndpoint.IsLocal(_settings.Endpoint);
         if (!_providerConnected) return "● Model not connected";
         if (_mode == "Coding Agent") return local ? "● Project context stays on device" : "● Project files go to remote model";
         if (_includeProjectFilesInChat) return local ? "● Prompt + selected project files stay on device" : "● Project excerpts go to remote model";

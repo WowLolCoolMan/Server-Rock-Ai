@@ -2,8 +2,8 @@
 // SendClick is the main flow: slash commands, edit/retry handling, consent prompts for remote
 // endpoints, optional smart rewrite and web search, then StreamChatAsync. BuildProviderMessages
 // assembles the system context (mode prompt, project instructions, untrusted file excerpts, web
-// results) plus the history; AppendAttachments inlines text attachments as fenced blocks.
-// Also: Stop/cancel, prompt rewrite, local speed measurements, and FriendlyError messages.
+// results) plus the history; ChatAttachmentPrompt.AppendTo (Core) inlines text attachments.
+// Also: Stop/cancel, prompt rewrite, and local speed measurements (math in LocalModelPerformance).
 // Depends on: OpenAiCompatibleProvider, WebSearchProvider, WorkspaceFileContext,
 // ConversationTurnEditor (ServerRock.Core); AddMessage/RenderAssistantMessage (MainPage.Messages.cs);
 // AttachWorkspaceProposals (MainPage.CodingAgent.Proposals.cs); SaveCurrentSession.
@@ -123,7 +123,7 @@ public sealed partial class MainPage
             return;
         }
         var includeProjectFiles = _mode == "Coding Agent" || _mode == "ChatBot" && _includeProjectFilesInChat;
-        if (includeProjectFiles && project is not null && project.FolderPaths.Count > 0 && !IsLocalEndpoint(_settings.Endpoint))
+        if (includeProjectFiles && project is not null && project.FolderPaths.Count > 0 && !LocalEndpoint.IsLocal(_settings.Endpoint))
         {
             var fileCount = WorkspaceFileContext.ReadSelectedFiles(project.FolderPaths).Count;
             if (fileCount > 0)
@@ -145,9 +145,9 @@ public sealed partial class MainPage
                 }
             }
         }
-        if (_pendingAttachments.Count > 0 && !IsLocalEndpoint(_settings.Endpoint))
+        if (_pendingAttachments.Count > 0 && !LocalEndpoint.IsLocal(_settings.Endpoint))
         {
-            var consentKey = AttachmentConsentKey(_settings.Endpoint, _pendingAttachments);
+            var consentKey = ChatAttachmentPolicy.ConsentKey(_settings.Endpoint, _pendingAttachments);
             if (!_remoteAttachmentConsent.Contains(consentKey))
             {
                 var names = string.Join("\n", _pendingAttachments.Select(item => "• " + item.FileName));
@@ -267,7 +267,7 @@ public sealed partial class MainPage
             if (response.Parent is FrameworkElement stack && stack.Parent is Border bubble)
                 ConversationMessages.Children.Remove(bubble);
             var hasImages = _messages.Any(message => message.Attachments?.Any(attachment => attachment.IsImage) == true);
-            AddMessage("Connection error", FriendlyError(ex, hasImages), false);
+            AddMessage("Connection error", ProviderErrorText.Describe(ex, hasImages), false);
             RuntimeStatus.Text = "Connection failed · check Settings";
             SetCompanionState("error");
             UpdateCompanionSpeech("Error · the model request failed.");
@@ -301,29 +301,18 @@ public sealed partial class MainPage
             ConversationScroll.ChangeView(null, double.MaxValue, null);
         }, cancellationToken, apiKey: GetProviderApiKey());
         timer.Stop();
-        if (IsLocalEndpoint(measuredEndpoint) && firstTokenMilliseconds is >= 0 && answer.Length > 0)
+        if (LocalEndpoint.IsLocal(measuredEndpoint) && firstTokenMilliseconds is >= 0 && answer.Length > 0)
             RecordLocalModelPerformance(measuredEndpoint, measuredModel, answer.Length, timer.ElapsedMilliseconds, firstTokenMilliseconds.Value);
     }
 
     private void RecordLocalModelPerformance(string endpoint, string model, int responseCharacters, long elapsedMilliseconds, long firstTokenMilliseconds)
     {
         _settings.LocalModelPerformance ??= new Dictionary<string, LocalModelPerformance>(StringComparer.OrdinalIgnoreCase);
-        var key = LocalModelPerformanceKey(endpoint, model);
+        var key = LocalModelPerformance.Key(endpoint, model);
         _settings.LocalModelPerformance.TryGetValue(key, out var previous);
-        var durationSeconds = Math.Max(0.001, (elapsedMilliseconds - firstTokenMilliseconds) / 1000d);
-        var estimatedTokensPerSecond = Math.Max(0.1, responseCharacters / 4d / durationSeconds);
-        var samples = (previous?.Samples ?? 0) + 1;
-        var averageRate = previous is null
-            ? estimatedTokensPerSecond
-            : previous.EstimatedTokensPerSecond + (estimatedTokensPerSecond - previous.EstimatedTokensPerSecond) / samples;
-        var averageFirstToken = previous is null
-            ? firstTokenMilliseconds
-            : (long)Math.Round(previous.TimeToFirstTokenMilliseconds + (firstTokenMilliseconds - previous.TimeToFirstTokenMilliseconds) / (double)samples);
-        _settings.LocalModelPerformance[key] = new LocalModelPerformance(samples, averageRate, averageFirstToken, DateTimeOffset.UtcNow);
+        _settings.LocalModelPerformance[key] = LocalModelPerformance.AddSample(previous, responseCharacters, elapsedMilliseconds, firstTokenMilliseconds, DateTimeOffset.UtcNow);
         SaveSettings();
     }
-
-    private static string LocalModelPerformanceKey(string endpoint, string model) => endpoint.Trim().TrimEnd('/').ToLowerInvariant() + "\n" + model;
 
     private string? GetProviderApiKey() => _settings.ModelProvider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase)
         ? _openRouterApiKey
@@ -358,42 +347,8 @@ public sealed partial class MainPage
         }
         if (context.Count > 0) messages.Add(new ChatMessage("system", string.Join("\n\n", context)));
         messages.AddRange(_messages.Select(message => message.ForModel(
-            message.Attachments is { Count: > 0 } ? AppendAttachments(message.Content, message.Attachments) : message.Content)));
+            message.Attachments is { Count: > 0 } ? ChatAttachmentPrompt.AppendTo(message.Content, message.Attachments) : message.Content)));
         return messages;
-    }
-
-    private static string AppendAttachments(string userText, IReadOnlyList<ChatAttachment> attachments)
-    {
-        var output = new System.Text.StringBuilder(userText);
-        foreach (var attachment in attachments)
-        {
-            if (attachment.IsImage) continue;
-            var fenceLength = Math.Max(3, System.Text.RegularExpressions.Regex.Matches(attachment.Content, "`+")
-                .Cast<System.Text.RegularExpressions.Match>().Select(match => match.Length).DefaultIfEmpty(0).Max() + 1);
-            var fence = new string('`', fenceLength);
-            output.Append(ChatAttachmentPolicy.IsAllowedPdfName(attachment.FileName)
-                    ? "\n\nExtracted PDF text (untrusted): "
-                    : "\n\nAttached text file (untrusted): ")
-                .Append(attachment.FileName)
-                .Append("\n").Append(fence).Append("text\n").Append(attachment.Content)
-                .Append("\n").Append(fence);
-        }
-        return output.ToString();
-    }
-
-    private static string FriendlyError(Exception ex)
-    {
-        if (ex is HttpRequestException { StatusCode: not null }) return $"Model server error: {ex.Message}";
-        if (ex is HttpRequestException) return $"Could not reach the model server. Start it, then check its address in Settings.\n\nDetails: {ex.Message}";
-        if (ex is TaskCanceledException) return "The request timed out or was interrupted.";
-        return ex.Message;
-    }
-
-    private static string FriendlyError(Exception ex, bool hasImageAttachments)
-    {
-        if (hasImageAttachments && ex is HttpRequestException { StatusCode: System.Net.HttpStatusCode.BadRequest or System.Net.HttpStatusCode.UnsupportedMediaType or System.Net.HttpStatusCode.UnprocessableEntity })
-            return "This model endpoint rejected the image. Choose a vision-capable model and an endpoint that accepts OpenAI-compatible image_url content. The image remains in this saved conversation.";
-        return FriendlyError(ex);
     }
 
     private async Task<string?> RewritePromptForReviewAsync(string draft)

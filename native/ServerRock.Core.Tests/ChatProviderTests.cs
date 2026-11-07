@@ -163,5 +163,18 @@ internal static class ChatProviderTests
             Check(error.Message.Contains("503", StringComparison.Ordinal), "provider HTTP errors include status");
             Check(error.Message.Contains("model server unavailable", StringComparison.Ordinal), "provider HTTP errors include a readable response body");
         }
+
+        // Local endpoint check and error messages (moved from MainPage into Core).
+        Check(LocalEndpoint.IsLocal("http://localhost:11434/v1") && LocalEndpoint.IsLocal("http://127.0.0.1:1234/v1") && LocalEndpoint.IsLocal("http://[::1]:8080"),
+            "loopback and localhost endpoints count as on-device");
+        Check(!LocalEndpoint.IsLocal("http://192.168.1.20:11434/v1") && !LocalEndpoint.IsLocal("https://openrouter.ai/api/v1") && !LocalEndpoint.IsLocal("not a url"),
+            "LAN, cloud, and malformed endpoints do not count as on-device");
+        Check(ProviderErrorText.Describe(new HttpRequestException("boom", null, HttpStatusCode.InternalServerError)) == "Model server error: boom"
+            && ProviderErrorText.Describe(new HttpRequestException("refused")).StartsWith("Could not reach the model server.", StringComparison.Ordinal)
+            && ProviderErrorText.Describe(new TaskCanceledException()) == "The request timed out or was interrupted.",
+            "provider errors distinguish server errors, unreachable servers, and timeouts");
+        Check(ProviderErrorText.Describe(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: true).StartsWith("This model endpoint rejected the image.", StringComparison.Ordinal)
+            && ProviderErrorText.Describe(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: false) == "Model server error: bad",
+            "a 400 is explained as an image rejection only when images were attached");
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Models;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -217,7 +218,7 @@ public sealed partial class MainPage
             ? _settings.WebSearchEnabled ? "Web on" : "Web off"
             : _settings.WebSearchEnabled ? "Web search on" : "Web search off";
         UiTheme.ApplyToggleState(WebSearchButton, _settings.WebSearchEnabled);
-        var local = IsLocalEndpoint(_settings.Endpoint);
+        var local = LocalEndpoint.IsLocal(_settings.Endpoint);
         var projectFiles = _mode == "ChatBot" && _includeProjectFilesInChat;
         if (_isTemporaryChat)
         {

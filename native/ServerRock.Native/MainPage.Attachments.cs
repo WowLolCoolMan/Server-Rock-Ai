@@ -1,6 +1,6 @@
 // Composer attachments: picking up to five text/code files, PDFs (text extracted on-device), or
 // PNG/JPEG images, enforcing size and type limits, and showing removable chips.
-// AttachmentConsentKey identifies a set of attachments for one endpoint so the remote-upload
+// ChatAttachmentPolicy.ConsentKey (Core) identifies a set of attachments for one endpoint so the remote-upload
 // consent prompt is asked once per set.
 // Depends on: ChatAttachmentPolicy, PdfAttachmentTextExtractor (ServerRock.Core), the file picker,
 // and _pendingAttachments in MainPage.xaml.cs.
@@ -19,22 +19,6 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
-    private static string AttachmentConsentKey(string endpoint, IEnumerable<ChatAttachment> attachments)
-    {
-        using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
-        var separator = new byte[] { 0 };
-        foreach (var attachment in attachments.OrderBy(item => item.FileName, StringComparer.OrdinalIgnoreCase))
-        {
-            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.FileName));
-            hash.AppendData(separator);
-            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.MediaType ?? "text"));
-            hash.AppendData(separator);
-            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(attachment.Content));
-            hash.AppendData(separator);
-        }
-        return endpoint + "\n" + Convert.ToHexString(hash.GetHashAndReset());
-    }
-
     private async void AttachClick(object sender, RoutedEventArgs e)
     {
         if (_requestCancellation is not null) return;

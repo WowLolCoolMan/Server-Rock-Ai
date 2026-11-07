@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using ServerRock.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -88,7 +89,7 @@ public sealed partial class MainPage
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
-                status.Text = $"Image generation failed: {FriendlyError(exception)}";
+                status.Text = $"Image generation failed: {ProviderErrorText.Describe(exception)}";
             }
             finally
             {

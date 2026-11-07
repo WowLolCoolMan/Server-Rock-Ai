@@ -31,5 +31,29 @@ public sealed class AppSettings
     public string? ProjectInstructions { get; set; }
 }
 
-public sealed record LocalModelPerformance(int Samples, double EstimatedTokensPerSecond, long TimeToFirstTokenMilliseconds, DateTimeOffset LastMeasuredAt);
+/// <summary>Running average of measured local response speed for one endpoint + model.</summary>
+public sealed record LocalModelPerformance(int Samples, double EstimatedTokensPerSecond, long TimeToFirstTokenMilliseconds, DateTimeOffset LastMeasuredAt)
+{
+    /// <summary>Dictionary key in <see cref="AppSettings.LocalModelPerformance"/>: normalized endpoint + newline + model ID.</summary>
+    public static string Key(string endpoint, string model) => endpoint.Trim().TrimEnd('/').ToLowerInvariant() + "\n" + model;
+
+    /// <summary>
+    /// Folds one measured response into the running average. Speed is estimated as
+    /// characters / 4 per second after the first token (a rough token count).
+    /// </summary>
+    public static LocalModelPerformance AddSample(LocalModelPerformance? previous, int responseCharacters,
+        long elapsedMilliseconds, long firstTokenMilliseconds, DateTimeOffset measuredAt)
+    {
+        var durationSeconds = Math.Max(0.001, (elapsedMilliseconds - firstTokenMilliseconds) / 1000d);
+        var estimatedTokensPerSecond = Math.Max(0.1, responseCharacters / 4d / durationSeconds);
+        var samples = (previous?.Samples ?? 0) + 1;
+        var averageRate = previous is null
+            ? estimatedTokensPerSecond
+            : previous.EstimatedTokensPerSecond + (estimatedTokensPerSecond - previous.EstimatedTokensPerSecond) / samples;
+        var averageFirstToken = previous is null
+            ? firstTokenMilliseconds
+            : (long)Math.Round(previous.TimeToFirstTokenMilliseconds + (firstTokenMilliseconds - previous.TimeToFirstTokenMilliseconds) / (double)samples);
+        return new LocalModelPerformance(samples, averageRate, averageFirstToken, measuredAt);
+    }
+}
 public sealed record PinnedModelConnection(string Provider, string Model, string Endpoint);

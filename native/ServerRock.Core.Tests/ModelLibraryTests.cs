@@ -188,5 +188,16 @@ internal static class ModelLibraryTests
             throw new Exception("Expected unsafe ModelScope archive paths to be rejected.");
         }
         catch (InvalidOperationException) { Check(true, "ModelScope GGUF import rejects path traversal before network access"); }
+
+        // Local speed averaging (moved from MainPage into Core).
+        Check(LocalModelPerformance.Key(" HTTP://LocalHost:1234/v1/ ", "Qwen3") == "http://localhost:1234/v1\nQwen3",
+            "local speed key normalizes the endpoint but keeps the model ID");
+        var measuredAt = DateTimeOffset.Parse("2026-11-07T00:00:00Z");
+        var firstSample = LocalModelPerformance.AddSample(null, 400, 1100, 100, measuredAt);
+        Check(firstSample.Samples == 1 && Math.Abs(firstSample.EstimatedTokensPerSecond - 100) < 0.001 && firstSample.TimeToFirstTokenMilliseconds == 100,
+            "first local speed sample estimates characters/4 per second after the first token");
+        var secondSample = LocalModelPerformance.AddSample(firstSample, 200, 1300, 300, measuredAt);
+        Check(secondSample.Samples == 2 && Math.Abs(secondSample.EstimatedTokensPerSecond - 75) < 0.001 && secondSample.TimeToFirstTokenMilliseconds == 200,
+            "later local speed samples update the running averages");
     }
 }

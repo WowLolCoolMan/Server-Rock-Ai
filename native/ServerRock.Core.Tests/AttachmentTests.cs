@@ -56,5 +56,22 @@ internal static class AttachmentTests
         catch (InvalidDataException) { Check(true, "PDF attachment extractor rejects invalid PDF signatures"); }
         Check(ChatAttachmentPolicy.HasValidImageSignature("image/png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) && ChatAttachmentPolicy.HasValidImageSignature("image/jpeg", [0xFF, 0xD8, 0xFF, 0xD9]) && !ChatAttachmentPolicy.HasValidImageSignature("image/png", [0, 1, 2]), "chat attachment policy checks PNG/JPEG file signatures");
         Check(ChatAttachmentPolicy.RemainingImageBytes([new ChatAttachment("photo.png", Convert.ToBase64String([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]), "image/png")]) == ChatAttachmentPolicy.MaxTotalImageBytes - 8, "chat attachment policy budgets decoded image bytes");
+
+        // Consent key and prompt formatting (moved from MainPage into Core).
+        var notes = new ChatAttachment("notes.md", "alpha");
+        var spec = new ChatAttachment("spec.txt", "beta");
+        Check(ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [notes, spec]) == ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [spec, notes]),
+            "attachment consent key ignores attachment order");
+        Check(ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [notes]) != ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [notes with { Content = "changed" }])
+            && ChatAttachmentPolicy.ConsentKey("https://a.example/v1", [notes]) != ChatAttachmentPolicy.ConsentKey("https://b.example/v1", [notes]),
+            "attachment consent key changes with file content and endpoint");
+        var fencedPrompt = ChatAttachmentPrompt.AppendTo("Review this", [
+            new ChatAttachment("snippet.md", "before\n```\ninside\n```"),
+            new ChatAttachment("photo.png", "iVBORw0KGgo=", "image/png"),
+            new ChatAttachment("brief.pdf", "PDF words")]);
+        Check(fencedPrompt.StartsWith("Review this\n\nAttached text file (untrusted): snippet.md\n````text\n", StringComparison.Ordinal)
+            && fencedPrompt.Contains("Extracted PDF text (untrusted): brief.pdf", StringComparison.Ordinal)
+            && !fencedPrompt.Contains("photo.png", StringComparison.Ordinal),
+            "attachment prompt uses a fence longer than any backtick run, labels PDFs, and skips images");
     }
 }

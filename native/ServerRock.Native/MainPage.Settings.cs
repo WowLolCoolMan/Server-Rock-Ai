@@ -367,7 +367,7 @@ public sealed partial class MainPage
                 }
                 foreach (var model in models)
                 {
-                    var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformanceKey(model.Endpoint, model.Model));
+                    var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformance.Key(model.Endpoint, model.Model));
                     var isPinned = (_settings.PinnedModelConnections ?? []).Any(item => item.Model.Equals(model.Model, StringComparison.OrdinalIgnoreCase) && item.Endpoint.Equals(model.Endpoint, StringComparison.OrdinalIgnoreCase));
                     var metrics = performance is null
                         ? "No live performance sample yet"
