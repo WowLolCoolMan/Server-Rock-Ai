@@ -79,6 +79,8 @@ const requiredCode = [
   ['Command palette query label', 'AutomationProperties.SetName(query, "Search command palette actions")'],
   ['Command palette results label', 'AutomationProperties.SetName(results, "Command palette results")'],
   ['Command palette focus return', 'dialog.Closed += (_, _) => PromptBox.Focus(FocusState.Programmatic);'],
+  ['Local provider recovery action', 'AutomationProperties.SetName(chooseModel, "Choose another local model after connection failure")'],
+  ['Local provider recovery stays local', 'var localEndpoint = LocalEndpoint.IsLocal(_settings.Endpoint);'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

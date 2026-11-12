@@ -1410,3 +1410,44 @@ during validation was restored to its original value.
 Not yet verified: durable restart/reopen of this successful response, automatic
 model compatibility recovery, explicit fallback consent, multi-provider
 routing, Linux parity, and packaged-release acceptance.
+
+## Slice 39 — explicit local model recovery after provider failure
+
+Status: `implemented_verified_windows`
+
+When a local model request fails, the conversation error now offers an
+accessible `Choose another local model` action. The action is rendered only
+for loopback/localhost endpoints, opens the existing installed-model library,
+and explicitly does not switch models automatically. Remote failures retain
+the existing Settings guidance, so this slice cannot silently route prompts or
+context to another provider.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Messages.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (91 contracts).`
+- `git diff --check` — passed.
+- Live Windows failure journey — passed: the incompatible local model
+  produced the truthful stream-closure message and accessible recovery button;
+  activating it opened `Model Library`, whose accessible results listed five
+  installed local models.
+
+Privacy/security/licensing: the recovery action is gated by
+`LocalEndpoint.IsLocal`; it reads the existing local model inventory and sends
+no prompt or workspace context anywhere. No third-party code or dependency was
+added.
+
+Rollback: remove the optional message-content callback and recovery button;
+the existing error bubble and Settings guidance remain unchanged.
+
+Not yet verified: automatic compatibility detection, an explicit fallback
+confirmation flow for switching, multi-provider routing, durable provider
+identity across fallback attempts, Linux parity, and packaged-release
+acceptance.

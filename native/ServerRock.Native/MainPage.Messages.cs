@@ -24,7 +24,8 @@ public sealed partial class MainPage
         IReadOnlyList<ChatAttachment>? attachments = null,
         IReadOnlyList<ChatSource>? sources = null,
         int? messageIndex = null,
-        bool showActions = false)
+        bool showActions = false,
+        Action<StackPanel>? addContent = null)
     {
         // Message bubbles and their actions use tokens: user turns sit on AccentSoft, replies on
         // SurfaceAlt, and Copy/Retry/Edit use the shared ContextButtonStyle.
@@ -46,6 +47,7 @@ public sealed partial class MainPage
         else content.Children.Add(body);
         if (!user && sources is { Count: > 0 }) content.Children.Add(BuildSourcesPanel(sources));
         if (showActions && messageIndex is int index) content.Children.Add(BuildMessageActions(index, user, text));
+        addContent?.Invoke(content);
         bubble.Child = content;
         ConversationMessages.Children.Add(bubble);
         ConversationScroll.ChangeView(null, double.MaxValue, null);

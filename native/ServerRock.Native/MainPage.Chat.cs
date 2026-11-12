@@ -304,8 +304,22 @@ public sealed partial class MainPage
             if (response.Parent is FrameworkElement stack && stack.Parent is Border bubble)
                 ConversationMessages.Children.Remove(bubble);
             var hasImages = _messages.Any(message => message.Attachments?.Any(attachment => attachment.IsImage) == true);
-            AddMessage("Connection error", ProviderErrorText.Describe(ex, hasImages), false);
-            RuntimeStatus.Text = "Connection failed · check Settings";
+            var localEndpoint = LocalEndpoint.IsLocal(_settings.Endpoint);
+            AddMessage("Connection error", ProviderErrorText.Describe(ex, hasImages), false, addContent: localEndpoint ? errorContent =>
+            {
+                var chooseModel = new Button
+                {
+                    Content = "Choose another local model",
+                    Style = UiTheme.Style("ContextButtonStyle"),
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                AutomationProperties.SetName(chooseModel, "Choose another local model after connection failure");
+                AutomationProperties.SetHelpText(chooseModel, "Open installed local models so you can choose a different model. The app will not switch models automatically.");
+                chooseModel.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox);
+                errorContent.Children.Add(chooseModel);
+            } : null);
+            if (localEndpoint) RuntimeStatus.Text = "Connection failed · choose another local model or check Settings";
+            else RuntimeStatus.Text = "Connection failed · check Settings";
             FailActiveOperation("provider request failed");
             SetCompanionState("error");
             UpdateCompanionSpeech("Error · the model request failed.");
