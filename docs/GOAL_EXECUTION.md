@@ -1767,6 +1767,44 @@ Not yet verified: a packaged long-stream performance run, Linux/Skia timing,
 screen-reader streaming announcements, and full live keyboard/accessibility
 acceptance.
 
+## Slice 55 — explicit MCP tool permission gate
+
+Status: `implemented_verified_core`
+
+The Core layer now treats MCP server manifests as untrusted metadata and
+requires a separate local grant matching the server identity, tool name,
+connection, and approval identity. Grants are limited to an explicit read or
+write capability; read-only test tools can be authorized, while a mutating
+tool is denied unless write approval is present. Input schemas are bounded and
+must parse as JSON objects before any future executor is allowed to proceed.
+This slice deliberately does not claim an MCP transport, server lifecycle, or
+UI integration.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/McpTool.cs`
+- `native/ServerRock.Core/Services/McpToolPermissionGate.cs`
+- `native/ServerRock.Core.Tests/McpToolPermissionGateTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit read-only authorization, denial of an unapproved mutating tool, and invalid-schema rejection.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: manifest metadata never creates authority; the
+grant must come from the local application. Validation is bounded and local,
+with no network calls, credentials, prompts, files, or new dependencies.
+
+Rollback: remove `McpTool.cs`, `McpToolPermissionGate.cs`, its focused tests,
+and the test-runner entry. No transport or existing integration behavior is
+changed.
+
+Not yet verified: Streamable HTTP or stdio transport, server discovery and
+health, cancellation/revocation, UI permission review, real read-only MCP
+server invocation, write-tool confirmation, MCP audit records, Linux parity,
+and packaged-release acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
