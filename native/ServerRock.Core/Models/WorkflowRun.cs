@@ -40,6 +40,9 @@ public sealed class WorkflowRun
 public sealed class WorkflowStepRun
 {
     public string NodeId { get; set; } = "";
+    public string NodeType { get; set; } = "";
+    public string Label { get; set; } = "";
+    public List<string> DependsOn { get; set; } = [];
     public string Status { get; set; } = WorkflowStepStatuses.Pending;
     public int Attempt { get; set; } = 1;
     public bool RequiresApproval { get; set; }

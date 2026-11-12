@@ -77,6 +77,32 @@ public sealed class WorkflowService
         return errors.Distinct(StringComparer.Ordinal).ToArray();
     }
 
+    public IReadOnlyList<WorkflowPlanStep> BuildExecutionPlan(WorkflowDefinition workflow)
+    {
+        var errors = Validate(workflow);
+        if (errors.Count > 0) throw new InvalidDataException(string.Join(" ", errors));
+        var order = workflow.Nodes.Select((node, index) => (node.Id, index)).ToDictionary(item => item.Id, item => item.index, StringComparer.Ordinal);
+        var nodes = workflow.Nodes.ToDictionary(node => node.Id, StringComparer.Ordinal);
+        var dependencies = workflow.Nodes.ToDictionary(node => node.Id, _ => new List<string>(), StringComparer.Ordinal);
+        var outgoing = workflow.Nodes.ToDictionary(node => node.Id, _ => new List<string>(), StringComparer.Ordinal);
+        foreach (var edge in workflow.Edges)
+        {
+            dependencies[edge.To].Add(edge.From);
+            outgoing[edge.From].Add(edge.To);
+        }
+        var indegree = dependencies.ToDictionary(item => item.Key, item => item.Value.Count, StringComparer.Ordinal);
+        var ready = new PriorityQueue<string, int>();
+        foreach (var item in indegree.Where(item => item.Value == 0)) ready.Enqueue(item.Key, order[item.Key]);
+        var plan = new List<WorkflowPlanStep>(workflow.Nodes.Count);
+        while (ready.TryDequeue(out var nodeId, out _))
+        {
+            var node = nodes[nodeId];
+            plan.Add(new WorkflowPlanStep { NodeId = node.Id, NodeType = node.Type, Label = node.Label, DependsOn = [.. dependencies[nodeId].OrderBy(id => order[id])] });
+            foreach (var next in outgoing[nodeId]) if (--indegree[next] == 0) ready.Enqueue(next, order[next]);
+        }
+        return plan;
+    }
+
     public IReadOnlyList<WorkflowDefinition> Load()
     {
         if (!File.Exists(_path)) return [];

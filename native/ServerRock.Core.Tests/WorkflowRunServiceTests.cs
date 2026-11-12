@@ -19,6 +19,7 @@ internal static class WorkflowRunServiceTests
             var definitions = new WorkflowService(definitionPath);
             var runs = new WorkflowRunService(definitions, runPath);
             var run = runs.Create(definition);
+            Check(run.Steps.Select(step => step.NodeId).SequenceEqual(["test", "approval"]), "durable run stores the graph execution plan order");
             run = runs.Queue(run.RunId);
             run = runs.Start(run.RunId);
             run = runs.BeginStep(run.RunId, "test");

@@ -131,7 +131,8 @@ public sealed partial class MainPage
                 foreach (var step in run.Steps)
                 {
                     var stepLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(8, 2, 0, 0) };
-                    stepLine.Children.Add(new TextBlock { Text = $"{step.NodeId}: {step.Status} (attempt {step.Attempt})", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                    var dependencies = step.DependsOn.Count == 0 ? "root" : "after " + string.Join(", ", step.DependsOn);
+                    stepLine.Children.Add(new TextBlock { Text = $"{step.Label} · {step.NodeType} · {step.Status} · {dependencies} · attempt {step.Attempt}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
                     if (run.Status == WorkflowRunStatuses.AwaitingApproval && step.Status == WorkflowStepStatuses.WaitingApproval)
                     {
                         var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };

@@ -43,3 +43,11 @@ public sealed class WorkflowEdge
     public string From { get; set; } = "";
     public string To { get; set; } = "";
 }
+
+public sealed class WorkflowPlanStep
+{
+    public string NodeId { get; set; } = "";
+    public string NodeType { get; set; } = "";
+    public string Label { get; set; } = "";
+    public List<string> DependsOn { get; set; } = [];
+}

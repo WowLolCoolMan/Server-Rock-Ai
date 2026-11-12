@@ -24,6 +24,7 @@ internal static class WorkflowServiceTests
         try
         {
             Check(service.Validate(workflow).Count == 0, "valid workflow DAG passes validation");
+            Check(service.BuildExecutionPlan(workflow).Select(step => step.NodeId).SequenceEqual(["prompt", "approval", "test"]), "execution plan follows dependency order");
             service.Save(workflow);
             Check(service.Load().Single().Version == 1, "workflow version persists atomically");
             Check(service.Validate(new WorkflowDefinition { Id = "cycle", Title = "Cycle", Nodes = [new() { Id = "a", Type = WorkflowNodeTypes.Test, Label = "A" }, new() { Id = "b", Type = WorkflowNodeTypes.Test, Label = "B" }], Edges = [new() { From = "a", To = "b" }, new() { From = "b", To = "a" }]}).Any(error => error.Contains("cycle", StringComparison.OrdinalIgnoreCase)), "cycles are rejected");

@@ -33,12 +33,15 @@ public sealed class WorkflowRunService
             CreatedAt = now,
             UpdatedAt = now,
             LastEventSequence = 1,
-            Steps = definition.Nodes.Select(node => new WorkflowStepRun
+            Steps = _definitions.BuildExecutionPlan(definition).Select(step => new WorkflowStepRun
             {
-                NodeId = node.Id,
-                RequiresApproval = node.Type == WorkflowNodeTypes.Approval,
-                SafeToRetry = node.Type is WorkflowNodeTypes.Condition or WorkflowNodeTypes.Test or WorkflowNodeTypes.Join,
-                IdempotencyKey = $"{definition.Id}:{definition.Version}:{node.Id}"
+                NodeId = step.NodeId,
+                NodeType = step.NodeType,
+                Label = step.Label,
+                DependsOn = step.DependsOn,
+                RequiresApproval = step.NodeType == WorkflowNodeTypes.Approval,
+                SafeToRetry = step.NodeType is WorkflowNodeTypes.Condition or WorkflowNodeTypes.Test or WorkflowNodeTypes.Join,
+                IdempotencyKey = $"{definition.Id}:{definition.Version}:{step.NodeId}"
             }).ToList()
         };
         snapshot.Runs.Add(run);

@@ -403,3 +403,43 @@ Not yet verified: live UI approval keyboard/screen-reader behavior, workflow
 editor/dry-run, tool adapter capability gates, parallel limits, scheduling,
 and packaged Linux parity. The next dependency is a dry-run/execution-plan
 view that can explain graph order without invoking tools.
+
+## Slice 12 — dependency-ordered workflow plan
+
+Status: `implemented_unverified`
+
+Workflow definitions now produce a deterministic topological execution plan.
+Each durable step run stores its node type, label, dependency IDs, stable
+idempotency key, and attempt number in plan order. Activity renders the
+dependency context for each step, making the current run plan inspectable
+without invoking any tool or provider. Cycles remain rejected at definition
+validation, and no bounded retry node is implied.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowDefinition.cs`
+- `native/ServerRock.Core/Models/WorkflowRun.cs`
+- `native/ServerRock.Core/Services/WorkflowService.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowServiceTests.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including dependency-order plan and durable plan-order assertions.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the plan contains bounded local node metadata and
+dependency IDs only. It cannot execute work, interpolate secrets, or change
+provider routing. No network call, credential, or third-party code was added.
+
+Rollback: revert plan fields, topological planning, rendering, and tests;
+durable workflow runs remain readable only through their prior state fields.
+
+Not yet verified: live graph editor/dry-run controls, tool adapter capability
+gates, parallel limits, scheduling, and packaged Linux parity. The next
+dependency is a read-only dry-run action in the Activity surface, followed by
+executor adapters.
