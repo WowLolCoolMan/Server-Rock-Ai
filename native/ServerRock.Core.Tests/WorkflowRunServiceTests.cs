@@ -22,6 +22,10 @@ internal static class WorkflowRunServiceTests
             Check(run.Steps.Select(step => step.NodeId).SequenceEqual(["test", "approval"]), "durable run stores the graph execution plan order");
             run = runs.Queue(run.RunId);
             run = runs.Start(run.RunId);
+            var blockedDependency = false;
+            try { runs.BeginStep(run.RunId, "approval"); }
+            catch (InvalidOperationException error) { blockedDependency = error.Message.Contains("test", StringComparison.Ordinal); }
+            Check(blockedDependency, "workflow steps cannot begin before their dependencies complete");
             run = runs.BeginStep(run.RunId, "test");
             run = runs.CompleteStep(run.RunId, "test");
             run = runs.BeginStep(run.RunId, "approval");

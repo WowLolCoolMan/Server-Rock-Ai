@@ -1602,6 +1602,40 @@ Not yet verified: live Windows seeded approval expiry/countdown acceptance,
 successful workflow execution, richer branching, parallel limits, OS session
 hosting, Linux parity, and packaged acceptance.
 
+## Slice 78 — enforce workflow dependency readiness
+
+Status: `implemented_verified_core`
+
+`WorkflowRunService.BeginStep` now refuses to start a pending step until every
+declared dependency is complete or skipped. This closes a state-machine hole
+that could otherwise bypass the persisted DAG order, and it provides the safe
+readiness boundary needed before parallel branches or richer adapters are
+introduced. Unsupported node types remain refused by their existing executor
+gates.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including refusal to begin the approval step before its `test` dependency and the complete existing workflow, queue, MCP, memory, skill, and release checks.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is a local state-machine guard. It prevents
+out-of-order execution and adds no provider, network, shell, file, Git,
+credential, dependency, or third-party path.
+
+Rollback: remove the dependency check and regression assertion; the existing
+topological plan and conservative unsupported-node refusal remain available.
+
+Not yet verified: live workflow run acceptance, richer branching semantics,
+parallel resource limits, automatic scheduling, side-effecting adapters,
+Linux parity, and packaged acceptance.
+
 ## Slice 49 — serialize reviewed workspace writes
 
 Status: `implemented_verified_with_live_surface_boundary`

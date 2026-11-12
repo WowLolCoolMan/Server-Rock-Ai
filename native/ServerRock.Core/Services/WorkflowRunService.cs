@@ -64,6 +64,13 @@ public sealed class WorkflowRunService
         if (run.Status != WorkflowRunStatuses.Running) throw new InvalidOperationException("A workflow step can only begin while its run is running.");
         var step = FindStep(run, nodeId);
         if (step.Status is not (WorkflowStepStatuses.Pending or WorkflowStepStatuses.Queued)) throw new InvalidOperationException("The workflow step is not ready to begin.");
+        var blockedDependencies = step.DependsOn
+            .Select(dependencyId => FindStep(run, dependencyId))
+            .Where(dependency => dependency.Status is not (WorkflowStepStatuses.Complete or WorkflowStepStatuses.Skipped))
+            .Select(dependency => dependency.NodeId)
+            .ToArray();
+        if (blockedDependencies.Length > 0)
+            throw new InvalidOperationException($"Workflow step '{nodeId}' is waiting for: {string.Join(", ", blockedDependencies)}.");
         step.Status = step.RequiresApproval ? WorkflowStepStatuses.WaitingApproval : WorkflowStepStatuses.Executing;
         run.Status = step.RequiresApproval ? WorkflowRunStatuses.AwaitingApproval : run.Status;
         Touch(run);
