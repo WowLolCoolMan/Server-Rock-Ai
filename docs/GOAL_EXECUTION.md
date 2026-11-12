@@ -1693,6 +1693,45 @@ permission review and enablement, publisher/signature trust, update diff,
 cross-process activation locking, Linux parity, and packaged-release
 acceptance.
 
+## Slice 53 — installed skills in the reviewed Skills journey
+
+Status: `implemented_verified_core`
+
+The Skills dialog now lists installed local packages separately from built-in
+read-only templates. Users can choose a local package directory, review an
+explicit non-execution warning, inspect publisher/source/digest/permissions,
+load bounded Markdown instructions into the composer for review, and roll back
+the selected installed package. The installer remains the only activation
+boundary; no package script or binary can be executed through this journey.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including package digest, activation, rollback, and executable rejection tests.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (114 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: package content remains local and bounded; only
+Markdown is loaded into the composer, where existing review, model, and remote
+consent gates still apply. No network fetch, credential persistence, tool
+grant, script execution, dependency, or third-party code was added.
+
+Rollback: remove the installed-skill controls and `ReadInstructions` bridge;
+the built-in skill catalog and safe Core installer remain independently
+reversible.
+
+Not yet verified: live Windows package-picker/install/rollback acceptance,
+GitHub transport and cryptographic ref verification, explicit permission
+enablement, publisher trust, cross-process activation locking, Linux parity,
+and packaged-release acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

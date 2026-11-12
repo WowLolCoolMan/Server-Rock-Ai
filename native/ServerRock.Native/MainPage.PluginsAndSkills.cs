@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
@@ -85,21 +86,81 @@ public sealed partial class MainPage
     {
         var list = new ListView { MinHeight = 260, MaxHeight = 420, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(SkillDefinition.Name) };
         list.ItemsSource = SkillCatalogService.BuiltIns;
+        var installedList = new ListView { MinHeight = 80, MaxHeight = 180, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(InstalledSkill.Name) };
         var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
         var run = new Button { Content = "Use skill", IsEnabled = false, MinWidth = 100 };
+        var install = new Button { Content = "Install local package", MinWidth = 170 };
+        var rollback = new Button { Content = "Rollback selected", IsEnabled = false, MinWidth = 150 };
         var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+        AutomationProperties.SetName(installedList, "Installed skills");
+        AutomationProperties.SetName(install, "Install local skill package");
+        AutomationProperties.SetHelpText(install, "Choose a local skill package containing a manifest and Markdown instructions. Scripts are rejected and never executed.");
+        AutomationProperties.SetName(rollback, "Rollback selected installed skill");
+        AutomationProperties.SetHelpText(rollback, "Restore the previous atomically activated version of the selected installed skill.");
+        void RefreshInstalled() => installedList.ItemsSource = _skillPackageInstaller.ListInstalled();
         list.SelectionChanged += (_, _) =>
         {
+            installedList.SelectedItem = null;
+            rollback.IsEnabled = false;
             if (list.SelectedItem is not SkillDefinition skill) { run.IsEnabled = false; details.Text = string.Empty; return; }
             details.Text = $"{skill.Name}\n\n{skill.Description}\n\nPermissions: {string.Join(", ", skill.RequiredPermissions)}";
             run.IsEnabled = true;
         };
+        installedList.SelectionChanged += (_, _) =>
+        {
+            list.SelectedItem = null;
+            if (installedList.SelectedItem is not InstalledSkill skill) { rollback.IsEnabled = false; details.Text = string.Empty; return; }
+            details.Text = $"{skill.Name} · v{skill.Version}\n\nPublisher: {skill.Publisher}\nSource: {skill.SourceRef}\nDigest: {skill.PackageSha256}\nPermissions: {string.Join(", ", skill.RequiredPermissions)}\n\nInstalled package content is treated as instructions and is never executed automatically.";
+            rollback.IsEnabled = true;
+            run.IsEnabled = true;
+        };
         run.Click += (_, _) =>
         {
-            if (list.SelectedItem is not SkillDefinition skill) return;
-            PromptBox.Text = skill.Prompt;
+            if (list.SelectedItem is SkillDefinition builtIn)
+            {
+                PromptBox.Text = builtIn.Prompt;
+                PromptBox.Focus(FocusState.Programmatic);
+                status.Text = $"Loaded {builtIn.Name}. Review the prompt, then send it when ready.";
+                return;
+            }
+            if (installedList.SelectedItem is not InstalledSkill skill) return;
+            try { PromptBox.Text = _skillPackageInstaller.ReadInstructions(skill.Id); }
+            catch (Exception ex) { status.Text = $"Skill instructions could not be read: {ex.Message}"; return; }
             PromptBox.Focus(FocusState.Programmatic);
             status.Text = $"Loaded {skill.Name}. Review the prompt, then send it when ready.";
+        };
+        install.Click += async (_, _) =>
+        {
+            var folder = await PickWorkspaceFolderAsync();
+            if (string.IsNullOrWhiteSpace(folder)) return;
+            var confirmation = new ContentDialog
+            {
+                Title = "Install local skill package?",
+                Content = "The package must contain a valid manifest and Markdown instructions. Executable files, links, and unsafe paths are rejected. The package will not be executed.",
+                PrimaryButtonText = "Install",
+                CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot
+            };
+            if (await confirmation.ShowAsync() != ContentDialogResult.Primary) return;
+            try
+            {
+                var installed = _skillPackageInstaller.Install(folder, "local-folder:" + Path.GetFileName(folder));
+                status.Text = $"Installed {installed.Name} v{installed.Version}. Review its permissions before using it.";
+                RefreshInstalled();
+            }
+            catch (Exception ex) { status.Text = $"Skill package was not installed: {ex.Message}"; }
+        };
+        rollback.Click += async (_, _) =>
+        {
+            if (installedList.SelectedItem is not InstalledSkill skill) return;
+            try
+            {
+                var restored = _skillPackageInstaller.Rollback(skill.Id);
+                status.Text = $"Rolled back {restored.Name} to v{restored.Version}.";
+                RefreshInstalled();
+            }
+            catch (Exception ex) { status.Text = $"Skill rollback failed: {ex.Message}"; }
+            await Task.CompletedTask;
         };
         var dialog = new ContentDialog
         {
@@ -114,12 +175,16 @@ public sealed partial class MainPage
                 {
                     new TextBlock { Text = "Built-in skills are read-only workflow templates. Review the requested permissions before using one.", TextWrapping = TextWrapping.Wrap },
                     list,
+                    new TextBlock { Text = "INSTALLED LOCAL SKILLS", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75 },
+                    installedList,
                     details,
                     run,
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { install, rollback } },
                     status
                 }
             }
         };
+        RefreshInstalled();
         await dialog.ShowAsync();
     }
 }

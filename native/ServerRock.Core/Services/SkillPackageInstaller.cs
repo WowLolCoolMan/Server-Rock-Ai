@@ -37,6 +37,17 @@ public sealed class SkillPackageInstaller
         return result.OrderBy(item => item.Id, StringComparer.Ordinal).ToArray();
     }
 
+    public string ReadInstructions(string id)
+    {
+        ValidateId(id);
+        var skill = ListInstalled().SingleOrDefault(item => item.Id.Equals(id, StringComparison.Ordinal));
+        if (skill is null) throw new InvalidOperationException("The installed skill is no longer available.");
+        var root = Path.GetFullPath(skill.ActivePath);
+        var path = Path.GetFullPath(Path.Combine(root, SkillFileName));
+        if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The installed skill path is invalid.");
+        return BoundedFileReader.ReadText(path, MaxFileBytes);
+    }
+
     public InstalledSkill Install(string sourceDirectory, string sourceRef, string? expectedPackageSha256 = null)
     {
         if (string.IsNullOrWhiteSpace(sourceRef) || sourceRef.Length > 512 || sourceRef.Any(char.IsControl)) throw new ArgumentException("A pinned skill source reference is required.", nameof(sourceRef));
