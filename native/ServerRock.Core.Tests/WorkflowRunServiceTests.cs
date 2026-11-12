@@ -42,7 +42,7 @@ internal static class WorkflowRunServiceTests
             var condition = runs.Create(conditionDefinition);
             runs.Queue(condition.RunId); runs.Start(condition.RunId);
             condition = runs.EvaluateCondition(condition.RunId, "condition", new Dictionary<string, string> { ["ready"] = "yes" });
-            Check(condition.Steps.Single().Status == WorkflowStepStatuses.Complete && condition.Status == WorkflowRunStatuses.Completed, "safe condition executor records a local result without external dispatch");
+            Check(condition.Steps.Single().Status == WorkflowStepStatuses.Complete && condition.Steps.Single().Result == "true" && condition.Status == WorkflowRunStatuses.Completed, "safe condition executor records a local result without external dispatch");
             var denied = runs.Create(new WorkflowDefinition { Id = "tool-flow", Title = "Tool flow", Nodes = [new() { Id = "tool", Type = WorkflowNodeTypes.ToolCall, Label = "Tool" }] });
             runs.Queue(denied.RunId); runs.Start(denied.RunId);
             var refused = false;

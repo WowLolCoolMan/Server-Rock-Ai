@@ -48,6 +48,7 @@ public sealed class WorkflowStepRun
     public int Attempt { get; set; } = 1;
     public bool RequiresApproval { get; set; }
     public bool SafeToRetry { get; set; }
+    public string? Result { get; set; }
     public string IdempotencyKey { get; set; } = Guid.NewGuid().ToString("N");
 }
 

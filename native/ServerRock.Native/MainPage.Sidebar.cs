@@ -140,7 +140,9 @@ public sealed partial class MainPage
                 {
                     var stepLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(8, 2, 0, 0) };
                     var dependencies = step.DependsOn.Count == 0 ? "root" : "after " + string.Join(", ", step.DependsOn);
-                    stepLine.Children.Add(new TextBlock { Text = $"{step.Label} · {step.NodeType} · {step.Status} · {dependencies} · attempt {step.Attempt}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                    var result = step.Result is null ? string.Empty : $" · result {step.Result}";
+                    var capability = step.NodeType == WorkflowNodeTypes.Condition ? "local condition executor" : "executor unavailable";
+                    stepLine.Children.Add(new TextBlock { Text = $"{step.Label} · {step.NodeType} · {step.Status} · {dependencies} · attempt {step.Attempt}{result}\n{capability}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
                     if (run.Status == WorkflowRunStatuses.AwaitingApproval && step.Status == WorkflowStepStatuses.WaitingApproval)
                     {
                         var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };

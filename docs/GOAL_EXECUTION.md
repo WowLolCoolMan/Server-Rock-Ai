@@ -514,3 +514,38 @@ parallel limits, scheduler/OS restart behavior, full approval inbox, and
 packaged Linux parity. The next dependency is to expose condition results and
 capability refusal in Activity, then add another safe adapter only with a
 separate permission contract.
+
+## Slice 15 — workflow executor observability
+
+Status: `implemented_unverified`
+
+Condition step runs now persist their boolean result. Activity shows that
+result and labels the executor as the local condition executor; every other
+node type is labeled executor unavailable rather than appearing runnable.
+This makes capability refusal visible without widening permissions.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowRun.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including persisted true condition result and unsupported-node refusal.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded local result metadata is persisted;
+unsupported nodes remain non-executable. No network, provider, shell, Git,
+filesystem, credential, or third-party code path was added.
+
+Rollback: remove the result field and Activity capability/result text; the
+condition executor and prior run state remain usable.
+
+Not yet verified: richer branching, tool adapter grants, parallel limits,
+scheduler/OS restart behavior, full approval inbox, and packaged Linux parity.
+The next dependency is a separate permission contract for any adapter beyond
+pure local conditions.

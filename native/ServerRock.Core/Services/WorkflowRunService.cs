@@ -124,6 +124,7 @@ public sealed class WorkflowRunService
         step = FindStep(run, nodeId);
         if (step.Status != WorkflowStepStatuses.Executing) throw new InvalidOperationException("The condition node is not executable in its current state.");
         var result = ReadOnlyConditionExecutor.Evaluate(step.Config, inputs);
+        step.Result = result ? "true" : "false";
         step.Status = WorkflowStepStatuses.Complete;
         Touch(run);
         AddEvent(snapshot, run, "condition.evaluated", actor, new() { ["nodeId"] = nodeId, ["result"] = result ? "true" : "false" });
