@@ -63,7 +63,7 @@ public sealed class SkillPackageInstaller
 
     public InstalledSkill Install(string sourceDirectory, string sourceRef, string? expectedPackageSha256 = null)
     {
-        if (string.IsNullOrWhiteSpace(sourceRef) || sourceRef.Length > 512 || sourceRef.Any(char.IsControl)) throw new ArgumentException("A pinned skill source reference is required.", nameof(sourceRef));
+        sourceRef = SkillSourceReference.Validate(sourceRef);
         var source = Path.GetFullPath(sourceDirectory);
         if (!Directory.Exists(source) || IsLink(source)) throw new DirectoryNotFoundException("The skill source directory is unavailable or linked.");
         var manifest = ReadManifest(Path.Combine(source, ManifestFileName));
@@ -72,7 +72,7 @@ public sealed class SkillPackageInstaller
         var digest = ComputePackageDigest(files);
         if (!string.IsNullOrWhiteSpace(expectedPackageSha256) && !digest.Equals(expectedPackageSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("The downloaded skill package checksum does not match its pinned digest.");
-        manifest.SourceRef = sourceRef.Trim();
+        manifest.SourceRef = sourceRef;
         manifest.PackageSha256 = digest;
 
         var activeRoot = Path.Combine(_root, "active");

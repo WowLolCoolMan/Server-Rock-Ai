@@ -2419,6 +2419,41 @@ enablement remain available.
 Not yet verified: GitHub transport/ref verification, publisher trust, live
 Windows preview acceptance, cross-platform packaging, and update diff review.
 
+## Slice 75 — pinned GitHub skill-reference validation
+
+Status: `implemented_verified_core`
+
+Skill installation now validates source provenance before reading or activating
+a package. Local-folder references remain supported, while GitHub references
+must use an HTTPS `github.com/owner/repository@<hex commit ref>` form with no
+credentials, query, fragment, or floating branch/tag. This is a format guard,
+not a claim that the remote commit exists; transport and remote ref resolution
+remain separate future work.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/SkillSourceReference.cs`
+- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including rejection of a floating `@main` reference and preservation of pinned test references.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: validation is local-only and happens before package
+file processing; it adds no network request, credential handling, dependency,
+or remote trust decision.
+
+Rollback: remove `SkillSourceReference`, the installer validation call, and the
+invalid-reference test; existing local package safety checks remain.
+
+Not yet verified: GitHub download/authentication, remote commit existence,
+publisher trust, live Windows skill controls, cross-platform packaging, and
+update diff review.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`

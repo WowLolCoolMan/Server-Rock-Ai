@@ -27,7 +27,9 @@ internal static class SkillPackageInstallerTests
         var rolledBack = installer.Rollback("review-skill");
         TestSupport.Check(rolledBack.SourceRef.Contains("@abc123", StringComparison.Ordinal) && rolledBack.Enabled, "skill rollback restores the previous pinned package and grant");
         File.WriteAllText(Path.Combine(source, "run.ps1"), "Write-Output unsafe");
-        try { installer.Install(source, "https://github.com/example/review-skill@bad"); throw new Exception("Expected executable skill content to be rejected."); }
+        try { installer.Install(source, "https://github.com/example/review-skill@bad123"); throw new Exception("Expected executable skill content to be rejected."); }
         catch (InvalidDataException) { TestSupport.Check(true, "skill installer rejects executable package content"); }
+        try { installer.Install(source, "https://github.com/example/review-skill@main"); throw new Exception("Expected floating skill ref to be rejected."); }
+        catch (ArgumentException) { TestSupport.Check(true, "skill installer rejects floating GitHub refs"); }
     }
 }
