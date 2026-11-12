@@ -6,11 +6,84 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
+using ColorHelper = Microsoft.UI.ColorHelper;
 
 namespace ServerRock.Native;
 
 internal static class UiTheme
 {
+    public static ElementTheme CurrentElementTheme { get; private set; } = ElementTheme.Light;
+
+    /// <summary>Applies the persisted light/dark palette to the shared native token brushes.</summary>
+    public static void ApplyTheme(string? mode)
+    {
+        var dark = string.Equals(mode, "dark", StringComparison.OrdinalIgnoreCase);
+        CurrentElementTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
+
+        if (Application.Current is App app && app.MainWindow?.Content is FrameworkElement root)
+            root.RequestedTheme = CurrentElementTheme;
+
+        if (dark)
+        {
+            SetColor("CanvasColor", "CanvasBrush", ColorHelper.FromArgb(255, 17, 25, 27));
+            SetColor("SurfaceColor", "SurfaceBrush", ColorHelper.FromArgb(255, 24, 35, 38));
+            SetColor("SurfaceAltColor", "SurfaceAltBrush", ColorHelper.FromArgb(255, 32, 48, 52));
+            SetColor("SidebarColor", "SidebarBrush", ColorHelper.FromArgb(255, 20, 33, 36));
+            SetColor("LineColor", "LineBrush", ColorHelper.FromArgb(255, 58, 77, 81));
+            SetColor("LineSoftColor", "LineSoftBrush", ColorHelper.FromArgb(255, 44, 60, 64));
+            SetColor("InkColor", "InkBrush", ColorHelper.FromArgb(255, 229, 240, 240));
+            SetColor("MutedInkColor", "MutedInkBrush", ColorHelper.FromArgb(255, 168, 184, 186));
+            SetColor("SubtleInkColor", "SubtleInkBrush", ColorHelper.FromArgb(255, 126, 146, 149));
+            SetColor("AccentColor", "AccentBrush", ColorHelper.FromArgb(255, 20, 141, 157));
+            SetColor("AccentHoverColor", "AccentHoverBrush", ColorHelper.FromArgb(255, 24, 163, 178));
+            SetColor("AccentPressedColor", "AccentPressedBrush", ColorHelper.FromArgb(255, 17, 119, 134));
+            SetColor("AccentInkColor", "AccentInkBrush", ColorHelper.FromArgb(255, 123, 225, 231));
+            SetColor("AccentSoftColor", "AccentSoftBrush", ColorHelper.FromArgb(255, 27, 74, 82));
+            SetColor("ScrimColor", "ScrimBrush", ColorHelper.FromArgb(210, 0, 0, 0));
+            SetColor("BrandMarkColor", "BrandMarkBrush", ColorHelper.FromArgb(255, 12, 22, 24));
+            SetColor("BrandMarkInkColor", "BrandMarkInkBrush", ColorHelper.FromArgb(255, 223, 247, 250));
+            SetColor("SuccessColor", "SuccessBrush", ColorHelper.FromArgb(255, 91, 194, 137));
+            SetColor("WarningColor", "WarningBrush", ColorHelper.FromArgb(255, 232, 176, 91));
+            SetColor("WarningSoftColor", "WarningSoftBrush", ColorHelper.FromArgb(255, 73, 57, 31));
+            SetColor("WarningLineColor", "WarningLineBrush", ColorHelper.FromArgb(255, 117, 88, 43));
+            SetColor("WarningInkColor", "WarningInkBrush", ColorHelper.FromArgb(255, 245, 205, 130));
+            SetColor("DangerColor", "DangerBrush", ColorHelper.FromArgb(255, 219, 113, 103));
+        }
+        else
+        {
+            SetColor("CanvasColor", "CanvasBrush", ColorHelper.FromArgb(255, 247, 250, 249));
+            SetColor("SurfaceColor", "SurfaceBrush", ColorHelper.FromArgb(255, 255, 255, 255));
+            SetColor("SurfaceAltColor", "SurfaceAltBrush", ColorHelper.FromArgb(255, 244, 248, 247));
+            SetColor("SidebarColor", "SidebarBrush", ColorHelper.FromArgb(255, 238, 245, 243));
+            SetColor("LineColor", "LineBrush", ColorHelper.FromArgb(255, 216, 229, 226));
+            SetColor("LineSoftColor", "LineSoftBrush", ColorHelper.FromArgb(255, 229, 236, 235));
+            SetColor("InkColor", "InkBrush", ColorHelper.FromArgb(255, 24, 51, 59));
+            SetColor("MutedInkColor", "MutedInkBrush", ColorHelper.FromArgb(255, 88, 109, 114));
+            SetColor("SubtleInkColor", "SubtleInkBrush", ColorHelper.FromArgb(255, 139, 153, 157));
+            SetColor("AccentColor", "AccentBrush", ColorHelper.FromArgb(255, 10, 128, 148));
+            SetColor("AccentHoverColor", "AccentHoverBrush", ColorHelper.FromArgb(255, 8, 112, 127));
+            SetColor("AccentPressedColor", "AccentPressedBrush", ColorHelper.FromArgb(255, 7, 104, 122));
+            SetColor("AccentInkColor", "AccentInkBrush", ColorHelper.FromArgb(255, 11, 111, 128));
+            SetColor("AccentSoftColor", "AccentSoftBrush", ColorHelper.FromArgb(255, 229, 245, 246));
+            SetColor("ScrimColor", "ScrimBrush", ColorHelper.FromArgb(102, 0, 0, 0));
+            SetColor("BrandMarkColor", "BrandMarkBrush", ColorHelper.FromArgb(255, 24, 56, 68));
+            SetColor("BrandMarkInkColor", "BrandMarkInkBrush", ColorHelper.FromArgb(255, 223, 247, 250));
+            SetColor("SuccessColor", "SuccessBrush", ColorHelper.FromArgb(255, 62, 155, 106));
+            SetColor("WarningColor", "WarningBrush", ColorHelper.FromArgb(255, 214, 154, 75));
+            SetColor("WarningSoftColor", "WarningSoftBrush", ColorHelper.FromArgb(255, 255, 247, 230));
+            SetColor("WarningLineColor", "WarningLineBrush", ColorHelper.FromArgb(255, 239, 222, 184));
+            SetColor("WarningInkColor", "WarningInkBrush", ColorHelper.FromArgb(255, 113, 82, 42));
+            SetColor("DangerColor", "DangerBrush", ColorHelper.FromArgb(255, 166, 77, 67));
+        }
+    }
+
+    private static void SetColor(string colorKey, string brushKey, Color color)
+    {
+        if (Application.Current?.Resources is not { } resources) return;
+        resources[colorKey] = color;
+        if (resources.TryGetValue(brushKey, out var value) && value is SolidColorBrush brush) brush.Color = color;
+    }
+
     /// <summary>Returns a token brush from App.xaml (e.g. "InkBrush"); magenta if it is missing so the gap is obvious.</summary>
     public static Brush Brush(string key)
     {
@@ -39,6 +112,7 @@ internal static class UiTheme
     /// </summary>
     public static ContentDialog Standardize(ContentDialog dialog, double? maxWidth = null, double? maxHeight = null)
     {
+        dialog.RequestedTheme = CurrentElementTheme;
         if (!string.IsNullOrEmpty(dialog.PrimaryButtonText) && Style("DialogPrimaryButtonStyle") is { } primary)
             dialog.PrimaryButtonStyle = primary;
         if (maxWidth is double width)

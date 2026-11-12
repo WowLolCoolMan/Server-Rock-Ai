@@ -1,6 +1,6 @@
 // Settings dialog (sections: General, Models & downloads, Chats & history, Appearance, Pets,
 // GitHub workspace, Host configuration, Advanced), the Advanced generation dialog (temperature),
-// and ApplySavedCustomization, which applies the accent color, density, and voice-output icon.
+// and ApplySavedCustomization, which applies the theme, accent color, density, and voice-output icon.
 // Some Settings buttons close the dialog and then open another feature (Model Library, GitHub,
 // import/export) through actionAfterClose.
 // Depends on: SaveSettings, RefreshModelConnectionAsync, AppLogService export, UiTheme, and most
@@ -22,6 +22,7 @@ public sealed partial class MainPage
 {
     private void ApplySavedCustomization()
     {
+        UiTheme.ApplyTheme(_settings.ThemeMode);
         // Accent choices are darkened so white text on them passes WCAG AA (4.5:1); the
         // default comes from the AccentColor token. UiTheme.ApplyAccent updates every
         // accent brush in place, so the send button and dialog primary actions follow.
@@ -126,6 +127,11 @@ public sealed partial class MainPage
         AutomationProperties.SetName(accent, "Accent color");
         accent.Items.Add("Cyan"); accent.Items.Add("Violet"); accent.Items.Add("Green"); accent.Items.Add("Orange");
         accent.SelectedIndex = _settings.AccentColor.ToLowerInvariant() switch { "violet" => 1, "green" => 2, "orange" => 3, _ => 0 };
+        var theme = new ComboBox { MinWidth = 220 };
+        AutomationProperties.SetName(theme, "Color theme");
+        AutomationProperties.SetHelpText(theme, "Choose the light or dark palette for the native workspace.");
+        theme.Items.Add("Light"); theme.Items.Add("Dark");
+        theme.SelectedIndex = _settings.ThemeMode.Equals("dark", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         var density = new ComboBox { MinWidth = 220 };
         AutomationProperties.SetName(density, "Interface density");
         density.Items.Add("Comfortable"); density.Items.Add("Compact");
@@ -281,11 +287,12 @@ public sealed partial class MainPage
         void BuildAppearancePage()
         {
             pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(MakeSettingsCard("Color theme", "Use the light or dark palette across the native workspace and dialogs.", theme));
             pageBody.Children.Add(MakeSettingsCard("Accent color", "Choose the highlight color used for send and connection actions.", accent));
             pageBody.Children.Add(MakeSettingsCard("Interface density", "Use comfortable spacing for readability or compact spacing for smaller screens.", density));
             var reset = new Button { Content = "Reset appearance" };
-            reset.Click += (_, _) => { accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
-            pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the calm cyan accent and comfortable spacing.", reset));
+            reset.Click += (_, _) => { theme.SelectedIndex = 0; accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
+            pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the light theme, calm cyan accent, and comfortable spacing.", reset));
             pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
         }
 
@@ -566,6 +573,7 @@ public sealed partial class MainPage
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
             _settings.AccentColor = accent.SelectedIndex switch { 1 => "violet", 2 => "green", 3 => "orange", _ => "cyan" };
+            _settings.ThemeMode = theme.SelectedIndex == 1 ? "dark" : "light";
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
             _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
             _settings.RequireLocalModelEndpoints = localOnly.IsChecked == true;

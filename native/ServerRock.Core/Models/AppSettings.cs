@@ -19,6 +19,7 @@ public sealed class AppSettings
     public bool SmartPromptRewritingEnabled { get; set; }
     public bool VoiceOutputEnabled { get; set; }
     public string AccentColor { get; set; } = "cyan";
+    public string ThemeMode { get; set; } = "light";
     public string InterfaceDensity { get; set; } = "comfortable";
     public string HostLabel { get; set; } = "This device";
     public bool RequireLocalModelEndpoints { get; set; }

@@ -44,6 +44,11 @@ public sealed class JsonSettingsStore
         settings.ComfyEndpoint ??= defaults.ComfyEndpoint;
         settings.ImageWorkflow ??= defaults.ImageWorkflow;
         settings.GitHubAppClientId ??= defaults.GitHubAppClientId;
+        settings.ThemeMode = settings.ThemeMode?.ToLowerInvariant() switch
+        {
+            "dark" => "dark",
+            _ => defaults.ThemeMode
+        };
         settings.PinnedModels ??= [];
         settings.PinnedModelConnections ??= [];
         settings.LocalModelPerformance ??= new(StringComparer.OrdinalIgnoreCase);
