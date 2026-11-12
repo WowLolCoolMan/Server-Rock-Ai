@@ -32,12 +32,14 @@ public sealed class OperationJournal
         return new(store.Runs, store.Events);
     }
 
-    public OperationRun Create(string workspaceId, string userInstruction, string actor = "user")
+    public OperationRun Create(string workspaceId, string userInstruction, string actor = "user",
+        string modelProvider = "unknown", string model = "unknown", string endpointPrivacy = "unknown")
     {
         if (string.IsNullOrWhiteSpace(workspaceId) || workspaceId.Length > 128 || workspaceId.Any(char.IsControl))
             throw new ArgumentException("Workspace identity is invalid.", nameof(workspaceId));
         if (string.IsNullOrWhiteSpace(userInstruction) || userInstruction.Length > MaxInstructionCharacters)
             throw new ArgumentException($"An operation instruction must contain 1-{MaxInstructionCharacters} characters.", nameof(userInstruction));
+        ValidateProvenance(modelProvider, model, endpointPrivacy);
 
         var snapshot = Load();
         var now = DateTimeOffset.UtcNow;
@@ -45,6 +47,9 @@ public sealed class OperationJournal
         {
             WorkspaceId = workspaceId,
             UserInstruction = userInstruction,
+            ModelProvider = modelProvider.Trim(),
+            Model = model.Trim(),
+            EndpointPrivacy = endpointPrivacy.Trim().ToLowerInvariant(),
             Status = OperationRunStatuses.Draft,
             CreatedAt = now,
             UpdatedAt = now,
@@ -61,7 +66,10 @@ public sealed class OperationJournal
             Payload = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["workspaceId"] = workspaceId,
-                ["status"] = run.Status
+                ["status"] = run.Status,
+                ["modelProvider"] = run.ModelProvider,
+                ["model"] = run.Model,
+                ["endpointPrivacy"] = run.EndpointPrivacy
             }
         });
         Save(snapshot);
@@ -172,9 +180,13 @@ public sealed class OperationJournal
         var runs = store.Runs.ToDictionary(item => item.RunId, StringComparer.Ordinal);
         foreach (var run in runs.Values)
         {
+            run.ModelProvider ??= "unknown";
+            run.Model ??= "unknown";
+            run.EndpointPrivacy ??= "unknown";
             if (string.IsNullOrWhiteSpace(run.RunId) || string.IsNullOrWhiteSpace(run.WorkspaceId) ||
                 run.UserInstruction.Length > MaxInstructionCharacters || run.LastEventSequence < 1)
                 throw new InvalidDataException("The operation journal contains an invalid run.");
+            ValidateProvenance(run.ModelProvider, run.Model, run.EndpointPrivacy);
         }
         foreach (var group in store.Events.GroupBy(item => item.RunId, StringComparer.Ordinal))
         {
@@ -188,6 +200,14 @@ public sealed class OperationJournal
             if (runs[group.Key].LastEventSequence != expected - 1)
                 throw new InvalidDataException("The operation run sequence does not match its event journal.");
         }
+    }
+
+    private static void ValidateProvenance(string modelProvider, string model, string endpointPrivacy)
+    {
+        if (string.IsNullOrWhiteSpace(modelProvider) || modelProvider.Length > 128 || modelProvider.Any(char.IsControl) ||
+            string.IsNullOrWhiteSpace(model) || model.Length > 256 || model.Any(char.IsControl) ||
+            endpointPrivacy is not ("local" or "remote" or "unknown"))
+            throw new ArgumentException("Operation provider provenance is invalid.");
     }
 
     private sealed class JournalStore

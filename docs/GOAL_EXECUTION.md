@@ -877,3 +877,43 @@ bounded automatic FIFO dispatch remains available.
 Not yet verified: live keyboard/screen-reader queue interaction, reorder or
 persisted queue behavior, and packaged Linux parity. The next dependency is
 live accessibility validation before adding persistence or parallel dispatch.
+
+## Slice 25 — durable chat operation provider provenance
+
+Status: `implemented_unverified`
+
+Chat operation records now persist the selected model provider, model ID, and a
+bounded endpoint privacy classification (`local`, `remote`, or `unknown`). The
+Activity & tasks surface shows this provenance without exposing endpoint URLs,
+so a user can tell which configured route handled a request after the response
+has completed or failed. Existing journals remain readable because missing
+legacy fields normalize to `unknown` in memory.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/OperationRun.cs`
+- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including provider/model/local provenance persistence.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded provider/model labels and a local or
+remote classification are persisted and rendered. Endpoint URLs, API keys,
+and prompt contents are not added to the Activity metadata. No third-party
+code or new network path was added.
+
+Rollback: remove the provenance fields, journal metadata, and Activity label;
+the existing durable operation lifecycle remains usable with unknown metadata.
+
+Not yet verified: provenance for non-chat workflow/provider attempts, live
+Activity accessibility behavior, capability-aware routing, and packaged Linux
+parity. The next dependency is provider capability/profile modeling before
+implementing fallback or multi-provider routing.

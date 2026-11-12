@@ -12,8 +12,9 @@ internal static class OperationServiceTests
         try
         {
             var service = new OperationService(new OperationJournal(path));
-            var run = service.Start("chat", "send a test message");
+            var run = service.Start("chat", "send a test message", modelProvider: "Ollama", model: "llama3.2", endpointPrivacy: "local");
             Check(run.Status == OperationRunStatuses.Running, "service starts a run in the running state");
+            Check(run.ModelProvider == "Ollama" && run.Model == "llama3.2" && run.EndpointPrivacy == "local", "service persists provider provenance");
             run = service.Complete(run);
             Check(run.Status == OperationRunStatuses.Completed, "service completes a streamed run");
 

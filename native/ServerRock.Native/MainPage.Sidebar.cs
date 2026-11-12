@@ -112,7 +112,7 @@ public sealed partial class MainPage
                     {
                         new TextBlock { Text = $"{OperationStatusLabel(run.Status)} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
                         new TextBlock { Text = preview, TextWrapping = TextWrapping.Wrap },
-                        new TextBlock { Text = $"Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
+                        new TextBlock { Text = $"{run.ModelProvider} · {run.Model} · {run.EndpointPrivacy} endpoint · Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
                     }
                 };
                 if (run.Status == OperationRunStatuses.NeedsReconciliation)

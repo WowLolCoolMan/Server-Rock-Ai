@@ -25,6 +25,9 @@ public sealed class OperationRun
     public string RunId { get; set; } = Guid.NewGuid().ToString("N");
     public string WorkspaceId { get; set; } = "default";
     public string UserInstruction { get; set; } = "";
+    public string ModelProvider { get; set; } = "unknown";
+    public string Model { get; set; } = "unknown";
+    public string EndpointPrivacy { get; set; } = "unknown";
     public string Status { get; set; } = OperationRunStatuses.Draft;
     public long LastEventSequence { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

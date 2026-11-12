@@ -13,9 +13,10 @@ public sealed class OperationService
 
     public OperationService(OperationJournal? journal = null) => _journal = journal ?? new OperationJournal();
 
-    public OperationRun Start(string workspaceId, string instruction, string actor = "user")
+    public OperationRun Start(string workspaceId, string instruction, string actor = "user",
+        string modelProvider = "unknown", string model = "unknown", string endpointPrivacy = "unknown")
     {
-        var run = _journal.Create(workspaceId, instruction, actor);
+        var run = _journal.Create(workspaceId, instruction, actor, modelProvider, model, endpointPrivacy);
         run = _journal.Transition(run.RunId, OperationRunStatuses.Validating, actor);
         run = _journal.Transition(run.RunId, OperationRunStatuses.Queued, actor);
         return _journal.Transition(run.RunId, OperationRunStatuses.Running, actor);

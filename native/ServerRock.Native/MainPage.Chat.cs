@@ -212,7 +212,12 @@ public sealed partial class MainPage
         _requestCancellation = new CancellationTokenSource();
         try
         {
-            _activeOperationRun = _operationService.Start(_activeProjectId ?? "default", text);
+            _activeOperationRun = _operationService.Start(
+                _activeProjectId ?? "default",
+                text,
+                modelProvider: _settings.ModelProvider,
+                model: _settings.Model,
+                endpointPrivacy: LocalEndpoint.IsLocal(_settings.Endpoint) ? "local" : "remote");
         }
         catch (Exception ex)
         {
