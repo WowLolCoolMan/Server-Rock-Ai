@@ -46,6 +46,7 @@ public sealed partial class MainPage
         try
         {
             reconciled = _operationService.ReconcileAfterRestart();
+            _workflowRunService.ExpirePendingApprovals();
             snapshot = _operationService.Load();
             workflowSnapshot = _workflowRunService.Load();
         }
@@ -66,9 +67,13 @@ public sealed partial class MainPage
                 var approvalPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
                 approvalPanel.Children.Add(new TextBlock { Text = $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
                 var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                var deny = new Button { Content = "Deny", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 AutomationProperties.SetName(approve, $"Approve pending workflow step {approval.Label}");
+                AutomationProperties.SetName(deny, $"Deny pending workflow step {approval.Label}");
                 approve.Click += (_, _) => ApprovePendingWorkflowStep(approval, dialog);
+                deny.Click += (_, _) => DenyPendingWorkflowStep(approval, dialog);
                 approvalPanel.Children.Add(approve);
+                approvalPanel.Children.Add(deny);
                 content.Children.Add(new Border { Background = ResourceBrush("WarningBrush"), BorderBrush = ResourceBrush("WarningLineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = approvalPanel });
             }
         }
@@ -280,6 +285,24 @@ public sealed partial class MainPage
             return;
         }
         ApproveWorkflowStep(run, step, dialog);
+    }
+
+    private void DenyPendingWorkflowStep(WorkflowApprovalRequest approval, ContentDialog? dialog)
+    {
+        var run = _workflowRunService.Load().Runs.SingleOrDefault(item => item.RunId == approval.RunId);
+        var step = run?.Steps.SingleOrDefault(item => item.NodeId == approval.NodeId);
+        if (run is null || step is null)
+        {
+            RuntimeStatus.Text = "That approval is no longer pending. Refresh Activity & tasks.";
+            return;
+        }
+        try
+        {
+            _workflowRunService.DenyApproval(run.RunId, step.NodeId, "Denied from Activity & tasks.");
+            RuntimeStatus.Text = $"Denied workflow step {step.NodeId}. The run failed without dispatching the step.";
+            dialog?.Hide();
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Workflow denial could not be recorded: {ex.Message}"; }
     }
 
     private async Task ShowWorkflowPlanAsync(WorkflowRun run)

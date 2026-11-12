@@ -23,6 +23,8 @@ public static class WorkflowStepStatuses
     public const string Failed = "failed";
     public const string Skipped = "skipped";
     public const string Cancelled = "cancelled";
+    public const string Denied = "denied";
+    public const string Expired = "expired";
 }
 
 public sealed class WorkflowRun

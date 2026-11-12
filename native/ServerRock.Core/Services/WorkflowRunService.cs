@@ -8,6 +8,7 @@ namespace ServerRock.Core.Services;
 /// tool/provider dispatch is intentionally a later capability-gated adapter.</summary>
 public sealed class WorkflowRunService
 {
+    public static readonly TimeSpan ApprovalLifetime = TimeSpan.FromMinutes(30);
     private const int MaxRuns = 500;
     private const int MaxEvents = 20_000;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 24 };
@@ -241,6 +242,43 @@ public sealed class WorkflowRunService
             .OrderBy(request => request.RequestedAt)
             .Take(100)
             .ToArray();
+    }
+
+    public WorkflowRun DenyApproval(string runId, string nodeId, string reason, string actor = "user")
+    {
+        if (string.IsNullOrWhiteSpace(reason) || reason.Length > 500 || reason.Any(char.IsControl)) throw new ArgumentException("A bounded denial reason is required.", nameof(reason));
+        var snapshot = Load();
+        var run = Find(snapshot, runId);
+        var step = FindStep(run, nodeId);
+        if (run.Status != WorkflowRunStatuses.AwaitingApproval || step.Status != WorkflowStepStatuses.WaitingApproval) throw new InvalidOperationException("That step is not awaiting approval.");
+        step.Status = WorkflowStepStatuses.Denied;
+        step.Result = "denied";
+        run.Status = WorkflowRunStatuses.Failed;
+        Touch(run);
+        AddEvent(snapshot, run, "approval.denied", actor, new() { ["nodeId"] = nodeId, ["reason"] = reason });
+        Save(snapshot);
+        return run;
+    }
+
+    public IReadOnlyList<WorkflowRun> ExpirePendingApprovals(DateTimeOffset? now = null, string actor = "system")
+    {
+        var cutoff = (now ?? DateTimeOffset.UtcNow) - ApprovalLifetime;
+        var snapshot = Load();
+        var expired = new List<WorkflowRun>();
+        foreach (var run in snapshot.Runs.Where(item => item.Status == WorkflowRunStatuses.AwaitingApproval && item.UpdatedAt <= cutoff))
+        {
+            foreach (var step in run.Steps.Where(item => item.Status == WorkflowStepStatuses.WaitingApproval))
+            {
+                step.Status = WorkflowStepStatuses.Expired;
+                step.Result = "expired";
+                AddEvent(snapshot, run, "approval.expired", actor, new() { ["nodeId"] = step.NodeId, ["reason"] = "Approval lifetime elapsed." });
+            }
+            run.Status = WorkflowRunStatuses.Failed;
+            Touch(run);
+            expired.Add(run);
+        }
+        if (expired.Count > 0) Save(snapshot);
+        return expired;
     }
 
     private WorkflowRun Transition(string runId, string next, string actor)

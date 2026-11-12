@@ -730,3 +730,40 @@ Not yet verified: live concurrent approval keyboard/screen-reader acceptance,
 approval expiry/denial, write/shell/network adapters, parallel limits,
 scheduling, and packaged Linux parity. The next dependency is durable approval
 denial/expiry semantics before any broader adapter surface.
+
+## Slice 21 — approval denial and expiry
+
+Status: `implemented_unverified`
+
+Workflow approvals now support explicit bounded-reason denial, which marks the
+step denied, fails the run, and records `approval.denied`. Pending approvals
+older than the 30-minute lifetime are marked expired, fail their run, and
+record `approval.expired`. Activity expires stale requests before rendering
+the inbox, and exposes accessible Approve and Deny actions for current
+requests.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowRun.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable denial and 30-minute expiry event coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: denial reasons are bounded local metadata;
+expired approvals cannot be acted on. No network, credentials, shell,
+provider, Git, or third-party code path was added.
+
+Rollback: remove denial/expiry transitions and inbox actions; existing approve
+and reconciliation paths remain available.
+
+Not yet verified: live keyboard/screen-reader approval acceptance, approval
+identity display/expiry messaging, write/shell/network adapters, parallel
+limits, scheduling, and packaged Linux parity. The next dependency is a
+durable approval identity and visible expiry state in the effect timeline.
