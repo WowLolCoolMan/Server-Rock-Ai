@@ -960,6 +960,45 @@ Not yet verified: live completion/dispatch acceptance, queue reordering,
 cross-device synchronization, durable context continuity, and packaged Linux
 parity. The next dependency is a complete user-driven live queue journey.
 
+## Slice 32 — live restored-queue dispatch evidence
+
+Status: `implemented_unverified`
+
+The live Windows journey was extended using the restored queued follow-up. A
+first request was submitted while the restored message remained queued. The
+first request reached a provider failure, and the queued follow-up then
+appeared in the conversation and was automatically dispatched. The durable
+queue file was empty after dispatch, proving the queued item was removed before
+the next send. Both local provider calls returned an empty stream, so this
+slice records queue ordering and failure-path dispatch only, not successful
+model-response acceptance.
+
+Evidence:
+
+- Live Windows accessibility tree showed the restored queued message and
+  `Manage queued messages` before the first send.
+- Live Windows accessibility tree then showed the first user request, its
+  `Connection error`, the restored `Queued follow-up validation message`, and
+  the second `Connection error` after automatic dispatch.
+- `C:\Users\basic\AppData\Roaming\ServerRock\AI\queued-messages.json` was
+  `[]` after the dispatch path.
+- The local `/v1/models` endpoint returned HTTP 200 before the journey, but
+  the selected model closed both chat streams without content; provider
+  availability is therefore not claimed.
+
+Privacy/security/licensing: the journey used local model routing only. Queue
+content stayed in local app data, no remote endpoint or credential was added,
+and failure handling did not replay the request indefinitely. No third-party
+code was added.
+
+Rollback: no production behavior change was made in this evidence slice;
+retain the existing queue and provider failure behavior.
+
+Not yet verified: successful live provider response, queue reordering,
+cross-device synchronization, durable context continuity, and packaged Linux
+parity. The next dependency is provider/runtime health or a deterministic
+local test endpoint before claiming successful end-to-end dispatch.
+
 ## Slice 25 — durable chat operation provider provenance
 
 Status: `implemented_unverified`
