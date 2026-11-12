@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `6000c50` plus the live local-provider validation
+Snapshot commit: `0d5e2c1` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -41,7 +41,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `6000c50`, with the user-provided
+- Live checkout: `main` at `0d5e2c1`, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
