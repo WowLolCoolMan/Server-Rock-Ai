@@ -4,7 +4,8 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const nativeDir = path.join(root, "native", "ServerRock.Native");
 const xamlPath = path.join(nativeDir, "MainPage.xaml");
-const xaml = fs.readFileSync(xamlPath, "utf8");
+const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
+const xaml = readText(xamlPath);
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -14,7 +15,7 @@ const readPartials = (prefix) =>
   fs.readdirSync(nativeDir)
     .filter((name) => name.startsWith(prefix) && name.endsWith(".cs"))
     .sort()
-    .map((name) => fs.readFileSync(path.join(nativeDir, name), "utf8"))
+    .map((name) => readText(path.join(nativeDir, name)))
     .join("\n");
 const code = readPartials("MainPage.");
 const githubCode = readPartials("MainPage.GitHub");

@@ -58,5 +58,28 @@ or external code were added. Theme state remains a non-secret local setting.
 Rollback: revert the slice commit; the new `ThemeMode` property is additive and
 older settings files continue to load as light mode.
 
-Next unblocked slice: address one static UI audit contract with a focused
-runtime-safe fix, starting with the smallest isolated focus/recovery case.
+## Slice 2 — Windows line-ending-safe native UI audit
+
+Status: `verified_windows` (static contract audit only)
+
+The native UI audit reported ten missing multiline contracts. Inspection showed
+the source already contained the required contracts, but the checker compared
+LF-only strings against CRLF files. The audit now normalizes CRLF to LF for
+XAML and C# inputs before matching, preserving the same contract definitions
+while removing Windows false negatives.
+
+Changed file:
+
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+
+This improves evidence quality only; it does not replace live Windows/Linux UI
+acceptance or accessibility testing. No new dependencies, network calls,
+credentials, or runtime behavior were added.
+
+Next unblocked slice: inspect the handoff-to-repository feature map and choose
+the smallest missing user-facing capability that can be implemented with a
+real backend and focused tests.
