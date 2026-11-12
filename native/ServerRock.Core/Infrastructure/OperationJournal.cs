@@ -135,6 +135,47 @@ public sealed class OperationJournal
         return run;
     }
 
+    /// <summary>Appends a bounded evidence event without changing the operation status.</summary>
+    public OperationRun AppendEvent(string runId, string type, string actor = "system",
+        IReadOnlyDictionary<string, string>? payload = null, string? correlationId = null)
+    {
+        ValidateEventText(runId, 128, nameof(runId));
+        ValidateEventText(type, 128, nameof(type));
+        ValidateEventText(actor, 128, nameof(actor));
+        if (correlationId is not null) ValidateEventText(correlationId, 128, nameof(correlationId));
+        var safePayload = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (payload is not null)
+        {
+            if (payload.Count > 32) throw new ArgumentException("An operation event cannot contain more than 32 metadata fields.", nameof(payload));
+            foreach (var item in payload)
+            {
+                ValidateEventText(item.Key, 128, "payload key");
+                ValidateEventText(item.Value, 4_096, "payload value");
+                safePayload[item.Key] = item.Value;
+            }
+        }
+
+        var snapshot = Load();
+        var run = snapshot.Runs.SingleOrDefault(item => item.RunId == runId)
+            ?? throw new InvalidOperationException("The operation run no longer exists.");
+        var now = DateTimeOffset.UtcNow;
+        var sequence = run.LastEventSequence + 1;
+        run.LastEventSequence = sequence;
+        run.UpdatedAt = now;
+        snapshot.Events.Add(new OperationEvent
+        {
+            RunId = run.RunId,
+            Sequence = sequence,
+            TimestampUtc = now,
+            Type = type,
+            Actor = actor,
+            CorrelationId = correlationId,
+            Payload = safePayload
+        });
+        Save(snapshot);
+        return run;
+    }
+
     /// <summary>
     /// Marks in-flight runs as uncertain after a process restart. This records
     /// a new event and never retries a tool, Git, or provider side effect.
@@ -238,6 +279,12 @@ public sealed class OperationJournal
             string.IsNullOrWhiteSpace(model) || model.Length > 256 || model.Any(char.IsControl) ||
             endpointPrivacy is not ("local" or "remote" or "unknown"))
             throw new ArgumentException("Operation provider provenance is invalid.");
+    }
+
+    private static void ValidateEventText(string value, int maxLength, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl))
+            throw new ArgumentException($"Operation event {parameterName} is invalid.", parameterName);
     }
 
     private sealed class JournalStore

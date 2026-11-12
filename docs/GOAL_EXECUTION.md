@@ -1611,6 +1611,45 @@ Not yet verified: live Windows persistence and insertion of a variable-bearing
 installed package, cross-platform/package acceptance, and additional
 user-configurable variables beyond `{{USER_NAME}}`.
 
+## Slice 83 — durable provider-attempt provenance
+
+Status: `implemented_verified_core`
+
+Chat operation runs now append bounded provider-attempt evidence for started,
+completed, failed, and user-cancelled requests. Each event records the
+provider, model, privacy classification, outcome, and an optional bounded
+reason, while intentionally excluding endpoint URLs, API keys, prompts, and
+response content. This makes the selected route and failure outcome auditable
+without changing provider routing or adding automatic fallback behavior.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable started/failed provider-attempt events and bounded provenance fields.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (134 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: event payloads are local-only, bounded, and
+redacted by design; no endpoint URL, credential, prompt, response, dependency,
+or third-party code is recorded. The existing explicit model-selection and
+no-automatic-fallback boundary remains unchanged.
+
+Rollback: remove `OperationJournal.AppendEvent`,
+`OperationService.RecordProviderAttempt`, the Chat lifecycle calls, its test,
+and the UI audit contract. Existing status-transition journal evidence remains
+available.
+
+Not yet verified: live Windows Activity rendering of provider-attempt events,
+workflow/provider attempts outside chat, and cross-platform/package acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

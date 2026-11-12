@@ -39,6 +39,21 @@ public sealed class OperationService
             new Dictionary<string, string>(StringComparer.Ordinal) { ["reason"] = reason });
     }
 
+    public OperationRun RecordProviderAttempt(OperationRun run, string outcome, string? reason = null, string actor = "provider")
+    {
+        if (outcome is not ("started" or "completed" or "failed" or "cancelled"))
+            throw new ArgumentException("Provider attempt outcome is invalid.", nameof(outcome));
+        var payload = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["outcome"] = outcome,
+            ["modelProvider"] = run.ModelProvider,
+            ["model"] = run.Model,
+            ["endpointPrivacy"] = run.EndpointPrivacy
+        };
+        if (!string.IsNullOrWhiteSpace(reason)) payload["reason"] = reason;
+        return _journal.AppendEvent(run.RunId, $"provider.attempt.{outcome}", actor, payload, run.RunId);
+    }
+
     public OperationRun Cancel(OperationRun run, string actor = "user")
     {
         if (run.Status != OperationRunStatuses.Cancelling)

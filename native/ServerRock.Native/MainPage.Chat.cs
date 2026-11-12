@@ -226,6 +226,7 @@ public sealed partial class MainPage
                 modelProvider: _settings.ModelProvider,
                 model: _settings.Model,
                 endpointPrivacy: LocalEndpoint.IsLocal(_settings.Endpoint) ? "local" : "remote");
+            _activeOperationRun = _operationService.RecordProviderAttempt(_activeOperationRun, "started");
         }
         catch (Exception ex)
         {
@@ -273,6 +274,7 @@ public sealed partial class MainPage
             await StreamChatAsync(response, assistantIndex, requestMessages, _requestCancellation.Token);
             if (_mode == WorkspaceModes.CodingAgent) AttachWorkspaceProposals(response, assistantIndex);
             RenderAssistantMessage(response, _messages[assistantIndex].Content, _messages[assistantIndex].Sources);
+            RecordActiveProviderAttempt("completed");
             CompleteActiveOperation();
             SetCompanionCompletionSummary(_messages[assistantIndex].Content);
             _ = SpeakResponseAsync(_messages[assistantIndex].Content);
@@ -294,11 +296,13 @@ public sealed partial class MainPage
                 RuntimeStatus.Text = _historyAvailable
                     ? "Response stopped"
                     : "Response stopped · conversation not saved";
+                RecordActiveProviderAttempt("cancelled", "user cancelled the request");
                 CancelActiveOperation();
             }
             else
             {
                 RuntimeStatus.Text = "The model request timed out after five minutes.";
+                RecordActiveProviderAttempt("failed", "provider timeout");
                 FailActiveOperation("provider timeout");
             }
             SetCompanionState("stuck");
@@ -333,6 +337,7 @@ public sealed partial class MainPage
                 : localEndpoint
                     ? "Connection failed · choose another local model or check Settings"
                     : "Connection failed · check Settings";
+            RecordActiveProviderAttempt("failed", failureKind == ProviderFailureKind.ModelCompatibility ? "model compatibility failure" : "provider request failed");
             FailActiveOperation(failureKind == ProviderFailureKind.ModelCompatibility ? "model compatibility failure" : "provider request failed");
             SetCompanionState("error");
             UpdateCompanionSpeech("Error · the model request failed.");
@@ -448,6 +453,13 @@ public sealed partial class MainPage
         if (_activeOperationRun is null) return;
         try { _activeOperationRun = _operationService.Complete(_activeOperationRun); }
         catch (Exception ex) { App.Log.Error("Operations", ex, "Could not complete durable chat operation"); }
+    }
+
+    private void RecordActiveProviderAttempt(string outcome, string? reason = null)
+    {
+        if (_activeOperationRun is null) return;
+        try { _activeOperationRun = _operationService.RecordProviderAttempt(_activeOperationRun, outcome, reason); }
+        catch (Exception ex) { App.Log.Error("Operations", ex, "Could not record provider attempt evidence"); }
     }
 
     private void CancelActiveOperation()

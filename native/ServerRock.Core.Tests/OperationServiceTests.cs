@@ -15,6 +15,12 @@ internal static class OperationServiceTests
             var run = service.Start("chat", "send a test message", modelProvider: "Ollama", model: "llama3.2", endpointPrivacy: "local");
             Check(run.Status == OperationRunStatuses.Running, "service starts a run in the running state");
             Check(run.ModelProvider == "Ollama" && run.Model == "llama3.2" && run.EndpointPrivacy == "local", "service persists provider provenance");
+            run = service.RecordProviderAttempt(run, "started");
+            run = service.RecordProviderAttempt(run, "failed", "model compatibility failure");
+            var attemptEvents = new OperationJournal(path).Load().Events.Where(item => item.RunId == run.RunId).ToArray();
+            Check(attemptEvents.Any(item => item.Type == "provider.attempt.started" && item.Payload["model"] == "llama3.2") &&
+                  attemptEvents.Any(item => item.Type == "provider.attempt.failed" && item.Payload["reason"] == "model compatibility failure"),
+                "service durably records bounded provider attempt outcomes");
             run = service.Complete(run);
             Check(run.Status == OperationRunStatuses.Completed, "service completes a streamed run");
 
