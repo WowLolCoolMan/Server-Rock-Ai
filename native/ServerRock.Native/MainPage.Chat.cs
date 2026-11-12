@@ -315,7 +315,7 @@ public sealed partial class MainPage
                 };
                 AutomationProperties.SetName(chooseModel, "Choose another local model after connection failure");
                 AutomationProperties.SetHelpText(chooseModel, "Open installed local models so you can choose a different model. The app will not switch models automatically.");
-                chooseModel.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox);
+                chooseModel.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox, confirmModelSwitch: true);
                 errorContent.Children.Add(chooseModel);
             } : null);
             if (localEndpoint) RuntimeStatus.Text = "Connection failed · choose another local model or check Settings";

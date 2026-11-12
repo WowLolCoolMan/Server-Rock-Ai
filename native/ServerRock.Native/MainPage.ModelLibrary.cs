@@ -74,9 +74,9 @@ public sealed partial class MainPage
         menu.ShowAt(ModelButton);
     }
 
-    private async Task OpenModelLibraryAndRestoreFocusAsync(bool returnToCompactSidebar, Control? trigger)
+    private async Task OpenModelLibraryAndRestoreFocusAsync(bool returnToCompactSidebar, Control? trigger, bool confirmModelSwitch = false)
     {
-        try { await RunUiActionAsync(ModelLibraryClickAsync); }
+        try { await RunUiActionAsync(() => ModelLibraryClickAsync(confirmModelSwitch)); }
         finally { RestoreNavigationDialogFocus(returnToCompactSidebar, trigger); }
     }
 
@@ -124,7 +124,7 @@ public sealed partial class MainPage
         _settings.PinnedModels.Clear();
     }
 
-    private async Task ModelLibraryClickAsync()
+    private async Task ModelLibraryClickAsync(bool confirmModelSwitch = false)
     {
         var source = new ComboBox { MinWidth = 220 };
         AutomationProperties.SetName(source, "Model source");
@@ -428,7 +428,26 @@ public sealed partial class MainPage
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-                if (list.SelectedItem is InstalledModelChoice selected) await SelectModelAsync(selected.Model, selected.Endpoint, selected.Provider);
+                if (list.SelectedItem is InstalledModelChoice selected)
+                {
+                    if (confirmModelSwitch)
+                    {
+                        var confirm = new ContentDialog
+                        {
+                            Title = "Switch local model?",
+                            Content = new TextBlock
+                            {
+                                Text = $"The previous model failed to return a response. Switch from {_settings.Model} to {selected.Model}? This changes the selected local model only; no cloud route or automatic retry will occur.",
+                                TextWrapping = TextWrapping.Wrap
+                            },
+                            PrimaryButtonText = "Switch model",
+                            CloseButtonText = "Keep current model",
+                            XamlRoot = XamlRoot
+                        };
+                        if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+                    }
+                    await SelectModelAsync(selected.Model, selected.Endpoint, selected.Provider);
+                }
                 return;
             }
             if (result != ContentDialogResult.Secondary) return;

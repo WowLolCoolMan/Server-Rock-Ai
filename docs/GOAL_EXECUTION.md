@@ -1451,3 +1451,42 @@ Not yet verified: automatic compatibility detection, an explicit fallback
 confirmation flow for switching, multi-provider routing, durable provider
 identity across fallback attempts, Linux parity, and packaged-release
 acceptance.
+
+## Slice 40 — explicit fallback confirmation
+
+Status: `implemented_verified_windows`
+
+The local failure recovery path now carries an explicit confirmation boundary.
+When the user selects another installed local model from the recovery library,
+the app shows `Switch local model?`, names the current and proposed models, and
+states that the change affects only the selected local model with no cloud
+route or automatic retry. Choosing Keep current model leaves the preference
+unchanged; only Switch model calls the existing selection path.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.ModelLibrary.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (94 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: failure recovery opened
+  Model Library; selecting `wtwk-qwen35-4b:latest` exposed the accessible
+  confirmation with current/target models and explicit no-cloud language;
+  `Keep current model` preserved `huihui_ai/Qwen3.8-abliterated:latest`.
+
+Privacy/security/licensing: switching remains local-only and user initiated.
+The confirmation prevents an implicit model change after a provider failure;
+no prompt, context, credentials, or third-party code was added.
+
+Rollback: remove the optional confirmation parameter and dialog; the existing
+local model library and explicit recovery chooser remain available.
+
+Not yet verified: automatic compatibility detection, multi-route provider
+selection, durable provider identity across fallback attempts, Linux parity,
+and packaged-release acceptance.

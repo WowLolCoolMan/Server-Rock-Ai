@@ -81,6 +81,9 @@ const requiredCode = [
   ['Command palette focus return', 'dialog.Closed += (_, _) => PromptBox.Focus(FocusState.Programmatic);'],
   ['Local provider recovery action', 'AutomationProperties.SetName(chooseModel, "Choose another local model after connection failure")'],
   ['Local provider recovery stays local', 'var localEndpoint = LocalEndpoint.IsLocal(_settings.Endpoint);'],
+  ['Fallback confirmation title', 'Title = "Switch local model?"'],
+  ['Fallback confirmation action', 'PrimaryButtonText = "Switch model"'],
+  ['Fallback confirmation no cloud route', 'no cloud route or automatic retry will occur.'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
