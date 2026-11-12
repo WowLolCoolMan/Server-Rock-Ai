@@ -1608,7 +1608,7 @@ cross-process locking, Linux parity, and packaged-release acceptance.
 
 ## Slice 51 — Activity scheduling controls and reviewed prompt surfacing
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_windows`
 
 Activity & tasks now exposes a one-time scheduling action with accessible
 prompt/date/time/workspace controls, persisted task listing, and explicit
@@ -1631,6 +1631,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (111 contracts).`
 - `git diff --check` — passed.
+- Live Windows native run — passed for opening Activity & tasks, scheduling a
+  prompt with date/time/workspace controls, seeing the persisted `scheduled`
+  record, and changing it to `paused` then `scheduled` through the accessible
+  Pause/Resume controls. The short run did not wait long enough to prove the
+  due-timer composer surfacing path.
 
 Privacy/security/licensing: scheduling stores only the authored prompt,
 workspace choice, timestamps, status, and bounded outcome. Due work is
@@ -1642,7 +1647,7 @@ Rollback: remove `MainPage.ScheduledTasks.cs`, the Activity scheduling controls,
 timer, and audit contracts; the durable scheduler store remains harmless and
 can be removed separately without touching chat or operation history.
 
-Not yet verified: live Windows schedule/pause/due-surface interaction, OS
+Not yet verified: live Windows due-surface interaction, OS
 session process hosting, automatic provider execution/result capture, timezone
 and recurring schedules, backoff, cross-process locking, Linux parity, and
 packaged-release acceptance.
