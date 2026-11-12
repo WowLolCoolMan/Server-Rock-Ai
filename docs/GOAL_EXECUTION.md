@@ -864,6 +864,7 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
+- Live Windows check: the built `Server Rock: AI` window exposed accessible names for the message composer, Send message, Activity & tasks, and the Queue control contract. End-to-end queue interaction was not claimed because the automation helper returned no click geometry for the Send action while multiple native windows were present.
 
 Privacy/security/licensing: queue contents remain local process memory and the
 management surface renders bounded previews only. Explicit clear is reversible
