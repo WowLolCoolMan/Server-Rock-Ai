@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Services;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;
@@ -40,11 +41,13 @@ public sealed partial class MainPage
     private async void ScheduledTasksClick(object sender, RoutedEventArgs e)
     {
         OperationJournalSnapshot snapshot;
+        WorkflowRunSnapshot workflowSnapshot;
         IReadOnlyList<OperationRun> reconciled;
         try
         {
             reconciled = _operationService.ReconcileAfterRestart();
             snapshot = _operationService.Load();
+            workflowSnapshot = _workflowRunService.Load();
         }
         catch (Exception ex)
         {
@@ -117,6 +120,39 @@ public sealed partial class MainPage
             }
         }
 
+        if (workflowSnapshot.Runs.Count > 0)
+        {
+            content.Children.Add(new TextBlock { Text = "WORKFLOW RUNS", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75, Margin = new Thickness(0, 8, 0, 0) });
+            foreach (var run in workflowSnapshot.Runs.OrderByDescending(item => item.UpdatedAt).Take(50))
+            {
+                var runPanel = new StackPanel { Spacing = 3 };
+                runPanel.Children.Add(new TextBlock { Text = $"{WorkflowStatusLabel(run.Status)} · v{run.WorkflowVersion} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                runPanel.Children.Add(new TextBlock { Text = $"Workflow {run.WorkflowId} · run {run.RunId[..Math.Min(8, run.RunId.Length)]}", FontSize = 11, Opacity = 0.7 });
+                foreach (var step in run.Steps)
+                {
+                    var stepLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(8, 2, 0, 0) };
+                    stepLine.Children.Add(new TextBlock { Text = $"{step.NodeId}: {step.Status} (attempt {step.Attempt})", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                    if (run.Status == WorkflowRunStatuses.AwaitingApproval && step.Status == WorkflowStepStatuses.WaitingApproval)
+                    {
+                        var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                        AutomationProperties.SetName(approve, $"Approve workflow step {step.NodeId}");
+                        approve.Click += (_, _) => ApproveWorkflowStep(run, step, dialog);
+                        stepLine.Children.Add(approve);
+                    }
+                    runPanel.Children.Add(stepLine);
+                }
+                content.Children.Add(new Border
+                {
+                    Background = ResourceBrush("SurfaceAltBrush"),
+                    BorderBrush = ResourceBrush("LineBrush"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(10),
+                    Child = runPanel
+                });
+            }
+        }
+
         dialog = new ContentDialog
         {
             Title = "Activity & tasks",
@@ -156,6 +192,31 @@ public sealed partial class MainPage
         OperationRunStatuses.Running => "Running",
         _ => status.Replace('_', ' ')
     };
+
+    private static string WorkflowStatusLabel(string status) => status switch
+    {
+        WorkflowRunStatuses.NeedsReconciliation => "Needs review after restart",
+        WorkflowRunStatuses.AwaitingApproval => "Waiting for approval",
+        WorkflowRunStatuses.Completed => "Completed",
+        WorkflowRunStatuses.Cancelled => "Cancelled",
+        WorkflowRunStatuses.Failed => "Failed",
+        WorkflowRunStatuses.Running => "Running",
+        _ => status.Replace('_', ' ')
+    };
+
+    private void ApproveWorkflowStep(WorkflowRun run, WorkflowStepRun step, ContentDialog? dialog)
+    {
+        try
+        {
+            _workflowRunService.ApproveStep(run.RunId, step.NodeId, $"activity-ui:{run.RunId}:{step.NodeId}");
+            RuntimeStatus.Text = $"Approved workflow step {step.NodeId}. No tool or provider action was dispatched by this approval surface.";
+            dialog?.Hide();
+        }
+        catch (Exception ex)
+        {
+            RuntimeStatus.Text = $"Workflow approval could not be recorded: {ex.Message}";
+        }
+    }
 
     private async void MoreClick(object sender, RoutedEventArgs e)
     {

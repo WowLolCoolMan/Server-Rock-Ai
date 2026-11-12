@@ -367,3 +367,39 @@ Not yet verified: workflow editor/dry-run, tool adapter capability gates,
 parallel resource limits, background scheduler/OS restart behavior, approval
 inbox UI, and packaged Linux parity. The next dependency is an explicit
 workflow-run activity surface before connecting any executor.
+
+## Slice 11 — workflow runs in Activity & tasks
+
+Status: `implemented_unverified`
+
+Activity & tasks now loads durable workflow runs alongside chat operations,
+showing workflow ID/version, run status, each step state, attempt number, and
+waiting approvals. Waiting approval steps expose an accessible Approve action
+that records a stable UI approval identity and refreshes truthfully by closing
+the surface; it does not dispatch a tool, provider, shell, Git, or file action.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed in the preceding workflow-run slice, including durable approval transitions and restart reconciliation.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the UI displays local run metadata and bounded
+step IDs only. Approval is explicit and auditable; no external action is
+implicitly authorized or dispatched. No network call, credential, or
+third-party code was added.
+
+Rollback: revert the workflow service fields and Activity rendering; durable
+workflow runs remain available to Core callers and existing chat activity is
+unchanged.
+
+Not yet verified: live UI approval keyboard/screen-reader behavior, workflow
+editor/dry-run, tool adapter capability gates, parallel limits, scheduling,
+and packaged Linux parity. The next dependency is a dry-run/execution-plan
+view that can explain graph order without invoking tools.

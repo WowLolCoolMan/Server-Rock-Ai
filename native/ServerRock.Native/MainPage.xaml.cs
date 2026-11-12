@@ -34,6 +34,8 @@ public sealed partial class MainPage : Page
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
     private readonly WorkspaceCommandRunner _commandRunner = new();
     private readonly OperationService _operationService = new();
+    private readonly WorkflowService _workflowService = new();
+    private readonly WorkflowRunService _workflowRunService;
     private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer = new();
     private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
@@ -88,6 +90,7 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        _workflowRunService = new WorkflowRunService(_workflowService);
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
         SidebarView.CodingModeRequested += CodingModeClick;
