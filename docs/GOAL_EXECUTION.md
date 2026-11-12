@@ -914,10 +914,51 @@ No third-party code was added.
 Rollback: remove queue-store load/save calls and the local queue store; the
 in-memory FIFO behavior remains available.
 
-Not yet verified: live restart/accessibility acceptance, queue reordering,
+Live Windows evidence: after stopping the native app while a response was still
+active, the persisted follow-up remained in `queued-messages.json`; relaunching
+the rebuilt app exposed `Restored 1 queued message; review the Queue control
+before sending.` and an accessible `Manage queued messages` button. The startup
+rendering path required an additional `UpdateQueueControl()` call, recorded in
+the follow-up fix below. End-to-end completion of the active request and
+automatic queued dispatch was not claimed because the local model response did
+not complete during the bounded observation window.
+
+Not yet verified: queue reordering, cross-device synchronization, durable
+context continuity, packaged Linux parity, and live end-to-end send/dispatch
+acceptance. The next dependency is queue reordering only after the restored
+Queue surface receives a complete live send/dispatch journey.
+
+## Slice 31 — restore queued-message controls on startup
+
+Status: `implemented_unverified`
+
+Startup now refreshes the Queue control after loading durable queued requests,
+so restored items are immediately visible and actionable instead of remaining
+hidden in memory. This closes the live restart visibility defect found during
+the Slice 30 Windows check without auto-sending restored messages.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+- Live Windows check: after relaunch, the accessibility tree exposed `Restored 1 queued message; review the Queue control before sending.` and `Manage queued messages` while the queue file still contained the bounded follow-up.
+
+Privacy/security/licensing: startup restoration remains local-only, bounded,
+and review-first. It does not replay an active request, transmit queue content,
+or add credentials/network access. No third-party code was added.
+
+Rollback: remove the startup `UpdateQueueControl()` call; durable data remains
+readable but restored items would again require another queue mutation to make
+the control visible.
+
+Not yet verified: live completion/dispatch acceptance, queue reordering,
 cross-device synchronization, durable context continuity, and packaged Linux
-parity. The next dependency is live queue restart/accessibility validation
-before adding reorder or parallel dispatch.
+parity. The next dependency is a complete user-driven live queue journey.
 
 ## Slice 25 — durable chat operation provider provenance
 

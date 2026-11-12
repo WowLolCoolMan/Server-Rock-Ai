@@ -214,6 +214,7 @@ public sealed partial class MainPage : Page
         UpdateWebSearchButton();
         UpdateSmartRewriteButton();
         UpdateTemporaryControls();
+        UpdateQueueControl();
         ApplySavedCustomization();
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
