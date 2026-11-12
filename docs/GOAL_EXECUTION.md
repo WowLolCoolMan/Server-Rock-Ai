@@ -1688,6 +1688,44 @@ Not yet verified: UI presentation, authenticated document retrieval, `$ref`
 resolution, explicit per-operation grants, execution adapters, live
 integration acceptance, Linux parity, and packaged acceptance.
 
+## Slice 85 — visible local OpenAPI review journey
+
+Status: `implemented_verified_windows_with_execution_boundary`
+
+The Plugins surface now exposes a reachable `Review local OpenAPI schema`
+action. It opens a local JSON-only file picker, reads the selected document
+through the bounded UTF-8 reader, parses it with the Core discovery service,
+and presents the resulting operations in a dedicated review dialog with method,
+path, capability, mutating status, and input-schema details. The review dialog
+does not fetch a server, execute an operation, create credentials, or grant
+MCP permission.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after the dev process was closed.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (137 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility/surface inspection — passed: the Plugins dialog visibly exposed `Review local OpenAPI schema`; activating it opened the native picker filtered to `JSON files`. The picker was cancelled without selecting a file, and the dev app was closed afterward. No user data, settings, pet state, credential, or network route changed.
+
+Privacy/security/licensing: only a user-selected local JSON file is read,
+within the existing 1,000,000-character parser bound and UTF-8 validation. The
+schema remains untrusted; no operation can run from this surface. No
+dependency, network request, credential, or third-party code was added.
+
+Rollback: remove the OpenAPI review button, picker/review dialog, and UI audit
+contracts. Core schema discovery remains available for a future integration
+surface.
+
+Not yet verified: selecting and rendering a real user-provided OpenAPI file,
+authenticated document retrieval, `$ref` resolution, explicit per-operation
+grants, execution adapters, live integration acceptance, Linux parity, and
+packaged acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

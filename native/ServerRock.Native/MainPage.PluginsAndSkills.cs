@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Infrastructure;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 
@@ -39,6 +40,9 @@ public sealed partial class MainPage
         var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true };
         AutomationProperties.SetLiveSetting(details, AutomationLiveSetting.Polite);
         var status = new TextBlock { FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextWrapping = TextWrapping.Wrap };
+        var reviewOpenApi = new Button { Content = "Review local OpenAPI schema", MinWidth = 220 };
+        AutomationProperties.SetName(reviewOpenApi, "Review local OpenAPI schema");
+        AutomationProperties.SetHelpText(reviewOpenApi, "Choose a local JSON OpenAPI 3 document. The app only discovers and displays operations; it does not fetch, execute, or authorize them.");
         var dialog = new ContentDialog
         {
             Title = "Plugins",
@@ -50,6 +54,9 @@ public sealed partial class MainPage
                 Children =
                 {
                     new TextBlock { Text = "Integrations marked Built in already work in this app. The others are not connected in this version; each entry shows what data it would access.", TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") },
+                    new TextBlock { Text = "OPENAPI DISCOVERY", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 8, 0, 0) },
+                    new TextBlock { Text = "Review a local OpenAPI 3 JSON schema without connecting to its server. Discovered operations remain untrusted until a future explicit permission and execution flow exists.", TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") },
+                    reviewOpenApi,
                     new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { search, category } },
                     list,
                     details,
@@ -77,6 +84,69 @@ public sealed partial class MainPage
                 ? $"Built in. {item.WhereToFind}"
                 : "Not available yet. This integration is not connected in this version of the app.";
             details.Text = $"{item.Name} · {item.Description}\nAccess: {item.Access}\n{where}";
+        };
+        async Task ShowOpenApiReviewAsync(IReadOnlyList<OpenApiDiscoveredOperation> operations, string fileName)
+        {
+            var results = UiTheme.WrapListText(new ListView { MinHeight = 180, MaxHeight = 300, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(OpenApiDiscoveredOperation.Name) });
+            var operationDetails = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("InkBrush"), IsTextSelectionEnabled = true };
+            AutomationProperties.SetName(results, "OpenAPI operation results");
+            AutomationProperties.SetName(operationDetails, "OpenAPI operation details");
+            results.ItemsSource = operations;
+            results.SelectionChanged += (_, _) =>
+            {
+                if (results.SelectedItem is not OpenApiDiscoveredOperation operation) return;
+                operationDetails.Text = $"{operation.Method} {operation.Path}\n{operation.Description}\nCapability: {string.Join(", ", operation.RequiredCapabilities)}\nMutating: {(operation.IsMutating ? "yes" : "no")}\nInput schema: {operation.InputSchemaJson}";
+            };
+            var reviewDialog = new ContentDialog
+            {
+                Title = $"OpenAPI operations · {fileName}",
+                Content = new StackPanel
+                {
+                    Spacing = 10,
+                    Children =
+                    {
+                        new TextBlock { Text = $"Discovered {operations.Count} operation(s). This is an untrusted local schema review; nothing was fetched, executed, or authorized.", TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") },
+                        results,
+                        operationDetails
+                    }
+                },
+                CloseButtonText = "Done",
+                XamlRoot = XamlRoot
+            };
+            UiTheme.Standardize(reviewDialog);
+            await reviewDialog.ShowAsync();
+        }
+        reviewOpenApi.Click += async (_, _) =>
+        {
+            try
+            {
+                var picker = new Windows.Storage.Pickers.FileOpenPicker
+                {
+                    SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                    ViewMode = Windows.Storage.Pickers.PickerViewMode.List
+                };
+                picker.FileTypeFilter.Add(".json");
+#if WINDOWS
+                var window = (Application.Current as App)?.MainWindow;
+                if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+                await Task.Delay(50);
+                var file = await picker.PickSingleFileAsync();
+                if (file is null) return;
+                var properties = await file.GetBasicPropertiesAsync();
+                if (properties.Size > (ulong)OpenApiToolDiscovery.MaxDocumentCharacters * 4)
+                {
+                    status.Text = $"OpenAPI schema {file.Name} exceeds the bounded input limit.";
+                    return;
+                }
+                await using var stream = await file.OpenStreamForReadAsync();
+                var json = await BoundedFileReader.ReadTextAsync(stream, OpenApiToolDiscovery.MaxDocumentCharacters, "OpenAPI schema");
+                var operations = OpenApiToolDiscovery.Parse(json, Path.GetFileName(file.Name));
+                status.Text = $"Discovered {operations.Count} OpenAPI operation(s) from {file.Name}. Nothing was fetched, executed, or authorized.";
+                await ShowOpenApiReviewAsync(operations, file.Name);
+            }
+            catch (Exception ex) { status.Text = $"OpenAPI schema could not be reviewed: {ex.Message}"; }
         };
         Refresh();
         await dialog.ShowAsync();
