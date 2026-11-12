@@ -2381,6 +2381,44 @@ Not yet verified: GitHub transport/ref verification, publisher trust, live
 Windows permission-control acceptance, cross-platform packaging, and update
 diff review.
 
+## Slice 74 — skill package update preview
+
+Status: `implemented_verified_core`
+
+Local skill installation now performs a read-only package preview before the
+explicit install confirmation. The preview validates the Markdown-only package,
+shows version and publisher, computes the package digest, lists requested
+permissions, and identifies whether the package replaces an existing version.
+The install confirmation states that nothing executes automatically and that
+the package remains disabled until explicitly enabled.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/InstalledSkill.cs`
+- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including pre-install digest/permission preview and update detection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: preview reads only the user-selected local folder,
+does not activate or execute it, and does not perform network access. The
+digest and permissions are shown before confirmation. No dependency or
+third-party code was added.
+
+Rollback: remove `SkillPackagePreview`, the preview method/dialog content, its
+tests, and the static UI contract; existing package validation and explicit
+enablement remain available.
+
+Not yet verified: GitHub transport/ref verification, publisher trust, live
+Windows preview acceptance, cross-platform packaging, and update diff review.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`

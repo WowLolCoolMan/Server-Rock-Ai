@@ -48,6 +48,19 @@ public sealed class SkillPackageInstaller
         return BoundedFileReader.ReadText(path, MaxFileBytes);
     }
 
+    public SkillPackagePreview Preview(string sourceDirectory, string? expectedPackageSha256 = null)
+    {
+        var source = Path.GetFullPath(sourceDirectory);
+        if (!Directory.Exists(source) || IsLink(source)) throw new DirectoryNotFoundException("The skill source directory is unavailable or linked.");
+        var manifest = ReadManifest(Path.Combine(source, ManifestFileName));
+        var files = ReadPackageFiles(source);
+        var digest = ComputePackageDigest(files);
+        if (!string.IsNullOrWhiteSpace(expectedPackageSha256) && !digest.Equals(expectedPackageSha256, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The downloaded skill package checksum does not match its pinned digest.");
+        var existing = ListInstalled().SingleOrDefault(item => item.Id.Equals(manifest.Id, StringComparison.Ordinal));
+        return new SkillPackagePreview(manifest.Id, manifest.Name, manifest.Version, manifest.Publisher, digest, manifest.RequiredPermissions.ToArray(), existing is not null, existing?.Version, existing?.PackageSha256);
+    }
+
     public InstalledSkill Install(string sourceDirectory, string sourceRef, string? expectedPackageSha256 = null)
     {
         if (string.IsNullOrWhiteSpace(sourceRef) || sourceRef.Length > 512 || sourceRef.Any(char.IsControl)) throw new ArgumentException("A pinned skill source reference is required.", nameof(sourceRef));

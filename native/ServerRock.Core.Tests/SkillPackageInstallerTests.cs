@@ -11,6 +11,8 @@ internal static class SkillPackageInstallerTests
         File.WriteAllText(Path.Combine(source, "skill.json"), JsonSerializer.Serialize(new { id = "review-skill", name = "Review skill", version = "1.0.0", publisher = "Test publisher", requiredPermissions = new[] { "project.read" } }));
         File.WriteAllText(Path.Combine(source, "SKILL.md"), "# Review\n\nRead-only review instructions.");
         var installer = new SkillPackageInstaller(Path.Combine(root, "installed"));
+        var preview = installer.Preview(source);
+        TestSupport.Check(!preview.IsUpdate && preview.PackageSha256.Length == 64 && preview.RequiredPermissions.Contains("project.read"), "skill preview reports digest and permissions before install");
         var installed = installer.Install(source, "https://github.com/example/review-skill@abc123", expectedPackageSha256: null);
         TestSupport.Check(installed.SourceRef.Contains("@abc123", StringComparison.Ordinal), "skill installation records pinned provenance");
         TestSupport.Check(!installed.Enabled, "new skill packages require explicit enablement");
@@ -18,6 +20,8 @@ internal static class SkillPackageInstallerTests
         TestSupport.Check(installed.Enabled, "skill enablement is explicit and durable");
         TestSupport.Check(installer.ListInstalled().Single().PackageSha256.Length == 64, "skill installation records a package digest");
         File.WriteAllText(Path.Combine(source, "SKILL.md"), "# Review v2\n\nUpdated read-only instructions.");
+        preview = installer.Preview(source);
+        TestSupport.Check(preview.IsUpdate && preview.ExistingVersion == "1.0.0", "skill preview identifies an update before activation");
         installer.Install(source, "https://github.com/example/review-skill@def456");
         TestSupport.Check(installer.ListInstalled().Single().Version == "1.0.0", "skill update atomically activates the replacement");
         var rolledBack = installer.Rollback("review-skill");

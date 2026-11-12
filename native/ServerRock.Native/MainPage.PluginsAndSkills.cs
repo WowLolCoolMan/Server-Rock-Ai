@@ -151,10 +151,13 @@ public sealed partial class MainPage
         {
             var folder = await PickWorkspaceFolderAsync();
             if (string.IsNullOrWhiteSpace(folder)) return;
+            SkillPackagePreview preview;
+            try { preview = _skillPackageInstaller.Preview(folder); }
+            catch (Exception ex) { status.Text = $"Skill package preview failed: {ex.Message}"; return; }
             var confirmation = new ContentDialog
             {
-                Title = "Install local skill package?",
-                Content = "The package must contain a valid manifest and Markdown instructions. Executable files, links, and unsafe paths are rejected. The package will not be executed.",
+                Title = preview.IsUpdate ? $"Review skill update · {preview.Name}" : $"Review skill package · {preview.Name}",
+                Content = $"Version: {preview.Version}{(preview.IsUpdate ? $" (replaces {preview.ExistingVersion})" : string.Empty)}\nPublisher: {preview.Publisher}\nDigest: {preview.PackageSha256}\nPermissions: {string.Join(", ", preview.RequiredPermissions)}\n\nThe package contains Markdown instructions only. Executable files, links, and unsafe paths are rejected. Nothing is executed automatically. Review this preview before installing; the package will remain disabled until explicitly enabled.",
                 PrimaryButtonText = "Install",
                 CloseButtonText = "Cancel",
                 XamlRoot = XamlRoot

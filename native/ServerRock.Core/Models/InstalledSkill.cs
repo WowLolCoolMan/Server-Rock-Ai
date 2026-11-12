@@ -22,3 +22,14 @@ public sealed record InstalledSkill(
     string ActivePath,
     IReadOnlyList<string> RequiredPermissions,
     bool Enabled);
+
+public sealed record SkillPackagePreview(
+    string Id,
+    string Name,
+    string Version,
+    string Publisher,
+    string PackageSha256,
+    IReadOnlyList<string> RequiredPermissions,
+    bool IsUpdate,
+    string? ExistingVersion,
+    string? ExistingPackageSha256);
