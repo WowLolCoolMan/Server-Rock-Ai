@@ -134,6 +134,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(messages);
+        ModelCapabilityResolver.ValidateMessageCapabilities(settings, messages);
         if (messages.Count is < 1 or > MaxMessages)
             throw new InvalidOperationException($"A chat request must contain between 1 and {MaxMessages} messages.");
         if (string.IsNullOrWhiteSpace(settings.Model) || settings.Model.Length > MaxModelCharacters || settings.Model.Any(char.IsControl))

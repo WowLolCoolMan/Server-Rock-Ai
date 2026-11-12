@@ -917,3 +917,41 @@ Not yet verified: provenance for non-chat workflow/provider attempts, live
 Activity accessibility behavior, capability-aware routing, and packaged Linux
 parity. The next dependency is provider capability/profile modeling before
 implementing fallback or multi-provider routing.
+
+## Slice 26 — conservative model capability profiles
+
+Status: `implemented_unverified`
+
+The core provider path now resolves a bounded capability profile for the
+selected provider/model: provider label, model label, local/remote endpoint
+privacy, streaming support, and vision support confidence. Unknown models stay
+allowed so compatible OpenAI-style servers are not silently rejected. Model
+identifiers with definitive non-vision markers such as embedding, reranker,
+ASR, or TTS are rejected before an image-bearing request reaches the network.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ModelCapabilityProfile.cs`
+- `native/ServerRock.Core/Infrastructure/ModelCapabilityResolver.cs`
+- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local/remote profile facts, unknown-model tolerance, definitive non-vision detection, and pre-network image rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the resolver uses only the configured provider,
+model, and endpoint locality; it stores no credentials and emits no endpoint
+URL. Definitive rejection happens before request serialization/network access.
+No third-party code was added.
+
+Rollback: remove the profile model, resolver call, and focused tests; existing
+provider validation and compatible unknown-model behavior remain available.
+
+Not yet verified: user-editable capability overrides, provider capability
+discovery, fallback consent, multi-provider routing, live accessibility, and
+packaged Linux parity. The next dependency is an explicit profile/override
+surface with durable validation before adding fallback behavior.

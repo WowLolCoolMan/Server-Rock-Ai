@@ -169,6 +169,25 @@ internal static class ChatProviderTests
             "loopback and localhost endpoints count as on-device");
         Check(!LocalEndpoint.IsLocal("http://192.168.1.20:11434/v1") && !LocalEndpoint.IsLocal("https://openrouter.ai/api/v1") && !LocalEndpoint.IsLocal("not a url"),
             "LAN, cloud, and malformed endpoints do not count as on-device");
+        var profile = ModelCapabilityResolver.Resolve(new AppSettings { ModelProvider = "Ollama", Model = "llama3.2", Endpoint = "http://localhost:11434/v1" });
+        Check(profile.EndpointPrivacy == "local" && profile.Streaming == CapabilitySupport.Supported && profile.Vision == CapabilitySupport.Unknown,
+            "capability profile reports bounded local routing facts without guessing vision support");
+        var nonVisionProfile = ModelCapabilityResolver.Resolve(new AppSettings { ModelProvider = "Custom endpoint", Model = "text-embedding-3-small", Endpoint = "https://example.test/v1" });
+        Check(nonVisionProfile.Vision == CapabilitySupport.Unsupported && nonVisionProfile.EndpointPrivacy == "remote",
+            "capability profile identifies definitive non-vision model markers");
+        var blockedImageProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) => throw new Exception("Definitive capability rejection must happen before network access."))));
+        try
+        {
+            await blockedImageProvider.StreamChatAsync(
+                new AppSettings { Model = "text-embedding-3-small", Endpoint = "https://example.test/v1" },
+                [new ChatMessage("user", "describe", [new ChatAttachment("sample.png", Convert.ToBase64String(pngSignature), "image/png")])],
+                _ => { }, CancellationToken.None);
+            throw new Exception("Expected a definitive non-vision model to reject image input.");
+        }
+        catch (InvalidOperationException error)
+        {
+            Check(error.Message.Contains("non-vision", StringComparison.OrdinalIgnoreCase), "provider blocks image input for a definitive non-vision model");
+        }
         Check(ProviderErrorText.Describe(new HttpRequestException("boom", null, HttpStatusCode.InternalServerError)) == "Model server error: boom"
             && ProviderErrorText.Describe(new HttpRequestException("refused")).StartsWith("Could not reach the model server.", StringComparison.Ordinal)
             && ProviderErrorText.Describe(new TaskCanceledException()) == "The request timed out or was interrupted.",
