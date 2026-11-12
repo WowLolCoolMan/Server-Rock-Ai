@@ -45,6 +45,18 @@ public sealed class OperationService
         return _journal.Transition(run.RunId, OperationRunStatuses.Cancelled, actor);
     }
 
+    public OperationRun ResolveReconciliation(OperationRun run, bool markCancelled, string actor = "user")
+    {
+        if (run.Status != OperationRunStatuses.NeedsReconciliation)
+            throw new InvalidOperationException($"Only operations needing reconciliation can be resolved from this surface; current status is '{run.Status}'.");
+        var status = markCancelled ? OperationRunStatuses.Cancelled : OperationRunStatuses.Failed;
+        return _journal.Transition(run.RunId, status, actor,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["reason"] = "User reviewed the interrupted operation without replaying side effects."
+            });
+    }
+
     public IReadOnlyList<OperationRun> ReconcileAfterRestart() => _journal.ReconcileAfterRestart();
 
     public OperationJournalSnapshot Load() => _journal.Load();

@@ -255,3 +255,38 @@ recoverable.
 Not yet verified: live Windows keyboard/screen-reader rendering and packaged
 Linux parity. The next dependency is a real user decision path for
 `needs_reconciliation` runs, followed by explicit workflow/schedule models.
+
+## Slice 8 — reviewed reconciliation decisions
+
+Status: `implemented_unverified`
+
+Activity & tasks now gives a user-visible `needs_reconciliation` run two
+explicit outcomes: mark cancelled or mark failed. Both outcomes append a
+bounded reason event and close the dialog without resuming or replaying any
+provider, shell, Git, or file side effect. The Core service rejects decisions
+for any other status, keeping the recovery path state-safe.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including restart reconciliation and reviewed decision coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after fixing the automation metadata import.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the decision records only local operation metadata
+and a fixed bounded reason. It does not expose secrets, resume uncertain work,
+or add network access, credentials, or third-party code.
+
+Rollback: revert the reconciliation decision method, test, and two Activity
+buttons; unresolved runs remain visible as `needs_reconciliation` in the
+existing history surface.
+
+Not yet verified: live keyboard/screen-reader use of the decision buttons and
+packaged Linux parity. The next dependency is a versioned workflow/task model
+with approvals, retries, cancellation, and schedule semantics.

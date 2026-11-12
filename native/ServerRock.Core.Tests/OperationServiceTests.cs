@@ -20,6 +20,13 @@ internal static class OperationServiceTests
             var cancelled = service.Start("chat", "cancel a test message");
             cancelled = service.Cancel(cancelled);
             Check(cancelled.Status == OperationRunStatuses.Cancelled, "service records cancellation");
+
+            var interrupted = service.Start("chat", "resolve an interrupted message");
+            var reloaded = new OperationJournal(path);
+            reloaded.ReconcileAfterRestart();
+            interrupted = new OperationJournal(path).Load().Runs.Single(item => item.RunId == interrupted.RunId);
+            interrupted = service.ResolveReconciliation(interrupted, markCancelled: false);
+            Check(interrupted.Status == OperationRunStatuses.Failed, "service records a reviewed reconciliation decision");
         }
         finally
         {

@@ -7,6 +7,7 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
@@ -52,6 +53,7 @@ public sealed partial class MainPage
         }
 
         var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
+        ContentDialog? dialog = null;
         if (reconciled.Count > 0)
         {
             content.Children.Add(new Border
@@ -80,6 +82,29 @@ public sealed partial class MainPage
             {
                 var preview = run.UserInstruction.ReplaceLineEndings(" ").Trim();
                 if (preview.Length > 140) preview = preview[..140] + "…";
+                var runPanel = new StackPanel
+                {
+                    Spacing = 3,
+                    Children =
+                    {
+                        new TextBlock { Text = $"{OperationStatusLabel(run.Status)} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                        new TextBlock { Text = preview, TextWrapping = TextWrapping.Wrap },
+                        new TextBlock { Text = $"Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
+                    }
+                };
+                if (run.Status == OperationRunStatuses.NeedsReconciliation)
+                {
+                    var decisions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 6, 0, 0) };
+                    var cancel = new Button { Content = "Mark cancelled", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    var failed = new Button { Content = "Mark failed", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    AutomationProperties.SetName(cancel, "Mark interrupted operation cancelled");
+                    AutomationProperties.SetName(failed, "Mark interrupted operation failed");
+                    cancel.Click += (_, _) => ResolveReconciledOperation(run, markCancelled: true, dialog);
+                    failed.Click += (_, _) => ResolveReconciledOperation(run, markCancelled: false, dialog);
+                    decisions.Children.Add(cancel);
+                    decisions.Children.Add(failed);
+                    runPanel.Children.Add(decisions);
+                }
                 content.Children.Add(new Border
                 {
                     Background = ResourceBrush("SurfaceAltBrush"),
@@ -87,21 +112,12 @@ public sealed partial class MainPage
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(8),
                     Padding = new Thickness(10),
-                    Child = new StackPanel
-                    {
-                        Spacing = 3,
-                        Children =
-                        {
-                            new TextBlock { Text = $"{OperationStatusLabel(run.Status)} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-                            new TextBlock { Text = preview, TextWrapping = TextWrapping.Wrap },
-                            new TextBlock { Text = $"Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
-                        }
-                    }
+                    Child = runPanel
                 });
             }
         }
 
-        var dialog = new ContentDialog
+        dialog = new ContentDialog
         {
             Title = "Activity & tasks",
             Content = new ScrollViewer { Content = content, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
@@ -109,6 +125,22 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         await dialog.ShowAsync();
+    }
+
+    private void ResolveReconciledOperation(OperationRun run, bool markCancelled, ContentDialog? dialog)
+    {
+        try
+        {
+            _operationService.ResolveReconciliation(run, markCancelled);
+            RuntimeStatus.Text = markCancelled
+                ? "Interrupted operation marked cancelled after review. No side effect was replayed."
+                : "Interrupted operation marked failed after review. No side effect was replayed.";
+            dialog?.Hide();
+        }
+        catch (Exception ex)
+        {
+            RuntimeStatus.Text = $"Could not resolve interrupted operation: {ex.Message}";
+        }
     }
 
     private static Brush? ResourceBrush(string key) => Application.Current.Resources[key] as Brush;
