@@ -1678,6 +1678,43 @@ Not yet verified: seeded live Windows workflow-event result matching, OS session
 parallel agent artifacts, richer workflow branching, Linux parity, and
 packaged acceptance.
 
+## Slice 80 — enforce local-only policy on pinned route selection
+
+Status: `implemented_verified_core`
+
+Selecting a pinned model route from the composer hotswapper now reuses the same
+endpoint/model validator used by Settings. When local-only mode is enabled, a
+pinned remote endpoint is rejected before model loading, settings mutation, or
+connection refresh; the user receives an explicit status explaining the
+blocked switch. Local route selection remains available, and no automatic
+fallback or cloud route is introduced.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.ModelLibrary.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local-only route validation and the full existing Core suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (130 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the guard prevents an explicit local-only setting
+from being bypassed through a previously pinned remote route. It adds no
+network request, credential handling, provider fallback, dependency, or
+third-party code.
+
+Rollback: remove the selection validation and its audit/test assertion; the
+Settings save guard remains, but pinned-route selection would lose the same
+local-only boundary.
+
+Not yet verified: live Windows pinned-route rejection, capability-aware
+multi-route selection, durable provider identity across fallback attempts,
+Linux parity, and packaged acceptance.
+
 ## Slice 49 — serialize reviewed workspace writes
 
 Status: `implemented_verified_core`

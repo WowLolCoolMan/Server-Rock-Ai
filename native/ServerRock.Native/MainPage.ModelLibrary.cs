@@ -94,6 +94,12 @@ public sealed partial class MainPage
     {
         var targetEndpoint = endpoint ?? _settings.Endpoint;
         var targetProvider = provider ?? _settings.ModelProvider;
+        var selectionValidation = ConnectionSettingsValidator.Validate(targetEndpoint, model, _settings.RequireLocalModelEndpoints);
+        if (!selectionValidation.IsValid)
+        {
+            RuntimeStatus.Text = $"Cannot switch to {model} · {selectionValidation.Error}";
+            return;
+        }
         try
         {
             if (targetProvider.Equals("LM Studio", StringComparison.OrdinalIgnoreCase))

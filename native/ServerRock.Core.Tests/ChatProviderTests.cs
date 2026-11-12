@@ -234,6 +234,9 @@ internal static class ChatProviderTests
             "invalid endpoint and missing model are rejected before save");
         Check(!ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
             "local-only settings reject remote endpoints before save");
+        Check(ConnectionSettingsValidator.Validate("http://localhost:11434/v1", "local-a", true).IsValid
+            && !ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
+            "local-only route selection rejects a pinned remote endpoint before switching");
         var drafts = new WorkspaceDraftStore();
         drafts.Set("ChatBot", "draft for chat");
         drafts.Set("CodingAgent", "draft for coding");

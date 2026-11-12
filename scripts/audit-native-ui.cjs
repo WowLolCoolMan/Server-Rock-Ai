@@ -98,6 +98,7 @@ const requiredCode = [
   ['Model compatibility status', 'ProviderFailureKind.ModelCompatibility'],
   ['Unavailable model requires explicit selection', 'ModelSelectionPolicy.Evaluate(_settings.Model, models)'],
   ['Unavailable model does not auto-save', 'selected model {_settings.Model} is unavailable'],
+  ['Pinned route respects local-only policy', 'ConnectionSettingsValidator.Validate(targetEndpoint, model, _settings.RequireLocalModelEndpoints)'],
   ['Settings validation policy', 'ConnectionSettingsValidator.Validate(endpoint.Text, model.Text, localOnly.IsChecked == true)'],
   ['Settings invalid submit stays open', 'args.Cancel = true'],
   ['Settings validation is announced', 'AutomationProperties.SetLiveSetting(saveValidation, AutomationLiveSetting.Assertive)'],
