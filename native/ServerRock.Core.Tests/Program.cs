@@ -20,5 +20,6 @@ OperationServiceTests.Run();
 WorkflowServiceTests.Run();
 WorkflowRunServiceTests.Run();
 WorkflowCapabilityGateTests.Run();
+ReadOnlyWorkspaceAdapterTests.Run();
 
 Console.WriteLine("Native core checks passed.");

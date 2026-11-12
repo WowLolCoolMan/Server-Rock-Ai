@@ -587,3 +587,40 @@ Not yet verified: adapter-specific grants, approval inbox queuing, parallel
 resource limits, scheduling, and packaged Linux parity. The next dependency
 is to connect this contract to a deliberately read-only workspace adapter
 with a separate effect audit.
+
+## Slice 17 — capability-gated read-only workspace adapter
+
+Status: `implemented_unverified`
+
+Added `ReadOnlyWorkspaceAdapter`, which requires an exact run/node/scope grant
+for `workspace.read`, reads a bounded supported text file through the existing
+workspace path, symlink, extension, and protected-name safeguards, and returns
+a `WorkspaceReadEffect` with relative path, character count, and
+`Mutated=false`. It cannot write files or run commands.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkspaceReadEffect.cs`
+- `native/ServerRock.Core/Services/ReadOnlyWorkspaceAdapter.cs`
+- `native/ServerRock.Core.Tests/ReadOnlyWorkspaceAdapterTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including approved read/effect reporting, cross-run grant refusal, and protected-file refusal.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the adapter is local-only, bounded, read-only,
+scope-authorized, and reuses existing symlink/path/protected-file controls.
+No network, shell, provider, Git, credential, or third-party code path was
+added.
+
+Rollback: remove the adapter, effect model, and tests; the capability gate and
+existing Coding Agent file controls remain unchanged.
+
+Not yet verified: adapter invocation from a workflow run, effect timeline UI,
+write/shell/network adapters, parallel limits, scheduling, and packaged Linux
+parity. The next dependency is wiring this adapter to a workflow step with a
+durable effect event while preserving approval and cancellation boundaries.
