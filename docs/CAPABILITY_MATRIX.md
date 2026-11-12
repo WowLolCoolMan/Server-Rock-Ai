@@ -23,16 +23,16 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 83 contracts | Typed routes, persistent tabs/layout, command palette, inspector and live focus/resize acceptance |
 | Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins and tags in `native/ServerRock.Core.Tests` | Message queue, richer search, durable context continuity, live keyboard/accessibility acceptance |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
-| Agent workbench | partial | Coding Agent proposals, approvals, terminal commands and reviewed file changes | Durable task IDs/events, scheduler, pause/reconcile, parallel agents and task artifacts |
+| Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, and new durable operation run/event contract | Application-service integration, scheduler, pause/reconcile UI, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks and measured local performance | Capability probes, hardware/resource scheduling, richer provider coverage and unload/queue states |
 | Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats | Explicit profiles, capability-aware routing, classified fallback consent and durable provider identity |
-| Workflows and scheduled tasks | absent | No durable DAG runner or task journal found in the live implementation | Versioned workflow model, approvals, retries, cancellation, scheduling and audit events |
+| Workflows and scheduled tasks | absent | Durable operation state contract now exists in `OperationJournal`; no DAG runner or schedule execution exists | Versioned workflow model, approvals, retries, cancellation, scheduling and audit events |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
 | Images and media | partial | ComfyUI queue/poll flow, image attachments and local vision paths have Core tests | Resumable media jobs, richer artifact storage, capability gating and runtime acceptance |
-| Activity and diagnostics | partial | Runtime status banner and redacted diagnostic export exist | Durable activity center, task/event history, search/exported operation evidence |
+| Activity and diagnostics | partial | Runtime status banner, redacted diagnostic export, and durable operation journal exist | Activity center, task/event history UI, search/exported operation evidence |
 | Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, model/voice/host controls; Core persistence tests | Full validation matrix, platform-specific diagnostics and live accessibility acceptance |
 | Companion/pet | partial | First-party companion state, selection and persistence exist | Complete presentation/positioning/collision/accessibility acceptance |
 | Updates and releases | partial | Signed-manifest verification and fail-closed CI contracts are documented/implemented in parts | Signed installers, clean-machine install/upgrade/uninstall/rollback and platform evidence |
@@ -54,8 +54,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Establish the typed operation/task state contract and durable event journal;
-   this is a dependency for workflows, activity, parallel agents and recovery.
+1. Expose the durable operation/task state through an application service and
+   activity surface with truthful progress, cancellation, and reconciliation.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad

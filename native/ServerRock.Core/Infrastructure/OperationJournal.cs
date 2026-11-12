@@ -1,0 +1,208 @@
+using System.Text.Json;
+using ServerRock.Core.Models;
+
+namespace ServerRock.Core.Infrastructure;
+
+/// <summary>
+/// Small durable operation journal for task identity, state transitions and
+/// crash reconciliation. It intentionally records uncertainty instead of
+/// replaying side effects after a restart.
+/// </summary>
+public sealed class OperationJournal
+{
+    public const int MaxEvents = 10_000;
+    public const int MaxInstructionCharacters = 50_000;
+    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 24 };
+    private readonly string _path;
+
+    public OperationJournal(string? path = null)
+    {
+        _path = path ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "ServerRock", "AI", "operations.json");
+    }
+
+    public OperationJournalSnapshot Load()
+    {
+        if (!File.Exists(_path)) return new([], []);
+        var store = JsonSerializer.Deserialize<JournalStore>(
+            BoundedFileReader.ReadText(_path), Options)
+            ?? throw new InvalidDataException("The operation journal is empty.");
+        Validate(store);
+        return new(store.Runs, store.Events);
+    }
+
+    public OperationRun Create(string workspaceId, string userInstruction, string actor = "user")
+    {
+        if (string.IsNullOrWhiteSpace(workspaceId) || workspaceId.Length > 128 || workspaceId.Any(char.IsControl))
+            throw new ArgumentException("Workspace identity is invalid.", nameof(workspaceId));
+        if (string.IsNullOrWhiteSpace(userInstruction) || userInstruction.Length > MaxInstructionCharacters)
+            throw new ArgumentException($"An operation instruction must contain 1-{MaxInstructionCharacters} characters.", nameof(userInstruction));
+
+        var snapshot = Load();
+        var now = DateTimeOffset.UtcNow;
+        var run = new OperationRun
+        {
+            WorkspaceId = workspaceId,
+            UserInstruction = userInstruction,
+            Status = OperationRunStatuses.Draft,
+            CreatedAt = now,
+            UpdatedAt = now,
+            LastEventSequence = 1
+        };
+        snapshot.Runs.Add(run);
+        snapshot.Events.Add(new OperationEvent
+        {
+            RunId = run.RunId,
+            Sequence = 1,
+            TimestampUtc = now,
+            Type = "run.created",
+            Actor = actor,
+            Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["workspaceId"] = workspaceId,
+                ["status"] = run.Status
+            }
+        });
+        Save(snapshot);
+        return run;
+    }
+
+    public OperationRun Transition(string runId, string nextStatus, string actor = "system",
+        IReadOnlyDictionary<string, string>? payload = null, string? correlationId = null)
+    {
+        var snapshot = Load();
+        var run = snapshot.Runs.SingleOrDefault(item => item.RunId == runId)
+            ?? throw new InvalidOperationException("The operation run no longer exists.");
+        if (!CanTransition(run.Status, nextStatus))
+            throw new InvalidOperationException($"Operation run cannot transition from '{run.Status}' to '{nextStatus}'.");
+
+        var now = DateTimeOffset.UtcNow;
+        var previousStatus = run.Status;
+        var sequence = run.LastEventSequence + 1;
+        run.Status = nextStatus;
+        run.LastEventSequence = sequence;
+        run.UpdatedAt = now;
+        snapshot.Events.Add(new OperationEvent
+        {
+            RunId = run.RunId,
+            Sequence = sequence,
+            TimestampUtc = now,
+            Type = "run.status_changed",
+            Actor = actor,
+            CorrelationId = correlationId,
+            Payload = BuildTransitionPayload(payload, previousStatus, nextStatus)
+        });
+        Save(snapshot);
+        return run;
+    }
+
+    /// <summary>
+    /// Marks in-flight runs as uncertain after a process restart. This records
+    /// a new event and never retries a tool, Git, or provider side effect.
+    /// </summary>
+    public IReadOnlyList<OperationRun> ReconcileAfterRestart(string actor = "recovery")
+    {
+        var snapshot = Load();
+        var changed = new List<OperationRun>();
+        foreach (var run in snapshot.Runs.Where(item => item.Status is
+            OperationRunStatuses.Validating or OperationRunStatuses.Queued or OperationRunStatuses.Running or
+            OperationRunStatuses.AwaitingApproval or OperationRunStatuses.Verifying or OperationRunStatuses.Cancelling))
+        {
+            var now = DateTimeOffset.UtcNow;
+            var previousStatus = run.Status;
+            var sequence = run.LastEventSequence + 1;
+            run.Status = OperationRunStatuses.NeedsReconciliation;
+            run.LastEventSequence = sequence;
+            run.UpdatedAt = now;
+            snapshot.Events.Add(new OperationEvent
+            {
+                RunId = run.RunId,
+                Sequence = sequence,
+                TimestampUtc = now,
+                Type = "run.needs_reconciliation",
+                Actor = actor,
+                Payload = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["previousStatus"] = previousStatus,
+                    ["reason"] = "The process restarted while the operation was in flight. Inspect effects before resuming."
+                }
+            });
+            changed.Add(run);
+        }
+        if (changed.Count > 0) Save(snapshot);
+        return changed;
+    }
+
+    public static bool CanTransition(string current, string next) => current switch
+    {
+        OperationRunStatuses.Draft => next is OperationRunStatuses.Validating or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.Validating => next is OperationRunStatuses.Queued or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.Queued => next is OperationRunStatuses.Running or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.Running => next is OperationRunStatuses.AwaitingApproval or OperationRunStatuses.Verifying or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.AwaitingApproval => next is OperationRunStatuses.Running or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.Verifying => next is OperationRunStatuses.ReviewReady or OperationRunStatuses.Completed or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.ReviewReady => next is OperationRunStatuses.Completed or OperationRunStatuses.Failed or OperationRunStatuses.Cancelling,
+        OperationRunStatuses.Cancelling => next is OperationRunStatuses.Cancelled or OperationRunStatuses.NeedsReconciliation,
+        OperationRunStatuses.NeedsReconciliation => next is OperationRunStatuses.Running or OperationRunStatuses.Cancelled or OperationRunStatuses.Failed,
+        _ => false
+    };
+
+    private void Save(OperationJournalSnapshot snapshot)
+    {
+        if (snapshot.Events.Count > MaxEvents) throw new InvalidDataException($"The operation journal cannot contain more than {MaxEvents} events.");
+        var json = BoundedFileReader.EnsureTextSize(JsonSerializer.Serialize(new JournalStore(snapshot.Runs, snapshot.Events), Options), "operation journal");
+        AtomicFileWriter.WriteText(_path, json);
+    }
+
+    private static Dictionary<string, string> BuildTransitionPayload(IReadOnlyDictionary<string, string>? payload, string previousStatus, string nextStatus)
+    {
+        var result = new Dictionary<string, string>(payload ?? new Dictionary<string, string>(), StringComparer.Ordinal)
+        {
+            ["from"] = previousStatus,
+            ["to"] = nextStatus
+        };
+        return result;
+    }
+
+    private static void Validate(JournalStore store)
+    {
+        if (store.SchemaVersion != 1 || store.Runs.Count > MaxEvents || store.Events.Count > MaxEvents)
+            throw new InvalidDataException("The operation journal schema or size is invalid.");
+        var runs = store.Runs.ToDictionary(item => item.RunId, StringComparer.Ordinal);
+        foreach (var run in runs.Values)
+        {
+            if (string.IsNullOrWhiteSpace(run.RunId) || string.IsNullOrWhiteSpace(run.WorkspaceId) ||
+                run.UserInstruction.Length > MaxInstructionCharacters || run.LastEventSequence < 1)
+                throw new InvalidDataException("The operation journal contains an invalid run.");
+        }
+        foreach (var group in store.Events.GroupBy(item => item.RunId, StringComparer.Ordinal))
+        {
+            if (!runs.ContainsKey(group.Key)) throw new InvalidDataException("The operation journal contains an event for an unknown run.");
+            var expected = 1L;
+            foreach (var item in group.OrderBy(item => item.Sequence))
+            {
+                if (item.SchemaVersion != 1 || item.Sequence != expected++ || string.IsNullOrWhiteSpace(item.Type))
+                    throw new InvalidDataException("The operation journal contains a non-monotonic event sequence.");
+            }
+            if (runs[group.Key].LastEventSequence != expected - 1)
+                throw new InvalidDataException("The operation run sequence does not match its event journal.");
+        }
+    }
+
+    private sealed class JournalStore
+    {
+        public int SchemaVersion { get; set; } = 1;
+        public List<OperationRun> Runs { get; set; } = [];
+        public List<OperationEvent> Events { get; set; } = [];
+
+        public JournalStore() { }
+        public JournalStore(List<OperationRun> runs, List<OperationEvent> events) { Runs = runs; Events = events; }
+    }
+}
+
+public sealed class OperationJournalSnapshot(List<OperationRun> runs, List<OperationEvent> events)
+{
+    public List<OperationRun> Runs { get; } = runs;
+    public List<OperationEvent> Events { get; } = events;
+}

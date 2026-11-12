@@ -140,3 +140,44 @@ Evidence:
 
 Not yet verified: live Windows/Linux visual, keyboard, and screen-reader
 acceptance of the tag editor and tag rendering.
+
+## Slice 5 — durable operation state and journal foundation
+
+Status: `implemented_unverified`
+
+`ServerRock.Core` now has a small UI-independent operation contract with stable
+run IDs, bounded instructions, explicit state transitions, monotonic per-run
+event sequences, atomic JSON persistence, and restart reconciliation. In-flight
+runs are changed to `needs_reconciliation` after restart; the journal never
+replays uncertain Git, shell, provider, or other side effects automatically.
+This is the foundation for a later workflow/task UI and parallel agent host.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/OperationRun.cs`
+- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
+- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence, privacy, and rollback will be appended after the focused suite and
+native build complete. No external code, network call, credential, or
+destructive data migration was introduced.
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including operation creation, monotonic transitions, invalid-transition rejection, restart reconciliation, idempotence, and explicit cancellation.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the journal stores local task metadata and bounded
+user instructions only; it adds no network traffic, credentials, third-party
+code, or automatic side-effect replay. Atomic writes preserve the previous
+journal if the process fails during a write.
+
+Rollback: remove the additive operation journal files and test registration;
+existing conversation, project, and settings stores remain unchanged.
+
+Next dependency: expose the durable operation state through an application
+service and activity surface, then add workflow execution only after approval,
+cancellation, and reconciliation are visible to the user.
