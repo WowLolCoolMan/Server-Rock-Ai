@@ -1650,6 +1650,44 @@ available.
 Not yet verified: live Windows Activity rendering of provider-attempt events,
 workflow/provider attempts outside chat, and cross-platform/package acceptance.
 
+## Slice 84 — bounded OpenAPI 3 operation discovery
+
+Status: `implemented_verified_core`
+
+Core now parses OpenAPI 3.x JSON documents into bounded, reviewable operation
+descriptors. It discovers path/method names, summaries, parameter schemas, and
+JSON request-body schemas; classifies safe read methods versus mutating
+methods; and attaches the corresponding MCP read/write capability requirement.
+The slice is discovery-only: it does not fetch a document, resolve `$ref`
+values, create credentials, execute an operation, or grant permissions.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/OpenApiDiscoveredOperation.cs`
+- `native/ServerRock.Core/Services/OpenApiToolDiscovery.cs`
+- `native/ServerRock.Core.Tests/OpenApiToolDiscoveryTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including read/write classification, bounded schema preservation, unsupported-version rejection, and credential-bearing source-identity rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (134 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the parser consumes caller-provided JSON only and
+performs no network or code execution. Discovered metadata is untrusted and
+does not authorize MCP calls; future execution must reuse explicit grants and
+the existing redirect, credential, capability, and payload boundaries. No
+dependency or third-party code was added.
+
+Rollback: remove the operation model, parser, tests, and runner entry. Existing
+MCP discovery and permission gates remain unchanged.
+
+Not yet verified: UI presentation, authenticated document retrieval, `$ref`
+resolution, explicit per-operation grants, execution adapters, live
+integration acceptance, Linux parity, and packaged acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

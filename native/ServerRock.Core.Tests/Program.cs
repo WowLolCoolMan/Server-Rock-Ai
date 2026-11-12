@@ -14,6 +14,7 @@ await WebSearchTests.RunAsync();
 await GitHubTests.RunAsync();
 ChatMessageTests.Run();
 PromptVariableTests.Run();
+OpenApiToolDiscoveryTests.Run();
 await LocalStorageAndWorkspaceTests.RunAsync();
 ExternalLinkTests.Run();
 OperationJournalTests.Run();
