@@ -273,9 +273,15 @@ internal static class LocalStorageAndWorkspaceTests
                 Check(true, "GitHub review diff honors cancellation before starting work");
             }
             var safeReviewChanges = reviewStatus.Changes.Where(change => GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count == 0).ToArray();
+            var preStagedPath = Path.Combine(gitReviewPath, "pre-staged-user-work.md");
+            File.WriteAllText(preStagedPath, "keep staged but out of the selected commit\n");
+            RunGit(gitReviewPath, "add", "--", "pre-staged-user-work.md");
             _ = await gitReviewService.CommitSelectedAsync(gitReviewPath, safeReviewChanges, "Review safe workspace changes", "test-access-token");
+            var committedFiles = RunGitOutput(gitReviewPath, "show", "--format=", "--name-only", "HEAD");
+            var stagedFiles = RunGitOutput(gitReviewPath, "diff", "--cached", "--name-only");
+            Check(!committedFiles.Contains("pre-staged-user-work.md", StringComparison.Ordinal) && stagedFiles.Contains("pre-staged-user-work.md", StringComparison.Ordinal), "GitHub selected commit excludes unrelated staged changes and preserves the existing index");
             var afterReviewStatus = await gitReviewService.GetStatusAsync(gitReviewPath);
-            Check(afterReviewStatus.Changes.Count == 1 && afterReviewStatus.Changes[0].Path == "secrets.json", "GitHub review selectively stages safe normal, rename, and workflow changes");
+            Check(afterReviewStatus.Changes.Any(change => change.Path == "secrets.json") && afterReviewStatus.Changes.Any(change => change.Path == "pre-staged-user-work.md"), "GitHub review selectively stages safe normal, rename, and workflow changes");
 
             var commandRunner = new WorkspaceCommandRunner();
             var commandResponse = "Check the result first.\n<workspace-command cwd=\"src\" timeout-seconds=\"999\">  printf 'one\\ntwo'  </workspace-command>\n<workspace-command>echo next</workspace-command>";

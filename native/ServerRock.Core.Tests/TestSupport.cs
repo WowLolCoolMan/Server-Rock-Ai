@@ -20,6 +20,9 @@ internal static class TestSupport
     }
 
     public static void RunGit(string workingDirectory, params string[] arguments)
+        => _ = RunGitOutput(workingDirectory, arguments);
+
+    public static string RunGitOutput(string workingDirectory, params string[] arguments)
     {
         var startInfo = new ProcessStartInfo("git")
         {
@@ -35,6 +38,7 @@ internal static class TestSupport
         var stderr = process.StandardError.ReadToEnd();
         process.WaitForExit();
         if (process.ExitCode != 0) throw new InvalidOperationException($"Git test fixture command failed: {string.Join(' ', arguments)} {stderr} {stdout}");
+        return stdout;
     }
 
     public static void DeleteDirectoryTree(string path)

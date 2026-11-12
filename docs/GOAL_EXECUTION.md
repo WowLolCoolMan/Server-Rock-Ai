@@ -1531,6 +1531,43 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 45 — isolate selected Git commits from the user index
+
+Status: `implemented_verified_windows_core`
+
+Selected Git commits now use a temporary `GIT_INDEX_FILE` initialized from
+`HEAD`. The reviewed paths are staged and committed through that isolated index,
+so unrelated changes the user had already staged remain untouched and cannot
+accidentally enter the selected commit. The temporary index is removed after
+success or failure; the user's working tree and real index are never reset.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Core.Tests/TestSupport.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the regression that pre-stages `pre-staged-user-work.md`, commits only the selected safe review changes, and verifies the unrelated file remains staged and absent from `HEAD`.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (104 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the isolated index prevents accidental disclosure
+or publication of unrelated user changes. It uses local Git state only, never
+places credentials in arguments or remotes, and adds no dependency.
+
+Rollback: restore the prior `CommitSelectedCoreAsync` staging/commit calls and
+remove the isolated-index fixture assertion; the existing path and secret
+checks remain available.
+
+Not yet verified: live Git dialog acceptance with a user-selected repository,
+remote fetch/reconciliation before push, worktree isolation, proactive model
+compatibility detection, multi-route provider selection, durable provider
+identity across fallback attempts, Linux parity, and packaged-release
+acceptance.
+
 ## Slice 43 — inline settings validation and draft cancellation
 
 Status: `implemented_verified_windows`

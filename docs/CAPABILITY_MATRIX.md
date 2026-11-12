@@ -22,7 +22,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | --- | --- | --- | --- |
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 104 contracts; live Ctrl+K command palette filtering, settings routing, and per-workspace draft restoration verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
 | Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content, live search dialog/result/open-chat journey, successful live response with a compatible local model, and separate Chat/Coding Agent composer drafts across workspace switches | Durable cross-restart context continuity, model-specific response compatibility/recovery |
-| Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
+| Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests; isolated-index selected commits now exclude unrelated pre-staged work while preserving the user's index | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
@@ -91,6 +91,10 @@ capability prevents progress; `unverified` means evidence is insufficient.
 - Live workspace-draft evidence: a Chat draft and a separate Coding Agent draft
   were entered in the native Windows app; switching workspaces and switching
   back restored each exact draft while the selected model remained unchanged.
+- Git selected-commit evidence: the Core Git fixture pre-staged
+  `pre-staged-user-work.md`, committed a separate reviewed selection, and
+  verified that the new commit omitted that file while the original index kept
+  it staged. No force push or remote mutation was used.
 
 ## Backlog ordering
 

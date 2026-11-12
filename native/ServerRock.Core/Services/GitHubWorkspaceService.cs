@@ -145,18 +145,30 @@ public sealed class GitHubWorkspaceService
             .Cast<string>()
             .Distinct(StringComparer.Ordinal)
             .ToArray();
-        foreach (var path in paths)
+        var temporaryIndex = Path.Combine(Path.GetTempPath(), $"server-rock-index-{Guid.NewGuid():N}");
+        try
         {
-            var target = Path.GetFullPath(Path.Combine(root, path));
-            var arguments = File.Exists(target) || Directory.Exists(target)
-                ? new[] { "add", "--", path }
-                : new[] { "add", "-u", "--", path };
-            var stage = await RunGitAsync(root, arguments, null, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
-            EnsureSuccess(stage, "Git could not stage the workspace changes.");
+            var resetIndex = await RunGitAsync(root, ["read-tree", "HEAD"], null, TimeSpan.FromMinutes(2), cancellationToken, temporaryIndex).ConfigureAwait(false);
+            EnsureSuccess(resetIndex, "Git could not prepare an isolated commit index.");
+            foreach (var path in paths)
+            {
+                var target = Path.GetFullPath(Path.Combine(root, path));
+                var arguments = File.Exists(target) || Directory.Exists(target)
+                    ? new[] { "add", "--", path }
+                    : new[] { "add", "-u", "--", path };
+                var stage = await RunGitAsync(root, arguments, null, TimeSpan.FromMinutes(2), cancellationToken, temporaryIndex).ConfigureAwait(false);
+                EnsureSuccess(stage, "Git could not stage the workspace changes.");
+            }
+            var commit = await RunGitAsync(root, ["commit", "-m", message], null, TimeSpan.FromMinutes(2), cancellationToken, temporaryIndex).ConfigureAwait(false);
+            EnsureSuccess(commit, "Git could not create the commit. Check your Git author name and email in Git settings.");
+            return commit.StandardOutput.Trim();
         }
-        var commit = await RunGitAsync(root, ["commit", "-m", message], null, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(commit, "Git could not create the commit. Check your Git author name and email in Git settings.");
-        return commit.StandardOutput.Trim();
+        finally
+        {
+            try { if (File.Exists(temporaryIndex)) File.Delete(temporaryIndex); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
     }
 
     private static string ChangeIdentity(GitWorkspaceFileChange change) =>
@@ -316,7 +328,7 @@ public sealed class GitHubWorkspaceService
     }
 
     private static async Task<GitProcessResult> RunGitAsync(string workingDirectory, IReadOnlyList<string> arguments, string? accessToken,
-        TimeSpan timeoutDuration, CancellationToken cancellationToken)
+        TimeSpan timeoutDuration, CancellationToken cancellationToken, string? indexFile = null)
     {
         var startInfo = new ProcessStartInfo("git")
         {
@@ -329,6 +341,7 @@ public sealed class GitHubWorkspaceService
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
         startInfo.Environment["GIT_TERMINAL_PROMPT"] = "0";
         startInfo.Environment["GCM_INTERACTIVE"] = "Never";
+        if (!string.IsNullOrWhiteSpace(indexFile)) startInfo.Environment["GIT_INDEX_FILE"] = indexFile;
         if (!string.IsNullOrEmpty(accessToken))
         {
             var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes("x-access-token:" + accessToken));
