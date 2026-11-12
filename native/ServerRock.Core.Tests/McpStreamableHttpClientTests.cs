@@ -24,6 +24,7 @@ internal static class McpStreamableHttpClientTests
                 "tools/list" => $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{{\"tools\":[{{\"name\":\"list-files\",\"description\":\"Lists files.\",\"inputSchema\":{{\"type\":\"object\"}},\"annotations\":{{\"readOnlyHint\":true}}}}]}}}}",
                 _ => $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{{\"content\":[{{\"type\":\"text\",\"text\":\"http result\"}}]}}}}"
             };
+            if (method == "tools/call") return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"event: message\n\ndata: {responseJson}\n\n", System.Text.Encoding.UTF8, "text/event-stream") };
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(responseJson, System.Text.Encoding.UTF8, "application/json") };
         });
         using var http = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
@@ -32,7 +33,7 @@ internal static class McpStreamableHttpClientTests
         var tools = await client.ListToolsAsync();
         using var arguments = JsonDocument.Parse("{}");
         var result = await client.CallToolAsync(tools[0], new McpToolGrant { ServerId = "http-server", ToolName = "list-files", ConnectionId = "http-connection", ApprovalId = "approval-http", Capabilities = [McpCapabilities.InvokeRead] }, arguments.RootElement);
-        Check(!result.IsError && result.Text == "http result", "MCP Streamable HTTP invokes an approved read-only tool");
+        Check(!result.IsError && result.Text == "http result", "MCP Streamable HTTP invokes an approved read-only tool from SSE");
         Check(tools.Count == 1 && !tools[0].IsMutating, "MCP Streamable HTTP classifies explicit read-only metadata");
 
         registry.Revoke("http-connection");

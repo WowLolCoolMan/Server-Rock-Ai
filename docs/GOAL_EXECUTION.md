@@ -2004,6 +2004,40 @@ reconnect, process supervision, UI lifecycle/revocation review, audit journal
 events, live external MCP server acceptance, Linux/Windows packaged evidence,
 and ACP adapters.
 
+## Slice 61 — bounded MCP Streamable HTTP SSE responses
+
+Status: `implemented_verified_core`
+
+The Streamable HTTP client now accepts both JSON responses and
+`text/event-stream` responses. SSE parsing ignores event metadata, bounds each
+line, skips empty and `[DONE]` frames, parses the first JSON-RPC data frame,
+and applies the same response-id, error, output, timeout, cancellation, and
+connection-revocation checks as the JSON path. The client still does not claim
+MCP session negotiation or long-lived event subscriptions.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
+- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed with a scripted endpoint returning an SSE `tools/call` result, plus revocation and redirect negative cases.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: SSE data is treated as untrusted bounded text;
+event metadata does not gain authority, and no credentials or persistent
+subscriptions are created. No dependency or third-party code was added.
+
+Rollback: restore JSON-only response handling and the SSE assertion in the
+focused test; stdio, JSON HTTP, permission, and persistence paths remain
+independent.
+
+Not yet verified: MCP session IDs and protocol negotiation, long-lived
+notifications/resources, health/reconnect, process supervision, UI lifecycle
+and revocation review, audit journal events, live external MCP server
+acceptance, Linux/Windows packaged evidence, and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

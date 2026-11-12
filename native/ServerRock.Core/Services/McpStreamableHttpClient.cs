@@ -95,7 +95,7 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
             if ((int)response.StatusCode is >= 300 and < 400) throw new HttpRequestException("MCP endpoint redirects are refused.");
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"The MCP endpoint returned {(int)response.StatusCode} {response.ReasonPhrase}.");
-            using var document = await BoundedHttpContent.ReadJsonAsync(response.Content, timeout.Token, "MCP response").ConfigureAwait(false);
+            using var document = await ReadJsonRpcResponseAsync(response.Content, timeout.Token).ConfigureAwait(false);
             if (!document.RootElement.TryGetProperty("id", out var responseId) || responseId.ValueKind != JsonValueKind.Number || responseId.GetInt32() != id) throw new InvalidDataException("The MCP response did not match the outstanding request.");
             if (document.RootElement.TryGetProperty("error", out var error)) throw new InvalidOperationException($"The MCP server rejected {method}: {error.GetRawText()}");
             return JsonDocument.Parse(document.RootElement.GetRawText());
@@ -105,6 +105,24 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
 
     private void EnsureInitialized() { if (!_initialized) throw new InvalidOperationException("The MCP server must be initialized before a tool call."); }
     private static bool IsLoopback(Uri uri) => uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || System.Net.IPAddress.TryParse(uri.Host, out var address) && System.Net.IPAddress.IsLoopback(address);
+
+    private static async Task<JsonDocument> ReadJsonRpcResponseAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        var mediaType = content.Headers.ContentType?.MediaType;
+        if (!string.Equals(mediaType, "text/event-stream", StringComparison.OrdinalIgnoreCase)) return await BoundedHttpContent.ReadJsonAsync(content, cancellationToken, "MCP response").ConfigureAwait(false);
+        await using var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var reader = new StreamReader(stream, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: false, bufferSize: 4096, leaveOpen: false);
+        var lines = BoundedHttpContent.CreateLineReader(reader, MaxMessageCharacters);
+        while (await lines.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+        {
+            if (!line.StartsWith("data:", StringComparison.Ordinal)) continue;
+            var data = line[5..].Trim();
+            if (data is "" or "[DONE]") continue;
+            try { return JsonDocument.Parse(data); }
+            catch (JsonException exception) { throw new InvalidDataException("The MCP event stream returned invalid JSON.", exception); }
+        }
+        throw new EndOfStreamException("The MCP event stream closed without a JSON-RPC response.");
+    }
 
     public ValueTask DisposeAsync()
     {
