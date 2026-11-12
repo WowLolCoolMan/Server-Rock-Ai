@@ -4,12 +4,14 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using System.Collections.Concurrent;
 
 namespace ServerRock.Core.Infrastructure;
 
 /// <summary>Applies a single reviewed text-file change inside a user-selected workspace folder.</summary>
 public sealed class WorkspaceFileEditor
 {
+    private static readonly ConcurrentDictionary<string, object> EditGates = new(GetPathComparer());
     private static readonly HashSet<string> BlockedNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ".env", ".env.local", ".env.production", "secrets.json", "credentials.json", "id_rsa", "id_ed25519"
@@ -54,21 +56,25 @@ public sealed class WorkspaceFileEditor
         if (content.Length > MaxCharacters) throw new InvalidOperationException($"The proposed file exceeds the {MaxCharacters:N0} character limit.");
         if (content.Contains('\0')) throw new InvalidOperationException("Binary content cannot be written by the Coding Agent.");
         var target = Resolve(selectedRoot, relativePath);
-        var currentHash = GetCurrentHash(selectedRoot, relativePath);
-        if (!string.Equals(currentHash, expectedHash, StringComparison.Ordinal))
-            throw new IOException("The file changed after review. Reopen the proposal and review the current version before applying it.");
-
-        var previous = currentHash is null ? null : ReadBytesBounded(target, MaxFileBytes);
-        EnsureNoLinksInPath(selectedRoot, target);
-        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-        var temp = target + ".serverrock-" + Guid.NewGuid().ToString("N") + ".tmp";
-        try
+        var gate = EditGates.GetOrAdd(target, static path => new object());
+        lock (gate)
         {
-            File.WriteAllText(temp, content, new UTF8Encoding(false));
-            File.Move(temp, target, overwrite: true);
+            var currentHash = GetCurrentHash(selectedRoot, relativePath);
+            if (!string.Equals(currentHash, expectedHash, StringComparison.Ordinal))
+                throw new IOException("The file changed after review. Reopen the proposal and review the current version before applying it.");
+
+            var previous = currentHash is null ? null : ReadBytesBounded(target, MaxFileBytes);
+            EnsureNoLinksInPath(selectedRoot, target);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            var temp = target + ".serverrock-" + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.WriteAllText(temp, content, new UTF8Encoding(false));
+                File.Move(temp, target, overwrite: true);
+            }
+            finally { if (File.Exists(temp)) File.Delete(temp); }
+            return new WorkspaceEditReceipt(Path.GetFullPath(target), previous, Hash(ReadBytesBounded(target, MaxFileBytes)));
         }
-        finally { if (File.Exists(temp)) File.Delete(temp); }
-        return new WorkspaceEditReceipt(Path.GetFullPath(target), previous, Hash(ReadBytesBounded(target, MaxFileBytes)));
     }
 
     public void Undo(WorkspaceEditReceipt receipt)
@@ -153,6 +159,9 @@ public sealed class WorkspaceFileEditor
     }
 
     private static string Hash(byte[] content) => Convert.ToHexString(SHA256.HashData(content));
+
+    private static IEqualityComparer<string> GetPathComparer() =>
+        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
     public static string ReadTextBounded(string path, int maxBytes)
     {

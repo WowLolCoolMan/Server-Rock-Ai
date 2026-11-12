@@ -403,6 +403,21 @@ internal static class LocalStorageAndWorkspaceTests
             var replacedReceipt = editor.Apply(workspacePath, "README.md", "Updated overview", readmeHash);
             editor.Undo(replacedReceipt);
             Check(File.ReadAllText(readmePath) == "Workspace overview", "undo restores the previous text file contents");
+            var concurrentHash = editor.GetCurrentHash(workspacePath, "README.md")!;
+            var concurrentWrites = Enumerable.Range(0, 2)
+                .Select(index => Task.Run(() =>
+                {
+                    try
+                    {
+                        editor.Apply(workspacePath, "README.md", $"Concurrent writer {index}", concurrentHash);
+                        return true;
+                    }
+                    catch (IOException) { return false; }
+                }))
+                .ToArray();
+            var concurrentResults = await Task.WhenAll(concurrentWrites);
+            Check(concurrentResults.Count(result => result) == 1, "workspace edits serialize reviewed writes and reject the losing concurrent hash");
+            readmeHash = editor.GetCurrentHash(workspacePath, "README.md");
             var undoHistoryPath = Path.Combine(settingsDirectory, "workspace-undo.json");
             var undoStore = new WorkspaceUndoStore(undoHistoryPath);
             var durableReceipt = editor.Apply(workspacePath, Path.Combine("src", "Durable.cs"), "// durable change", null);

@@ -1531,6 +1531,42 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 49 — serialize reviewed workspace writes
+
+Status: `implemented_verified_core`
+
+`WorkspaceFileEditor.Apply` now gates the complete reviewed-write transaction
+by normalized target path. The hash comparison, previous-content capture,
+temporary write, replacement, and receipt creation occur under the same
+per-path gate, so concurrent Coding Agent/editor writes in this process cannot
+both pass the same review hash. A regression harness races two reviewed writes
+and verifies exactly one succeeds while the other is rejected as stale.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceFileEditor.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `workspace edits serialize reviewed writes and reject the losing concurrent hash`.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this prevents competing in-process reviewed
+writes from silently overwriting one another; it does not claim OS-level file
+locking against an external editor that ignores the app's transaction gate.
+No file contents, credentials, network route, dependency, or third-party code
+were added.
+
+Rollback: remove the per-target gate and restore the prior `Apply` body; the
+existing expected-hash check and undo receipts remain available.
+
+Not yet verified: cross-process/external-editor race behavior, multi-tab
+editing, Linux parity, packaged-release acceptance, and full live editor
+accessibility.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
