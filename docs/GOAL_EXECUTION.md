@@ -2153,7 +2153,7 @@ and packaged acceptance.
 
 ## Slice 65 — explicit native memory management journey
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_windows`
 
 Settings → Chats & history now exposes a Memory manager backed by the tested
 local store. The surface searches all saved entries, displays scope/source/
@@ -2175,6 +2175,12 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (120 contracts).`
 - `git diff --check` — passed.
+- Live Windows UI inspection — passed by launching the exact `net10.0-desktop`
+  executable and opening Navigation → More → Connection & settings → Chats &
+  history → Manage memory. The dialog exposed the local-only disclosure,
+  Search saved memory, Saved memory entries, scope/source/content/tags fields,
+  enable checkbox, and New/Save/Disable/Delete controls, with `0 saved entries
+  · local only`. No memory entry was created or deleted during inspection.
 
 Privacy/security/licensing: the UI writes only when the user clicks Save,
 generates a local approval ID for that explicit action, and uses the existing
@@ -2185,8 +2191,8 @@ Rollback: remove the Memory manager section, its field, and the four static UI
 contracts; the Core memory file and store remain independent for explicit
 future recovery or removal.
 
-Not yet verified: live Windows keyboard/screen-reader journey, memory export or
-backup, encrypted storage, retention controls, review-before-injection,
+Not yet verified: keyboard/screen-reader CRUD journey, memory export or backup,
+encrypted storage, retention controls, review-before-injection,
 automatic memory proposals, model-context injection, cross-device sync, Linux
 parity, and packaged acceptance.
 
