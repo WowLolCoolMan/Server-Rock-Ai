@@ -75,6 +75,8 @@ const requiredCode = [
   ['Skill package installation action', 'AutomationProperties.SetName(install, "Install local skill package")'],
   ['Skill package execution safety disclosure', 'The package will not be executed.'],
   ['Skill rollback action', 'AutomationProperties.SetName(rollback, "Rollback selected installed skill")'],
+  ['Throttled streaming render timer', 'var renderTimer = DispatcherQueue.CreateTimer();'],
+  ['Streaming preserves manual scroll', 'if (followOutput) ConversationScroll.ChangeView(null, double.MaxValue, null);'],
   ['Untrusted result insertion disclosure', 'AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.")'],
   ['Project terminal output keyboard navigation', 'IsTabStop = true,\n            VerticalScrollBarVisibility'],
   ['Project terminal output accessible name', 'AutomationProperties.SetName(outputScroll, "Project terminal output pane")'],

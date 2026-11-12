@@ -471,14 +471,39 @@ public sealed partial class MainPage
         var answer = new System.Text.StringBuilder();
         var timer = Stopwatch.StartNew();
         long? firstTokenMilliseconds = null;
-        await _provider.StreamChatAsync(_settings, requestMessages, text =>
+        var responseLock = new object();
+        var followOutput = ConversationScroll.ScrollableHeight <= 0 || ConversationScroll.VerticalOffset >= ConversationScroll.ScrollableHeight - 64;
+        var renderTimer = DispatcherQueue.CreateTimer();
+        renderTimer.Interval = TimeSpan.FromMilliseconds(50);
+        renderTimer.Tick += (_, _) =>
         {
-            firstTokenMilliseconds ??= Math.Max(1, timer.ElapsedMilliseconds);
-            answer.Append(text);
-            _messages[assistantIndex] = new ChatMessage("assistant", answer.ToString(), Sources: _pendingWebSources);
-            output.Text = answer.ToString();
-            ConversationScroll.ChangeView(null, double.MaxValue, null);
-        }, cancellationToken, apiKey: GetProviderApiKey());
+            string current;
+            lock (responseLock) current = answer.ToString();
+            _messages[assistantIndex] = new ChatMessage("assistant", current, Sources: _pendingWebSources);
+            output.Text = current;
+            if (followOutput) ConversationScroll.ChangeView(null, double.MaxValue, null);
+        };
+        renderTimer.Start();
+        try
+        {
+            await _provider.StreamChatAsync(_settings, requestMessages, text =>
+            {
+                lock (responseLock)
+                {
+                    firstTokenMilliseconds ??= Math.Max(1, timer.ElapsedMilliseconds);
+                    answer.Append(text);
+                }
+            }, cancellationToken, apiKey: GetProviderApiKey());
+        }
+        finally
+        {
+            renderTimer.Stop();
+            string finalAnswer;
+            lock (responseLock) finalAnswer = answer.ToString();
+            _messages[assistantIndex] = new ChatMessage("assistant", finalAnswer, Sources: _pendingWebSources);
+            output.Text = finalAnswer;
+            if (followOutput) ConversationScroll.ChangeView(null, double.MaxValue, null);
+        }
         timer.Stop();
         if (LocalEndpoint.IsLocal(measuredEndpoint) && firstTokenMilliseconds is >= 0 && answer.Length > 0)
             RecordLocalModelPerformance(measuredEndpoint, measuredModel, answer.Length, timer.ElapsedMilliseconds, firstTokenMilliseconds.Value);

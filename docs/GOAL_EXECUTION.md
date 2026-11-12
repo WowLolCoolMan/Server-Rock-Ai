@@ -1732,6 +1732,41 @@ GitHub transport and cryptographic ref verification, explicit permission
 enablement, publisher trust, cross-process activation locking, Linux parity,
 and packaged-release acceptance.
 
+## Slice 54 — throttled streaming render and scroll preservation
+
+Status: `implemented_verified_core`
+
+Assistant streaming now accumulates provider chunks under a small response
+lock and renders through a 50 ms dispatcher timer instead of rebuilding the
+native text surface for every chunk. The stream captures whether the user was
+already at the bottom; only that case follows the response, so a user who has
+scrolled upward is not repeatedly pulled back down. A final render is performed
+and the timer is stopped on both success and provider failure/cancellation.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this changes only local rendering cadence and
+scroll behavior; provider payloads, persistence, credentials, and routing are
+unchanged. No dependency or third-party code was added.
+
+Rollback: restore the direct per-chunk output update and unconditional bottom
+scroll in `StreamChatAsync`; provider transport and conversation persistence
+remain unchanged.
+
+Not yet verified: a packaged long-stream performance run, Linux/Skia timing,
+screen-reader streaming announcements, and full live keyboard/accessibility
+acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
