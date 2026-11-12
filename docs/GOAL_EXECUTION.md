@@ -660,3 +660,36 @@ Not yet verified: effect timeline UI, write/shell/network adapters, approval
 inbox queuing, parallel limits, scheduling, and packaged Linux parity. The
 next dependency is exposing this durable effect in Activity before any new
 side-effecting adapter is considered.
+
+## Slice 19 — workflow effect timeline in Activity
+
+Status: `implemented_unverified`
+
+Activity & tasks now renders a bounded effect timeline from the persisted
+workflow event journal. It summarizes workspace reads (relative path,
+characters, no mutation), condition outcomes, approvals, reconciliation,
+completion, and cancellation, capped to the latest 12 events per run. Raw
+file contents, absolute paths, and arbitrary payloads are not rendered.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the timeline is local-only, bounded, and uses an
+allowlisted event-summary mapping. It deliberately omits raw event payloads
+and file contents. No network, credential, shell, provider, Git, or
+third-party code path was added.
+
+Rollback: remove the event-summary rendering block; persisted workflow events
+remain available to Core callers.
+
+Not yet verified: live timeline keyboard/screen-reader behavior, approval
+inbox queuing, write/shell/network adapters, parallel limits, scheduling, and
+packaged Linux parity. The next dependency is a UI-visible approval inbox
+model for concurrent workflow requests.

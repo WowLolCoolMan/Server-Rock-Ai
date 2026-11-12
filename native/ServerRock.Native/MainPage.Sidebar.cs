@@ -152,6 +152,21 @@ public sealed partial class MainPage
                     }
                     runPanel.Children.Add(stepLine);
                 }
+                var events = workflowSnapshot.Events.Where(item => item.RunId == run.RunId).OrderBy(item => item.Sequence).ToArray();
+                if (events.Length > 0)
+                {
+                    runPanel.Children.Add(new TextBlock { Text = "EFFECT TIMELINE", FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.7, Margin = new Thickness(8, 6, 0, 0) });
+                    foreach (var workflowEvent in events.TakeLast(12))
+                    {
+                        runPanel.Children.Add(new TextBlock
+                        {
+                            Text = $"#{workflowEvent.Sequence} · {WorkflowEventLabel(workflowEvent)}",
+                            FontSize = 11,
+                            TextWrapping = TextWrapping.Wrap,
+                            Margin = new Thickness(8, 1, 0, 0)
+                        });
+                    }
+                }
                 content.Children.Add(new Border
                 {
                     Background = ResourceBrush("SurfaceAltBrush"),
@@ -213,6 +228,17 @@ public sealed partial class MainPage
         WorkflowRunStatuses.Failed => "Failed",
         WorkflowRunStatuses.Running => "Running",
         _ => status.Replace('_', ' ')
+    };
+
+    private static string WorkflowEventLabel(WorkflowRunEvent workflowEvent) => workflowEvent.Type switch
+    {
+        "workspace.read_completed" => $"Workspace read · {workflowEvent.Payload.GetValueOrDefault("relativePath", "file")} · {workflowEvent.Payload.GetValueOrDefault("charactersRead", "0")} chars · no mutation",
+        "condition.evaluated" => $"Condition evaluated · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")} = {workflowEvent.Payload.GetValueOrDefault("result", "unknown")}",
+        "approval.granted" => $"Approval recorded · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")}",
+        "run.needs_reconciliation" => "Restart reconciliation required · no side effect replay",
+        "run.completed" => "Run completed after verification",
+        "run.cancelled" => "Run cancelled",
+        _ => workflowEvent.Type.Replace('.', ' ')
     };
 
     private void ApproveWorkflowStep(WorkflowRun run, WorkflowStepRun step, ContentDialog? dialog)
