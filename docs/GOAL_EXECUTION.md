@@ -1638,7 +1638,7 @@ Linux parity, and packaged acceptance.
 
 ## Slice 79 — searchable workflow-event evidence
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_with_live_surface_boundary`
 
 Activity search now searches both the durable operation journal and the
 workflow-run event journal. Workflow results are bounded to the latest 100
@@ -1661,6 +1661,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (129 contracts).`
 - `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: Activity opened `Search
+  activity`; the dialog exposed the search field, `Operation activity search
+  results`, separate `Workflow event search results`, and the local-only
+  `nothing was changed` status. This run had no seeded workflow event, so no
+  live event-result match was claimed.
 
 Privacy/security/licensing: search stays on local journals and does not send
 queries or event data to a provider. The UI shows only bounded allowlisted
@@ -1669,13 +1674,13 @@ workflow summaries; no dependency or third-party code was added.
 Rollback: remove `WorkflowEventSearchHit`, `SearchEvents`, the workflow result
 list, its test, and the two UI contracts; operation search remains available.
 
-Not yet verified: live Windows workflow-event search, OS session hosting,
+Not yet verified: seeded live Windows workflow-event result matching, OS session hosting,
 parallel agent artifacts, richer workflow branching, Linux parity, and
 packaged acceptance.
 
 ## Slice 49 — serialize reviewed workspace writes
 
-Status: `implemented_verified_with_live_surface_boundary`
+Status: `implemented_verified_core`
 
 `WorkspaceFileEditor.Apply` now gates the complete reviewed-write transaction
 by normalized target path. The hash comparison, previous-content capture,
