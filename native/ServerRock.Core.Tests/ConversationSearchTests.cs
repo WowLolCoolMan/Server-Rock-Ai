@@ -14,6 +14,7 @@ internal static class ConversationSearchTests
         };
         Check(ConversationSearchService.Search(sessions, "priority").Single().Session.Title == "Planning", "conversation search finds tags");
         Check(ConversationSearchService.Search(sessions, "roadmap.pdf").Single().Session.Title == "Planning", "conversation search finds attachment names");
+        Check(ConversationSearchService.Search(sessions, "ROADMAP.PDF").Single().Session.Title == "Planning", "conversation search is culture independent");
         var sourceHit = ConversationSearchService.Search(sessions, "cooking").Single();
         Check(sourceHit.Session.Title == "Recipes" && sourceHit.Display.Contains("Recipes", StringComparison.Ordinal), "conversation search finds source metadata and builds a bounded display");
         Check(ConversationSearchService.Search(sessions, "").Count == 3 && ConversationSearchService.Search(sessions, "")[0].Session.Title == "Recipes", "empty conversation search returns recent chats first");

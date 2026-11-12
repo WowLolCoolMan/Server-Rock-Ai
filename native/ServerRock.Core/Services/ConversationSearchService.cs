@@ -37,7 +37,7 @@ public static class ConversationSearchService
                 || (message.Sources ?? []).Any(source => Contains(source.Title, value) || Contains(source.Url, value)));
     }
 
-    private static bool Contains(string? text, string query) => text?.Contains(query, StringComparison.CurrentCultureIgnoreCase) == true;
+    private static bool Contains(string? text, string query) => text?.Contains(query, StringComparison.OrdinalIgnoreCase) == true;
 
     private static string BuildDisplay(ChatSession session)
     {
