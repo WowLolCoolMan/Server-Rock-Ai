@@ -21,6 +21,137 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
+    private async Task MemoryDialogAsync()
+    {
+        var search = new TextBox { PlaceholderText = "Search saved memory", MinWidth = 280 };
+        var list = UiTheme.WrapListText(new ListView { MinHeight = 180, MaxHeight = 260, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(MemoryEntry.Content) });
+        var scope = new TextBox { Header = "Scope", Text = "global", PlaceholderText = "global or project:name" };
+        var source = new TextBox { Header = "Source", Text = "user", PlaceholderText = "Where this note came from" };
+        var content = new TextBox { Header = "Memory", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 120, MaxHeight = 220, PlaceholderText = "A fact or project note you explicitly want to remember" };
+        var tags = new TextBox { Header = "Tags", PlaceholderText = "comma-separated" };
+        var enabled = new CheckBox { Content = "Use this memory when enabled by a future context review", IsChecked = true };
+        var save = new Button { Content = "Save memory", MinWidth = 120 };
+        var newEntry = new Button { Content = "New", MinWidth = 80 };
+        var disable = new Button { Content = "Disable", MinWidth = 90, IsEnabled = false };
+        var remove = new Button { Content = "Delete", MinWidth = 80, IsEnabled = false };
+        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
+        MemoryEntry? selected = null;
+        AutomationProperties.SetName(search, "Search saved memory");
+        AutomationProperties.SetName(list, "Saved memory entries");
+        AutomationProperties.SetName(content, "Memory content");
+        AutomationProperties.SetHelpText(content, "Saving is explicit user approval. Notes remain local and are not automatically sent to a model.");
+        AutomationProperties.SetName(save, "Save memory");
+        AutomationProperties.SetName(remove, "Delete memory");
+        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
+
+        void ClearEditor()
+        {
+            selected = null;
+            scope.Text = "global";
+            source.Text = "user";
+            content.Text = string.Empty;
+            tags.Text = string.Empty;
+            enabled.IsChecked = true;
+            disable.IsEnabled = false;
+            remove.IsEnabled = false;
+            details.Text = "Saving a note creates a local memory entry with an explicit approval record.";
+        }
+        void Refresh()
+        {
+            try
+            {
+                list.ItemsSource = _memoryStore.Search(search.Text.Trim(), enabledOnly: false);
+                status.Text = $"{list.Items.Count} saved entr{(list.Items.Count == 1 ? "y" : "ies")} · local only";
+            }
+            catch (Exception ex) { status.Text = $"Memory could not be loaded: {ex.Message}"; }
+        }
+        search.TextChanged += (_, _) => Refresh();
+        list.SelectionChanged += (_, _) =>
+        {
+            if (list.SelectedItem is not MemoryEntry entry) return;
+            selected = entry;
+            scope.Text = entry.Scope;
+            source.Text = entry.Source;
+            content.Text = entry.Content;
+            tags.Text = string.Join(", ", entry.Tags);
+            enabled.IsChecked = entry.Enabled;
+            disable.IsEnabled = true;
+            remove.IsEnabled = true;
+            details.Text = $"{entry.Scope} · {entry.Source} · {(entry.Enabled ? "enabled" : "disabled")}\nApproved {entry.ApprovalId} · updated {entry.UpdatedAtUtc.ToLocalTime():g}";
+        };
+        newEntry.Click += (_, _) => ClearEditor();
+        save.Click += (_, _) =>
+        {
+            try
+            {
+                var tagValues = tags.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var approval = "ui-memory-" + Guid.NewGuid().ToString("N");
+                if (selected is null)
+                {
+                    var added = _memoryStore.Add(content.Text, scope.Text, source.Text, approval, tagValues);
+                    if (enabled.IsChecked != true) _memoryStore.SetEnabled(added.Id, false);
+                    status.Text = "Memory saved locally with explicit approval. Review it before enabling future injection.";
+                }
+                else
+                {
+                    var updated = _memoryStore.Update(selected.Id, content.Text, scope.Text, source.Text, approval, tagValues);
+                    updated.Enabled = enabled.IsChecked == true;
+                    if (updated.Enabled != selected.Enabled) _memoryStore.SetEnabled(updated.Id, updated.Enabled);
+                    status.Text = "Memory updated locally.";
+                }
+                Refresh();
+                ClearEditor();
+            }
+            catch (Exception ex) { status.Text = $"Memory was not saved: {ex.Message}"; }
+        };
+        disable.Click += (_, _) =>
+        {
+            if (selected is null) return;
+            try { _memoryStore.SetEnabled(selected.Id, enabled.IsChecked == true); status.Text = enabled.IsChecked == true ? "Memory enabled locally." : "Memory disabled locally."; Refresh(); }
+            catch (Exception ex) { status.Text = $"Memory state could not be changed: {ex.Message}"; }
+        };
+        remove.Click += (_, _) =>
+        {
+            if (selected is null) return;
+            try { _memoryStore.Remove(selected.Id); status.Text = "Memory deleted locally."; Refresh(); ClearEditor(); }
+            catch (Exception ex) { status.Text = $"Memory was not deleted: {ex.Message}"; }
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "Memory",
+            PrimaryButtonText = "Done",
+            CloseButtonText = "Close",
+            XamlRoot = XamlRoot,
+            Content = new ScrollViewer
+            {
+                Content = new StackPanel
+                {
+                    Spacing = 9,
+                    Children =
+                    {
+                        new TextBlock { Text = "Saved memory is local, explicit, and reviewable. Nothing is extracted from chats automatically, and entries are not injected into model requests by this screen.", TextWrapping = TextWrapping.Wrap },
+                        search,
+                        list,
+                        details,
+                        scope,
+                        source,
+                        content,
+                        tags,
+                        enabled,
+                        new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, disable, remove } },
+                        status
+                    }
+                },
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            }
+        };
+        UiTheme.Standardize(dialog);
+        ClearEditor();
+        Refresh();
+        await dialog.ShowAsync();
+    }
+
     private void ApplySavedCustomization()
     {
         UiTheme.ApplyTheme(_settings.ThemeMode);
@@ -377,6 +508,10 @@ public sealed partial class MainPage
             export.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(ExportChatsAsync); dialog.Hide(); };
             pageBody.Children.Add(MakeSettingsCard("Import conversations", "Add chats from a supported local archive.", import));
             pageBody.Children.Add(MakeSettingsCard("Export conversations", "Create a portable archive of saved chats.", export));
+        var memory = new Button { Content = "Manage memory" };
+        AutomationProperties.SetName(memory, "Manage saved memory");
+        memory.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(MemoryDialogAsync); dialog.Hide(); };
+        pageBody.Children.Add(MakeSettingsCard("Saved memory", "Review, search, enable, edit, or delete explicitly approved local notes. Nothing is automatically extracted or sent from this screen.", memory));
         }
 
         async Task RefreshSettingsModelsAsync(StackPanel inventory, TextBlock status, Button refresh)

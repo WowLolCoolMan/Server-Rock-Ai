@@ -2151,6 +2151,45 @@ project/global retention controls, encrypted storage, backup/export, automatic
 memory proposals, model-context injection, cross-device sync, Linux parity,
 and packaged acceptance.
 
+## Slice 65 — explicit native memory management journey
+
+Status: `implemented_verified_core`
+
+Settings → Chats & history now exposes a Memory manager backed by the tested
+local store. The surface searches all saved entries, displays scope/source/
+approval metadata, creates explicitly approved notes, edits content and tags,
+enables or disables retrieval eligibility, and deletes selected entries. The
+screen clearly states that memory is local, not automatically extracted, and
+not injected into model requests by this slice. It does not touch companion
+settings or code.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the memory store persistence and mutation suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (120 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the UI writes only when the user clicks Save,
+generates a local approval ID for that explicit action, and uses the existing
+atomic store. No memory content is sent to a provider, logged, or synced by
+this journey. No dependency or third-party code was added.
+
+Rollback: remove the Memory manager section, its field, and the four static UI
+contracts; the Core memory file and store remain independent for explicit
+future recovery or removal.
+
+Not yet verified: live Windows keyboard/screen-reader journey, memory export or
+backup, encrypted storage, retention controls, review-before-injection,
+automatic memory proposals, model-context injection, cross-device sync, Linux
+parity, and packaged acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
