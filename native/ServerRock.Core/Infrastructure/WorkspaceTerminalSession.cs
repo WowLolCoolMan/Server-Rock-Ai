@@ -7,6 +7,7 @@ using Porta.Pty;
 using XTerm;
 using XTerm.Common;
 using XTerm.Options;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Infrastructure;
 
@@ -55,7 +56,7 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
         var selectedShell = ResolveShell(shell);
         var options = new PtyOptions
         {
-            Name = "Server Rock Coding Terminal",
+            Name = $"{ProductIdentity.ShortName} Coding Terminal",
             Cols = Terminal.Cols,
             Rows = Terminal.Rows,
             Cwd = workingDirectory,
@@ -186,7 +187,7 @@ public sealed class WorkspaceTerminalSession : IAsyncDisposable
                 break;
             case WindowInfoRequest.Title:
             case WindowInfoRequest.IconTitle:
-                args.Title = "Server Rock terminal";
+                args.Title = $"{ProductIdentity.ShortName} terminal";
                 args.Handled = true;
                 break;
         }

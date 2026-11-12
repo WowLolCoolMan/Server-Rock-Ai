@@ -116,7 +116,7 @@ public sealed partial class MainPage
                     SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
                     SuggestedFileName = $"server-rock-memory-{DateTime.Now:yyyy-MM-dd}"
                 };
-                picker.FileTypeChoices.Add("Server Rock memory backup", new List<string> { ".json" });
+                picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} memory backup", new List<string> { ".json" });
 #if WINDOWS
                 var window = (Application.Current as App)?.MainWindow;
                 if (window is null) throw new InvalidOperationException("The app window is unavailable.");
@@ -740,7 +740,7 @@ public sealed partial class MainPage
         {
             try
             {
-                var destination = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Server Rock diagnostics");
+                var destination = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AI diagnostics");
                 var archive = App.Log.Export(destination);
                 checkStatus.Text = "Redacted diagnostics exported. You can attach the archive to support.";
                 RuntimeStatus.Text = $"Diagnostics exported to {archive}";

@@ -6,7 +6,7 @@
     <UnoSingleProject>true</UnoSingleProject>
 
     <!-- Display name -->
-    <ApplicationTitle>Server Rock: AI</ApplicationTitle>
+    <ApplicationTitle>$(ProductDisplayName)</ApplicationTitle>
     <!-- App Identifier -->
     <ApplicationId>com.server-rock.ai</ApplicationId>
     <!-- Versions -->

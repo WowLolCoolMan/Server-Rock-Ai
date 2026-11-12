@@ -79,7 +79,7 @@ public sealed partial class MainPage
         var parentPath = new TextBox
         {
             Header = "Clone into",
-            Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Server Rock Projects"),
+            Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"{ProductIdentity.ShortName} Projects"),
             PlaceholderText = "Choose a local parent folder"
         };
         var chooseParent = new Button { Content = "Choose folder…", HorizontalAlignment = HorizontalAlignment.Left };

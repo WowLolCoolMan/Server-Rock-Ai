@@ -40,7 +40,7 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        using var response = await SendRequestAsync("initialize", new { protocolVersion = "2025-06-18", capabilities = new { }, clientInfo = new { name = "Server Rock AI", version = "0.1" } }, cancellationToken).ConfigureAwait(false);
+        using var response = await SendRequestAsync("initialize", new { protocolVersion = "2025-06-18", capabilities = new { }, clientInfo = new { name = ProductIdentity.ClientName, version = "0.1" } }, cancellationToken).ConfigureAwait(false);
         if (!response.RootElement.TryGetProperty("result", out var result) || !result.TryGetProperty("protocolVersion", out var version) || version.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(version.GetString())) throw new InvalidDataException("The MCP initialize response did not declare a protocol version.");
         _protocolVersion = version.GetString();
         _initialized = true;

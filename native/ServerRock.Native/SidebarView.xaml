@@ -12,7 +12,7 @@
         <TextBlock Text="◈" Foreground="{StaticResource BrandMarkInkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Border>
       <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-        <TextBlock Text="Server Rock" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
+        <TextBlock x:Name="ProductName" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
         <TextBlock Text="Local AI workspace" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" />
       </StackPanel>
     </Grid>
@@ -66,7 +66,7 @@
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
           <!-- Update notice (from main): shown only when an update is available; Auto width so the
                pet button keeps the full row when it is hidden. -->
-          <Button x:Name="UpdateButton" Visibility="Collapsed" Click="UpdateClick" Style="{StaticResource ContextButtonStyle}" Background="{StaticResource AccentSoftBrush}" Foreground="{StaticResource AccentInkBrush}" HorizontalContentAlignment="Left" Content="↓　Update available" AutomationProperties.Name="Open available app update" AutomationProperties.HelpText="Review and install the available Server Rock AI update." />
+          <Button x:Name="UpdateButton" Visibility="Collapsed" Click="UpdateClick" Style="{StaticResource ContextButtonStyle}" Background="{StaticResource AccentSoftBrush}" Foreground="{StaticResource AccentInkBrush}" HorizontalContentAlignment="Left" Content="↓　Update available" AutomationProperties.Name="Open available app update" AutomationProperties.HelpText="Review and install the available app update." />
           <!-- Pet controls: show/hide plus a clearly labelled "choose pet" icon (was a bare ···). -->
           <Button Grid.Column="1" x:Name="CompanionButton" Click="ToggleCompanionClick" Style="{StaticResource ContextButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window."><StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE76E;" FontSize="14" /><TextBlock x:Name="CompanionButtonLabel" Text="Show pet" /></StackPanel></Button>
           <Button Grid.Column="2" Click="CustomizeCompanionClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Choose pet" AutomationProperties.Name="Choose pet companion" AutomationProperties.HelpText="Choose which local companion to show."><FontIcon Glyph="&#xE70F;" FontSize="13" /></Button>

@@ -2309,6 +2309,51 @@ Not yet verified: live Windows search accessibility acceptance, searchable
 workflow-event evidence, OS session hosting, parallel agent artifacts, Linux
 parity, and packaged acceptance.
 
+## Slice 69 — centralized rebrand-safe product identity
+
+Status: `implemented_verified_core`
+
+User-facing native labels now read from the centralized `ProductIdentity` and
+build `ProductDisplayName` settings instead of repeating the current product
+name throughout sidebar, messages, update, archive, backup, terminal, GitHub,
+and MCP client surfaces. Existing technical storage paths, namespaces,
+credential entropy, package identifiers, and protocol formats remain unchanged
+so a future rebrand does not migrate or invalidate user data.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/Directory.Build.props`
+- `native/ServerRock.Native/ServerRock.Native.csproj`
+- `native/ServerRock.Native/SidebarView.xaml`
+- `native/ServerRock.Native/SidebarView.xaml.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Native/MainPage.Messages.cs`
+- `native/ServerRock.Native/MainPage.Recents.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Native/MainPage.ImportExport.cs`
+- `native/ServerRock.Native/MainPage.GitHub.cs`
+- `native/ServerRock.Core/Infrastructure/WorkspaceTerminalSession.cs`
+- `native/ServerRock.Core/Services/McpStdioClient.cs`
+- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (123 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is a local label/configuration change only;
+it adds no network traffic, credential changes, data migration, or dependency.
+
+Rollback: restore the prior display literals and application title property;
+technical identifiers remain unaffected either way.
+
+Not yet verified: packaged installer title/name propagation, Linux display
+acceptance, and the final selected rebrand name.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

@@ -39,7 +39,7 @@ public sealed class McpStdioClient : IAsyncDisposable
         {
             protocolVersion = "2025-06-18",
             capabilities = new { },
-            clientInfo = new { name = "Server Rock AI", version = "0.1" }
+            clientInfo = new { name = ProductIdentity.ClientName, version = "0.1" }
         }, cancellationToken).ConfigureAwait(false);
         if (!result.RootElement.TryGetProperty("result", out var initializeResult) || !initializeResult.TryGetProperty("protocolVersion", out var protocolVersion) || protocolVersion.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(protocolVersion.GetString()))
             throw new InvalidDataException("The MCP initialize response did not declare a protocol version.");

@@ -10,6 +10,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
 
@@ -40,7 +41,7 @@ public sealed partial class MainPage
                 SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
                 SuggestedFileName = $"server-rock-chats-{DateTime.Now:yyyy-MM-dd}"
             };
-            picker.FileTypeChoices.Add("Server Rock chat archive", new List<string> { ".json" });
+            picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} chat archive", new List<string> { ".json" });
 #if WINDOWS
             var window = (Application.Current as App)?.MainWindow;
             if (window is null) throw new InvalidOperationException("The app window is unavailable.");

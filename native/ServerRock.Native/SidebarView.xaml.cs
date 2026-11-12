@@ -4,6 +4,7 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using ServerRock.Core.Models;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;
@@ -48,7 +49,11 @@ public sealed partial class SidebarView : UserControl
     public event RoutedEventHandler? MoreRequested;
     public event RoutedEventHandler? UpdateRequested;
 
-    public SidebarView() => InitializeComponent();
+    public SidebarView()
+    {
+        InitializeComponent();
+        ProductName.Text = ProductIdentity.ShortName;
+    }
 
     private void ChatModeClick(object sender, RoutedEventArgs e) => ChatModeRequested?.Invoke(sender, e);
     private void CodingModeClick(object sender, RoutedEventArgs e) => CodingModeRequested?.Invoke(sender, e);

@@ -3,6 +3,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Change the product label here for a future package/display rebrand. -->
+    <ProductDisplayName>Server Rock: AI</ProductDisplayName>
 
     <!--
       Adding NoWarn to remove build warnings

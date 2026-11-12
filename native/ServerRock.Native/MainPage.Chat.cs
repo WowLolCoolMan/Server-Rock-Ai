@@ -158,7 +158,7 @@ public sealed partial class MainPage
                     var consent = new ContentDialog
                     {
                         Title = "Send project context to a remote model?",
-                        Content = $"The selected model endpoint is {_settings.Endpoint}. {purpose} will send your prompt and up to {fileCount} text-file excerpts from this project's selected folders to that server. Files are not sent to a Server Rock service. Continue for this project and endpoint?",
+                        Content = $"The selected model endpoint is {_settings.Endpoint}. {purpose} will send your prompt and up to {fileCount} text-file excerpts from this project's selected folders to that server. Files are not sent to an app service. Continue for this project and endpoint?",
                         PrimaryButtonText = "Continue",
                         CloseButtonText = "Cancel",
                         XamlRoot = XamlRoot
@@ -216,7 +216,7 @@ public sealed partial class MainPage
         SaveCurrentSession();
         _messages.Add(new ChatMessage("assistant", ""));
         var assistantIndex = _messages.Count - 1;
-        var response = AddMessage(_mode == WorkspaceModes.CodingAgent ? "Coding Agent" : "Server Rock", "", false, messageIndex: assistantIndex);
+        var response = AddMessage(_mode == WorkspaceModes.CodingAgent ? "Coding Agent" : ProductIdentity.ShortName, "", false, messageIndex: assistantIndex);
         _requestCancellation = new CancellationTokenSource();
         try
         {

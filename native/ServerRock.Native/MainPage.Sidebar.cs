@@ -70,7 +70,7 @@ public sealed partial class MainPage
                     SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
                     SuggestedFileName = $"server-rock-activity-{DateTime.Now:yyyy-MM-dd}"
                 };
-                picker.FileTypeChoices.Add("Server Rock activity evidence", new List<string> { ".json" });
+                picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} activity evidence", new List<string> { ".json" });
 #if WINDOWS
                 var window = (Application.Current as App)?.MainWindow;
                 if (window is null) throw new InvalidOperationException("The app window is unavailable.");
@@ -499,7 +499,7 @@ public sealed partial class MainPage
     {
         var dialog = new ContentDialog
         {
-            Title = "Server Rock AI update",
+            Title = $"{ProductIdentity.DisplayName} update",
             Content = new TextBlock { Text = "A newer app build is available. Open Settings to review the signed update channel and choose when to install it.", TextWrapping = TextWrapping.Wrap },
             PrimaryButtonText = "Open settings",
             CloseButtonText = "Later",
