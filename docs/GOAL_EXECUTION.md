@@ -1966,6 +1966,44 @@ cleanup, health probes, disconnect recovery, Streamable HTTP, UI lifecycle and
 revocation review, audit journal events, live external MCP server acceptance,
 Linux/Windows packaged evidence, and ACP adapters.
 
+## Slice 60 — MCP Streamable HTTP transport
+
+Status: `implemented_verified_core`
+
+The Core layer now supports the JSON-response path of MCP Streamable HTTP.
+It validates HTTPS endpoints (or loopback-only HTTP), rejects credentials,
+query/fragment data, and redirects, applies the same bounded JSON-RPC request
+and response limits as stdio, and routes tool calls through the shared
+permission and connection-revocation boundary. Cancellation and a bounded
+request timeout are applied to the HTTP operation. SSE response framing,
+session negotiation, credential references, and UI configuration are
+deliberately not claimed yet.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
+- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed with a scripted HTTP endpoint covering initialize, tool discovery, approved read-only invocation, revocation denial before request, and redirect refusal.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: no credentials are accepted or persisted, public
+HTTP is limited to loopback, redirects are refused to prevent host substitution,
+and payloads/results are bounded. The injected HTTP client remains under the
+caller’s ownership; no dependency or third-party code was added.
+
+Rollback: remove `McpStreamableHttpClient`, its focused test, and the test-runner
+entry. Stdio transport, connection storage, and permission policy remain
+independent.
+
+Not yet verified: Streamable HTTP SSE/session support, live endpoint health and
+reconnect, process supervision, UI lifecycle/revocation review, audit journal
+events, live external MCP server acceptance, Linux/Windows packaged evidence,
+and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
