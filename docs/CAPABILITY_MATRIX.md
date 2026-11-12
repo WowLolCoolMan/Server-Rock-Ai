@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `0696124` plus the activity-surface working slice
+Snapshot commit: `c13db14` plus the live conversation-search validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -21,7 +21,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Domain | Status | Current evidence | Main gap / next dependency |
 | --- | --- | --- | --- |
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 83 contracts | Typed routes, persistent tabs/layout, command palette, inspector and live focus/resize acceptance |
-| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, and bounded search across message metadata/content | Durable context continuity, successful live provider-response acceptance |
+| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, and bounded local search across message metadata/content; live search dialog/result/open-chat journey verified | Durable context continuity, successful live provider-response acceptance |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
@@ -41,7 +41,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `3e34156`, with the user-provided
+- Live checkout: `main` at `c13db14`, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
@@ -51,6 +51,10 @@ capability prevents progress; `unverified` means evidence is insufficient.
   83-contract native UI audit have passed in prior slices; no new claim of
   Linux or packaged-release validation is made here.
 - Existing slice evidence is recorded in `docs/GOAL_EXECUTION.md`.
+- Live search evidence: the native Windows app exposed `Search your workspace`,
+  the `Search chats in both workspaces` field, a matching `FIRST_DONE` result,
+  and `Open chat`; opening the result loaded the saved conversation and its
+  `Queued follow-up validation message`.
 
 ## Backlog ordering
 

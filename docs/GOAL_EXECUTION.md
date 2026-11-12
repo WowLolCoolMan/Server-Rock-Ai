@@ -1260,3 +1260,34 @@ beyond `/models`, streaming/context-limit discovery, fallback consent,
 multi-provider routing, and packaged Linux parity. The next dependency is a
 tested capability-aware selection decision, still requiring explicit consent
 before any alternate route is used.
+
+## Slice 35 — live conversation search journey
+
+Status: `implemented_verified_windows`
+
+The bounded local conversation search added in Slice 34 was exercised in the
+live Windows native app. The search surface exposed an accessible dialog title,
+query field, result list, and Open chat action. Searching for `FIRST_DONE`
+returned the saved conversation `Reply with exactly: FIRST_DONE`; opening it
+loaded the conversation and displayed the persisted `Queued follow-up
+validation message`.
+
+Evidence:
+
+- Live Windows accessibility inspection — passed: `Search your workspace`,
+  `Search chats in both workspaces`, the matching result, and `Open chat` were
+  exposed; the opened conversation displayed both saved user messages.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search remains local-only and bounded; the live
+journey used saved conversation metadata/content and did not send a query to a
+provider. No third-party code was added.
+
+Rollback: revert `c13db14` and the associated documentation evidence; the
+existing conversation list remains available without the richer search path.
+
+Not yet verified: durable context continuity, successful live provider
+response acceptance, Linux parity, and packaged-release acceptance.
