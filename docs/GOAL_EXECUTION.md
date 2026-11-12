@@ -1531,6 +1531,44 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 76 — live queued-follow-up journey
+
+Status: `implemented_verified_windows_failure_path`
+
+The existing native queue was exercised end to end on Windows without changing
+the queue implementation. A second prompt was entered while a local response
+was active; the composer accepted it, the queue manager became accessible, and
+the bounded queue status reported one waiting item. The first local provider
+request then failed, after which the queued follow-up appeared in the
+conversation and the automatic dispatch path produced its own provider failure.
+This verifies ordering and failure-path dispatch, not successful model output.
+
+Evidence:
+
+- Live Windows accessibility inspection exposed `Stop generating response`
+  while the first request was active.
+- A second prompt was accepted while the first request was active; the tree
+  exposed `Manage queued messages` with the review/remove/clear help text and
+  `Queued message 1 of 8 · it will send when the current response finishes.`
+- After the first local request failed, the tree exposed the queued follow-up
+  text followed by a second `Connection error`; the queue control was gone,
+  showing the queued item had been removed before dispatch.
+- No remote endpoint, credential, file attachment, shell, Git action, or pet
+  functionality was used or changed.
+
+Privacy/security/licensing: test prompts stayed in the local conversation and
+queue store. The journey used the already configured local endpoint and did not
+introduce network routing or third-party code.
+
+Rollback: no production code change was made in this evidence slice; retain
+the existing bounded queue behavior and its failure handling.
+
+Not yet verified: successful live provider response, live queue reorder/remove/
+clear button activation, cross-device synchronization, durable context
+continuity, packaged Linux parity, and approval-inbox live acceptance. The
+next dependency remains a deterministic local test endpoint or healthy local
+model for successful dispatch evidence.
+
 ## Slice 49 — serialize reviewed workspace writes
 
 Status: `implemented_verified_with_live_surface_boundary`
