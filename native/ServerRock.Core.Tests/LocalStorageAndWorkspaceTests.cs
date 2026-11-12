@@ -65,6 +65,7 @@ internal static class LocalStorageAndWorkspaceTests
                     Mode = "Coding Agent",
                     IncludeProjectFilesInChat = true,
                     FolderName = "Research",
+                    Pinned = true,
                     Messages = [new ChatMessage("user", "Keep this on device", [new ChatAttachment("notes.md", "Attached note")]), new ChatMessage("assistant", "Saved locally.", Sources: [new ChatSource("Docs", "https://example.org", "A snippet")])]
                 },
                 new ChatSession
@@ -97,6 +98,7 @@ internal static class LocalStorageAndWorkspaceTests
             Check(restoredChats[0].Mode == "Coding Agent", "chat and coding-agent workspace identity survives save and reload");
             Check(restoredChats[0].IncludeProjectFilesInChat, "per-conversation project file context opt-in survives save and reload");
             Check(restoredChats[0].FolderName == "Research", "conversation folder assignment survives save and reload");
+            Check(restoredChats[0].Pinned, "pinned conversation state survives save and reload");
             Check(restoredChats[1].FolderName is null, "older conversations without folder metadata remain unfiled");
             Check(restoredChats[2].ImportSource == "electron-localstorage" && restoredChats[2].ImportSourceId == "electron-chat-001", "Electron import identity survives native history persistence");
             Check(restoredChats[2].Archived && restoredChats[2].ForkedFrom == "electron-chat-parent" && restoredChats[2].BranchIndex == 1 &&

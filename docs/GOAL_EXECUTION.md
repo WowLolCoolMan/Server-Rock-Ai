@@ -83,3 +83,22 @@ credentials, or runtime behavior were added.
 Next unblocked slice: inspect the handoff-to-repository feature map and choose
 the smallest missing user-facing capability that can be implemented with a
 real backend and focused tests.
+
+## Slice 3 — pinned conversations
+
+Status: `implemented_unverified`
+
+The handoff calls for pinned chats alongside folders and tags. Saved
+conversations now persist a `Pinned` flag, pinned conversations sort above
+other conversations within their mode/list, and the chat actions menu exposes
+Pin/Unpin with truthful status text and focus-preserving rerender behavior.
+
+Evidence:
+
+- Core persistence test covers the pinned state through save/reload.
+- Native UI build and full Core suite were green before this additive model/UI
+  change; the focused suite will be rerun before commit.
+- No new dependency, network call, credential, or external code was added.
+
+Not yet verified: live Windows/Linux visual and keyboard acceptance of the pin
+menu and ordering. Tags remain a separate future slice.

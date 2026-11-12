@@ -1,6 +1,6 @@
 // Saved conversations in the sidebar ("Recents"): starting a new chat, rendering the list
 // (grouped by folder, with an Archived section), opening a saved chat, the per-chat actions menu
-// (rename, archive/restore, move to folder, fork, delete), and saving the current conversation.
+// (rename, pin, archive/restore, move to folder, fork, delete), and saving the current conversation.
 // SaveCurrentSession is the single place a live chat is written into _sessions/conversations.json;
 // temporary chats are never saved.
 // Depends on: ConversationStore (ServerRock.Core), page state in MainPage.xaml.cs (_sessions,
@@ -56,7 +56,10 @@ public sealed partial class MainPage
         _chatFolderToggleButtons.Clear();
         _archivedChatsToggleButton = null;
         _settings.ChatFolders ??= [];
-        var modeSessions = _sessions.Where(item => item.Mode == _mode).OrderByDescending(item => item.UpdatedAt).ToArray();
+        var modeSessions = _sessions.Where(item => item.Mode == _mode)
+            .OrderByDescending(item => item.Pinned)
+            .ThenByDescending(item => item.UpdatedAt)
+            .ToArray();
         var visibleSessions = modeSessions.Where(item => !item.Archived).ToArray();
         var archivedSessions = modeSessions.Where(item => item.Archived).ToArray();
         ChatFolderList.Children.Clear();
@@ -160,7 +163,7 @@ public sealed partial class MainPage
 
     private Grid CreateRecentRow(ChatSession session)
     {
-        var title = new TextBlock { Text = session.Title, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 54, 74, 81)), FontSize = 12 };
+        var title = new TextBlock { Text = session.Pinned ? $"📌 {session.Title}" : session.Title, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 54, 74, 81)), FontSize = 12 };
         var updated = new TextBlock
         {
             Text = string.Join(" · ", new[] { session.ProjectName, session.UpdatedAt.ToLocalTime().ToString("g") }.Where(value => !string.IsNullOrWhiteSpace(value))),
@@ -172,7 +175,7 @@ public sealed partial class MainPage
             HorizontalContentAlignment = HorizontalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch,
             Background = new SolidColorBrush(ColorHelper.FromArgb(255, 238, 248, 249)), Padding = new Thickness(9, 7, 9, 7), CornerRadius = new CornerRadius(8)
         };
-        AutomationProperties.SetName(button, $"Open conversation: {session.Title}");
+        AutomationProperties.SetName(button, $"Open conversation: {session.Title}{(session.Pinned ? ", pinned" : string.Empty)}");
         button.Click += RecentClick;
         var actions = new Button
         {
@@ -286,6 +289,8 @@ public sealed partial class MainPage
 
         var rename = new MenuFlyoutItem { Text = "Rename chat", Tag = sessionId };
         rename.Click += async (_, _) => await RunAsync(() => RenameSessionAsync(sessionId));
+        var pin = new MenuFlyoutItem { Text = session.Pinned ? "Unpin chat" : "Pin chat", Tag = sessionId };
+        pin.Click += (_, _) => Run(() => ToggleSessionPinned(sessionId));
         var archive = new MenuFlyoutItem { Text = session.Archived ? "Restore from archive" : "Archive chat", Tag = sessionId };
         archive.Click += (_, _) => Run(() => ToggleSessionArchive(sessionId));
         var fork = new MenuFlyoutItem { Text = "Fork from here", Tag = sessionId };
@@ -293,6 +298,7 @@ public sealed partial class MainPage
         var delete = new MenuFlyoutItem { Text = "Delete chat", Tag = sessionId };
         delete.Click += async (_, _) => await RunAsync(() => DeleteSessionAsync(sessionId));
         menu.Items.Add(rename);
+        menu.Items.Add(pin);
         menu.Items.Add(archive);
         menu.Items.Add(fork);
         if (!session.Archived && _settings.ChatFolders.Count > 0)
@@ -352,6 +358,28 @@ public sealed partial class MainPage
         _archivedChatsExpanded = session.Archived;
         RenderRecent();
         RuntimeStatus.Text = session.Archived ? "Chat moved to Archived." : "Chat restored to Recents.";
+    }
+
+    private void ToggleSessionPinned(string sessionId)
+    {
+        if (_requestCancellation is not null)
+        {
+            RuntimeStatus.Text = "Wait for the current response to finish before pinning or unpinning a chat.";
+            return;
+        }
+        var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
+        if (session is null) return;
+        if (_activeSessionId == sessionId) SaveCurrentSession();
+        var previous = session.Pinned;
+        session.Pinned = !previous;
+        if (!PersistConversationEdits())
+        {
+            session.Pinned = previous;
+            RenderRecent();
+            return;
+        }
+        RenderRecent();
+        RuntimeStatus.Text = session.Pinned ? "Chat pinned above other chats." : "Chat unpinned.";
     }
 
     private async Task RenameSessionAsync(string sessionId)
