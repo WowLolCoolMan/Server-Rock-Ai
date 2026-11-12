@@ -251,6 +251,33 @@ public sealed class WorkflowRunService
             .ToArray();
     }
 
+    public IReadOnlyList<WorkflowEventSearchHit> SearchEvents(string? query)
+    {
+        const int maxQueryCharacters = 256;
+        var normalized = query?.Trim() ?? string.Empty;
+        if (normalized.Length > maxQueryCharacters || normalized.Any(char.IsControl))
+            throw new ArgumentException("Workflow event search text is invalid or too long.", nameof(query));
+
+        var snapshot = Load();
+        var runs = snapshot.Runs.ToDictionary(run => run.RunId, StringComparer.Ordinal);
+        return snapshot.Events
+            .OrderByDescending(item => item.TimestampUtc)
+            .Where(item => runs.TryGetValue(item.RunId, out var run)
+                && (normalized.Length == 0
+                    || item.Type.Contains(normalized, StringComparison.OrdinalIgnoreCase)
+                    || item.Actor.Contains(normalized, StringComparison.OrdinalIgnoreCase)
+                    || run.WorkflowId.Contains(normalized, StringComparison.OrdinalIgnoreCase)
+                    || run.RunId.Contains(normalized, StringComparison.OrdinalIgnoreCase)
+                    || item.Payload.Any(pair => pair.Key.Contains(normalized, StringComparison.OrdinalIgnoreCase) || pair.Value.Contains(normalized, StringComparison.OrdinalIgnoreCase))))
+            .Take(100)
+            .Select(item =>
+            {
+                var run = runs[item.RunId];
+                return new WorkflowEventSearchHit(run.RunId, run.WorkflowId, run.WorkflowVersion, item);
+            })
+            .ToArray();
+    }
+
     public WorkflowRun DenyApproval(string runId, string nodeId, string reason, string actor = "user")
     {
         if (string.IsNullOrWhiteSpace(reason) || reason.Length > 500 || reason.Any(char.IsControl)) throw new ArgumentException("A bounded denial reason is required.", nameof(reason));

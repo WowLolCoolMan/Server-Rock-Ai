@@ -79,6 +79,7 @@ internal static class WorkflowRunServiceTests
             Check(runs.LoadPendingApprovals().Count == 2 && runs.LoadPendingApprovals().All(item => item.ExpiresAt > item.RequestedAt), "concurrent approvals are surfaced as one durable inbox with expiry");
             var deniedRun = runs.DenyApproval(approvalOne.RunId, "approval", "Not authorized for this project.");
             Check(deniedRun.Status == WorkflowRunStatuses.Failed && deniedRun.Steps.Single().Status == WorkflowStepStatuses.Denied && runs.Load().Events.Any(item => item.Type == "approval.denied"), "approval denial is durable and fails the run");
+            Check(runs.SearchEvents("approval.denied").Any(item => item.WorkflowId == approvalDefinition.Id && item.Event.Type == "approval.denied"), "workflow event search matches local approval evidence");
             runs.DenyApproval(approvalTwo.RunId, "approval", "Resolve the second approval fixture before expiry coverage.");
             var expiring = runs.Create(new WorkflowDefinition { Id = "approval-expiry-flow", Title = "Approval expiry", Nodes = [new() { Id = "approval", Type = WorkflowNodeTypes.Approval, Label = "Expire me" }] });
             runs.Queue(expiring.RunId); runs.Start(expiring.RunId); runs.BeginStep(expiring.RunId, "approval");

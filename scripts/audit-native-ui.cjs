@@ -109,6 +109,8 @@ const requiredCode = [
   ['Memory import action', 'AutomationProperties.SetName(import, "Import saved memory backup")'],
   ['Activity evidence export action', 'AutomationProperties.SetName(exportActivity, "Export activity evidence")'],
   ['Activity evidence search action', 'AutomationProperties.SetName(searchActivity, "Search activity evidence")'],
+  ['Operation activity search results', 'AutomationProperties.SetName(results, "Operation activity search results")'],
+  ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
   ['Skill explicit enablement control', 'AutomationProperties.SetName(enable, "Enable or disable selected skill")'],
   ['Skill update preview before install', 'Review this preview before installing'],

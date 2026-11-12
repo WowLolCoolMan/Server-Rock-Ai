@@ -1636,6 +1636,43 @@ Not yet verified: live workflow run acceptance, richer branching semantics,
 parallel resource limits, automatic scheduling, side-effecting adapters,
 Linux parity, and packaged acceptance.
 
+## Slice 79 — searchable workflow-event evidence
+
+Status: `implemented_verified_core`
+
+Activity search now searches both the durable operation journal and the
+workflow-run event journal. Workflow results are bounded to the latest 100
+events, match event type/actor/run/workflow identity or bounded event metadata,
+and render through the existing allowlisted event-summary mapping rather than
+exposing raw payloads. Operation and workflow results have separate accessible
+list labels and the search remains non-mutating.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowEventSearchHit.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local approval-event search and the full existing Core suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (129 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search stays on local journals and does not send
+queries or event data to a provider. The UI shows only bounded allowlisted
+workflow summaries; no dependency or third-party code was added.
+
+Rollback: remove `WorkflowEventSearchHit`, `SearchEvents`, the workflow result
+list, its test, and the two UI contracts; operation search remains available.
+
+Not yet verified: live Windows workflow-event search, OS session hosting,
+parallel agent artifacts, richer workflow branching, Linux parity, and
+packaged acceptance.
+
 ## Slice 49 — serialize reviewed workspace writes
 
 Status: `implemented_verified_with_live_surface_boundary`

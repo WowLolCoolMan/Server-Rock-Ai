@@ -91,14 +91,21 @@ public sealed partial class MainPage
         {
             var query = new TextBox { PlaceholderText = "Instruction, status, model, provider, or workspace", MinWidth = 360 };
             var results = new ListView { MinHeight = 160, MaxHeight = 360, DisplayMemberPath = nameof(OperationRun.UserInstruction) };
+            AutomationProperties.SetName(results, "Operation activity search results");
+            var workflowResults = new ListView { MinHeight = 120, MaxHeight = 280 };
+            AutomationProperties.SetName(workflowResults, "Workflow event search results");
+            var workflowLabel = new TextBlock { Text = "Workflow events", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
             var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75 };
             void RefreshResults()
             {
                 try
                 {
                     var matches = _operationService.Search(query.Text);
+                    var workflowMatches = _workflowRunService.SearchEvents(query.Text);
                     results.ItemsSource = matches;
-                    status.Text = $"{matches.Count} local operation{(matches.Count == 1 ? "" : "s")} matched · no operation was changed.";
+                    workflowResults.ItemsSource = workflowMatches.Select(item =>
+                        $"{item.Event.TimestampUtc.ToLocalTime():g} · {item.WorkflowId} v{item.WorkflowVersion} · {WorkflowEventLabel(item.Event)}").ToArray();
+                    status.Text = $"{matches.Count} local operation{(matches.Count == 1 ? "" : "s")} · {workflowMatches.Count} workflow event{(workflowMatches.Count == 1 ? "" : "s")} matched · nothing was changed.";
                 }
                 catch (Exception ex) { status.Text = $"Activity search could not run: {ex.Message}"; }
             }
@@ -107,7 +114,7 @@ public sealed partial class MainPage
             await new ContentDialog
             {
                 Title = "Search activity",
-                Content = new StackPanel { Spacing = 8, Children = { query, results, status } },
+                Content = new StackPanel { Spacing = 8, Children = { query, results, workflowLabel, workflowResults, status } },
                 CloseButtonText = "Done",
                 XamlRoot = XamlRoot
             }.ShowAsync();
