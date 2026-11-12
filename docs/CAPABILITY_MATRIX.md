@@ -33,7 +33,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
 | Images and media | partial | ComfyUI queue/poll flow, image attachments and local vision paths have Core tests | Resumable media jobs, richer artifact storage, capability gating and runtime acceptance |
 | Activity and diagnostics | partial | Runtime status banner, redacted diagnostic export, durable operation journal, chat lifecycle integration, Activity & tasks history surface, explicit reconciliation outcomes, and provider/model/privacy provenance | Search/exported operation evidence and live accessibility acceptance |
-| Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, model/voice/host controls; Core persistence tests | Full validation matrix, platform-specific diagnostics and live accessibility acceptance |
+| Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, model/voice/host controls; Core persistence tests; inline endpoint/model/local-only validation keeps invalid Save attempts open with an accessible error; live cancel-preserves-settings evidence | Broader platform-specific diagnostics and complete live accessibility matrix |
 | Companion/pet | partial | First-party companion state, selection and persistence exist | Complete presentation/positioning/collision/accessibility acceptance |
 | Updates and releases | partial | Signed-manifest verification and fail-closed CI contracts are documented/implemented in parts | Signed installers, clean-machine install/upgrade/uninstall/rollback and platform evidence |
 | Security and privacy | partial | Bounded I/O, path checks, redaction, approval surfaces and local/cloud labeling are present | OS isolation, keyring parity, threat-model coverage and full negative scenario suite |
@@ -83,6 +83,11 @@ capability prevents progress; `unverified` means evidence is insufficient.
   accessible ModelButton description, and did not auto-save or switch to an
   advertised model. The original model was restored afterward; no cloud route
   was used.
+- Live settings-validation evidence: Settings was opened through the command
+  palette, the endpoint draft was changed to `not an endpoint`, and Save kept
+  the dialog open with the accessible message `Enter a valid http:// or
+  https:// model endpoint.`. Cancel then closed the dialog while the original
+  local endpoint and model remained selected.
 
 ## Backlog ordering
 

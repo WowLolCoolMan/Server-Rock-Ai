@@ -15,6 +15,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -176,10 +177,21 @@ public sealed partial class MainPage
         var navigation = new StackPanel { Spacing = 4 };
         var pageTitle = new TextBlock { FontSize = UiTheme.FontSize("TitleFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush") };
         var pageDescription = new TextBlock { FontSize = UiTheme.FontSize("SmallFontSize"), TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(0, 4, 0, 18) };
+        var saveValidation = new TextBlock
+        {
+            Visibility = Visibility.Collapsed,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+            Foreground = UiTheme.Brush("DangerBrush"),
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        AutomationProperties.SetName(saveValidation, "Settings validation message");
+        AutomationProperties.SetLiveSetting(saveValidation, AutomationLiveSetting.Assertive);
         var pageBody = new StackPanel { Spacing = 12 };
         var pageContent = new StackPanel { Spacing = 0, MaxWidth = 700, HorizontalAlignment = HorizontalAlignment.Left };
         pageContent.Children.Add(pageTitle);
         pageContent.Children.Add(pageDescription);
+        pageContent.Children.Add(saveValidation);
         pageContent.Children.Add(pageBody);
         var noSearchMatches = new TextBlock { Text = "No settings sections match that search.", FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 10, 8, 0) };
         var rootWidth = XamlRoot?.Size.Width ?? 1024;
@@ -507,6 +519,25 @@ public sealed partial class MainPage
         };
         SelectSection(sectionButtons[0].Button, "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
         dialog.Opened += (_, _) => sectionButtons[0].Button.Focus(FocusState.Programmatic);
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            var validation = ConnectionSettingsValidator.Validate(endpoint.Text, model.Text, localOnly.IsChecked == true);
+            if (validation.IsValid)
+            {
+                saveValidation.Visibility = Visibility.Collapsed;
+                saveValidation.Text = string.Empty;
+                return;
+            }
+
+            args.Cancel = true;
+            saveValidation.Text = validation.Error;
+            saveValidation.Visibility = Visibility.Visible;
+            SelectSection(sectionButtons[0].Button, "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                (validation.Error.Contains("endpoint", StringComparison.OrdinalIgnoreCase) ? endpoint : model).Focus(FocusState.Programmatic);
+            });
+        };
 
         openRouter.Click += (_, _) =>
         {
@@ -562,19 +593,10 @@ public sealed partial class MainPage
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
         {
-            if (string.IsNullOrWhiteSpace(endpoint.Text) || string.IsNullOrWhiteSpace(model.Text))
-            {
-                RuntimeStatus.Text = "Enter both a server address and model ID.";
-                return;
-            }
+            var validation = ConnectionSettingsValidator.Validate(endpoint.Text, model.Text, localOnly.IsChecked == true);
+            if (!validation.IsValid) return;
             MigrateLegacyPinnedModels();
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
-            var endpointIsLocal = Uri.TryCreate(_settings.Endpoint, UriKind.Absolute, out var savedEndpoint) && savedEndpoint.IsLoopback;
-            if (localOnly.IsChecked == true && !endpointIsLocal)
-            {
-                RuntimeStatus.Text = "Local-only mode is enabled, but the endpoint is not a local address. No connection changes were saved.";
-                return;
-            }
             _settings.Model = model.Text.Trim();
             _settings.ModelProvider = _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) ? "OpenRouter" : "Custom endpoint";
             _openRouterApiKey = _settings.ModelProvider == "OpenRouter" ? openRouterKey.Password.Trim() : string.Empty;

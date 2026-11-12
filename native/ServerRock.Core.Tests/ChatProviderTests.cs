@@ -216,5 +216,12 @@ internal static class ChatProviderTests
         Check(!selection.IsAvailable && selection.SelectedModel == "missing-model"
             && ModelSelectionPolicy.Evaluate("local-b", ["local-a", "local-b"]).IsAvailable,
             "unavailable selected models remain explicit until the user chooses a listed model");
+        Check(ConnectionSettingsValidator.Validate("http://localhost:11434/v1", "local-a", true).IsValid,
+            "valid local connection settings pass validation");
+        Check(!ConnectionSettingsValidator.Validate("not an endpoint", "local-a", false).IsValid
+            && !ConnectionSettingsValidator.Validate("http://localhost:11434/v1", "", false).IsValid,
+            "invalid endpoint and missing model are rejected before save");
+        Check(!ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
+            "local-only settings reject remote endpoints before save");
     }
 }

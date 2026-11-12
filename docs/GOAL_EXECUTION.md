@@ -1531,6 +1531,49 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 43 — inline settings validation and draft cancellation
+
+Status: `implemented_verified_windows`
+
+Settings now validates the endpoint, model ID, and local-only policy through a
+pure Core validator before any settings snapshot is committed. Invalid Save
+attempts cancel the dialog close, show an assertive accessible inline message,
+return to the General section, and focus the relevant draft field. Cancel still
+discards the entire draft, so malformed or incomplete edits cannot replace the
+last working connection.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ConnectionSettingsValidation.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid local, malformed endpoint, missing model, and local-only remote rejection cases.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (101 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: Settings opened through the
+  command palette; changing the endpoint to `not an endpoint` and choosing Save
+  kept Settings open and announced `Enter a valid http:// or https:// model
+  endpoint.`; choosing Cancel returned to chat with the original endpoint/model
+  still selected.
+
+Privacy/security/licensing: validation is local-only and uses no provider call,
+credential, prompt, or workspace data. It reduces accidental endpoint changes
+and preserves the user's last valid connection on cancellation.
+
+Rollback: remove `ConnectionSettingsValidator`, the primary-click validation
+handler, and its tests; the existing post-dialog checks remain as a weaker
+fallback.
+
+Not yet verified: broader settings validation matrix, platform-specific
+diagnostics, proactive model compatibility detection, multi-route provider
+selection, durable provider identity across fallback attempts, Linux parity, and
+packaged-release acceptance.
+
 ## Slice 42 — preserve unavailable selected models until explicit choice
 
 Status: `implemented_verified_windows`
