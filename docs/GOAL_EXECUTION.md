@@ -1533,7 +1533,7 @@ attempts, Linux parity, and packaged-release acceptance.
 
 ## Slice 49 — serialize reviewed workspace writes
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_with_live_surface_boundary`
 
 `WorkspaceFileEditor.Apply` now gates the complete reviewed-write transaction
 by normalized target path. The hash comparison, previous-content capture,
@@ -2345,7 +2345,7 @@ parallel agents, Linux parity, and packaged acceptance.
 
 ## Slice 73 — explicit installed-skill enablement
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_with_live_surface_boundary`
 
 Installed local skills are now disabled by default and must be explicitly
 enabled before their Markdown instructions can be loaded into the composer.
@@ -2368,6 +2368,10 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (126 contracts).`
 - `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: the Skills dialog exposed the
+  read-only built-in catalog, installed-skills list, disabled `Use skill`, local
+  package install, explicit enable/disable, rollback, and Done/Close controls;
+  no package was installed, enabled, or changed.
 
 Privacy/security/licensing: skill content remains local Markdown and is never
 executed. The explicit grant state prevents a newly installed or updated
@@ -2378,12 +2382,12 @@ Rollback: remove `Enabled`, `SetEnabled`, the UI control, test assertions, and
 static UI contract; the existing package validation and rollback paths remain.
 
 Not yet verified: GitHub transport/ref verification, publisher trust, live
-Windows permission-control acceptance, cross-platform packaging, and update
+Windows permission-control execution, cross-platform packaging, and update
 diff review.
 
 ## Slice 74 — skill package update preview
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_with_live_surface_boundary`
 
 Local skill installation now performs a read-only package preview before the
 explicit install confirmation. The preview validates the Markdown-only package,
@@ -2406,6 +2410,9 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
 - `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: the Skills dialog exposed the
+  installed-skills area and local package-install entry point; no package was
+  selected or installed, so the preview confirmation was not altered.
 
 Privacy/security/licensing: preview reads only the user-selected local folder,
 does not activate or execute it, and does not perform network access. The
@@ -2417,7 +2424,7 @@ tests, and the static UI contract; existing package validation and explicit
 enablement remain available.
 
 Not yet verified: GitHub transport/ref verification, publisher trust, live
-Windows preview acceptance, cross-platform packaging, and update diff review.
+Windows preview confirmation, cross-platform packaging, and update diff review.
 
 ## Slice 75 — pinned GitHub skill-reference validation
 
@@ -2451,8 +2458,8 @@ Rollback: remove `SkillSourceReference`, the installer validation call, and the
 invalid-reference test; existing local package safety checks remain.
 
 Not yet verified: GitHub download/authentication, remote commit existence,
-publisher trust, live Windows skill controls, cross-platform packaging, and
-update diff review.
+publisher trust, live Windows source-reference controls, cross-platform
+packaging, and update diff review.
 
 ## Slice 67 — explicit local activity evidence export
 
