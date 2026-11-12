@@ -23,6 +23,8 @@ public sealed class AppSettings
     public string ThemeMode { get; set; } = "light";
     public string InterfaceDensity { get; set; } = "comfortable";
     public string HostLabel { get; set; } = "This device";
+    /// <summary>Optional explicit value used only when a reviewed prompt contains {{USER_NAME}}.</summary>
+    public string PromptUserName { get; set; } = "";
     public bool RequireLocalModelEndpoints { get; set; }
     public string ComfyEndpoint { get; set; } = "http://127.0.0.1:8188";
     public string ImageWorkflow { get; set; } = "";

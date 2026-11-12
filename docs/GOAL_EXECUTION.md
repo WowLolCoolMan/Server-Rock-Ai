@@ -1570,6 +1570,47 @@ Not yet verified: live Windows skill insertion with a variable-bearing
 installed package, user-configurable variables such as `{{USER_NAME}}`, and
 cross-platform/package acceptance.
 
+## Slice 82 — explicit opt-in user-name prompt variable
+
+Status: `implemented_verified_core`
+
+The reviewed skill prompt path now supports `{{USER_NAME}}` only when the user
+has entered an explicit local `Prompt variable name (optional)` setting. An
+unset value leaves the token visible for review, and the app never reads the
+Windows account name automatically. The setting is normalized through the
+existing version-tolerant local settings store and is only substituted into a
+prompt the user can inspect and edit before sending.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core/Services/PromptVariableExpander.cs`
+- `native/ServerRock.Core.Tests/PromptVariableTests.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit-name substitution, unset-token preservation, and unsafe-value rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (133 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the value is user-entered, bounded, stored in
+local non-secret settings, and never inferred from the operating system. No
+new network request, credential, dependency, or third-party code is involved.
+
+Rollback: remove `PromptUserName`, its settings normalization and UI field, and
+the optional expander argument; existing date/time variables and reviewed
+skill loading can remain, or the full variable expander can be removed with
+Slice 81's rollback.
+
+Not yet verified: live Windows persistence and insertion of a variable-bearing
+installed package, cross-platform/package acceptance, and additional
+user-configurable variables beyond `{{USER_NAME}}`.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

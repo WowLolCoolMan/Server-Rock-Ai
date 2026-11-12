@@ -49,6 +49,7 @@ public sealed class JsonSettingsStore
         settings.ComfyEndpoint ??= defaults.ComfyEndpoint;
         settings.ImageWorkflow ??= defaults.ImageWorkflow;
         settings.GitHubAppClientId ??= defaults.GitHubAppClientId;
+        settings.PromptUserName ??= defaults.PromptUserName;
         settings.ThemeMode = settings.ThemeMode?.ToLowerInvariant() switch
         {
             "dark" => "dark",

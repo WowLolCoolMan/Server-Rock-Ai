@@ -337,6 +337,9 @@ public sealed partial class MainPage
         density.Items.Add("Comfortable"); density.Items.Add("Compact");
         density.SelectedIndex = _settings.InterfaceDensity.Equals("compact", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         var hostLabel = new TextBox { Header = "Host label", Text = _settings.HostLabel, PlaceholderText = "This device" };
+        var promptUserName = new TextBox { Header = "Prompt variable name (optional)", Text = _settings.PromptUserName, PlaceholderText = "Only used by {{USER_NAME}}" };
+        AutomationProperties.SetName(promptUserName, "Prompt variable name");
+        AutomationProperties.SetHelpText(promptUserName, "Stored locally and used only when a reviewed skill prompt contains {{USER_NAME}}. It is never read from the Windows account automatically.");
         var localOnly = new CheckBox { Content = "Only allow local model endpoints", IsChecked = _settings.RequireLocalModelEndpoints };
         AutomationProperties.SetHelpText(localOnly, "When enabled, saving a remote endpoint is rejected. OpenRouter remains available when this is off.");
         var showPet = new CheckBox { Content = "Show pet when the app starts", IsChecked = _companionState.IsVisible };
@@ -534,6 +537,7 @@ public sealed partial class MainPage
         {
             pageBody.Children.Add(new TextBlock { Text = "HOST CONFIGURATION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Host identity", "Give this local workspace a recognizable label in status messages and support diagnostics.", hostLabel));
+            pageBody.Children.Add(MakeSettingsCard("Reviewed prompt variables", "Optionally provide a name for the explicit {{USER_NAME}} variable. Skill prompts remain visible and editable before sending.", promptUserName));
             pageBody.Children.Add(localOnly);
             pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), VerticalAlignment = VerticalAlignment.Center }));
             pageBody.Children.Add(new TextBlock { Text = "Model endpoint and credentials remain in General. Local-only mode is a safety guard for environments where remote model hosts are not allowed.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
@@ -810,6 +814,7 @@ public sealed partial class MainPage
             _settings.ThemeMode = theme.SelectedIndex == 1 ? "dark" : "light";
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
             _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
+            _settings.PromptUserName = promptUserName.Text.Trim();
             _settings.RequireLocalModelEndpoints = localOnly.IsChecked == true;
             _companionState = _companionState with
             {

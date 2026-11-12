@@ -116,6 +116,8 @@ const requiredCode = [
   ['Skill explicit enablement control', 'AutomationProperties.SetName(enable, "Enable or disable selected skill")'],
   ['Skill update preview before install', 'Review this preview before installing'],
   ['Skill prompt variables are expanded before review', 'PromptVariableExpander.Expand'],
+  ['Explicit user-name prompt variable setting', 'AutomationProperties.SetName(promptUserName, "Prompt variable name")'],
+  ['User-name variable never reads the account automatically', 'never read from the Windows account automatically'],
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
   ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
   ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],
