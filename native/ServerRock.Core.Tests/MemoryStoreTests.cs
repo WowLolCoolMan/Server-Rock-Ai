@@ -19,6 +19,12 @@ internal static class MemoryStoreTests
             Check(reloaded.Load().Single().Content.Contains("signed releases", StringComparison.Ordinal), "memory edits survive reload");
             var backup = reloaded.ExportJson();
             Check(backup.Contains("server-rock-memory-v1", StringComparison.Ordinal) && backup.Contains("signed releases", StringComparison.Ordinal) && backup.Contains("\"enabled\": false", StringComparison.Ordinal), "memory export is a validated local backup");
+            var importPath = Path.Combine(directory, "imported-memory.json");
+            var importedStore = new MemoryStore(importPath);
+            var plan = importedStore.PlanImport(backup);
+            Check(plan.Entries.Count == 1 && plan.SkippedDuplicates == 0, "memory backup produces an explicit import plan");
+            Check(importedStore.ApplyImport(plan) == 1 && importedStore.Load().Single().Id == entry.Id, "memory import merges approved entries without overwriting");
+            Check(importedStore.PlanImport(backup).Entries.Count == 0 && importedStore.PlanImport(backup).SkippedDuplicates == 1, "memory import skips duplicate identities");
             store.Remove(entry.Id);
             Check(new MemoryStore(path).Load().Count == 0, "memory deletion is explicit and durable");
             var refused = false;

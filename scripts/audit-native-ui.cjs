@@ -106,6 +106,7 @@ const requiredCode = [
   ['Memory editor accessible label', 'AutomationProperties.SetName(content, "Memory content")'],
   ['Memory delete action', 'AutomationProperties.SetName(remove, "Delete memory")'],
   ['Memory export action', 'AutomationProperties.SetName(export, "Export saved memory backup")'],
+  ['Memory import action', 'AutomationProperties.SetName(import, "Import saved memory backup")'],
   ['Activity evidence export action', 'AutomationProperties.SetName(exportActivity, "Export activity evidence")'],
   ['Activity evidence search action', 'AutomationProperties.SetName(searchActivity, "Search activity evidence")'],
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],

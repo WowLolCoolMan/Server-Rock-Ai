@@ -32,6 +32,7 @@ public sealed partial class MainPage
         var enabled = new CheckBox { Content = "Use this memory when enabled by a future context review", IsChecked = true };
         var save = new Button { Content = "Save memory", MinWidth = 120 };
         var export = new Button { Content = "Export backup", MinWidth = 120 };
+        var import = new Button { Content = "Import backup", MinWidth = 120 };
         var newEntry = new Button { Content = "New", MinWidth = 80 };
         var disable = new Button { Content = "Disable", MinWidth = 90, IsEnabled = false };
         var remove = new Button { Content = "Delete", MinWidth = 80, IsEnabled = false };
@@ -44,6 +45,7 @@ public sealed partial class MainPage
         AutomationProperties.SetHelpText(content, "Saving is explicit user approval. Notes remain local and are not automatically sent to a model.");
         AutomationProperties.SetName(save, "Save memory");
         AutomationProperties.SetName(export, "Export saved memory backup");
+        AutomationProperties.SetName(import, "Import saved memory backup");
         AutomationProperties.SetName(remove, "Delete memory");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
 
@@ -130,6 +132,47 @@ public sealed partial class MainPage
             }
             catch (Exception ex) { status.Text = $"Memory backup could not be exported: {ex.Message}"; }
         };
+        import.Click += async (_, _) =>
+        {
+            try
+            {
+                var picker = new Windows.Storage.Pickers.FileOpenPicker
+                {
+                    SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                    ViewMode = Windows.Storage.Pickers.PickerViewMode.List
+                };
+                picker.FileTypeFilter.Add(".json");
+#if WINDOWS
+                var window = (Application.Current as App)?.MainWindow;
+                if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+                await Task.Delay(50);
+                var file = await picker.PickSingleFileAsync();
+                if (file is null) return;
+                var properties = await file.GetBasicPropertiesAsync();
+                if (properties.Size > 12 * 1024 * 1024) { status.Text = "This memory backup is larger than the 12 MB import limit."; return; }
+                var plan = _memoryStore.PlanImport(await Windows.Storage.FileIO.ReadTextAsync(file));
+                if (plan.Entries.Count == 0)
+                {
+                    status.Text = $"No new memory entries found in {file.Name}; skipped {plan.SkippedDuplicates} existing entr{(plan.SkippedDuplicates == 1 ? "y" : "ies")}.";
+                    return;
+                }
+                var confirm = new ContentDialog
+                {
+                    Title = "Import memory backup?",
+                    Content = $"File: {file.Name}\n\nNew entries: {plan.Entries.Count}\nExisting entries skipped: {plan.SkippedDuplicates}\n\nExisting entries are not overwritten. Imported entries retain their original approval and enabled state.",
+                    PrimaryButtonText = "Import memory",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = XamlRoot
+                };
+                if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+                var imported = _memoryStore.ApplyImport(plan);
+                status.Text = $"Imported {imported} memory entr{(imported == 1 ? "y" : "ies")} locally. Existing entries were preserved.";
+                Refresh();
+            }
+            catch (Exception ex) { status.Text = $"Memory backup could not be imported: {ex.Message}"; }
+        };
         disable.Click += (_, _) =>
         {
             if (selected is null) return;
@@ -164,7 +207,7 @@ public sealed partial class MainPage
                         content,
                         tags,
                         enabled,
-                        new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, export, disable, remove } },
+                        new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, import, export, disable, remove } },
                         status
                     }
                 },

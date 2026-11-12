@@ -92,6 +92,32 @@ public sealed class MemoryStore
         }, Options);
     }
 
+    public MemoryImportPlan PlanImport(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json.Length > MaxSerializedCharacters)
+            throw new InvalidDataException("The memory backup is empty or exceeds the bounded size limit.");
+        MemoryBackup backup;
+        try { backup = JsonSerializer.Deserialize<MemoryBackup>(json, Options) ?? throw new InvalidDataException("The memory backup is empty."); }
+        catch (JsonException exception) { throw new InvalidDataException("The memory backup is not valid JSON.", exception); }
+        if (!string.Equals(backup.Format, "server-rock-memory-v1", StringComparison.Ordinal) || backup.Entries is null)
+            throw new InvalidDataException("The memory backup format is unsupported.");
+        Validate(backup.Entries);
+        var existingIds = Load().Select(entry => entry.Id).ToHashSet(StringComparer.Ordinal);
+        var incoming = backup.Entries.Select(Copy).Where(entry => !existingIds.Contains(entry.Id)).ToList();
+        return new MemoryImportPlan(incoming, backup.Entries.Count - incoming.Count);
+    }
+
+    public int ApplyImport(MemoryImportPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        var existing = Load().ToList();
+        var existingIds = existing.Select(entry => entry.Id).ToHashSet(StringComparer.Ordinal);
+        var additions = plan.Entries.Select(Copy).Where(entry => existingIds.Add(entry.Id)).ToList();
+        if (existing.Count + additions.Count > MaxEntries) throw new InvalidDataException("Importing this backup would exceed the memory entry limit.");
+        Save(existing.Concat(additions));
+        return additions.Count;
+    }
+
     private void Save(IEnumerable<MemoryEntry> entries)
     {
         var list = entries.Select(Copy).ToList();
@@ -140,3 +166,5 @@ public sealed class MemoryStore
         public List<MemoryEntry> Entries { get; set; } = [];
     }
 }
+
+public sealed record MemoryImportPlan(IReadOnlyList<MemoryEntry> Entries, int SkippedDuplicates);

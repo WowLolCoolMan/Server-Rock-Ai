@@ -2233,6 +2233,44 @@ encrypted storage, retention controls, review-before-injection, automatic
 memory proposals, model-context injection, cross-device sync, Linux parity,
 and packaged acceptance.
 
+## Slice 70 — safe local memory backup restore
+
+Status: `implemented_verified_core`
+
+The Memory manager now supports importing its versioned JSON backup format
+through a bounded native file picker. Import first creates a validated plan,
+reports new versus duplicate identities, and requires explicit confirmation;
+existing entries are never overwritten. Imported entries retain their original
+approval, provenance, tags, timestamps, and enabled state.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/MemoryStore.cs`
+- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including import planning, merge, and duplicate-identity protection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (124 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: parsing is local and bounded to 12 MB; malformed,
+unsupported, or over-capacity backups are rejected before persistence. Import
+does not contact a provider or silently replace user data. No dependency or
+third-party code was added.
+
+Rollback: remove `MemoryStore.PlanImport`/`ApplyImport`, the import picker and
+confirmation flow, its tests, and the static UI contract; existing memory
+editing and export remain available.
+
+Not yet verified: live Windows import-picker and confirmation acceptance,
+encrypted storage, retention controls, review-before-injection, automatic
+memory proposals, model-context injection, cross-device sync, Linux parity,
+and packaged acceptance.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`
