@@ -96,6 +96,7 @@ internal static class GitHubTests
         Check(GitHubApiClient.ParseRepositoryReference("https://github.com/owner/project.git") == "owner/project", "GitHub repository input safely normalizes HTTPS clone URLs");
         var parsedGitStatus = GitHubWorkspaceService.ParseStatus("# branch.oid 0123456789abcdef\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +2 -1\n1 .M N... 100644 100644 100644 00000000 11111111 path with spaces.txt\n? new file.md\n", "owner/project");
         Check(parsedGitStatus.Branch == "main" && parsedGitStatus.CommitsAhead == 2 && parsedGitStatus.CommitsBehind == 1, "GitHub workspace parses branch status and ahead/behind counts");
+        Check(parsedGitStatus.CommitsBehind > 0, "GitHub push preflight blocks a branch that is behind after remote refresh");
         Check(parsedGitStatus.Changes.Count == 2 && parsedGitStatus.Changes[0].Path == "path with spaces.txt" && parsedGitStatus.Changes[1].Status == "??", "GitHub workspace preserves modified and untracked paths for review");
         var parsedRenameStatus = GitHubWorkspaceService.ParseStatus("# branch.head main\n2 R. N... 100644 100644 100644 00000000 11111111 R100 safe.txt\t.env.production\n", "owner/project");
         Check(parsedRenameStatus.Changes.Count == 1 && parsedRenameStatus.Changes[0].Path == "safe.txt" && parsedRenameStatus.Changes[0].OriginalPath == ".env.production", "GitHub workspace preserves both sides of a rename for review");

@@ -229,6 +229,11 @@ public sealed class GitHubWorkspaceService
         if (status.Changes.Count > 0) throw new InvalidOperationException("Commit or discard the listed changes before pushing.");
         if (status.CommitsAhead == 0) throw new InvalidOperationException("There are no local commits waiting to push.");
         var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var fetch = await RunGitAsync(root, ["fetch", "--prune", "--no-tags", "origin"], accessToken, TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
+        EnsureSuccess(fetch, "GitHub remote state could not be refreshed. Your local commits were not pushed; check connectivity and GitHub access, then try again.");
+        status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        if (status.Changes.Count > 0) throw new InvalidOperationException("The workspace changed while refreshing GitHub state. Review the changes before pushing.");
+        if (status.CommitsAhead == 0) throw new InvalidOperationException("There are no local commits waiting to push after refreshing GitHub state.");
         string[] arguments = status.CommitsBehind > 0
             ? throw new InvalidOperationException("The GitHub branch has newer commits. Fetch and review them before pushing to avoid overwriting remote work.")
             : ["push", "--set-upstream", "origin", "HEAD"];

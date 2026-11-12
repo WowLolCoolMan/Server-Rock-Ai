@@ -1576,6 +1576,43 @@ multi-route provider selection, durable provider identity across fallback
 attempts, live Git dialog acceptance, remote fetch/reconciliation before push,
 worktree isolation, Linux parity, and packaged-release acceptance.
 
+## Slice 47 — refresh remote Git state before push
+
+Status: `implemented_verified_core`
+
+`PushAsync` now performs a bounded `git fetch --prune --no-tags origin` before
+the final ahead/behind decision, then re-reads repository status. A fetch
+failure leaves local commits untouched and reports that remote state could not
+be refreshed. If the refreshed branch is behind, the existing no-force refusal
+still stops the push and directs the user to review the remote changes. The
+push path remains explicit and never uses force.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
+- `native/ServerRock.Core.Tests/GitHubTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the ahead/behind parser regression used by push preflight.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (106 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: fetch uses the already-authorized GitHub access
+token through the existing process environment credential path, never the
+command line or remote URL. It sends only Git protocol metadata and does not
+send prompts, workspace file contents, or conversation data.
+
+Rollback: remove the fetch and second status read in `PushAsync`; the existing
+behind-count refusal and non-force push remain as a weaker safety boundary.
+
+Not yet verified: live Git dialog push with a user-selected repository and
+credential, remote-update race against an actual GitHub branch, worktree
+isolation, proactive model capability mismatch checks, multi-route provider
+selection, durable provider identity across fallback attempts, Linux parity,
+and packaged-release acceptance.
+
 ## Slice 45 — isolate selected Git commits from the user index
 
 Status: `implemented_verified_windows_core`
