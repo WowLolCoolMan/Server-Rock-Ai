@@ -7,6 +7,9 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Models;
+using ServerRock.Core.Infrastructure;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;
@@ -35,15 +38,92 @@ public sealed partial class MainPage
 
     private async void ScheduledTasksClick(object sender, RoutedEventArgs e)
     {
+        OperationJournalSnapshot snapshot;
+        IReadOnlyList<OperationRun> reconciled;
+        try
+        {
+            reconciled = _operationService.ReconcileAfterRestart();
+            snapshot = _operationService.Load();
+        }
+        catch (Exception ex)
+        {
+            RuntimeStatus.Text = $"Activity history is unavailable: {ex.Message}";
+            return;
+        }
+
+        var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
+        if (reconciled.Count > 0)
+        {
+            content.Children.Add(new Border
+            {
+                Background = ResourceBrush("WarningBrush"),
+                BorderBrush = ResourceBrush("WarningLineBrush"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(10),
+                Child = new TextBlock
+                {
+                    Text = $"{reconciled.Count} interrupted operation{(reconciled.Count == 1 ? " was" : "s were")} marked needs reconciliation. No provider, shell, Git, or file action was replayed.",
+                    TextWrapping = TextWrapping.Wrap
+                }
+            });
+            snapshot = _operationService.Load();
+        }
+
+        if (snapshot.Runs.Count == 0)
+        {
+            content.Children.Add(new TextBlock { Text = "No operations have been recorded yet. Chat and Coding Agent work will appear here as they run.", TextWrapping = TextWrapping.Wrap });
+        }
+        else
+        {
+            foreach (var run in snapshot.Runs.OrderByDescending(item => item.UpdatedAt).Take(50))
+            {
+                var preview = run.UserInstruction.ReplaceLineEndings(" ").Trim();
+                if (preview.Length > 140) preview = preview[..140] + "…";
+                content.Children.Add(new Border
+                {
+                    Background = ResourceBrush("SurfaceAltBrush"),
+                    BorderBrush = ResourceBrush("LineBrush"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(10),
+                    Child = new StackPanel
+                    {
+                        Spacing = 3,
+                        Children =
+                        {
+                            new TextBlock { Text = $"{OperationStatusLabel(run.Status)} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                            new TextBlock { Text = preview, TextWrapping = TextWrapping.Wrap },
+                            new TextBlock { Text = $"Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
+                        }
+                    }
+                });
+            }
+        }
+
         var dialog = new ContentDialog
         {
-            Title = "Scheduled tasks",
-            Content = new TextBlock { Text = "Scheduled and recurring task controls are being prepared for this workspace. Nothing runs in the background yet.", TextWrapping = TextWrapping.Wrap },
+            Title = "Activity & tasks",
+            Content = new ScrollViewer { Content = content, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
         await dialog.ShowAsync();
     }
+
+    private static Brush? ResourceBrush(string key) => Application.Current.Resources[key] as Brush;
+
+    private static string OperationStatusLabel(string status) => status switch
+    {
+        OperationRunStatuses.NeedsReconciliation => "Needs review after restart",
+        OperationRunStatuses.AwaitingApproval => "Waiting for approval",
+        OperationRunStatuses.ReviewReady => "Ready for review",
+        OperationRunStatuses.Completed => "Completed",
+        OperationRunStatuses.Cancelled => "Cancelled",
+        OperationRunStatuses.Failed => "Failed",
+        OperationRunStatuses.Running => "Running",
+        _ => status.Replace('_', ' ')
+    };
 
     private async void MoreClick(object sender, RoutedEventArgs e)
     {

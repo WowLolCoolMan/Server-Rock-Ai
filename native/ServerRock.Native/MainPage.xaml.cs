@@ -128,6 +128,16 @@ public sealed partial class MainPage : Page
         _settings = _settingsStore.Load();
         var legacyProjectInstructions = _settings.ProjectInstructions;
         var warnings = new List<string>();
+        try
+        {
+            var reconciled = _operationService.ReconcileAfterRestart();
+            if (reconciled.Count > 0)
+                warnings.Add($"{reconciled.Count} interrupted operation{(reconciled.Count == 1 ? "" : "s")} need review in Activity & tasks.");
+        }
+        catch (Exception ex)
+        {
+            warnings.Add($"Operation history could not be reconciled: {ex.Message}");
+        }
         try { _companionState = _companionStore.Load(); }
         catch (Exception ex)
         {

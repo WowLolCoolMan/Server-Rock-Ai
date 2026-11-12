@@ -216,3 +216,42 @@ chat provider and conversation persistence paths remain independent.
 Not yet verified: live cancellation/timeout visuals and activity-history UI.
 The next slice is the user-visible activity surface and restart reconciliation
 status.
+
+## Slice 7 — activity and restart reconciliation surface
+
+Status: `implemented_unverified`
+
+The existing scheduled-task navigation seam now opens an Activity & tasks
+surface backed by the durable operation service. It lists recent operation
+previews, statuses, timestamps, and sequence checkpoints. Startup and surface
+open both reconcile interrupted runs to `needs_reconciliation`; the UI tells
+the user that no provider, shell, Git, or file side effect was replayed.
+Future scheduling remains explicitly unimplemented rather than being implied
+by the label.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/SidebarView.xaml`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including journal restart-reconciliation coverage.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed before commit.
+
+Privacy/security/licensing: the surface displays bounded local instruction
+previews and operation metadata only. Reconciliation is a journal transition
+and never retries external side effects. No network call, credential, or
+third-party code was added.
+
+Rollback: revert the Activity & tasks navigation and service load/reconcile
+calls; the underlying journal and chat lifecycle remain independently
+recoverable.
+
+Not yet verified: live Windows keyboard/screen-reader rendering and packaged
+Linux parity. The next dependency is a real user decision path for
+`needs_reconciliation` runs, followed by explicit workflow/schedule models.

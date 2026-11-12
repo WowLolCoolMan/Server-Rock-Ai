@@ -46,4 +46,6 @@ public sealed class OperationService
     }
 
     public IReadOnlyList<OperationRun> ReconcileAfterRestart() => _journal.ReconcileAfterRestart();
+
+    public OperationJournalSnapshot Load() => _journal.Load();
 }

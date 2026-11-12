@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `4af276c` plus the operation-service working slice
+Snapshot commit: `0696124` plus the activity-surface working slice
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -28,11 +28,11 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks and measured local performance | Capability probes, hardware/resource scheduling, richer provider coverage and unload/queue states |
 | Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats | Explicit profiles, capability-aware routing, classified fallback consent and durable provider identity |
-| Workflows and scheduled tasks | absent | Durable operation state contract now exists in `OperationJournal`; no DAG runner or schedule execution exists | Versioned workflow model, approvals, retries, cancellation, scheduling and audit events |
+| Workflows and scheduled tasks | absent | Activity surface exposes durable operation history; no DAG runner or schedule execution exists | Versioned workflow model, approvals, retries, cancellation, scheduling and audit events |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
 | Images and media | partial | ComfyUI queue/poll flow, image attachments and local vision paths have Core tests | Resumable media jobs, richer artifact storage, capability gating and runtime acceptance |
-| Activity and diagnostics | partial | Runtime status banner, redacted diagnostic export, and durable operation journal exist | Activity center, task/event history UI, search/exported operation evidence |
+| Activity and diagnostics | partial | Runtime status banner, redacted diagnostic export, durable operation journal, chat lifecycle integration, and Activity & tasks history surface | User decision actions for reconciliation, search/exported operation evidence, live accessibility acceptance |
 | Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, model/voice/host controls; Core persistence tests | Full validation matrix, platform-specific diagnostics and live accessibility acceptance |
 | Companion/pet | partial | First-party companion state, selection and persistence exist | Complete presentation/positioning/collision/accessibility acceptance |
 | Updates and releases | partial | Signed-manifest verification and fail-closed CI contracts are documented/implemented in parts | Signed installers, clean-machine install/upgrade/uninstall/rollback and platform evidence |
@@ -54,8 +54,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Expose the durable operation/task state through an activity surface with
-   truthful progress, cancellation, and reconciliation.
+1. Add an explicit user decision path for `needs_reconciliation` operations,
+   then define versioned workflow/task execution and scheduling.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad
