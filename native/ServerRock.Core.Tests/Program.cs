@@ -17,5 +17,6 @@ await LocalStorageAndWorkspaceTests.RunAsync();
 ExternalLinkTests.Run();
 OperationJournalTests.Run();
 OperationServiceTests.Run();
+WorkflowServiceTests.Run();
 
 Console.WriteLine("Native core checks passed.");

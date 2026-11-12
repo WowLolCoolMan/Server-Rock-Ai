@@ -290,3 +290,41 @@ existing history surface.
 Not yet verified: live keyboard/screen-reader use of the decision buttons and
 packaged Linux parity. The next dependency is a versioned workflow/task model
 with approvals, retries, cancellation, and schedule semantics.
+
+## Slice 9 — versioned workflow definition foundation
+
+Status: `implemented_unverified`
+
+`WorkflowService` now persists versioned workflow definitions and validates the
+typed DAG before saving. Validation enforces bounded IDs and labels, supported
+node types, exactly one root, connectivity, acyclicity, bounded configuration,
+and indirect secret references. Duplicate `(workflowId, version)` entries are
+rejected so edits must create a new version. This slice is a definition and
+validation boundary only; no workflow is executed or scheduled yet.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowDefinition.cs`
+- `native/ServerRock.Core/Services/WorkflowService.cs`
+- `native/ServerRock.Core.Tests/WorkflowServiceTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid DAG persistence, cycle rejection, and inline-secret rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: workflow configuration is local bounded JSON and
+rejects secret-like keys rather than persisting credential material. Atomic
+writes preserve the previous file on write failure. No execution, network
+access, credential use, or third-party code was added.
+
+Rollback: remove the workflow model, service, and test registration; existing
+operation, conversation, project, and settings stores are independent.
+
+Not yet verified: workflow editor, dry-run, step runner, approval inbox,
+idempotent retries, background scheduling, or packaged Linux parity. The next
+dependency is durable per-step run state pinned to a workflow version before
+any tool/provider execution is connected.
