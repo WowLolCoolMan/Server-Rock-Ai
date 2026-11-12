@@ -3,12 +3,30 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Gate 0 — live capability audit
+
+Completed at commit `3e34156` before the next implementation slice.
+
+- Current branch: `main`, synchronized with `origin/main`.
+- The user-provided `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory is
+  untracked input and was preserved without modification.
+- The 126-row combined register was inspected; it contains 86 premium
+  requirements and 40 uploaded remediation issues, all marked
+  `requires_live_repo_recheck`.
+- A conservative domain capability matrix and dependency order are recorded in
+  [`CAPABILITY_MATRIX.md`](CAPABILITY_MATRIX.md).
+- No handoff document was treated as proof of implementation or release.
+
+The next slice is the durable operation/task state contract, because it is a
+dependency for workflow execution, activity visibility, cancellation,
+reconciliation, parallel agents and recovery.
+
 ## Baseline
 
 - Repository: `WowLolCoolMan/Server-Rock-Ai`
 - Branch: `main`
-- Baseline commit: `52e7503` (`docs: add future features backlog`)
-- Working tree: clean before this slice
+- Baseline commit: `3e34156` (`feat: add bounded chat tags`)
+- Working tree: clean apart from the preserved untracked handoff directory
 - Host: Windows `10.0.26200`, x64
 - SDK: .NET `10.0.401`
 - Architecture preserved: Uno Platform/XAML native app with C#/.NET 10 Core
