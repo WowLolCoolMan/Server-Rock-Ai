@@ -1606,6 +1606,47 @@ Not yet verified: Activity UI creation/list controls, OS session process host,
 reviewed prompt execution, timezone selection, recurring tasks, backoff,
 cross-process locking, Linux parity, and packaged-release acceptance.
 
+## Slice 51 — Activity scheduling controls and reviewed prompt surfacing
+
+Status: `implemented_verified_core`
+
+Activity & tasks now exposes a one-time scheduling action with accessible
+prompt/date/time/workspace controls, persisted task listing, and explicit
+pause/resume actions. A dispatcher timer claims due tasks exactly once. If a
+response is active, the prompt is persisted into the existing bounded queue;
+otherwise it is placed in the composer for review and focus is restored there.
+No scheduled path bypasses model availability, remote-data consent, or the
+normal Send action.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including scheduler persistence/no-replay tests.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (111 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: scheduling stores only the authored prompt,
+workspace choice, timestamps, status, and bounded outcome. Due work is
+surfaced for review or queued behind an active response; it does not silently
+send a cloud request, persist credentials, or grant tools. No dependency or
+third-party code was added.
+
+Rollback: remove `MainPage.ScheduledTasks.cs`, the Activity scheduling controls,
+timer, and audit contracts; the durable scheduler store remains harmless and
+can be removed separately without touching chat or operation history.
+
+Not yet verified: live Windows schedule/pause/due-surface interaction, OS
+session process hosting, automatic provider execution/result capture, timezone
+and recurring schedules, backoff, cross-process locking, Linux parity, and
+packaged-release acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

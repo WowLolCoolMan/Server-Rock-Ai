@@ -44,6 +44,7 @@ public sealed partial class MainPage : Page
     private readonly ChatMessageQueue _messageQueue = new();
     private readonly ChatMessageQueueStore _messageQueueStore = new();
     private readonly WorkspaceDraftStore _workspaceDrafts = new();
+    private readonly ScheduledTaskStore _scheduledTaskStore = new();
     private bool _restoringWorkspaceDraft;
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;
@@ -91,6 +92,7 @@ public sealed partial class MainPage : Page
     private Windows.Media.Playback.MediaPlayer? _voicePlayer;
 #endif
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
+    private readonly DispatcherTimer _scheduledTaskTimer = new() { Interval = TimeSpan.FromSeconds(20) };
 
     public MainPage()
     {
@@ -125,6 +127,8 @@ public sealed partial class MainPage : Page
             _runtimeStatusTimer.Stop();
             RuntimeStatus.Text = string.Empty;
         };
+        _scheduledTaskTimer.Tick += async (_, _) => await ProcessDueScheduledTaskAsync();
+        _scheduledTaskTimer.Start();
         RuntimeStatus.RegisterPropertyChangedCallback(TextBlock.TextProperty, (_, _) =>
         {
             var message = RuntimeStatus.Text;

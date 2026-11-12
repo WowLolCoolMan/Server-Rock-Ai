@@ -1,7 +1,7 @@
 // Sidebar glue for MainPage. The sidebar itself is SidebarView (SidebarView.xaml); MainPage keeps
 // using the old element names through the accessor properties below, so feature files didn't
 // change when the sidebar moved. Also holds the sidebar-only actions added on main: Scheduled
-// tasks (placeholder), More (projects, search, Code Review Agent, health scan, settings), Update.
+// tasks (scheduler, activity history), More (projects, search, Code Review Agent, health scan, settings), Update.
 // Depends on: SidebarView, OpenCodeReviewAgentAsync (MainPage.CodeReview.cs), ShowLocalHealthAsync
 // (MainPage.ProjectHealth.cs). Called by: SidebarView events wired in the MainPage constructor.
 
@@ -59,6 +59,28 @@ public sealed partial class MainPage
 
         var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
         ContentDialog? dialog = null;
+        IReadOnlyList<ScheduledTask> scheduledTasks = [];
+        try { scheduledTasks = _scheduledTaskStore.Load(); }
+        catch (Exception ex) { RuntimeStatus.Text = $"Scheduled tasks are unavailable: {ex.Message}"; }
+        var scheduleButton = new Button { Content = "Schedule one-time task", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(scheduleButton, "Schedule one-time task");
+        scheduleButton.Click += async (_, _) => await CreateScheduledTaskAsync(dialog);
+        content.Children.Add(scheduleButton);
+        foreach (var task in scheduledTasks.OrderBy(item => item.Status == ScheduledTaskStatuses.Scheduled ? 0 : 1).ThenBy(item => item.DueAtUtc).Take(20))
+        {
+            var taskPanel = new StackPanel { Spacing = 3 };
+            taskPanel.Children.Add(new TextBlock { Text = $"{task.Status} · {task.DueAtUtc.ToLocalTime():g} · {task.WorkspaceMode}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            taskPanel.Children.Add(new TextBlock { Text = task.Prompt, TextWrapping = TextWrapping.Wrap });
+            if (task.Outcome is not null) taskPanel.Children.Add(new TextBlock { Text = task.Outcome, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+            if (task.Status is ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Paused)
+            {
+                var toggle = new Button { Content = task.Status == ScheduledTaskStatuses.Paused ? "Resume" : "Pause", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(toggle, $"{(task.Status == ScheduledTaskStatuses.Paused ? "Resume" : "Pause")} scheduled task");
+                toggle.Click += async (_, _) => await ChangeScheduledTaskAsync(task, task.Status == ScheduledTaskStatuses.Paused, dialog);
+                taskPanel.Children.Add(toggle);
+            }
+            content.Children.Add(new Border { Background = ResourceBrush("SurfaceAltBrush"), BorderBrush = ResourceBrush("LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = taskPanel });
+        }
         DispatcherTimer? approvalTimer = null;
         var approvalCountdowns = new List<(WorkflowApprovalRequest Request, TextBlock Status, Button Approve, Button Deny)>();
         var pendingApprovals = _workflowRunService.LoadPendingApprovals();
