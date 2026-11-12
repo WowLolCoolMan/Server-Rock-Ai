@@ -128,6 +128,14 @@ public sealed partial class MainPage
                 var runPanel = new StackPanel { Spacing = 3 };
                 runPanel.Children.Add(new TextBlock { Text = $"{WorkflowStatusLabel(run.Status)} · v{run.WorkflowVersion} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
                 runPanel.Children.Add(new TextBlock { Text = $"Workflow {run.WorkflowId} · run {run.RunId[..Math.Min(8, run.RunId.Length)]}", FontSize = 11, Opacity = 0.7 });
+                var previewPlan = new Button { Content = "Preview plan", Style = (Style?)Application.Current.Resources["ContextButtonStyle"], HorizontalAlignment = HorizontalAlignment.Left };
+                AutomationProperties.SetName(previewPlan, $"Preview workflow plan for {run.WorkflowId}");
+                previewPlan.Click += async (_, _) =>
+                {
+                    dialog?.Hide();
+                    await ShowWorkflowPlanAsync(run);
+                };
+                runPanel.Children.Add(previewPlan);
                 foreach (var step in run.Steps)
                 {
                     var stepLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(8, 2, 0, 0) };
@@ -217,6 +225,47 @@ public sealed partial class MainPage
         {
             RuntimeStatus.Text = $"Workflow approval could not be recorded: {ex.Message}";
         }
+    }
+
+    private async Task ShowWorkflowPlanAsync(WorkflowRun run)
+    {
+        var plan = new StackPanel { Spacing = 8, MaxWidth = 680 };
+        plan.Children.Add(new TextBlock
+        {
+            Text = "Read-only dry run · nothing will execute",
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = ResourceBrush("AccentInkBrush")
+        });
+        plan.Children.Add(new TextBlock
+        {
+            Text = "This preview explains the persisted dependency order and policy gates. It does not call a model, tool, shell, Git, network, or file operation.",
+            TextWrapping = TextWrapping.Wrap
+        });
+        foreach (var (step, index) in run.Steps.Select((item, index) => (item, index + 1)))
+        {
+            var dependencies = step.DependsOn.Count == 0 ? "root step" : $"after {string.Join(", ", step.DependsOn)}";
+            var policy = step.RequiresApproval ? "manual approval required" : step.SafeToRetry ? "safe retry eligible" : "retry requires review";
+            plan.Children.Add(new Border
+            {
+                Background = ResourceBrush("SurfaceAltBrush"),
+                BorderBrush = ResourceBrush("LineBrush"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(10),
+                Child = new TextBlock
+                {
+                    Text = $"{index}. {step.Label} · {step.NodeType}\n{dependencies} · {policy}\nCurrent state: {step.Status} · attempt {step.Attempt}",
+                    TextWrapping = TextWrapping.Wrap
+                }
+            });
+        }
+        await new ContentDialog
+        {
+            Title = $"Workflow plan · {run.WorkflowId} v{run.WorkflowVersion}",
+            Content = new ScrollViewer { Content = plan, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        }.ShowAsync();
     }
 
     private async void MoreClick(object sender, RoutedEventArgs e)

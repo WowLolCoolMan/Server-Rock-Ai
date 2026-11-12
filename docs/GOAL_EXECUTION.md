@@ -443,3 +443,35 @@ Not yet verified: live graph editor/dry-run controls, tool adapter capability
 gates, parallel limits, scheduling, and packaged Linux parity. The next
 dependency is a read-only dry-run action in the Activity surface, followed by
 executor adapters.
+
+## Slice 13 — read-only workflow dry-run preview
+
+Status: `implemented_unverified`
+
+Activity & tasks now provides a Preview plan action for workflow runs. The
+preview explains persisted dependency order, node type/label, approval gates,
+safe-retry policy, current state, and attempt number. It explicitly performs
+no model, tool, shell, Git, network, or file operation and does not mutate the
+run.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the preview reads only already-persisted local
+workflow metadata and makes no authorization or provider decision. No network
+call, credential, or third-party code was added.
+
+Rollback: remove the Preview plan button and dialog; the existing inline
+workflow state and Core run service remain available.
+
+Not yet verified: live keyboard/screen-reader behavior, graph editing,
+tool-adapter capability gates, parallel limits, scheduling, and packaged Linux
+parity. The next dependency is a capability-gated executor adapter for one
+safe read-only node type.
