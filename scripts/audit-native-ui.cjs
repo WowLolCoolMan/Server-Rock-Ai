@@ -75,6 +75,10 @@ const requiredCode = [
   ['Project terminal state live announcements', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
   ['Workflow approval countdown accessible status', 'AutomationProperties.SetLiveSetting(approvalStatus, AutomationLiveSetting.Polite)'],
   ['Workflow approval countdown text', 'WorkflowApprovalTiming.RemainingLabel(approval.ExpiresAt, now)'],
+  ['Command palette shortcut', 'e.Key == Windows.System.VirtualKey.K'],
+  ['Command palette query label', 'AutomationProperties.SetName(query, "Search command palette actions")'],
+  ['Command palette results label', 'AutomationProperties.SetName(results, "Command palette results")'],
+  ['Command palette focus return', 'dialog.Closed += (_, _) => PromptBox.Focus(FocusState.Programmatic);'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

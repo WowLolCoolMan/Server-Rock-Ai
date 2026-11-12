@@ -62,6 +62,13 @@ public sealed partial class MainPage
             return;
         }
 
+        if (controlPressed && e.Key == Windows.System.VirtualKey.K)
+        {
+            e.Handled = true;
+            _ = OpenCommandPaletteAsync();
+            return;
+        }
+
         if (e.Key == Windows.System.VirtualKey.Escape && CommandHintPanel.Visibility == Visibility.Visible)
         {
             e.Handled = true;

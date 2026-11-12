@@ -1333,3 +1333,41 @@ fixed expiry timestamp and durable expiry service remain available.
 Not yet verified: a seeded live pending-approval countdown, workflow write/
 shell/network adapters, richer branching, parallel limits, scheduling, full
 audit/export, Linux parity, and packaged-release acceptance.
+
+## Slice 37 — global command palette
+
+Status: `implemented_verified_windows`
+
+The native shell now opens a searchable command palette with `Ctrl+K`. It
+filters existing routed actions by title and keywords, exposes the query and
+results through accessibility names, restores composer focus when dismissed,
+and executes the selected action only after the palette closes. The first live
+journey filtered for `settings` and opened the existing Settings surface;
+provider, file, Git, and model behavior remains owned by their existing routes.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- Live Windows accessibility inspection — passed: `Ctrl+K` exposed
+  `Command palette`, `Search command palette actions`, `Command palette
+  results`, and the full routed action list; filtering `settings` left
+  `Connection & settings`, and running it opened the Settings dialog.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (89 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the palette searches a fixed local action catalog
+and does not transmit query text, invoke a provider, or add a dependency.
+Actions retain their existing consent and permission gates.
+
+Rollback: remove `MainPage.CommandPalette.cs`, the `Ctrl+K` branch, and the
+three audit contracts; all existing sidebar and slash-command routes remain.
+
+Not yet verified: navigation back/forward history, persistent tabs/layout,
+inspector state, live resize/focus acceptance at every target width, Linux
+parity, and packaged-release acceptance.
