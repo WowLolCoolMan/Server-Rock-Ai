@@ -2233,6 +2233,45 @@ encrypted storage, retention controls, review-before-injection, automatic
 memory proposals, model-context injection, cross-device sync, Linux parity,
 and packaged acceptance.
 
+## Slice 67 — explicit local activity evidence export
+
+Status: `implemented_verified_core`
+
+Activity & tasks now offers an explicit JSON export of the durable operation
+journal. The export is validated before serialization, carries a versioned
+format marker, and includes run/event provenance so users can preserve local
+evidence for review without changing operation state or replaying any side
+effect.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the versioned export and reconciliation-event assertion.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (122 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the evidence bundle is written only after an
+explicit native save-picker choice, remains local, and is clearly reported as
+not sent to a provider. It can contain the user's operation instructions and
+must be treated as sensitive when shared. No dependency or third-party code
+was added.
+
+Rollback: remove the journal/service export methods, Activity button/picker,
+test assertion, and static UI contract; the existing Activity surface and
+durable journal remain available.
+
+Not yet verified: live Windows export-picker acceptance, searchable/exported
+operation evidence beyond the full journal, OS session hosting, parallel agent
+artifacts, Linux parity, and packaged acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

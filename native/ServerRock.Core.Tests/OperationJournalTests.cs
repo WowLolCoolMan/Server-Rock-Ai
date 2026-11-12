@@ -37,6 +37,8 @@ internal static class OperationJournalTests
             journal.Transition(run.RunId, OperationRunStatuses.Cancelling);
             journal.Transition(run.RunId, OperationRunStatuses.Cancelled);
             Check(new OperationJournal(path).Load().Runs[0].Status == OperationRunStatuses.Cancelled, "reconciled operations can be explicitly cancelled");
+            var export = journal.ExportJson();
+            Check(export.Contains("server-rock-operations-v1", StringComparison.Ordinal) && export.Contains(run.RunId, StringComparison.Ordinal) && export.Contains("run.needs_reconciliation", StringComparison.Ordinal), "operation export is a validated local evidence bundle");
         }
         finally
         {

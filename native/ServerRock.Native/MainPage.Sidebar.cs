@@ -59,6 +59,32 @@ public sealed partial class MainPage
 
         var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
         ContentDialog? dialog = null;
+        var exportActivity = new Button { Content = "Export activity", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(exportActivity, "Export activity evidence");
+        exportActivity.Click += async (_, _) =>
+        {
+            try
+            {
+                var picker = new Windows.Storage.Pickers.FileSavePicker
+                {
+                    SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                    SuggestedFileName = $"server-rock-activity-{DateTime.Now:yyyy-MM-dd}"
+                };
+                picker.FileTypeChoices.Add("Server Rock activity evidence", new List<string> { ".json" });
+#if WINDOWS
+                var window = (Application.Current as App)?.MainWindow;
+                if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+                await Task.Delay(50);
+                var file = await picker.PickSaveFileAsync();
+                if (file is null) return;
+                await Windows.Storage.FileIO.WriteTextAsync(file, _operationService.ExportJson());
+                RuntimeStatus.Text = $"Exported local activity evidence to {file.Name}. Nothing was sent to a provider.";
+            }
+            catch (Exception ex) { RuntimeStatus.Text = $"Activity evidence could not be exported: {ex.Message}"; }
+        };
+        content.Children.Add(exportActivity);
         IReadOnlyList<ScheduledTask> scheduledTasks = [];
         try { scheduledTasks = _scheduledTaskStore.Load(); }
         catch (Exception ex) { RuntimeStatus.Text = $"Scheduled tasks are unavailable: {ex.Message}"; }

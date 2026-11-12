@@ -32,6 +32,20 @@ public sealed class OperationJournal
         return new(store.Runs, store.Events);
     }
 
+    /// <summary>Returns a versioned, validated local export without changing operation state.</summary>
+    public string ExportJson()
+    {
+        var snapshot = Load();
+        Validate(new JournalStore(snapshot.Runs, snapshot.Events));
+        return JsonSerializer.Serialize(new JournalExport
+        {
+            Format = "server-rock-operations-v1",
+            ExportedAtUtc = DateTimeOffset.UtcNow,
+            Runs = snapshot.Runs,
+            Events = snapshot.Events
+        }, Options);
+    }
+
     public OperationRun Create(string workspaceId, string userInstruction, string actor = "user",
         string modelProvider = "unknown", string model = "unknown", string endpointPrivacy = "unknown")
     {
@@ -218,6 +232,14 @@ public sealed class OperationJournal
 
         public JournalStore() { }
         public JournalStore(List<OperationRun> runs, List<OperationEvent> events) { Runs = runs; Events = events; }
+    }
+
+    private sealed class JournalExport
+    {
+        public string Format { get; set; } = "server-rock-operations-v1";
+        public DateTimeOffset ExportedAtUtc { get; set; }
+        public List<OperationRun> Runs { get; set; } = [];
+        public List<OperationEvent> Events { get; set; } = [];
     }
 }
 
