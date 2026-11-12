@@ -32,5 +32,6 @@ await McpStdioClientTests.RunAsync();
 McpConnectionRegistryTests.Run();
 await McpStreamableHttpClientTests.RunAsync();
 await ReleaseManifestVerifierTests.RunAsync();
+ConversationContextPlannerTests.Run();
 
 Console.WriteLine("Native core checks passed.");
