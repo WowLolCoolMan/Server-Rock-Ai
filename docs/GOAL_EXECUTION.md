@@ -841,3 +841,38 @@ Not yet verified: live multi-send keyboard/accessibility behavior, queue
 cancel/reorder controls, persistence across app restart, and packaged Linux
 parity. The next dependency is a user-visible queue management action before
 adding persistent or parallel message behavior.
+
+## Slice 24 — chat queue management controls
+
+Status: `implemented_unverified`
+
+The active-response queue now exposes a Queue control in the runtime status
+banner when items exist. Users can inspect bounded prompt previews and
+attachment counts, remove individual queued items, or explicitly clear the
+entire queue. FIFO dispatch remains unchanged for retained items; clearing the
+queue does not stop or alter the active response.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including queue FIFO/capacity/drain coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: queue contents remain local process memory and the
+management surface renders bounded previews only. Explicit clear is reversible
+only by resubmitting; it never changes the active request. No network,
+credential, provider, shell, Git, or third-party code was added.
+
+Rollback: remove Queue control, management dialog, and queue mutation methods;
+bounded automatic FIFO dispatch remains available.
+
+Not yet verified: live keyboard/screen-reader queue interaction, reorder or
+persisted queue behavior, and packaged Linux parity. The next dependency is
+live accessibility validation before adding persistence or parallel dispatch.

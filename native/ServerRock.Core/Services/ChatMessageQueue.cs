@@ -11,6 +11,8 @@ public sealed class ChatMessageQueue(int capacity = 8)
 
     public int Count => _items.Count;
 
+    public IReadOnlyList<QueuedChatRequest> Snapshot() => _items.ToArray();
+
     public void Enqueue(string text, IReadOnlyList<ChatAttachment>? attachments = null)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length > 50_000 || text.Any(char.IsControl)) throw new ArgumentException("Queued message text is invalid.", nameof(text));
@@ -25,4 +27,15 @@ public sealed class ChatMessageQueue(int capacity = 8)
         request = _items.Dequeue();
         return true;
     }
+
+    public bool RemoveAt(int index)
+    {
+        if (index < 0 || index >= _items.Count) return false;
+        var remaining = _items.ToArray();
+        _items.Clear();
+        for (var i = 0; i < remaining.Length; i++) if (i != index) _items.Enqueue(remaining[i]);
+        return true;
+    }
+
+    public void Clear() => _items.Clear();
 }

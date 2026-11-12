@@ -74,9 +74,10 @@
       <StackPanel Grid.Row="1" MaxWidth="{StaticResource ComposerMaxWidth}" HorizontalAlignment="Stretch" Margin="24,0,24,18">
         <StackPanel x:Name="AttachmentList" Visibility="Collapsed" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8" />
         <Border x:Name="RuntimeStatusBanner" Visibility="Collapsed" Background="#f3f8f9" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="9" Padding="10,7" Margin="0,0,0,8">
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
             <TextBlock x:Name="RuntimeStatus" Text="" FontSize="12" Foreground="#526a70" VerticalAlignment="Center" TextWrapping="Wrap" MaxHeight="72" AutomationProperties.LiveSetting="Polite" />
-            <Button Grid.Column="1" Content="×" Click="DismissRuntimeStatusClick" Background="Transparent" Foreground="#60777d" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Dismiss status message" />
+            <Button x:Name="ManageQueueButton" Grid.Column="1" Content="Queue" Click="ManageQueueClick" Visibility="Collapsed" Background="Transparent" Foreground="#236b78" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Manage queued messages" AutomationProperties.HelpText="Review, remove, or clear messages waiting to send." />
+            <Button Grid.Column="2" Content="×" Click="DismissRuntimeStatusClick" Background="Transparent" Foreground="#60777d" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Dismiss status message" />
           </Grid>
         </Border>
         <Grid x:Name="ComposerToolbar" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0,0,0,8" SizeChanged="ComposerToolbarSizeChanged">

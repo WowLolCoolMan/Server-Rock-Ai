@@ -91,6 +91,7 @@ public sealed partial class MainPage
                 _messageQueue.Enqueue(text, _pendingAttachments.Count == 0 ? null : _pendingAttachments);
                 PromptBox.Text = string.Empty;
                 ClearPendingAttachments();
+                UpdateQueueControl();
                 RuntimeStatus.Text = $"Queued message { _messageQueue.Count } of 8 · it will send when the current response finishes.";
             }
             catch (Exception ex) { RuntimeStatus.Text = ex.Message; }
@@ -319,9 +320,60 @@ public sealed partial class MainPage
                 PromptBox.Text = queued.Text;
                 if (queued.Attachments is not null) _pendingAttachments.AddRange(queued.Attachments);
                 RenderPendingAttachments();
+                UpdateQueueControl();
                 RuntimeStatus.Text = $"Sending queued message · {_messageQueue.Count} remaining";
                 DispatcherQueue.TryEnqueue(() => SendClick(this, new RoutedEventArgs()));
             }
+        }
+    }
+
+    private void UpdateQueueControl()
+    {
+        ManageQueueButton.Content = _messageQueue.Count == 0 ? "Queue" : $"Queue ({_messageQueue.Count})";
+        ManageQueueButton.Visibility = _messageQueue.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async void ManageQueueClick(object sender, RoutedEventArgs e)
+    {
+        var items = new StackPanel { Spacing = 8 };
+        var empty = new TextBlock { Text = "No messages are waiting.", TextWrapping = TextWrapping.Wrap };
+        void Render()
+        {
+            items.Children.Clear();
+            var snapshot = _messageQueue.Snapshot();
+            if (snapshot.Count == 0) { items.Children.Add(empty); return; }
+            for (var index = 0; index < snapshot.Count; index++)
+            {
+                var queued = snapshot[index];
+                var text = queued.Text.ReplaceLineEndings(" ");
+                if (text.Length > 160) text = text[..160] + "…";
+                var row = new Grid();
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                var attachmentLabel = queued.Attachments is { Count: > 0 } ? $" · {queued.Attachments.Count} attachment(s)" : string.Empty;
+                var label = new TextBlock { Text = $"{index + 1}. {text}{attachmentLabel}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                var remove = new Button { Content = "Remove", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(remove, $"Remove queued message {index + 1}");
+                var capturedIndex = index;
+                remove.Click += (_, _) =>
+                {
+                    _messageQueue.RemoveAt(capturedIndex);
+                    UpdateQueueControl();
+                    Render();
+                };
+                Grid.SetColumn(remove, 1);
+                row.Children.Add(label);
+                row.Children.Add(remove);
+                items.Children.Add(new Border { Background = Application.Current.Resources["SurfaceAltBrush"] as Microsoft.UI.Xaml.Media.Brush, BorderBrush = Application.Current.Resources["LineBrush"] as Microsoft.UI.Xaml.Media.Brush, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(8), Child = row });
+            }
+        }
+        Render();
+        var dialog = new ContentDialog { Title = "Queued messages", Content = new ScrollViewer { Content = items, MaxHeight = 520, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, PrimaryButtonText = "Clear queue", CloseButtonText = "Done", XamlRoot = XamlRoot };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            _messageQueue.Clear();
+            UpdateQueueControl();
+            RuntimeStatus.Text = "Queued messages cleared. The active response was not changed.";
         }
     }
 
