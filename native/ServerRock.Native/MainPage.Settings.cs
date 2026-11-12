@@ -150,6 +150,13 @@ public sealed partial class MainPage
         visionFormat.Items.Add("Ollama-compatible image_url string");
         visionFormat.SelectedIndex = _settings.VisionApiFormat.ToLowerInvariant() switch { "openai" => 1, "ollama" => 2, _ => 0 };
         var visionNote = new TextBlock { Text = "Choose a vision-capable model. Automatic selects Ollama format for its standard local port and OpenAI format for other endpoints.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.75 };
+        var visionCapability = new ComboBox { Header = "Vision capability profile", MinWidth = 300 };
+        visionCapability.Items.Add("Automatic (conservative detection)");
+        visionCapability.Items.Add("This model supports images");
+        visionCapability.Items.Add("This model does not support images");
+        visionCapability.SelectedIndex = _settings.VisionCapabilityOverride.ToLowerInvariant() switch { "supported" => 1, "unsupported" => 2, _ => 0 };
+        AutomationProperties.SetName(visionCapability, "Vision capability profile");
+        AutomationProperties.SetHelpText(visionCapability, "Override automatic image capability detection for the selected model. This setting is saved locally and does not send model metadata anywhere.");
         var checkConnection = new Button { Content = "Check connection", MinWidth = 132 };
         var exportLogs = new Button { Content = "Export redacted diagnostics", MinWidth = 190 };
         var checkStatus = new TextBlock
@@ -472,6 +479,7 @@ public sealed partial class MainPage
         {
             pageBody.Children.Add(new TextBlock { Text = "VISION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(visionFormat);
+            pageBody.Children.Add(visionCapability);
             pageBody.Children.Add(visionNote);
             pageBody.Children.Add(new TextBlock { Text = "DIAGNOSTICS", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 14, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Support bundle", "Export a diagnostics archive with sensitive values redacted.", exportLogs));
@@ -572,6 +580,7 @@ public sealed partial class MainPage
             _openRouterApiKey = _settings.ModelProvider == "OpenRouter" ? openRouterKey.Password.Trim() : string.Empty;
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
+            _settings.VisionCapabilityOverride = visionCapability.SelectedIndex switch { 1 => "supported", 2 => "unsupported", _ => "auto" };
             _settings.AccentColor = accent.SelectedIndex switch { 1 => "violet", 2 => "green", 3 => "orange", _ => "cyan" };
             _settings.ThemeMode = theme.SelectedIndex == 1 ? "dark" : "light";
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";

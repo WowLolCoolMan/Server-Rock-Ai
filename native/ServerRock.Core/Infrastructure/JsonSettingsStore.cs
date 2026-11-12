@@ -41,6 +41,11 @@ public sealed class JsonSettingsStore
         settings.Model ??= defaults.Model;
         settings.ModelProvider ??= defaults.ModelProvider;
         settings.VisionApiFormat ??= defaults.VisionApiFormat;
+        settings.VisionCapabilityOverride = settings.VisionCapabilityOverride?.ToLowerInvariant() switch
+        {
+            "supported" or "unsupported" => settings.VisionCapabilityOverride.ToLowerInvariant(),
+            _ => defaults.VisionCapabilityOverride
+        };
         settings.ComfyEndpoint ??= defaults.ComfyEndpoint;
         settings.ImageWorkflow ??= defaults.ImageWorkflow;
         settings.GitHubAppClientId ??= defaults.GitHubAppClientId;

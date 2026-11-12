@@ -955,3 +955,43 @@ Not yet verified: user-editable capability overrides, provider capability
 discovery, fallback consent, multi-provider routing, live accessibility, and
 packaged Linux parity. The next dependency is an explicit profile/override
 surface with durable validation before adding fallback behavior.
+
+## Slice 27 — persisted vision capability override
+
+Status: `implemented_unverified`
+
+Settings now provide a local Vision capability profile choice: automatic
+conservative detection, explicitly supports images, or explicitly does not
+support images. The choice is normalized and persisted with the existing
+settings store, exposed in the Advanced settings page with an accessible name
+and help text, and honored by provider preflight. This lets a user correct a
+model-name heuristic without silently changing endpoint routing or sending
+metadata to a server.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core/Infrastructure/ModelCapabilityResolver.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including settings round-trip and explicit capability override behavior.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the override is a non-secret local preference;
+automatic detection and the override run before request serialization. No
+endpoint URL, credential, prompt, or third-party code is added.
+
+Rollback: remove the override setting/control and resolver branch; automatic
+conservative detection remains the default.
+
+Not yet verified: provider capability discovery, user-editable profiles for
+streaming/context limits, fallback consent, multi-provider routing, live
+settings accessibility, and packaged Linux parity. The next dependency is
+capability discovery/profile validation before selecting another route.

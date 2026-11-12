@@ -175,6 +175,9 @@ internal static class ChatProviderTests
         var nonVisionProfile = ModelCapabilityResolver.Resolve(new AppSettings { ModelProvider = "Custom endpoint", Model = "text-embedding-3-small", Endpoint = "https://example.test/v1" });
         Check(nonVisionProfile.Vision == CapabilitySupport.Unsupported && nonVisionProfile.EndpointPrivacy == "remote",
             "capability profile identifies definitive non-vision model markers");
+        var overrideProfile = ModelCapabilityResolver.Resolve(new AppSettings { Model = "text-embedding-3-small", VisionCapabilityOverride = "supported" });
+        Check(overrideProfile.Vision == CapabilitySupport.Supported && overrideProfile.Evidence.Contains("override", StringComparison.Ordinal),
+            "capability profile honors an explicit local vision override");
         var blockedImageProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) => throw new Exception("Definitive capability rejection must happen before network access."))));
         try
         {

@@ -17,9 +17,19 @@ public static class ModelCapabilityResolver
         var provider = string.IsNullOrWhiteSpace(settings.ModelProvider) ? "unknown" : settings.ModelProvider.Trim();
         var model = string.IsNullOrWhiteSpace(settings.Model) ? "unknown" : settings.Model.Trim();
         var privacy = LocalEndpoint.IsLocal(settings.Endpoint) ? "local" : "remote";
-        var vision = IsDefinitelyNonVision(model) ? CapabilitySupport.Unsupported : CapabilitySupport.Unknown;
-        return new(provider, model, privacy, CapabilitySupport.Supported, vision,
-            vision == CapabilitySupport.Unsupported ? "model identifier indicates a non-vision runtime" : "provider/model metadata does not declare vision support");
+        var vision = settings.VisionCapabilityOverride.Trim().ToLowerInvariant() switch
+        {
+            "supported" => CapabilitySupport.Supported,
+            "unsupported" => CapabilitySupport.Unsupported,
+            _ => IsDefinitelyNonVision(model) ? CapabilitySupport.Unsupported : CapabilitySupport.Unknown
+        };
+        var evidence = settings.VisionCapabilityOverride.Trim().ToLowerInvariant() switch
+        {
+            "supported" or "unsupported" => "user-selected vision capability override",
+            _ when vision == CapabilitySupport.Unsupported => "model identifier indicates a non-vision runtime",
+            _ => "provider/model metadata does not declare vision support"
+        };
+        return new(provider, model, privacy, CapabilitySupport.Supported, vision, evidence);
     }
 
     public static void ValidateMessageCapabilities(AppSettings settings, IReadOnlyList<ChatMessage> messages)
