@@ -37,6 +37,18 @@ internal static class WorkflowRunServiceTests
 
             var interrupted = runs.Create(definition); runs.Queue(interrupted.RunId); runs.Start(interrupted.RunId);
             Check(runs.ReconcileAfterRestart().Any(item => item.RunId == interrupted.RunId && item.Status == WorkflowRunStatuses.NeedsReconciliation), "in-flight workflow runs reconcile after restart");
+
+            var conditionDefinition = new WorkflowDefinition { Id = "condition-flow", Title = "Condition flow", Nodes = [new() { Id = "condition", Type = WorkflowNodeTypes.Condition, Label = "Is ready", Config = new() { ["field"] = "ready", ["equals"] = "yes" } }] };
+            var condition = runs.Create(conditionDefinition);
+            runs.Queue(condition.RunId); runs.Start(condition.RunId);
+            condition = runs.EvaluateCondition(condition.RunId, "condition", new Dictionary<string, string> { ["ready"] = "yes" });
+            Check(condition.Steps.Single().Status == WorkflowStepStatuses.Complete && condition.Status == WorkflowRunStatuses.Completed, "safe condition executor records a local result without external dispatch");
+            var denied = runs.Create(new WorkflowDefinition { Id = "tool-flow", Title = "Tool flow", Nodes = [new() { Id = "tool", Type = WorkflowNodeTypes.ToolCall, Label = "Tool" }] });
+            runs.Queue(denied.RunId); runs.Start(denied.RunId);
+            var refused = false;
+            try { runs.EvaluateCondition(denied.RunId, "tool", new Dictionary<string, string>()); }
+            catch (InvalidOperationException error) { refused = error.Message.Contains("condition", StringComparison.OrdinalIgnoreCase); }
+            Check(refused, "unsupported workflow node execution is capability-gated");
         }
         finally
         {

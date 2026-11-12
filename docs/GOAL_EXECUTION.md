@@ -475,3 +475,42 @@ Not yet verified: live keyboard/screen-reader behavior, graph editing,
 tool-adapter capability gates, parallel limits, scheduling, and packaged Linux
 parity. The next dependency is a capability-gated executor adapter for one
 safe read-only node type.
+
+## Slice 14 — capability-gated condition executor
+
+Status: `implemented_unverified`
+
+The workflow runtime now supports one explicitly safe executor: a pure
+condition node that compares a bounded local input field with a bounded
+expected value. It records the boolean result and completes the step/run when
+appropriate. The run service rejects tool-call and other unsupported node
+types through the same entry point, preventing accidental expansion of the
+execution surface.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowRun.cs`
+- `native/ServerRock.Core/Services/ReadOnlyConditionExecutor.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local condition evaluation, durable result completion, and unsupported-node rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: execution is in-process, local, deterministic,
+bounded, and has no filesystem, shell, network, provider, Git, or credential
+access. Tool-like nodes are refused rather than silently downgraded. No
+third-party code was added.
+
+Rollback: remove the condition executor, persisted config fields, and tests;
+workflow definitions and non-executing run state remain intact.
+
+Not yet verified: richer conditions/branch semantics, tool adapter grants,
+parallel limits, scheduler/OS restart behavior, full approval inbox, and
+packaged Linux parity. The next dependency is to expose condition results and
+capability refusal in Activity, then add another safe adapter only with a
+separate permission contract.

@@ -28,7 +28,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks and measured local performance | Capability probes, hardware/resource scheduling, richer provider coverage and unload/queue states |
 | Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats | Explicit profiles, capability-aware routing, classified fallback consent and durable provider identity |
-| Workflows and scheduled tasks | partial | Activity surface shows dependency-ordered workflow plans, provides a read-only dry-run preview, versions, step states, and explicit approval actions; versioned typed DAG definitions and durable runs support conservative retry, cancellation, and restart reconciliation | Tool adapter gates, parallel limits, scheduling and full audit/export |
+| Workflows and scheduled tasks | partial | Activity surface shows dependency-ordered workflow plans, provides a read-only dry-run preview, versions, step states, and explicit approval actions; durable runs include a bounded condition-only executor with refusal of unsupported tool nodes | Richer branching, permissioned tool adapters, parallel limits, scheduling and full audit/export |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
 | Images and media | partial | ComfyUI queue/poll flow, image attachments and local vision paths have Core tests | Resumable media jobs, richer artifact storage, capability gating and runtime acceptance |
@@ -54,8 +54,9 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Add a capability-gated executor adapter for one safe read-only node type,
-   then parallel limits, scheduling, and full audit/export.
+1. Expose condition results/refusals in Activity, then define separate
+   permission contracts for any additional adapters, parallel limits,
+   scheduling, and full audit/export.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad

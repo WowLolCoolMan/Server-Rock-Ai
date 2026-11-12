@@ -39,6 +39,7 @@ public sealed class WorkflowRunService
                 NodeType = step.NodeType,
                 Label = step.Label,
                 DependsOn = step.DependsOn,
+                Config = definition.Nodes.Single(node => node.Id == step.NodeId).Config,
                 RequiresApproval = step.NodeType == WorkflowNodeTypes.Approval,
                 SafeToRetry = step.NodeType is WorkflowNodeTypes.Condition or WorkflowNodeTypes.Test or WorkflowNodeTypes.Join,
                 IdempotencyKey = $"{definition.Id}:{definition.Version}:{step.NodeId}"
@@ -100,6 +101,32 @@ public sealed class WorkflowRunService
         step.Status = WorkflowStepStatuses.Complete;
         Touch(run);
         AddEvent(snapshot, run, "step.completed", actor, new() { ["nodeId"] = nodeId, ["attempt"] = step.Attempt.ToString() });
+        if (run.Steps.All(item => item.Status is WorkflowStepStatuses.Complete or WorkflowStepStatuses.Skipped))
+        {
+            run.Status = WorkflowRunStatuses.Verifying;
+            AddEvent(snapshot, run, "run.verifying", actor, new());
+            run.Status = WorkflowRunStatuses.Completed;
+            AddEvent(snapshot, run, "run.completed", actor, new());
+        }
+        Save(snapshot);
+        return run;
+    }
+
+    public WorkflowRun EvaluateCondition(string runId, string nodeId, IReadOnlyDictionary<string, string> inputs, string actor = "system")
+    {
+        var snapshot = Load();
+        var run = Find(snapshot, runId);
+        var step = FindStep(run, nodeId);
+        if (step.NodeType != WorkflowNodeTypes.Condition) throw new InvalidOperationException("Only condition nodes are available to the read-only executor.");
+        if (step.Status is WorkflowStepStatuses.Pending or WorkflowStepStatuses.Queued) run = BeginStep(runId, nodeId, actor);
+        snapshot = Load();
+        run = Find(snapshot, runId);
+        step = FindStep(run, nodeId);
+        if (step.Status != WorkflowStepStatuses.Executing) throw new InvalidOperationException("The condition node is not executable in its current state.");
+        var result = ReadOnlyConditionExecutor.Evaluate(step.Config, inputs);
+        step.Status = WorkflowStepStatuses.Complete;
+        Touch(run);
+        AddEvent(snapshot, run, "condition.evaluated", actor, new() { ["nodeId"] = nodeId, ["result"] = result ? "true" : "false" });
         if (run.Steps.All(item => item.Status is WorkflowStepStatuses.Complete or WorkflowStepStatuses.Skipped))
         {
             run.Status = WorkflowRunStatuses.Verifying;

@@ -43,6 +43,7 @@ public sealed class WorkflowStepRun
     public string NodeType { get; set; } = "";
     public string Label { get; set; } = "";
     public List<string> DependsOn { get; set; } = [];
+    public Dictionary<string, string> Config { get; set; } = new(StringComparer.Ordinal);
     public string Status { get; set; } = WorkflowStepStatuses.Pending;
     public int Attempt { get; set; } = 1;
     public bool RequiresApproval { get; set; }
