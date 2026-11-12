@@ -27,6 +27,15 @@ internal static class ChatProviderTests
         var provider = new OpenAiCompatibleProvider(new HttpClient(discoveryHandler));
         var models = await provider.DiscoverModelsAsync("http://localhost:11434/v1");
         Check(models.SequenceEqual(["local-a", "local-b"]), "model discovery reads model IDs");
+        var profileProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"data\":[{\"id\":\"vision-model\",\"capabilities\":[\"text\",\"vision\"]},{\"id\":\"text-model\",\"modalities\":[\"text\"]},{\"id\":\"flagged-model\",\"supports_vision\":true}]}", Encoding.UTF8, "application/json")
+        }))));
+        var profiles = await profileProvider.DiscoverModelProfilesAsync("http://localhost:11434/v1");
+        Check(profiles.Single(profile => profile.Model == "vision-model").Vision == CapabilitySupport.Supported
+            && profiles.Single(profile => profile.Model == "flagged-model").Vision == CapabilitySupport.Supported
+            && profiles.Single(profile => profile.Model == "text-model").Vision == CapabilitySupport.Unknown,
+            "model discovery parses bounded provider capability metadata");
         var openRouterAuthHandler = new StubHandler((request, _) =>
         {
             Check(request.RequestUri?.AbsoluteUri == "https://openrouter.ai/api/v1/models" && request.Headers.Authorization?.Scheme == "Bearer" && request.Headers.Authorization.Parameter == "sk-or-v1-test", "OpenRouter model discovery sends the session API key without persisting it");

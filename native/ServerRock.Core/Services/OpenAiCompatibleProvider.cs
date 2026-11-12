@@ -176,6 +176,12 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
 
     public async Task<IReadOnlyList<string>> DiscoverModelsAsync(string endpoint, CancellationToken cancellationToken = default, string? apiKey = null)
     {
+        var profiles = await DiscoverModelProfilesAsync(endpoint, cancellationToken, apiKey);
+        return profiles.Select(profile => profile.Model).ToArray();
+    }
+
+    public async Task<IReadOnlyList<ProviderModelDescriptor>> DiscoverModelProfilesAsync(string endpoint, CancellationToken cancellationToken = default, string? apiKey = null)
+    {
         var root = BuildBaseUri(endpoint);
         var path = root.AbsolutePath.TrimEnd('/');
         var modelsUri = path.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)
@@ -191,14 +197,38 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         if (!json.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException("The provider response did not include a model list.");
         var models = data.EnumerateArray()
-            .Where(item => item.TryGetProperty("id", out _))
-            .Select(item => item.GetProperty("id").GetString())
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Cast<string>()
-            .Distinct(StringComparer.Ordinal)
+            .Select(ParseModelDescriptor)
+            .Where(profile => profile is not null)
+            .Cast<ProviderModelDescriptor>()
+            .DistinctBy(profile => profile.Model, StringComparer.Ordinal)
             .ToArray();
         if (models.Length == 0) throw new InvalidOperationException("The provider returned no models.");
         return models;
+    }
+
+    private static ProviderModelDescriptor? ParseModelDescriptor(JsonElement item)
+    {
+        if (!item.TryGetProperty("id", out var idElement) || idElement.ValueKind != JsonValueKind.String) return null;
+        var model = idElement.GetString();
+        if (string.IsNullOrWhiteSpace(model) || model.Length > MaxModelCharacters || model.Any(char.IsControl)) return null;
+        var capabilities = new List<string>();
+        foreach (var propertyName in new[] { "capabilities", "modalities" })
+        {
+            if (!item.TryGetProperty(propertyName, out var values) || values.ValueKind != JsonValueKind.Array) continue;
+            foreach (var value in values.EnumerateArray().Take(16))
+            {
+                if (value.ValueKind != JsonValueKind.String) continue;
+                var capability = value.GetString()?.Trim().ToLowerInvariant();
+                if (!string.IsNullOrWhiteSpace(capability) && capability.Length <= 64 && !capability.Any(char.IsControl) && !capabilities.Contains(capability, StringComparer.Ordinal))
+                    capabilities.Add(capability);
+            }
+        }
+        var vision = item.TryGetProperty("supports_vision", out var supportsVision) && supportsVision.ValueKind is JsonValueKind.True
+            ? CapabilitySupport.Supported
+            : capabilities.Any(capability => capability is "vision" or "image" or "images" or "image_input")
+                ? CapabilitySupport.Supported
+                : CapabilitySupport.Unknown;
+        return new(model, vision, capabilities);
     }
 
     private static Uri BuildChatUri(string endpoint)

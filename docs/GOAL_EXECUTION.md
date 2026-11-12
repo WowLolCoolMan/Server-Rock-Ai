@@ -995,3 +995,42 @@ Not yet verified: provider capability discovery, user-editable profiles for
 streaming/context limits, fallback consent, multi-provider routing, live
 settings accessibility, and packaged Linux parity. The next dependency is
 capability discovery/profile validation before selecting another route.
+
+## Slice 28 — bounded provider model capability discovery
+
+Status: `implemented_unverified`
+
+The OpenAI-compatible model discovery path now has a profile-aware API that
+parses bounded provider metadata without changing the existing model-ID API.
+It recognizes explicit `supports_vision`, `capabilities`, and `modalities`
+signals, limits each advertised label and list, drops malformed or oversized
+model IDs, and preserves `unknown` when the provider does not declare vision
+support. Existing connection and selection callers continue using the legacy
+string list, while capability-aware callers can opt into descriptors.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProviderModelDescriptor.cs`
+- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit capability metadata, boolean vision flags, unknown metadata, and existing model-ID discovery.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only provider-returned bounded model labels and
+capability strings are retained in memory; credentials and endpoint URLs are
+not returned in descriptors. Malformed metadata is ignored rather than trusted.
+No third-party code was added.
+
+Rollback: retain `DiscoverModelsAsync` and remove the descriptor API/parser;
+existing connection and model selection behavior remains unchanged.
+
+Not yet verified: UI display of discovered capability evidence, provider
+discovery beyond OpenAI-compatible `/models`, streaming/context-limit
+discovery, fallback consent, multi-provider routing, live accessibility, and
+packaged Linux parity. The next dependency is surfacing descriptor evidence in
+model selection before routing decisions consume it.
