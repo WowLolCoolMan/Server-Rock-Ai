@@ -21,7 +21,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Domain | Status | Current evidence | Main gap / next dependency |
 | --- | --- | --- | --- |
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 83 contracts | Typed routes, persistent tabs/layout, command palette, inspector and live focus/resize acceptance |
-| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins and tags in `native/ServerRock.Core.Tests` | Message queue, richer search, durable context continuity, live keyboard/accessibility acceptance |
+| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, and bounded FIFO follow-up queue in `native/ServerRock.Core.Tests` | Queue management/persistence, richer search, durable context continuity, live keyboard/accessibility acceptance |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
@@ -54,8 +54,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Validate live approval accessibility/countdown UX, then add richer
-   branching, parallel limits, scheduling, and full audit/export.
+1. Validate live approval accessibility/countdown UX and chat queue controls,
+   then add richer branching, parallel limits, scheduling, and full audit/export.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad

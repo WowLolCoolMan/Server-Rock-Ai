@@ -82,7 +82,21 @@ public sealed partial class MainPage
     private async void SendClick(object sender, RoutedEventArgs e)
     {
         var text = PromptBox.Text.Trim();
-        if ((text.Length == 0 && _pendingAttachments.Count == 0) || _requestCancellation is not null) return;
+        if (_requestCancellation is not null)
+        {
+            if (text.Length == 0 && _pendingAttachments.Count == 0) return;
+            if (text.Length == 0 && _pendingAttachments.Count > 0) text = "Please help me with the attached file(s).";
+            try
+            {
+                _messageQueue.Enqueue(text, _pendingAttachments.Count == 0 ? null : _pendingAttachments);
+                PromptBox.Text = string.Empty;
+                ClearPendingAttachments();
+                RuntimeStatus.Text = $"Queued message { _messageQueue.Count } of 8 · it will send when the current response finishes.";
+            }
+            catch (Exception ex) { RuntimeStatus.Text = ex.Message; }
+            return;
+        }
+        if (text.Length == 0 && _pendingAttachments.Count == 0) return;
         if (_modelBenchmarkCancellation is not null)
         {
             RuntimeStatus.Text = "Finish or stop the model benchmark before sending a chat message.";
@@ -300,6 +314,14 @@ public sealed partial class MainPage
             StopButton.IsEnabled = true;
             StopButton.Content = "■";
             PromptBox.Focus(FocusState.Programmatic);
+            if (_messageQueue.TryDequeue(out var queued) && queued is not null)
+            {
+                PromptBox.Text = queued.Text;
+                if (queued.Attachments is not null) _pendingAttachments.AddRange(queued.Attachments);
+                RenderPendingAttachments();
+                RuntimeStatus.Text = $"Sending queued message · {_messageQueue.Count} remaining";
+                DispatcherQueue.TryEnqueue(() => SendClick(this, new RoutedEventArgs()));
+            }
         }
     }
 

@@ -41,6 +41,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
+    private readonly ChatMessageQueue _messageQueue = new();
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;
     private List<LocalProject> _projects = [];

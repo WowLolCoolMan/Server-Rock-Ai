@@ -803,3 +803,41 @@ Not yet verified: live keyboard/screen-reader behavior, approval countdown
 UX, write/shell/network adapters, parallel limits, scheduling, and packaged
 Linux parity. The next dependency is broader branching semantics or another
 adapter only after its separate permission contract.
+
+## Slice 23 — bounded chat message queue
+
+Status: `implemented_unverified`
+
+Chat now accepts follow-up sends while a response is active. A bounded FIFO
+queue holds up to eight validated requests, preserves text and attachments,
+reports queue position, and automatically dispatches the next request only
+after the active request reaches its cleanup path. Full queues are refused
+without losing the current draft or response.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/ServerRock.Core.Tests/ChatMessageQueueTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including FIFO ordering, attachment preservation, capacity refusal, and drain behavior.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: queued requests stay in local process memory and
+use existing attachment consent/provider paths when dispatched. The queue is
+bounded and does not add network routing or credential storage. No third-party
+code was added.
+
+Rollback: remove the queue service, test, field, and SendClick/finally hooks;
+the existing single-request chat flow remains unchanged.
+
+Not yet verified: live multi-send keyboard/accessibility behavior, queue
+cancel/reorder controls, persistence across app restart, and packaged Linux
+parity. The next dependency is a user-visible queue management action before
+adding persistent or parallel message behavior.
