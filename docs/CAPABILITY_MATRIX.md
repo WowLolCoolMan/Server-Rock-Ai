@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `d340597` plus the live local-provider validation
+Snapshot commit: `5789358` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
