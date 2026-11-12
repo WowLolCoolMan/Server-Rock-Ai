@@ -6,8 +6,30 @@ using System.Net;
 
 namespace ServerRock.Core.Infrastructure;
 
+public enum ProviderFailureKind
+{
+    Unknown,
+    EndpointUnavailable,
+    ServerRejected,
+    ModelCompatibility,
+    ImageRejected,
+    Timeout
+}
+
 public static class ProviderErrorText
 {
+    public static ProviderFailureKind Classify(Exception ex, bool hasImageAttachments = false)
+    {
+        if (ex is TaskCanceledException) return ProviderFailureKind.Timeout;
+        if (hasImageAttachments && ex is HttpRequestException { StatusCode: HttpStatusCode.BadRequest or HttpStatusCode.UnsupportedMediaType or HttpStatusCode.UnprocessableEntity })
+            return ProviderFailureKind.ImageRejected;
+        if (ex is HttpRequestException { StatusCode: not null }) return ProviderFailureKind.ServerRejected;
+        if (ex is HttpRequestException) return ProviderFailureKind.EndpointUnavailable;
+        if (ex is InvalidOperationException && ex.Message.Contains("closed the stream", StringComparison.OrdinalIgnoreCase))
+            return ProviderFailureKind.ModelCompatibility;
+        return ProviderFailureKind.Unknown;
+    }
+
     public static string Describe(Exception ex)
     {
         if (ex is HttpRequestException { StatusCode: not null }) return $"Model server error: {ex.Message}";

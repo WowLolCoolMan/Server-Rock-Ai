@@ -207,5 +207,10 @@ internal static class ChatProviderTests
         Check(ProviderErrorText.Describe(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: true).StartsWith("This model endpoint rejected the image.", StringComparison.Ordinal)
             && ProviderErrorText.Describe(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: false) == "Model server error: bad",
             "a 400 is explained as an image rejection only when images were attached");
+        Check(ProviderErrorText.Classify(new InvalidOperationException("The model server closed the stream without returning a response.")) == ProviderFailureKind.ModelCompatibility
+            && ProviderErrorText.Classify(new HttpRequestException("refused")) == ProviderFailureKind.EndpointUnavailable
+            && ProviderErrorText.Classify(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: true) == ProviderFailureKind.ImageRejected
+            && ProviderErrorText.Classify(new TaskCanceledException()) == ProviderFailureKind.Timeout,
+            "provider failures classify model compatibility separately from endpoint, image, and timeout failures");
     }
 }

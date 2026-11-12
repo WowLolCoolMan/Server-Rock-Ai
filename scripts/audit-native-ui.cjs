@@ -84,6 +84,8 @@ const requiredCode = [
   ['Fallback confirmation title', 'Title = "Switch local model?"'],
   ['Fallback confirmation action', 'PrimaryButtonText = "Switch model"'],
   ['Fallback confirmation no cloud route', 'no cloud route or automatic retry will occur.'],
+  ['Model compatibility failure classification', 'ProviderErrorText.Classify(ex, hasImages)'],
+  ['Model compatibility status', 'ProviderFailureKind.ModelCompatibility'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

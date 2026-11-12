@@ -305,6 +305,7 @@ public sealed partial class MainPage
                 ConversationMessages.Children.Remove(bubble);
             var hasImages = _messages.Any(message => message.Attachments?.Any(attachment => attachment.IsImage) == true);
             var localEndpoint = LocalEndpoint.IsLocal(_settings.Endpoint);
+            var failureKind = ProviderErrorText.Classify(ex, hasImages);
             AddMessage("Connection error", ProviderErrorText.Describe(ex, hasImages), false, addContent: localEndpoint ? errorContent =>
             {
                 var chooseModel = new Button
@@ -318,9 +319,14 @@ public sealed partial class MainPage
                 chooseModel.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, PromptBox, confirmModelSwitch: true);
                 errorContent.Children.Add(chooseModel);
             } : null);
-            if (localEndpoint) RuntimeStatus.Text = "Connection failed · choose another local model or check Settings";
-            else RuntimeStatus.Text = "Connection failed · check Settings";
-            FailActiveOperation("provider request failed");
+            RuntimeStatus.Text = failureKind == ProviderFailureKind.ModelCompatibility
+                ? localEndpoint
+                    ? "Model compatibility issue · choose another local model or check Settings"
+                    : "Model compatibility issue · check the selected model or Settings"
+                : localEndpoint
+                    ? "Connection failed · choose another local model or check Settings"
+                    : "Connection failed · check Settings";
+            FailActiveOperation(failureKind == ProviderFailureKind.ModelCompatibility ? "model compatibility failure" : "provider request failed");
             SetCompanionState("error");
             UpdateCompanionSpeech("Error · the model request failed.");
         }

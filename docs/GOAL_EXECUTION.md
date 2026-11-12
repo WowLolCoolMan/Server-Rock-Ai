@@ -1490,3 +1490,43 @@ local model library and explicit recovery chooser remain available.
 Not yet verified: automatic compatibility detection, multi-route provider
 selection, durable provider identity across fallback attempts, Linux parity,
 and packaged-release acceptance.
+
+## Slice 41 — model-specific provider failure classification
+
+Status: `implemented_verified_windows`
+
+Provider failures now have a bounded Core classification separating endpoint
+unavailability, server rejection, image rejection, timeout, unknown errors,
+and the model-compatibility case where a stream closes without content. The
+native chat surface uses that classification to announce `Model compatibility
+issue` for the failing model, preserve the local recovery chooser, and record a
+model-compatibility operation failure reason without attempting an automatic
+switch.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ProviderErrorText.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including model, endpoint, image, and timeout classification cases.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (96 contracts).`
+- `git diff --check` — passed.
+- Live Windows provider failure — passed: the original local model's closed
+  stream exposed `Model compatibility issue · choose another local model or
+  check Settings` and retained the accessible recovery action.
+
+Privacy/security/licensing: classification uses only the local exception and
+request context already in memory. It does not inspect or transmit prompt
+content, does not select a route, and adds no dependency.
+
+Rollback: remove `ProviderFailureKind` and restore the generic failure status;
+existing error descriptions and explicit recovery remain available.
+
+Not yet verified: proactive compatibility detection before a request,
+multi-route provider selection, durable provider identity across fallback
+attempts, Linux parity, and packaged-release acceptance.
