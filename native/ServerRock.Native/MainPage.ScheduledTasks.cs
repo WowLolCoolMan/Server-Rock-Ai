@@ -58,9 +58,17 @@ public sealed partial class MainPage
         mode.Items.Add("Coding Agent");
         mode.SelectedIndex = _mode == WorkspaceModes.CodingAgent ? 1 : 0;
         AutomationProperties.SetName(mode, "Scheduled task workspace");
-        var note = new TextBlock { Text = "When due, the prompt is placed in the composer for review. Normal model availability, remote-data consent, and send controls still apply.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 };
-        var content = new StackPanel { Spacing = 9, Children = { prompt, dueDate, dueTime, mode, note } };
-        var dialog = new ContentDialog { Title = "Schedule one-time task", Content = content, PrimaryButtonText = "Schedule", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
+        var repeat = new ComboBox { Header = "Repeat", MinWidth = 220 };
+        repeat.Items.Add("One-time");
+        repeat.Items.Add("Every hour");
+        repeat.Items.Add("Every 2 hours");
+        repeat.Items.Add("Daily");
+        repeat.Items.Add("Weekly");
+        repeat.SelectedIndex = 0;
+        AutomationProperties.SetName(repeat, "Scheduled task recurrence");
+        var note = new TextBlock { Text = "When due, the prompt is placed in the composer for review. Recurring tasks reschedule only after a successful surfaced run; failures stop for review. Normal model availability, remote-data consent, and send controls still apply.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 };
+        var content = new StackPanel { Spacing = 9, Children = { prompt, dueDate, dueTime, mode, repeat, note } };
+        var dialog = new ContentDialog { Title = "Schedule task", Content = content, PrimaryButtonText = "Schedule", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         dialog.Opened += (_, _) => prompt.Focus(FocusState.Programmatic);
         activityDialog?.Hide();
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
@@ -74,8 +82,9 @@ public sealed partial class MainPage
         var dueAtUtc = new DateTimeOffset(localDateTime, TimeZoneInfo.Local.GetUtcOffset(localDateTime)).ToUniversalTime();
         try
         {
-            var scheduled = _scheduledTaskStore.Schedule(prompt.Text, dueAtUtc, mode.SelectedIndex == 1 ? WorkspaceModes.CodingAgent : WorkspaceModes.Chat);
-            RuntimeStatus.Text = $"Scheduled task for {scheduled.DueAtUtc.ToLocalTime():g}. It will appear in the composer for review.";
+            var repeatEveryMinutes = repeat.SelectedIndex switch { 1 => 60, 2 => 120, 3 => 24 * 60, 4 => 7 * 24 * 60, _ => (int?)null };
+            var scheduled = _scheduledTaskStore.Schedule(prompt.Text, dueAtUtc, mode.SelectedIndex == 1 ? WorkspaceModes.CodingAgent : WorkspaceModes.Chat, repeatEveryMinutes: repeatEveryMinutes);
+            RuntimeStatus.Text = $"Scheduled task for {scheduled.DueAtUtc.ToLocalTime():g}{(repeatEveryMinutes is null ? string.Empty : $" · repeats every {repeatEveryMinutes} minutes")}. It will appear in the composer for review.";
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Task could not be scheduled: {ex.Message}"; }
     }

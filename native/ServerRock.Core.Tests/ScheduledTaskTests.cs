@@ -19,12 +19,20 @@ internal static class ScheduledTaskTests
         var completed = store.Load().Single(item => item.Id == claimed.Id);
         Check(completed.Status == ScheduledTaskStatuses.Completed && completed.Outcome!.Contains("reviewed", StringComparison.Ordinal), "scheduled task records its outcome");
 
+        var recurring = store.Schedule("Review recurring health", now.AddMinutes(10), WorkspaceModes.Chat, now, repeatEveryMinutes: 120);
+        var recurringClaim = store.TryClaimDue(now.AddMinutes(11));
+        Check(recurringClaim?.Id == recurring.Id, "recurring task is claimed when due");
+        store.Complete(recurring.Id, succeeded: true, "surfaced for review", now.AddMinutes(11));
+        var rescheduled = store.Load().Single(item => item.Id == recurring.Id);
+        Check(rescheduled.Status == ScheduledTaskStatuses.Scheduled && rescheduled.RunCount == 1 && rescheduled.DueAtUtc == now.AddMinutes(131), "successful recurring task is durably rescheduled");
+        Check(store.TryClaimDue(now.AddMinutes(12)) is null, "rescheduled task is not replayed early");
+
         var paused = store.Schedule("Paused task", now.AddMinutes(8), WorkspaceModes.CodingAgent, now);
         store.Pause(paused.Id);
         Check(store.TryClaimDue(now.AddMinutes(9)) is null, "paused scheduled task is not claimed");
         store.Resume(paused.Id);
         Check(store.TryClaimDue(now.AddMinutes(9))?.Id == paused.Id, "paused task resumes explicitly");
-        Console.WriteLine("PASS scheduled task persistence, claim, no-replay, outcome, pause, and resume");
+        Console.WriteLine("PASS scheduled task persistence, recurrence, claim, no-replay, outcome, pause, and resume");
     }
 
     private static void Check(bool condition, string message)

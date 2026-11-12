@@ -116,14 +116,15 @@ public sealed partial class MainPage
         IReadOnlyList<ScheduledTask> scheduledTasks = [];
         try { scheduledTasks = _scheduledTaskStore.Load(); }
         catch (Exception ex) { RuntimeStatus.Text = $"Scheduled tasks are unavailable: {ex.Message}"; }
-        var scheduleButton = new Button { Content = "Schedule one-time task", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
-        AutomationProperties.SetName(scheduleButton, "Schedule one-time task");
+        var scheduleButton = new Button { Content = "Schedule task", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(scheduleButton, "Schedule task");
         scheduleButton.Click += async (_, _) => await CreateScheduledTaskAsync(dialog);
         content.Children.Add(scheduleButton);
         foreach (var task in scheduledTasks.OrderBy(item => item.Status == ScheduledTaskStatuses.Scheduled ? 0 : 1).ThenBy(item => item.DueAtUtc).Take(20))
         {
             var taskPanel = new StackPanel { Spacing = 3 };
-            taskPanel.Children.Add(new TextBlock { Text = $"{task.Status} · {task.DueAtUtc.ToLocalTime():g} · {task.WorkspaceMode}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            var recurrence = task.RepeatEveryMinutes is null ? "one-time" : $"every {task.RepeatEveryMinutes} min · run {task.RunCount}";
+            taskPanel.Children.Add(new TextBlock { Text = $"{task.Status} · {task.DueAtUtc.ToLocalTime():g} · {task.WorkspaceMode} · {recurrence}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
             taskPanel.Children.Add(new TextBlock { Text = task.Prompt, TextWrapping = TextWrapping.Wrap });
             if (task.Outcome is not null) taskPanel.Children.Add(new TextBlock { Text = task.Outcome, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
             if (task.Status is ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Paused)

@@ -2304,6 +2304,45 @@ uppercase-search regression assertion.
 Not yet verified: full cross-platform locale matrix and live accessibility
 acceptance for every search result state.
 
+## Slice 72 — bounded recurring scheduled tasks
+
+Status: `implemented_verified_core`
+
+The durable scheduler now supports one-hour, two-hour, daily, and weekly
+recurrence options while preserving one-shot scheduling as the default. A
+successful surfaced run is durably rescheduled with its run count incremented;
+failed runs remain failed for review and are not automatically retried. Existing
+pause/resume and no-replay behavior remain explicit and durable.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ScheduledTask.cs`
+- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
+- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including recurring claim, durable rescheduling, run-count, and early-replay protection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (125 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: recurrence stores only bounded local task metadata;
+it does not execute a model request automatically. Each surfaced prompt still
+passes through the existing review, availability, consent, and send controls.
+No dependency or third-party code was added.
+
+Rollback: remove `RepeatEveryMinutes`/`RunCount`, the recurrence branch in
+completion, the recurrence picker/display, its tests, and the static UI
+contract; one-shot task behavior remains available.
+
+Not yet verified: live Windows recurring-task creation and pause/resume,
+timezone/locale matrix, backoff policies, autonomous background execution,
+parallel agents, Linux parity, and packaged acceptance.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`
