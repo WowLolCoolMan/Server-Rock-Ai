@@ -164,6 +164,9 @@ public sealed partial class MainPage
             approvalTimer.Tick += (_, _) =>
             {
                 var now = DateTimeOffset.UtcNow;
+                var expiredRuns = _workflowRunService.ExpirePendingApprovals(now);
+                if (expiredRuns.Count > 0)
+                    RuntimeStatus.Text = $"{expiredRuns.Count} workflow approval{(expiredRuns.Count == 1 ? "" : "s")} expired without dispatch.";
                 foreach (var item in approvalCountdowns)
                 {
                     item.Status.Text = ApprovalDetails(item.Request, now);

@@ -1569,6 +1569,39 @@ continuity, packaged Linux parity, and approval-inbox live acceptance. The
 next dependency remains a deterministic local test endpoint or healthy local
 model for successful dispatch evidence.
 
+## Slice 77 — persist live approval expiry
+
+Status: `implemented_verified_core`
+
+The Activity approval countdown now persists expired approvals on the live
+timer tick instead of waiting for the Activity surface to be reopened. Expired
+buttons remain disabled, the status reports that no dispatch occurred, and the
+existing service idempotence prevents repeated timer ticks from appending
+duplicate expiry events.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the regression that resolves an unrelated pending fixture approval, expires the target approval, invokes expiry again, and verifies one durable `approval.expired` event.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: expiry is local durable workflow state. It does
+not dispatch a provider, tool, shell, file, Git, or network action and adds no
+credentials, dependency, or third-party code.
+
+Rollback: remove the timer call and status update; the existing open-time
+expiry behavior and approval controls remain as the weaker fallback.
+
+Not yet verified: live Windows seeded approval expiry/countdown acceptance,
+successful workflow execution, richer branching, parallel limits, OS session
+hosting, Linux parity, and packaged acceptance.
+
 ## Slice 49 — serialize reviewed workspace writes
 
 Status: `implemented_verified_with_live_surface_boundary`
