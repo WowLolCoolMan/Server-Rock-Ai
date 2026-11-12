@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `2974a96` plus the live local-provider validation
+Snapshot commit: `0eb64d6` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -35,7 +35,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Activity and diagnostics | partial | Runtime status banner, redacted diagnostic export, durable operation journal, chat lifecycle integration, Activity & tasks history surface, explicit reconciliation outcomes, and provider/model/privacy provenance | Search/exported operation evidence and live accessibility acceptance |
 | Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, model/voice/host controls; Core persistence tests; inline endpoint/model/local-only validation keeps invalid Save attempts open with an accessible error; live cancel-preserves-settings evidence | Broader platform-specific diagnostics and complete live accessibility matrix |
 | Companion/pet | partial | First-party companion state, selection and persistence exist | Complete presentation/positioning/collision/accessibility acceptance |
-| Updates and releases | partial | Signed-manifest verification and fail-closed CI contracts are documented/implemented in parts | Signed installers, clean-machine install/upgrade/uninstall/rollback and platform evidence |
+| Updates and releases | partial | Core now verifies an RSA-authenticated release manifest, channel/version monotonicity, and staged artifact SHA-256; CI remains fail-closed and the manual updater still avoids silent installation | Signed installers, release-feed integration, clean-machine install/upgrade/uninstall/rollback and platform evidence |
 | Security and privacy | partial | Bounded I/O, path checks, redaction, approval surfaces and local/cloud labeling are present | OS isolation, keyring parity, threat-model coverage and full negative scenario suite |
 | Windows/Linux parity | unverified | Windows native build and Core tests are available locally; repository docs contain historical Linux evidence | Fresh live Linux build/run, exact distro scope, accessibility, packaging and release artifacts |
 

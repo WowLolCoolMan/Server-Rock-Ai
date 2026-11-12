@@ -1847,6 +1847,46 @@ protocol negotiation beyond the bounded initialize response, schema-change
 re-consent, connection health/revocation UI, audit journal events, a live
 external MCP server, Linux/Windows packaged acceptance, and ACP adapters.
 
+## Slice 57 — authenticated release manifest verifier
+
+Status: `implemented_verified_core`
+
+The Core layer now verifies a signed release manifest before a staged artifact
+can be considered eligible for update handling. The verifier authenticates a
+canonical version/channel/artifact/digest/key-id payload with a supplied RSA
+public key, rejects channel mismatches and non-monotonic versions, and checks
+the staged artifact SHA-256 before use. This is verification infrastructure;
+the existing manual GitHub release screen remains non-installing and no
+automatic download, replacement, or rollback behavior was enabled by this
+slice.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ReleaseManifest.cs`
+- `native/ServerRock.Core/Services/ReleaseManifestVerifier.cs`
+- `native/ServerRock.Core.Tests/ReleaseManifestVerifierTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid RSA authentication and artifact hashing plus tampered-manifest, tampered-artifact, and channel-mismatch rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: verification is local and bounded; it does not
+contact a release host, execute a package, access user data, or persist keys.
+The artifact is rejected on signature, channel, version, or digest failure.
+No dependency or third-party code was added.
+
+Rollback: remove the verifier, manifest model, focused tests, and test-runner
+entry. Existing manual update discovery remains unchanged.
+
+Not yet verified: trusted public-key provisioning and rotation, signed feed
+fetch integration, package signature/Authenticode/GPG verification, staged
+install transaction, restart/rollback orchestration, UI diagnostics, clean
+machine acceptance, Windows/Linux packaged evidence, and release publication.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
