@@ -2256,6 +2256,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (124 contracts).`
 - `git diff --check` — passed.
+- Live Windows accessibility inspection — passed by launching the exact
+  `net10.0-desktop` executable, opening Settings → Chats & history → Manage
+  memory, and observing the local-only disclosure plus Import saved memory
+  backup and Export saved memory backup controls. The empty state reported
+  `0 saved entries · local only`; no memory data was changed.
 
 Privacy/security/licensing: parsing is local and bounded to 12 MB; malformed,
 unsupported, or over-capacity backups are rejected before persistence. Import
@@ -2266,7 +2271,7 @@ Rollback: remove `MemoryStore.PlanImport`/`ApplyImport`, the import picker and
 confirmation flow, its tests, and the static UI contract; existing memory
 editing and export remain available.
 
-Not yet verified: live Windows import-picker and confirmation acceptance,
+Not yet verified: live Windows picker selection and confirmation acceptance,
 encrypted storage, retention controls, review-before-injection, automatic
 memory proposals, model-context injection, cross-device sync, Linux parity,
 and packaged acceptance.
