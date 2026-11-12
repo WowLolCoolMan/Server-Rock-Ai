@@ -1034,3 +1034,39 @@ discovery beyond OpenAI-compatible `/models`, streaming/context-limit
 discovery, fallback consent, multi-provider routing, live accessibility, and
 packaged Linux parity. The next dependency is surfacing descriptor evidence in
 model selection before routing decisions consume it.
+
+## Slice 29 — visible selected-model capability evidence
+
+Status: `implemented_unverified`
+
+The live connection refresh now uses the profile-aware discovery API and
+reports the selected model's provider-advertised vision state in the runtime
+status: `vision advertised`, `non-vision metadata`, or `vision capability
+unknown`. Existing model fallback and connection state behavior is unchanged;
+the evidence is informational and does not silently route, upload, or alter
+the user's model choice.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Connection.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including provider discovery and all existing connection/provider coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the status uses only bounded metadata returned by
+the configured provider. It does not expose credentials or endpoint URLs in
+the capability label, and it does not enable fallback or additional routing.
+No third-party code was added.
+
+Rollback: restore the legacy model-ID discovery call and generic connected
+status; model selection and connection checks remain functional.
+
+Not yet verified: live runtime status accessibility, provider metadata support
+beyond `/models`, streaming/context-limit discovery, fallback consent,
+multi-provider routing, and packaged Linux parity. The next dependency is a
+tested capability-aware selection decision, still requiring explicit consent
+before any alternate route is used.

@@ -11,6 +11,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
 
@@ -34,7 +35,8 @@ public sealed partial class MainPage
         HeaderConnectionLabel.Text = "Checking…";
         try
         {
-            var models = await _provider.DiscoverModelsAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
+            var profiles = await _provider.DiscoverModelProfilesAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
+            var models = profiles.Select(profile => profile.Model).ToArray();
             _providerConnected = true;
             var local = LocalEndpoint.IsLocal(_settings.Endpoint);
             ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
@@ -50,7 +52,17 @@ public sealed partial class MainPage
                 UpdateModelLabel();
                 RuntimeStatus.Text = $"Selected installed model {_settings.Model}; {previouslySelected} was unavailable";
             }
-            else RuntimeStatus.Text = $"Connected · {_settings.Model}";
+            else
+            {
+                var selectedProfile = profiles.FirstOrDefault(profile => profile.Model.Equals(_settings.Model, StringComparison.Ordinal));
+                var capability = selectedProfile?.Vision switch
+                {
+                    CapabilitySupport.Supported => "vision advertised",
+                    CapabilitySupport.Unsupported => "non-vision metadata",
+                    _ => "vision capability unknown"
+                };
+                RuntimeStatus.Text = $"Connected · {_settings.Model} · {capability}";
+            }
         }
         catch (Exception ex)
         {
