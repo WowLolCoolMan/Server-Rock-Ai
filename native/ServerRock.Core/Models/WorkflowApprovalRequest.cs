@@ -6,4 +6,5 @@ public sealed record WorkflowApprovalRequest(
     int WorkflowVersion,
     string NodeId,
     string Label,
-    DateTimeOffset RequestedAt);
+    DateTimeOffset RequestedAt,
+    DateTimeOffset ExpiresAt);

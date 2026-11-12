@@ -238,7 +238,7 @@ public sealed class WorkflowRunService
             .Where(run => run.Status == WorkflowRunStatuses.AwaitingApproval)
             .SelectMany(run => run.Steps
                 .Where(step => step.Status == WorkflowStepStatuses.WaitingApproval)
-                .Select(step => new WorkflowApprovalRequest(run.RunId, run.WorkflowId, run.WorkflowVersion, step.NodeId, step.Label, run.UpdatedAt)))
+                .Select(step => new WorkflowApprovalRequest(run.RunId, run.WorkflowId, run.WorkflowVersion, step.NodeId, step.Label, run.UpdatedAt, run.UpdatedAt + ApprovalLifetime)))
             .OrderBy(request => request.RequestedAt)
             .Take(100)
             .ToArray();

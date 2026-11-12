@@ -767,3 +767,39 @@ Not yet verified: live keyboard/screen-reader approval acceptance, approval
 identity display/expiry messaging, write/shell/network adapters, parallel
 limits, scheduling, and packaged Linux parity. The next dependency is a
 durable approval identity and visible expiry state in the effect timeline.
+
+## Slice 22 — approval identity and expiry visibility
+
+Status: `implemented_unverified`
+
+Pending approval records now expose a deterministic expiry timestamp derived
+from the 30-minute lifetime. The Activity inbox displays it, while event
+summaries show shortened approval identities for grants and explicit outcomes
+for denial and expiry. Denial reasons remain bounded; expired requests are
+not actionable.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowApprovalRequest.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including expiry timestamp assertions, denial, and expiration events.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded local identities, timestamps, and
+denial metadata are displayed. No credentials or file contents are exposed;
+no network, shell, provider, Git, or third-party code path was added.
+
+Rollback: remove expiry metadata and event-summary additions; durable approval
+denial/expiry transitions remain intact.
+
+Not yet verified: live keyboard/screen-reader behavior, approval countdown
+UX, write/shell/network adapters, parallel limits, scheduling, and packaged
+Linux parity. The next dependency is broader branching semantics or another
+adapter only after its separate permission contract.

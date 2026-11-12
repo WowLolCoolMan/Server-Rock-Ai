@@ -65,7 +65,7 @@ public sealed partial class MainPage
             foreach (var approval in pendingApprovals)
             {
                 var approvalPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-                approvalPanel.Children.Add(new TextBlock { Text = $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                approvalPanel.Children.Add(new TextBlock { Text = $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}\nExpires {approval.ExpiresAt.ToLocalTime():g}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
                 var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 var deny = new Button { Content = "Deny", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 AutomationProperties.SetName(approve, $"Approve pending workflow step {approval.Label}");
@@ -254,12 +254,16 @@ public sealed partial class MainPage
     {
         "workspace.read_completed" => $"Workspace read · {workflowEvent.Payload.GetValueOrDefault("relativePath", "file")} · {workflowEvent.Payload.GetValueOrDefault("charactersRead", "0")} chars · no mutation",
         "condition.evaluated" => $"Condition evaluated · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")} = {workflowEvent.Payload.GetValueOrDefault("result", "unknown")}",
-        "approval.granted" => $"Approval recorded · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")}",
+        "approval.granted" => $"Approval recorded · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")} · {ShortIdentity(workflowEvent.Payload.GetValueOrDefault("approvalId", "unknown"))}",
+        "approval.denied" => $"Approval denied · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")} · {workflowEvent.Payload.GetValueOrDefault("reason", "user decision")}",
+        "approval.expired" => $"Approval expired · {workflowEvent.Payload.GetValueOrDefault("nodeId", "step")} · no action dispatched",
         "run.needs_reconciliation" => "Restart reconciliation required · no side effect replay",
         "run.completed" => "Run completed after verification",
         "run.cancelled" => "Run cancelled",
         _ => workflowEvent.Type.Replace('.', ' ')
     };
+
+    private static string ShortIdentity(string value) => value.Length <= 12 ? value : value[..12] + "…";
 
     private void ApproveWorkflowStep(WorkflowRun run, WorkflowStepRun step, ContentDialog? dialog)
     {
