@@ -62,10 +62,17 @@ internal static class WorkflowRunServiceTests
                 workspaceRun = runs.ReadWorkspaceStep(workspaceRun.RunId, "read", workspaceRoot, "readme.md", workspaceGrant);
                 Check(workspaceRun.Status == WorkflowRunStatuses.Completed && workspaceRun.Steps.Single().Result == "read 13 characters" && runs.Load().Events.Any(item => item.Type == "workspace.read_completed" && item.Payload["mutated"] == "false"), "workflow workspace read records a non-mutating effect event");
             }
+
             finally
             {
                 if (Directory.Exists(workspaceRoot)) Directory.Delete(workspaceRoot, recursive: true);
             }
+
+            var approvalDefinition = new WorkflowDefinition { Id = "approval-inbox-flow", Title = "Approval inbox", Nodes = [new() { Id = "approval", Type = WorkflowNodeTypes.Approval, Label = "Review action" }] };
+            var approvalOne = runs.Create(approvalDefinition); runs.Queue(approvalOne.RunId); runs.Start(approvalOne.RunId); runs.BeginStep(approvalOne.RunId, "approval");
+            var approvalTwo = runs.Create(new WorkflowDefinition { Id = "approval-inbox-flow-2", Title = "Approval inbox 2", Nodes = [new() { Id = "approval", Type = WorkflowNodeTypes.Approval, Label = "Review second action" }] });
+            runs.Queue(approvalTwo.RunId); runs.Start(approvalTwo.RunId); runs.BeginStep(approvalTwo.RunId, "approval");
+            Check(runs.LoadPendingApprovals().Count == 2, "concurrent approvals are surfaced as one durable inbox");
         }
         finally
         {

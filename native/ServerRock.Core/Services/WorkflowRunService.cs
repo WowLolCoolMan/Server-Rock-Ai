@@ -230,6 +230,19 @@ public sealed class WorkflowRunService
 
     public WorkflowRunSnapshot Load() => ReadSnapshot();
 
+    public IReadOnlyList<WorkflowApprovalRequest> LoadPendingApprovals()
+    {
+        var snapshot = Load();
+        return snapshot.Runs
+            .Where(run => run.Status == WorkflowRunStatuses.AwaitingApproval)
+            .SelectMany(run => run.Steps
+                .Where(step => step.Status == WorkflowStepStatuses.WaitingApproval)
+                .Select(step => new WorkflowApprovalRequest(run.RunId, run.WorkflowId, run.WorkflowVersion, step.NodeId, step.Label, run.UpdatedAt)))
+            .OrderBy(request => request.RequestedAt)
+            .Take(100)
+            .ToArray();
+    }
+
     private WorkflowRun Transition(string runId, string next, string actor)
     {
         var snapshot = Load();

@@ -693,3 +693,40 @@ Not yet verified: live timeline keyboard/screen-reader behavior, approval
 inbox queuing, write/shell/network adapters, parallel limits, scheduling, and
 packaged Linux parity. The next dependency is a UI-visible approval inbox
 model for concurrent workflow requests.
+
+## Slice 20 — durable approval inbox
+
+Status: `implemented_unverified`
+
+`WorkflowRunService.LoadPendingApprovals` derives up to 100 pending approval
+requests from durable runs, ordered by request time. Activity & tasks now
+renders one bounded Pending approvals section before individual workflow
+details; each accessible Approve action targets the exact run and node and
+uses the existing approval event path. Concurrent requests do not require
+nested modal dialogs.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowApprovalRequest.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including two concurrent approvals surfaced through one inbox.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the inbox shows bounded local workflow/node IDs
+and labels only; approval remains exact-run/node scoped and auditable. No
+network, credential, shell, provider, Git, or third-party code path was added.
+
+Rollback: remove the pending-request model/query and inbox rendering; per-run
+approval controls and durable run events remain available.
+
+Not yet verified: live concurrent approval keyboard/screen-reader acceptance,
+approval expiry/denial, write/shell/network adapters, parallel limits,
+scheduling, and packaged Linux parity. The next dependency is durable approval
+denial/expiry semantics before any broader adapter surface.

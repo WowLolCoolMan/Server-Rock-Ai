@@ -57,6 +57,21 @@ public sealed partial class MainPage
 
         var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
         ContentDialog? dialog = null;
+        var pendingApprovals = _workflowRunService.LoadPendingApprovals();
+        if (pendingApprovals.Count > 0)
+        {
+            content.Children.Add(new TextBlock { Text = $"PENDING APPROVALS · {pendingApprovals.Count}", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75 });
+            foreach (var approval in pendingApprovals)
+            {
+                var approvalPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+                approvalPanel.Children.Add(new TextBlock { Text = $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(approve, $"Approve pending workflow step {approval.Label}");
+                approve.Click += (_, _) => ApprovePendingWorkflowStep(approval, dialog);
+                approvalPanel.Children.Add(approve);
+                content.Children.Add(new Border { Background = ResourceBrush("WarningBrush"), BorderBrush = ResourceBrush("WarningLineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = approvalPanel });
+            }
+        }
         if (reconciled.Count > 0)
         {
             content.Children.Add(new Border
@@ -253,6 +268,18 @@ public sealed partial class MainPage
         {
             RuntimeStatus.Text = $"Workflow approval could not be recorded: {ex.Message}";
         }
+    }
+
+    private void ApprovePendingWorkflowStep(WorkflowApprovalRequest approval, ContentDialog? dialog)
+    {
+        var run = _workflowRunService.Load().Runs.SingleOrDefault(item => item.RunId == approval.RunId);
+        var step = run?.Steps.SingleOrDefault(item => item.NodeId == approval.NodeId);
+        if (run is null || step is null)
+        {
+            RuntimeStatus.Text = "That approval is no longer pending. Refresh Activity & tasks.";
+            return;
+        }
+        ApproveWorkflowStep(run, step, dialog);
     }
 
     private async Task ShowWorkflowPlanAsync(WorkflowRun run)
