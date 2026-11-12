@@ -12,6 +12,7 @@ public sealed class McpStdioClient : IAsyncDisposable
     private const int MaxArgumentsCharacters = 32 * 1024;
     private const int MaxResultCharacters = 1 * 1024 * 1024;
     private readonly string _serverId;
+    private readonly McpConnectionRegistry? _connectionRegistry;
     private readonly StreamReader _input;
     private readonly StreamWriter _output;
     private readonly BoundedHttpContent.LimitedLineReader _lines;
@@ -20,10 +21,11 @@ public sealed class McpStdioClient : IAsyncDisposable
     private int _nextRequestId;
     private bool _initialized;
 
-    public McpStdioClient(string serverId, Stream input, Stream output, TimeSpan? requestTimeout = null)
+    public McpStdioClient(string serverId, Stream input, Stream output, TimeSpan? requestTimeout = null, McpConnectionRegistry? connectionRegistry = null)
     {
         if (string.IsNullOrWhiteSpace(serverId) || serverId.Length > 128 || serverId.Any(char.IsControl)) throw new ArgumentException("The MCP server identity is invalid.", nameof(serverId));
         _serverId = serverId;
+        _connectionRegistry = connectionRegistry;
         _requestTimeout = requestTimeout ?? TimeSpan.FromSeconds(30);
         if (_requestTimeout < TimeSpan.FromSeconds(1) || _requestTimeout > TimeSpan.FromMinutes(5)) throw new ArgumentOutOfRangeException(nameof(requestTimeout));
         _input = new StreamReader(input ?? throw new ArgumentNullException(nameof(input)), new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: false, bufferSize: 4096, leaveOpen: true);
@@ -78,7 +80,8 @@ public sealed class McpStdioClient : IAsyncDisposable
         if (arguments.ValueKind != JsonValueKind.Object) throw new ArgumentException("MCP tool arguments must be a JSON object.", nameof(arguments));
         var argumentsJson = arguments.GetRawText();
         if (Encoding.UTF8.GetByteCount(argumentsJson) > MaxArgumentsCharacters) throw new InvalidDataException("MCP tool arguments exceed the bounded payload limit.");
-        McpToolPermissionGate.Authorize(descriptor, grant);
+        if (_connectionRegistry is null) McpToolPermissionGate.Authorize(descriptor, grant);
+        else _connectionRegistry.Authorize(descriptor, grant);
         using var result = await SendRequestAsync("tools/call", new { name = descriptor.ToolName, arguments }, cancellationToken).ConfigureAwait(false);
         if (!result.RootElement.TryGetProperty("result", out var callResult)) throw new InvalidDataException("The MCP tools/call response is missing a result.");
         var isError = callResult.TryGetProperty("isError", out var error) && error.ValueKind == JsonValueKind.True;

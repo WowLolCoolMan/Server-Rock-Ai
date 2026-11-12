@@ -1887,6 +1887,47 @@ fetch integration, package signature/Authenticode/GPG verification, staged
 install transaction, restart/rollback orchestration, UI diagnostics, clean
 machine acceptance, Windows/Linux packaged evidence, and release publication.
 
+## Slice 58 — MCP connection lifecycle and revocation boundary
+
+Status: `implemented_verified_core`
+
+The MCP Core path now has a process-local connection registry with configured,
+healthy, degraded, disconnected, and revoked states. Tool authorization checks
+the registered server and connection identity and requires a healthy state;
+revocation is terminal for that connection and blocks subsequent stdio calls.
+The registry is connected to `McpStdioClient`, so revocation is enforced
+outside the UI and before a request is written to the transport. This slice is
+deliberately not a durable connection store or a UI lifecycle journey yet.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/McpTool.cs`
+- `native/ServerRock.Core/Services/McpConnectionRegistry.cs`
+- `native/ServerRock.Core/Services/McpStdioClient.cs`
+- `native/ServerRock.Core.Tests/McpConnectionRegistryTests.cs`
+- `native/ServerRock.Core.Tests/McpStdioClientTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including configured-to-healthy authorization, revocation denial, terminal reactivation refusal, and client-level revocation before wire output.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: connection state and revocation remain process-local
+and contain no credentials or prompt content. Exact server/connection matching,
+healthy-state checks, terminal revocation, and existing bounded grants prevent
+stale UI state from authorizing a new tool call. No dependency or third-party
+code was added.
+
+Rollback: remove `McpConnectionRegistry`, the lifecycle model, its tests, and
+the optional client registry dependency. The standalone MCP permission gate
+and transport remain usable.
+
+Not yet verified: durable connection persistence, process supervision and
+cleanup, health probes, disconnect recovery, Streamable HTTP, UI permission
+review/revocation, audit journal events, live external MCP server acceptance,
+Linux/Windows packaged evidence, and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

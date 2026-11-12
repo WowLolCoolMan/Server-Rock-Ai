@@ -6,6 +6,26 @@ public static class McpCapabilities
     public const string InvokeWrite = "mcp.invoke.write";
 }
 
+public static class McpConnectionStates
+{
+    public const string Configured = "configured";
+    public const string Healthy = "healthy";
+    public const string Degraded = "degraded";
+    public const string Disconnected = "disconnected";
+    public const string Revoked = "revoked";
+}
+
+public sealed class McpConnection
+{
+    public string ConnectionId { get; set; } = "";
+    public string ServerId { get; set; } = "";
+    public string Transport { get; set; } = "stdio";
+    public string State { get; set; } = McpConnectionStates.Configured;
+    public string ManifestDigest { get; set; } = "";
+    public string LastError { get; set; } = "";
+    public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+}
+
 /// <summary>Untrusted metadata received from an MCP server. It never grants permission.</summary>
 public sealed class McpToolDescriptor
 {

@@ -29,6 +29,7 @@ ScheduledTaskTests.Run();
 SkillPackageInstallerTests.Run();
 McpToolPermissionGateTests.Run();
 await McpStdioClientTests.RunAsync();
+McpConnectionRegistryTests.Run();
 await ReleaseManifestVerifierTests.RunAsync();
 
 Console.WriteLine("Native core checks passed.");
