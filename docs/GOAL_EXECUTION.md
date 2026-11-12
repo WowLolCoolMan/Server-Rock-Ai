@@ -878,6 +878,47 @@ Not yet verified: live keyboard/screen-reader queue interaction, reorder or
 persisted queue behavior, and packaged Linux parity. The next dependency is
 live accessibility validation before adding persistence or parallel dispatch.
 
+## Slice 30 — durable queued follow-up messages
+
+Status: `implemented_unverified`
+
+Queued follow-up requests are now saved atomically in local app data and
+restored at startup. The active response is never persisted or replayed: a
+request is removed from the durable queue immediately before dispatch. Queue
+mutations (enqueue, dequeue, remove, and clear) update the bounded store, and
+restored requests remain available through the existing Queue management
+surface for user review before sending.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ChatMessageQueueStore.cs`
+- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Core.Tests/ChatMessageQueueStoreTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including FIFO/attachment round-trip and persisted empty-queue behavior.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: queued prompts and explicitly attached content
+remain local app data, bounded by the existing eight-item and attachment
+limits. Persistence adds no network or credential path. Corrupt queue data is
+left untouched and reported; it is not overwritten with an empty queue.
+No third-party code was added.
+
+Rollback: remove queue-store load/save calls and the local queue store; the
+in-memory FIFO behavior remains available.
+
+Not yet verified: live restart/accessibility acceptance, queue reordering,
+cross-device synchronization, durable context continuity, and packaged Linux
+parity. The next dependency is live queue restart/accessibility validation
+before adding reorder or parallel dispatch.
+
 ## Slice 25 — durable chat operation provider provenance
 
 Status: `implemented_unverified`

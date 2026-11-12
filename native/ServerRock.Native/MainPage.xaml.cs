@@ -42,6 +42,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private readonly ChatMessageQueue _messageQueue = new();
+    private readonly ChatMessageQueueStore _messageQueueStore = new();
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;
     private List<LocalProject> _projects = [];
@@ -132,6 +133,15 @@ public sealed partial class MainPage : Page
         _settings = _settingsStore.Load();
         var legacyProjectInstructions = _settings.ProjectInstructions;
         var warnings = new List<string>();
+        try
+        {
+            foreach (var queued in _messageQueueStore.Load()) _messageQueue.Enqueue(queued.Text, queued.Attachments);
+            if (_messageQueue.Count > 0) warnings.Add($"Restored {_messageQueue.Count} queued message{(_messageQueue.Count == 1 ? "" : "s")}; review the Queue control before sending.");
+        }
+        catch (Exception ex)
+        {
+            warnings.Add($"Queued messages could not be restored; the saved queue was left untouched: {ex.Message}");
+        }
         try
         {
             var reconciled = _operationService.ReconcileAfterRestart();

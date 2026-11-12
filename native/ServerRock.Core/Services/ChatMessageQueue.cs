@@ -7,6 +7,7 @@ public sealed record QueuedChatRequest(string Text, IReadOnlyList<ChatAttachment
 /// <summary>Bounded FIFO for messages submitted while a response is active.</summary>
 public sealed class ChatMessageQueue(int capacity = 8)
 {
+    public const int DefaultCapacity = 8;
     private readonly Queue<QueuedChatRequest> _items = new();
 
     public int Count => _items.Count;

@@ -22,5 +22,6 @@ WorkflowRunServiceTests.Run();
 WorkflowCapabilityGateTests.Run();
 ReadOnlyWorkspaceAdapterTests.Run();
 ChatMessageQueueTests.Run();
+ChatMessageQueueStoreTests.Run();
 
 Console.WriteLine("Native core checks passed.");

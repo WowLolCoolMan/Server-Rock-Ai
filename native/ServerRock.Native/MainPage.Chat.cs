@@ -89,6 +89,7 @@ public sealed partial class MainPage
             try
             {
                 _messageQueue.Enqueue(text, _pendingAttachments.Count == 0 ? null : _pendingAttachments);
+                PersistMessageQueue();
                 PromptBox.Text = string.Empty;
                 ClearPendingAttachments();
                 UpdateQueueControl();
@@ -322,6 +323,7 @@ public sealed partial class MainPage
             PromptBox.Focus(FocusState.Programmatic);
             if (_messageQueue.TryDequeue(out var queued) && queued is not null)
             {
+                PersistMessageQueue();
                 PromptBox.Text = queued.Text;
                 if (queued.Attachments is not null) _pendingAttachments.AddRange(queued.Attachments);
                 RenderPendingAttachments();
@@ -363,6 +365,7 @@ public sealed partial class MainPage
                 remove.Click += (_, _) =>
                 {
                     _messageQueue.RemoveAt(capturedIndex);
+                    PersistMessageQueue();
                     UpdateQueueControl();
                     Render();
                 };
@@ -377,8 +380,19 @@ public sealed partial class MainPage
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             _messageQueue.Clear();
+            PersistMessageQueue();
             UpdateQueueControl();
             RuntimeStatus.Text = "Queued messages cleared. The active response was not changed.";
+        }
+    }
+
+    private void PersistMessageQueue()
+    {
+        try { _messageQueueStore.Save(_messageQueue.Snapshot()); }
+        catch (Exception ex)
+        {
+            App.Log.Error("Chat queue", ex, "Could not persist queued messages; keeping the in-memory queue");
+            RuntimeStatus.Text = "Queue persistence unavailable · current queued messages remain in memory";
         }
     }
 
