@@ -2271,6 +2271,34 @@ encrypted storage, retention controls, review-before-injection, automatic
 memory proposals, model-context injection, cross-device sync, Linux parity,
 and packaged acceptance.
 
+## Slice 71 — locale-independent conversation search
+
+Status: `implemented_verified_core`
+
+Conversation search now uses ordinal case-insensitive matching for message,
+tag, attachment, and source text. This keeps search behavior deterministic
+across machine cultures and adds a regression assertion for uppercase
+attachment queries.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ConversationSearchService.cs`
+- `native/ServerRock.Core.Tests/ConversationSearchTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the culture-independent uppercase attachment query.
+- `git diff --check` — passed in commit `f10f09c`.
+
+Privacy/security/licensing: matching remains local-only, adds no data flow or
+dependency, and does not change stored conversation content.
+
+Rollback: restore the prior culture-sensitive comparison and remove the
+uppercase-search regression assertion.
+
+Not yet verified: full cross-platform locale matrix and live accessibility
+acceptance for every search result state.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`

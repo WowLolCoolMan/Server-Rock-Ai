@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `7bbd714` plus the live local-provider validation
+Snapshot commit: `4ac3cb9` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -21,7 +21,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Domain | Status | Current evidence | Main gap / next dependency |
 | --- | --- | --- | --- |
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 104 contracts; live Ctrl+K command palette filtering, settings routing, and per-workspace draft restoration verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
-| Conversations | partial | Streaming with throttled 50 ms native rendering that preserves manual scroll position, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content, live search dialog/result/open-chat journey, successful live response with a compatible local model, separate Chat/Coding Agent composer drafts across workspace switches, provider-side deterministic context compaction that marks omitted history before an oversized request is sent, and a Settings-managed local memory editor with approval/provenance, durable enable/edit/delete controls, versioned local JSON backup export, and explicit duplicate-safe JSON backup restore | Live Windows memory import/export picker acceptance, memory injection policy, durable cross-restart context continuity, semantic compaction and 1M+ token support |
+| Conversations | partial | Streaming with throttled 50 ms native rendering that preserves manual scroll position, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content with deterministic ordinal matching, live search dialog/result/open-chat journey, successful live response with a compatible local model, separate Chat/Coding Agent composer drafts across workspace switches, provider-side deterministic context compaction that marks omitted history before an oversized request is sent, and a Settings-managed local memory editor with approval/provenance, durable enable/edit/delete controls, versioned local JSON backup export, and explicit duplicate-safe JSON backup restore | Live Windows memory import/export picker acceptance, memory injection policy, durable cross-restart context continuity, semantic compaction and 1M+ token support |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests; isolated-index selected commits now exclude unrelated pre-staged work while preserving the user's index; push now refreshes `origin` before evaluating ahead/behind state | Full project workbench, conflict recovery, worktree isolation, live Git dialog acceptance and complete push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests; reviewed writes now serialize per target path and reject the losing concurrent review hash | Multi-tab editor, external-process conflict evidence, syntax-aware editing and inspector integration |
@@ -41,14 +41,14 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `d5dad97`, with the user-provided
+- Live checkout: `main` at `4ac3cb9`, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
   uploaded remediation issues; every row initially declares
   `requires_live_repo_recheck`.
 - Current focused evidence: Core test harness, native desktop build, and the
-  104-contract native UI audit have passed for the current slice; no new claim of
+  124-contract native UI audit have passed for the current slice; no new claim of
   Linux or packaged-release validation is made here.
 - Existing slice evidence is recorded in `docs/GOAL_EXECUTION.md`.
 - Live search evidence: the native Windows app exposed `Search your workspace`,
