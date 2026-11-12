@@ -26,5 +26,6 @@ ChatMessageQueueTests.Run();
 ChatMessageQueueStoreTests.Run();
 ConversationSearchTests.Run();
 ScheduledTaskTests.Run();
+SkillPackageInstallerTests.Run();
 
 Console.WriteLine("Native core checks passed.");

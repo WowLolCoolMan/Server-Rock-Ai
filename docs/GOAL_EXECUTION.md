@@ -1652,6 +1652,47 @@ session process hosting, automatic provider execution/result capture, timezone
 and recurring schedules, backoff, cross-process locking, Linux parity, and
 packaged-release acceptance.
 
+## Slice 52 — staged, provenance-aware Markdown skill packages
+
+Status: `implemented_verified_core`
+
+Added `SkillPackageInstaller` as a fail-closed package boundary. A package
+must provide a validated manifest and root `SKILL.md`; only bounded UTF-8
+Markdown files are accepted, while scripts, binaries, symlinks, reparse
+points, traversal paths, oversized files, and oversized packages are rejected.
+The installer records the pinned source reference and SHA-256 package digest,
+activates through a staging directory, preserves the prior version, and can
+roll back to the previous activation. Package content is treated as
+instructions only and is never executed by this installer.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/InstalledSkill.cs`
+- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including pinned provenance, digest, atomic replacement, rollback, and executable-content rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after stopping the validation app that held the output DLL.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (111 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: no network fetch, script execution, provider call,
+credential storage, or tool grant is performed. The source reference is
+recorded as provenance, while package content remains local and bounded. No
+dependency or third-party code was added.
+
+Rollback: remove the installer and test registration; the existing built-in
+skill catalog remains unchanged. Installed package directories are not touched
+by unrelated conversation, settings, or project stores.
+
+Not yet verified: GitHub download/ref pinning, staged-install UI, explicit
+permission review and enablement, publisher/signature trust, update diff,
+cross-process activation locking, Linux parity, and packaged-release
+acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
