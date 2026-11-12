@@ -63,4 +63,6 @@ public sealed class OperationService
     public OperationJournalSnapshot Load() => _journal.Load();
 
     public string ExportJson() => _journal.ExportJson();
+
+    public IReadOnlyList<OperationRun> Search(string? query) => _journal.Search(query);
 }

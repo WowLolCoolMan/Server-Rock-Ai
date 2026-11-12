@@ -85,6 +85,34 @@ public sealed partial class MainPage
             catch (Exception ex) { RuntimeStatus.Text = $"Activity evidence could not be exported: {ex.Message}"; }
         };
         content.Children.Add(exportActivity);
+        var searchActivity = new Button { Content = "Search activity", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(searchActivity, "Search activity evidence");
+        searchActivity.Click += async (_, _) =>
+        {
+            var query = new TextBox { PlaceholderText = "Instruction, status, model, provider, or workspace", MinWidth = 360 };
+            var results = new ListView { MinHeight = 160, MaxHeight = 360, DisplayMemberPath = nameof(OperationRun.UserInstruction) };
+            var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75 };
+            void RefreshResults()
+            {
+                try
+                {
+                    var matches = _operationService.Search(query.Text);
+                    results.ItemsSource = matches;
+                    status.Text = $"{matches.Count} local operation{(matches.Count == 1 ? "" : "s")} matched · no operation was changed.";
+                }
+                catch (Exception ex) { status.Text = $"Activity search could not run: {ex.Message}"; }
+            }
+            query.TextChanged += (_, _) => RefreshResults();
+            RefreshResults();
+            await new ContentDialog
+            {
+                Title = "Search activity",
+                Content = new StackPanel { Spacing = 8, Children = { query, results, status } },
+                CloseButtonText = "Done",
+                XamlRoot = XamlRoot
+            }.ShowAsync();
+        };
+        content.Children.Add(searchActivity);
         IReadOnlyList<ScheduledTask> scheduledTasks = [];
         try { scheduledTasks = _scheduledTaskStore.Load(); }
         catch (Exception ex) { RuntimeStatus.Text = $"Scheduled tasks are unavailable: {ex.Message}"; }

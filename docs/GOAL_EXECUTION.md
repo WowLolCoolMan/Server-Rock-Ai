@@ -2272,6 +2272,43 @@ Not yet verified: live Windows export-picker acceptance, searchable/exported
 operation evidence beyond the full journal, OS session hosting, parallel agent
 artifacts, Linux parity, and packaged acceptance.
 
+## Slice 68 — bounded local activity search
+
+Status: `implemented_verified_core`
+
+Activity & tasks now includes a non-mutating search dialog for durable
+operations. Queries are bounded and match local instruction, status, model,
+provider, or workspace provenance; results are capped and ordered by recent
+activity. The surface explicitly reports that searching does not change an
+operation.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local provenance matching and no-result behavior.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (123 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search stays on the local operation journal and
+does not send queries or instructions to a provider. Query length and control
+characters are rejected before processing, and no dependency was added.
+
+Rollback: remove the journal/service search methods, Activity search dialog,
+test assertion, and static UI contract; activity export and operation history
+remain available.
+
+Not yet verified: live Windows search accessibility acceptance, searchable
+workflow-event evidence, OS session hosting, parallel agent artifacts, Linux
+parity, and packaged acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

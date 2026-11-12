@@ -46,6 +46,22 @@ public sealed class OperationJournal
         }, Options);
     }
 
+    public IReadOnlyList<OperationRun> Search(string? query)
+    {
+        var normalized = query?.Trim() ?? string.Empty;
+        if (normalized.Length > 512 || normalized.Any(char.IsControl))
+            throw new ArgumentException("The operation search query is invalid.", nameof(query));
+        var runs = Load().Runs;
+        if (normalized.Length == 0) return runs.OrderByDescending(item => item.UpdatedAt).Take(200).ToArray();
+        return runs.Where(run =>
+                run.UserInstruction.Contains(normalized, StringComparison.OrdinalIgnoreCase) ||
+                run.Status.Contains(normalized, StringComparison.OrdinalIgnoreCase) ||
+                run.ModelProvider.Contains(normalized, StringComparison.OrdinalIgnoreCase) ||
+                run.Model.Contains(normalized, StringComparison.OrdinalIgnoreCase) ||
+                run.WorkspaceId.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.UpdatedAt).Take(200).ToArray();
+    }
+
     public OperationRun Create(string workspaceId, string userInstruction, string actor = "user",
         string modelProvider = "unknown", string model = "unknown", string endpointPrivacy = "unknown")
     {
