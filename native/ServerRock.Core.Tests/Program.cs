@@ -19,5 +19,6 @@ OperationJournalTests.Run();
 OperationServiceTests.Run();
 WorkflowServiceTests.Run();
 WorkflowRunServiceTests.Run();
+WorkflowCapabilityGateTests.Run();
 
 Console.WriteLine("Native core checks passed.");

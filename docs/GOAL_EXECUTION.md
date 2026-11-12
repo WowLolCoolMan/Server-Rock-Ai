@@ -549,3 +549,41 @@ Not yet verified: richer branching, tool adapter grants, parallel limits,
 scheduler/OS restart behavior, full approval inbox, and packaged Linux parity.
 The next dependency is a separate permission contract for any adapter beyond
 pure local conditions.
+
+## Slice 16 — exact-scope workflow capability contract
+
+Status: `implemented_unverified`
+
+Added a UI-free capability contract for future external workflow adapters.
+Requests and grants must match the exact run ID, node ID, and scope; requested
+capabilities must be in the explicit allowlist; the grant must cover the full
+request and include an approval identity. Pure condition nodes are forbidden
+from requesting external capabilities. The gate authorizes metadata only and
+does not execute anything.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowCapability.cs`
+- `native/ServerRock.Core/Services/WorkflowCapabilityGate.cs`
+- `native/ServerRock.Core.Tests/WorkflowCapabilityGateTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including exact-scope acceptance, cross-run refusal, and condition external-capability refusal.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: capability names and scopes are bounded and
+allowlisted; approval identity is required and no credential values are
+accepted. The contract adds no network, shell, filesystem, provider, Git, or
+third-party code path.
+
+Rollback: remove the capability model, gate, and test registration; current
+condition-only execution and workflow persistence remain unchanged.
+
+Not yet verified: adapter-specific grants, approval inbox queuing, parallel
+resource limits, scheduling, and packaged Linux parity. The next dependency
+is to connect this contract to a deliberately read-only workspace adapter
+with a separate effect audit.
