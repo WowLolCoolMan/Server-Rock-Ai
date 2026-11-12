@@ -36,6 +36,7 @@ public sealed partial class MainPage
         _activeChatFolder = null;
         _editingMessageIndex = null;
         _includeProjectFilesInChat = false;
+        _workspaceDrafts.Clear(_mode);
         _messages.Clear();
         ConversationMessages.Children.Clear();
         WelcomePanel.Visibility = Visibility.Visible;

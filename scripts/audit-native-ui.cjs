@@ -91,6 +91,9 @@ const requiredCode = [
   ['Settings validation policy', 'ConnectionSettingsValidator.Validate(endpoint.Text, model.Text, localOnly.IsChecked == true)'],
   ['Settings invalid submit stays open', 'args.Cancel = true'],
   ['Settings validation is announced', 'AutomationProperties.SetLiveSetting(saveValidation, AutomationLiveSetting.Assertive)'],
+  ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
+  ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
+  ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

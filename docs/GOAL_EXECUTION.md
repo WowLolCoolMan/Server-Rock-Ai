@@ -1574,6 +1574,53 @@ diagnostics, proactive model compatibility detection, multi-route provider
 selection, durable provider identity across fallback attempts, Linux parity, and
 packaged-release acceptance.
 
+## Slice 44 — preserve composer drafts across workspaces
+
+Status: `implemented_verified_windows`
+
+The Chat and Coding Agent workspaces now keep independent in-memory composer
+drafts while the user switches between them. Text changes update the active
+workspace draft, mode switching restores the destination draft, and starting a
+new chat clears only the active workspace draft. Drafts are bounded to 100,000
+characters and are intentionally not persisted as conversation history or
+settings.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/WorkspaceDraftStore.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.Recents.cs`
+- `native/ServerRock.Native/MainPage.SlashCommands.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including isolated Chat/Coding Agent draft state.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (104 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: Chat draft
+  `chat draft survives workspace switch` and Coding Agent draft
+  `coding draft survives workspace switch` were entered separately; switching
+  to Coding Agent and back restored the exact Chat draft and retained the same
+  selected model.
+
+Privacy/security/licensing: drafts remain in process memory only, never enter
+conversation persistence or provider requests until the user sends them, and
+no dependency or third-party code was added.
+
+Rollback: remove `WorkspaceDraftStore`, the draft field/restore calls, and the
+three UI audit contracts; existing mode switching continues with its prior
+composer behavior.
+
+Not yet verified: draft persistence across app restart, attachment-draft
+continuity, typed navigation history, persistent tabs/layout, proactive model
+compatibility detection, multi-route provider selection, durable provider
+identity across fallback attempts, Linux parity, and packaged-release
+acceptance.
+
 ## Slice 42 — preserve unavailable selected models until explicit choice
 
 Status: `implemented_verified_windows`

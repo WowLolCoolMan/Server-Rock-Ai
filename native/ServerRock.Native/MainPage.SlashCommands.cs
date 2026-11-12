@@ -28,6 +28,8 @@ public sealed partial class MainPage
     private void PromptTextChanged(object sender, TextChangedEventArgs e)
     {
         var text = PromptBox.Text;
+        if (!_restoringWorkspaceDraft)
+            _workspaceDrafts.Set(_mode, text);
         CommandSuggestions.Children.Clear();
         _selectedSlashSuggestion = -1;
         if (!text.StartsWith('/'))

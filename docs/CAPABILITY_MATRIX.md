@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `f62f578` plus the live local-provider validation
+Snapshot commit: `bec3f63` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -20,8 +20,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 | Domain | Status | Current evidence | Main gap / next dependency |
 | --- | --- | --- | --- |
-| Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 98 contracts; live Ctrl+K command palette filtering and settings routing verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
-| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content, live search dialog/result/open-chat journey, and successful live response with a compatible local model | Durable context continuity, model-specific response compatibility/recovery |
+| Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 104 contracts; live Ctrl+K command palette filtering, settings routing, and per-workspace draft restoration verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
+| Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content, live search dialog/result/open-chat journey, successful live response with a compatible local model, and separate Chat/Coding Agent composer drafts across workspace switches | Durable cross-restart context continuity, model-specific response compatibility/recovery |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
@@ -41,14 +41,14 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `f62f578`, with the user-provided
+- Live checkout: `main` at `bec3f63`, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
   uploaded remediation issues; every row initially declares
   `requires_live_repo_recheck`.
 - Current focused evidence: Core test harness, native desktop build, and the
-  98-contract native UI audit have passed for the current slice; no new claim of
+  104-contract native UI audit have passed for the current slice; no new claim of
   Linux or packaged-release validation is made here.
 - Existing slice evidence is recorded in `docs/GOAL_EXECUTION.md`.
 - Live search evidence: the native Windows app exposed `Search your workspace`,
@@ -88,6 +88,9 @@ capability prevents progress; `unverified` means evidence is insufficient.
   the dialog open with the accessible message `Enter a valid http:// or
   https:// model endpoint.`. Cancel then closed the dialog while the original
   local endpoint and model remained selected.
+- Live workspace-draft evidence: a Chat draft and a separate Coding Agent draft
+  were entered in the native Windows app; switching workspaces and switching
+  back restored each exact draft while the selected model remained unchanged.
 
 ## Backlog ordering
 

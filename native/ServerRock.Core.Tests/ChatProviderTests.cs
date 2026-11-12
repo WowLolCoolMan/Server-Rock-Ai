@@ -223,5 +223,11 @@ internal static class ChatProviderTests
             "invalid endpoint and missing model are rejected before save");
         Check(!ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
             "local-only settings reject remote endpoints before save");
+        var drafts = new WorkspaceDraftStore();
+        drafts.Set("ChatBot", "draft for chat");
+        drafts.Set("CodingAgent", "draft for coding");
+        Check(drafts.Get("ChatBot") == "draft for chat" && drafts.Get("CodingAgent") == "draft for coding"
+            && drafts.Get("missing") == string.Empty,
+            "workspace drafts remain isolated by workspace");
     }
 }

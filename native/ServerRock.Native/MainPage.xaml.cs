@@ -43,6 +43,8 @@ public sealed partial class MainPage : Page
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private readonly ChatMessageQueue _messageQueue = new();
     private readonly ChatMessageQueueStore _messageQueueStore = new();
+    private readonly WorkspaceDraftStore _workspaceDrafts = new();
+    private bool _restoringWorkspaceDraft;
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;
     private List<LocalProject> _projects = [];

@@ -87,6 +87,7 @@ public sealed partial class MainPage
             return;
         }
         if (!await ConfirmTemporaryDiscardAsync($"switch to {selected}")) return;
+        _workspaceDrafts.Set(_mode, PromptBox.Text);
         SaveCurrentSession();
         ClearPendingAttachments();
         _mode = selected;
@@ -96,6 +97,9 @@ public sealed partial class MainPage
         _includeProjectFilesInChat = false;
         _messages.Clear();
         ConversationMessages.Children.Clear();
+        _restoringWorkspaceDraft = true;
+        PromptBox.Text = _workspaceDrafts.Get(_mode);
+        _restoringWorkspaceDraft = false;
         WelcomePanel.Visibility = Visibility.Visible;
         ConversationScroll.Visibility = Visibility.Collapsed;
         PageTitle.Text = selected == WorkspaceModes.CodingAgent ? "Coding Agent" : _activeProjectName ?? "New chat";
