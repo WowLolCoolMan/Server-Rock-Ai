@@ -8,6 +8,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
@@ -58,6 +59,8 @@ public sealed partial class MainPage
 
         var content = new StackPanel { Spacing = 10, MaxWidth = 680 };
         ContentDialog? dialog = null;
+        DispatcherTimer? approvalTimer = null;
+        var approvalCountdowns = new List<(WorkflowApprovalRequest Request, TextBlock Status, Button Approve, Button Deny)>();
         var pendingApprovals = _workflowRunService.LoadPendingApprovals();
         if (pendingApprovals.Count > 0)
         {
@@ -65,17 +68,33 @@ public sealed partial class MainPage
             foreach (var approval in pendingApprovals)
             {
                 var approvalPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-                approvalPanel.Children.Add(new TextBlock { Text = $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}\nExpires {approval.ExpiresAt.ToLocalTime():g}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                var approvalStatus = new TextBlock { Text = ApprovalDetails(approval, DateTimeOffset.UtcNow), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                AutomationProperties.SetName(approvalStatus, $"Pending workflow approval details for {approval.Label}");
+                AutomationProperties.SetLiveSetting(approvalStatus, AutomationLiveSetting.Polite);
                 var approve = new Button { Content = "Approve", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 var deny = new Button { Content = "Deny", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 AutomationProperties.SetName(approve, $"Approve pending workflow step {approval.Label}");
                 AutomationProperties.SetName(deny, $"Deny pending workflow step {approval.Label}");
                 approve.Click += (_, _) => ApprovePendingWorkflowStep(approval, dialog);
                 deny.Click += (_, _) => DenyPendingWorkflowStep(approval, dialog);
+                approvalPanel.Children.Add(approvalStatus);
                 approvalPanel.Children.Add(approve);
                 approvalPanel.Children.Add(deny);
                 content.Children.Add(new Border { Background = ResourceBrush("WarningBrush"), BorderBrush = ResourceBrush("WarningLineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = approvalPanel });
+                approvalCountdowns.Add((approval, approvalStatus, approve, deny));
             }
+            approvalTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            approvalTimer.Tick += (_, _) =>
+            {
+                var now = DateTimeOffset.UtcNow;
+                foreach (var item in approvalCountdowns)
+                {
+                    item.Status.Text = ApprovalDetails(item.Request, now);
+                    var expired = item.Request.ExpiresAt <= now;
+                    item.Approve.IsEnabled = !expired;
+                    item.Deny.IsEnabled = !expired;
+                }
+            };
         }
         if (reconciled.Count > 0)
         {
@@ -206,8 +225,16 @@ public sealed partial class MainPage
             CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
+        if (approvalTimer is not null)
+        {
+            dialog.Closed += (_, _) => approvalTimer.Stop();
+            approvalTimer.Start();
+        }
         await dialog.ShowAsync();
     }
+
+    private static string ApprovalDetails(WorkflowApprovalRequest approval, DateTimeOffset now) =>
+        $"{approval.Label} · {approval.WorkflowId} v{approval.WorkflowVersion} · run {approval.RunId[..Math.Min(8, approval.RunId.Length)]}\nExpires {approval.ExpiresAt.ToLocalTime():g} · {WorkflowApprovalTiming.RemainingLabel(approval.ExpiresAt, now)}";
 
     private void ResolveReconciledOperation(OperationRun run, bool markCancelled, ContentDialog? dialog)
     {

@@ -1291,3 +1291,45 @@ existing conversation list remains available without the richer search path.
 
 Not yet verified: durable context continuity, successful live provider
 response acceptance, Linux parity, and packaged-release acceptance.
+
+## Slice 36 — accessible workflow approval countdown
+
+Status: `implemented_verified_with_live_surface_boundary`
+
+Workflow approvals now expose a bounded remaining-time label in the Activity &
+tasks surface. The label reports sub-minute urgency, rounded minutes/hours, or
+`Expired`; a five-second native timer refreshes it, marks the status as a
+polite accessibility announcement, and disables Approve/Deny after expiry.
+The pure timing policy is covered independently so UI rendering does not own
+expiry arithmetic.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/WorkflowApprovalTiming.cs`
+- `native/ServerRock.Core.Tests/WorkflowApprovalTimingTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including sub-minute, minute, hour, and expired countdown cases.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (85 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed for the `Activity & tasks`
+  dialog and existing reconciliation controls. The current local state had no
+  pending approval, so the countdown text and disabled-after-expiry behavior
+  were not claimed as live-rendered evidence.
+
+Privacy/security/licensing: the countdown is derived from locally persisted
+approval timestamps; it does not call a provider, execute a tool, or add a
+credential. Expiry disables the visible actions and the existing durable
+service remains the authority for approval state.
+
+Rollback: remove the timing helper, timer, and two audit contracts; the prior
+fixed expiry timestamp and durable expiry service remain available.
+
+Not yet verified: a seeded live pending-approval countdown, workflow write/
+shell/network adapters, richer branching, parallel limits, scheduling, full
+audit/export, Linux parity, and packaged-release acceptance.

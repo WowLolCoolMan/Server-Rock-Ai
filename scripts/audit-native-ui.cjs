@@ -73,6 +73,8 @@ const requiredCode = [
   ['Project terminal output accessible description', 'AutomationProperties.SetHelpText(outputScroll, "Scrollable, read-only history from the shell running in the active project folder.")'],
   ['Project terminal status accessible name', 'AutomationProperties.SetName(status, "Project terminal status")'],
   ['Project terminal state live announcements', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
+  ['Workflow approval countdown accessible status', 'AutomationProperties.SetLiveSetting(approvalStatus, AutomationLiveSetting.Polite)'],
+  ['Workflow approval countdown text', 'WorkflowApprovalTiming.RemainingLabel(approval.ExpiresAt, now)'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

@@ -19,6 +19,7 @@ OperationJournalTests.Run();
 OperationServiceTests.Run();
 WorkflowServiceTests.Run();
 WorkflowRunServiceTests.Run();
+WorkflowApprovalTimingTests.Run();
 WorkflowCapabilityGateTests.Run();
 ReadOnlyWorkspaceAdapterTests.Run();
 ChatMessageQueueTests.Run();
