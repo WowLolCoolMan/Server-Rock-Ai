@@ -120,6 +120,17 @@ internal static class ChatProviderTests
             Check(true, "native provider request content is bounded before serialization and network access");
         }
 
+        string? compactedPayload = null;
+        var compactionProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            compactedPayload = await request.Content!.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("data: {\"choices\":[{\"delta\":{\"content\":\"compacted response\"}}]}\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+        })));
+        var oversizedHistory = Enumerable.Range(0, 10).Select(index => new ChatMessage(index % 2 == 0 ? "user" : "assistant", index == 9 ? "latest request" : new string((char)('a' + index), 999_000))).ToList();
+        await compactionProvider.StreamChatAsync(new AppSettings { Endpoint = "http://localhost:11434/v1", Model = "local-a" }, oversizedHistory, _ => { }, CancellationToken.None);
+        Check(compactedPayload is not null, "native provider sends a bounded oversized-history request");
+        Check(compactedPayload!.Contains("Earlier conversation omitted", StringComparison.Ordinal) && compactedPayload.Contains("latest request", StringComparison.Ordinal), "native provider compacts oversized conversation context before network access");
+
         string? imagePayload = null;
         var imageProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler(async (request, cancellationToken) =>
         {

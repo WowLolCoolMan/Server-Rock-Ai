@@ -51,5 +51,5 @@ public static class ConversationContextPlanner
         return new ContextPlan(selected, messages.Count, omitted, used);
     }
 
-    private static int Cost(ChatMessage message) => checked(message.Content.Length + message.Role.Length + 8);
+    private static int Cost(ChatMessage message) => checked(message.Content.Length + message.Role.Length + 8 + (message.Attachments?.Sum(attachment => attachment.Content.Length) ?? 0));
 }

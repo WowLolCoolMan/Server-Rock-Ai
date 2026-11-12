@@ -18,6 +18,7 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
     private const int MaxMessageCharacters = 1_000_000;
     private const int MaxStreamedResponseCharacters = 1_000_000;
     private const int MaxRequestCharacters = 8_000_000;
+    private const int MaxPlanningCharacters = 32_000_000;
     private const int MaxModelCharacters = 512;
     private static readonly HttpClient SharedHttp = new() { Timeout = Timeout.InfiniteTimeSpan };
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -34,21 +35,15 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         ValidateRequest(settings, messages);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromMinutes(5));
-        var requestBody = new Dictionary<string, object?>
-        {
-            ["model"] = settings.Model,
-            ["temperature"] = settings.Temperature,
-            ["stream"] = true,
-            ["messages"] = messages.Select(message => new
-            {
-                message.Role,
-                content = BuildModelContent(message, UsesOllamaImageUrlString(settings))
-            }).ToArray()
-        };
-        if (maxTokens is > 0) requestBody["max_tokens"] = Math.Clamp(maxTokens.Value, 1, 4096);
-        var requestJson = JsonSerializer.Serialize(requestBody, JsonOptions);
+        var requestMessages = messages;
+        var requestJson = SerializeRequest(settings, requestMessages, maxTokens);
         if (Encoding.UTF8.GetByteCount(requestJson) > MaxRequestCharacters)
-            throw new InvalidOperationException("The model request exceeds the 8 MB payload limit.");
+        {
+            requestMessages = ConversationContextPlanner.Plan(messages, MaxRequestCharacters - 256 * 1024).Messages;
+            requestJson = SerializeRequest(settings, requestMessages, maxTokens);
+            if (Encoding.UTF8.GetByteCount(requestJson) > MaxRequestCharacters)
+                throw new InvalidOperationException("The model request exceeds the 8 MB payload limit after bounded context compaction.");
+        }
         using var request = new HttpRequestMessage(HttpMethod.Post, BuildChatUri(settings.Endpoint))
         {
             Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
@@ -130,6 +125,23 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
         return parts;
     }
 
+    private static string SerializeRequest(AppSettings settings, IReadOnlyList<ChatMessage> messages, int? maxTokens)
+    {
+        var requestBody = new Dictionary<string, object?>
+        {
+            ["model"] = settings.Model,
+            ["temperature"] = settings.Temperature,
+            ["stream"] = true,
+            ["messages"] = messages.Select(message => new
+            {
+                message.Role,
+                content = BuildModelContent(message, UsesOllamaImageUrlString(settings))
+            }).ToArray()
+        };
+        if (maxTokens is > 0) requestBody["max_tokens"] = Math.Clamp(maxTokens.Value, 1, 4096);
+        return JsonSerializer.Serialize(requestBody, JsonOptions);
+    }
+
     private static void ValidateRequest(AppSettings settings, IReadOnlyList<ChatMessage> messages)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -161,8 +173,8 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
                     throw new InvalidOperationException("A chat attachment exceeds its supported content limit.");
                 totalCharacters += attachment.Content.Length;
             }
-            if (totalCharacters > MaxRequestCharacters)
-                throw new InvalidOperationException("The model request exceeds the 8 MB content limit.");
+            if (totalCharacters > MaxPlanningCharacters)
+                throw new InvalidOperationException("The model request exceeds the bounded planning limit.");
         }
     }
 

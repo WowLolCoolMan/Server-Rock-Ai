@@ -2076,23 +2076,27 @@ packaged evidence, and ACP adapters.
 
 Status: `implemented_verified_core`
 
-Core now includes a bounded context planner for future chat/agent request
-assembly. It preserves system messages that fit, selects the newest turns that
-fit the requested character budget, inserts an explicit untrusted omission
-marker when older history is dropped, and never mutates the source history or
-invents a summary. This is a deterministic compaction boundary, not semantic
-model summarization, persistent memory, or a claim of 1M+ token support; the
-native send path is not yet wired to a user-selected budget.
+Core now includes a bounded context planner used by the OpenAI-compatible
+provider when the serialized request exceeds its existing 8 MB ceiling. It
+preserves system messages that fit, selects the newest turns that fit the
+requested character budget, inserts an explicit untrusted omission marker when
+older history is dropped, and never mutates the source history or invents a
+summary. Normal-sized requests are unchanged. This is a deterministic
+compaction boundary, not semantic model summarization, persistent memory, or a
+claim of 1M+ token support; the budget remains an internal provider safety
+limit.
 
 Changed files:
 
 - `native/ServerRock.Core/Services/ConversationContextPlanner.cs`
+- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
 - `native/ServerRock.Core.Tests/ConversationContextPlannerTests.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including newest-turn/system preservation, omitted-history marking, source immutability, and empty-history handling.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including newest-turn/system preservation, omitted-history marking, source immutability, empty-history handling, oversized multi-turn provider compaction before network access, and preservation of single-message oversize rejection.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: planning is local and deterministic; omitted text
@@ -2100,11 +2104,12 @@ is not sent, persisted, or summarized by another service. The marker instructs
 the model not to assume missing details. No dependency or third-party code was
 added.
 
-Rollback: remove `ConversationContextPlanner`, its focused tests, and the
-test-runner entry. Existing provider message assembly remains unchanged.
+Rollback: remove the planner call and focused overflow test, then restore the
+provider’s direct 8 MB rejection. Existing normal-sized provider message
+assembly remains unchanged.
 
-Not yet verified: native send-path integration, user-visible budget controls,
-attachment-aware token accounting, semantic summarization with consent,
+Not yet verified: user-visible budget controls, exact provider-token accounting,
+semantic summarization with consent,
 persistent memory, restart continuity, provider-specific context limits,
 1M+ token inference, Linux parity, and packaged acceptance.
 
