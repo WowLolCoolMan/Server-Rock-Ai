@@ -195,6 +195,16 @@ public sealed partial class MainPage
         var assistantIndex = _messages.Count - 1;
         var response = AddMessage(_mode == WorkspaceModes.CodingAgent ? "Coding Agent" : "Server Rock", "", false, messageIndex: assistantIndex);
         _requestCancellation = new CancellationTokenSource();
+        try
+        {
+            _activeOperationRun = _operationService.Start(_activeProjectId ?? "default", text);
+        }
+        catch (Exception ex)
+        {
+            _activeOperationRun = null;
+            App.Log.Error("Operations", ex, "Could not start durable chat operation");
+            RuntimeStatus.Text = "Operation history unavailable · continuing with the response";
+        }
         SetCompanionState(_mode == WorkspaceModes.CodingAgent ? "coding" : "thinking");
         UpdateCompanionSpeech(_mode == WorkspaceModes.CodingAgent ? "Coding…" : "Thinking…");
         SendButton.Visibility = Visibility.Collapsed;
@@ -235,6 +245,7 @@ public sealed partial class MainPage
             await StreamChatAsync(response, assistantIndex, requestMessages, _requestCancellation.Token);
             if (_mode == WorkspaceModes.CodingAgent) AttachWorkspaceProposals(response, assistantIndex);
             RenderAssistantMessage(response, _messages[assistantIndex].Content, _messages[assistantIndex].Sources);
+            CompleteActiveOperation();
             SetCompanionCompletionSummary(_messages[assistantIndex].Content);
             _ = SpeakResponseAsync(_messages[assistantIndex].Content);
             // A finished reply needs no banner (it used to show a bare "⌖ model" line every time);
@@ -255,8 +266,13 @@ public sealed partial class MainPage
                 RuntimeStatus.Text = _historyAvailable
                     ? "Response stopped"
                     : "Response stopped · conversation not saved";
+                CancelActiveOperation();
             }
-            else RuntimeStatus.Text = "The model request timed out after five minutes.";
+            else
+            {
+                RuntimeStatus.Text = "The model request timed out after five minutes.";
+                FailActiveOperation("provider timeout");
+            }
             SetCompanionState("stuck");
             UpdateCompanionSpeech("Stuck · the response timed out.");
         }
@@ -269,11 +285,13 @@ public sealed partial class MainPage
             var hasImages = _messages.Any(message => message.Attachments?.Any(attachment => attachment.IsImage) == true);
             AddMessage("Connection error", ProviderErrorText.Describe(ex, hasImages), false);
             RuntimeStatus.Text = "Connection failed · check Settings";
+            FailActiveOperation("provider request failed");
             SetCompanionState("error");
             UpdateCompanionSpeech("Error · the model request failed.");
         }
         finally
         {
+            _activeOperationRun = null;
             _requestCancellation?.Dispose();
             _requestCancellation = null;
             SaveCurrentSession();
@@ -283,6 +301,27 @@ public sealed partial class MainPage
             StopButton.Content = "■";
             PromptBox.Focus(FocusState.Programmatic);
         }
+    }
+
+    private void CompleteActiveOperation()
+    {
+        if (_activeOperationRun is null) return;
+        try { _activeOperationRun = _operationService.Complete(_activeOperationRun); }
+        catch (Exception ex) { App.Log.Error("Operations", ex, "Could not complete durable chat operation"); }
+    }
+
+    private void CancelActiveOperation()
+    {
+        if (_activeOperationRun is null) return;
+        try { _activeOperationRun = _operationService.Cancel(_activeOperationRun); }
+        catch (Exception ex) { App.Log.Error("Operations", ex, "Could not cancel durable chat operation"); }
+    }
+
+    private void FailActiveOperation(string reason)
+    {
+        if (_activeOperationRun is null) return;
+        try { _activeOperationRun = _operationService.Fail(_activeOperationRun, reason); }
+        catch (Exception ex) { App.Log.Error("Operations", ex, "Could not fail durable chat operation"); }
     }
 
     private async Task StreamChatAsync(TextBlock output, int assistantIndex, IReadOnlyList<ChatMessage> requestMessages, CancellationToken cancellationToken)

@@ -178,6 +178,41 @@ journal if the process fails during a write.
 Rollback: remove the additive operation journal files and test registration;
 existing conversation, project, and settings stores remain unchanged.
 
-Next dependency: expose the durable operation state through an application
-service and activity surface, then add workflow execution only after approval,
-cancellation, and reconciliation are visible to the user.
+Next dependency: expose durable operation state through an activity surface,
+then add workflow execution only after approval, cancellation, and
+reconciliation are visible to the user.
+
+## Slice 6 — durable operation service in the chat journey
+
+Status: `implemented_unverified`
+
+The chat send flow now uses `OperationService` to create a durable operation,
+record validating/queued/running transitions, and record completion, provider
+failure, timeout, or user cancellation. The UI remains a client of the Core
+service; it does not write journal events or choose transition rules directly.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including service start, completion, cancellation, and the existing Core suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: operation instructions remain local bounded
+metadata and use the existing atomic journal; no new network call, credential,
+third-party code, or automatic side-effect replay was introduced.
+
+Rollback: remove the service, test, and chat lifecycle calls; the existing
+chat provider and conversation persistence paths remain independent.
+
+Not yet verified: live cancellation/timeout visuals and activity-history UI.
+The next slice is the user-visible activity surface and restart reconciliation
+status.

@@ -33,6 +33,7 @@ public sealed partial class MainPage : Page
     private readonly WorkspaceFileEditor _workspaceEditor = new();
     private readonly WorkspaceUndoStore _workspaceUndoStore = new();
     private readonly WorkspaceCommandRunner _commandRunner = new();
+    private readonly OperationService _operationService = new();
     private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer = new();
     private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
@@ -77,6 +78,7 @@ public sealed partial class MainPage : Page
     private Button? _lastUndoButton;
     private WorkspaceEditReceipt? _lastEditReceipt;
     private CancellationTokenSource? _requestCancellation;
+    private OperationRun? _activeOperationRun;
     private CancellationTokenSource? _modelBenchmarkCancellation;
 #if WINDOWS
     private Windows.Media.Playback.MediaPlayer? _voicePlayer;

@@ -16,5 +16,6 @@ ChatMessageTests.Run();
 await LocalStorageAndWorkspaceTests.RunAsync();
 ExternalLinkTests.Run();
 OperationJournalTests.Run();
+OperationServiceTests.Run();
 
 Console.WriteLine("Native core checks passed.");

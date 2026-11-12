@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `3e34156` (`feat: add bounded chat tags`)
+Snapshot commit: `4af276c` plus the operation-service working slice
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -23,7 +23,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 83 contracts | Typed routes, persistent tabs/layout, command palette, inspector and live focus/resize acceptance |
 | Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins and tags in `native/ServerRock.Core.Tests` | Message queue, richer search, durable context continuity, live keyboard/accessibility acceptance |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
-| Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, and new durable operation run/event contract | Application-service integration, scheduler, pause/reconcile UI, parallel agents and task artifacts |
+| Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, and chat lifecycle integration through `OperationService` | Activity UI, scheduler, pause/reconcile UI, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks and measured local performance | Capability probes, hardware/resource scheduling, richer provider coverage and unload/queue states |
@@ -54,8 +54,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Expose the durable operation/task state through an application service and
-   activity surface with truthful progress, cancellation, and reconciliation.
+1. Expose the durable operation/task state through an activity surface with
+   truthful progress, cancellation, and reconciliation.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad
