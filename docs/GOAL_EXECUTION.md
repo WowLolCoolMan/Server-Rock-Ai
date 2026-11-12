@@ -2113,6 +2113,44 @@ semantic summarization with consent,
 persistent memory, restart continuity, provider-specific context limits,
 1M+ token inference, Linux parity, and packaged acceptance.
 
+## Slice 64 — explicit local memory store
+
+Status: `implemented_verified_core`
+
+Core now provides a bounded, atomic memory store for user-approved facts or
+project notes. Every entry requires an approval identity and records scope,
+source, tags, enabled state, and timestamps. Search is local and bounded;
+entries can be disabled, edited, or explicitly deleted, and changes survive
+reload. The store does not automatically extract memories from prompts or
+responses, inject entries into model requests, sync across devices, or store
+credentials.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/MemoryEntry.cs`
+- `native/ServerRock.Core/Services/MemoryStore.cs`
+- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including approved project search, enable/disable retrieval, edit/reload, explicit durable deletion, and invalid-content rejection.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: memory is local-only, explicitly approved, bounded,
+atomically persisted, and never sent to a provider by this slice. Multiline
+notes are allowed, but other control characters and oversized entries are
+rejected. No dependency or third-party code was added.
+
+Rollback: remove `MemoryEntry`, `MemoryStore`, and its focused test/runner
+entry. Existing conversations and settings remain independent; any stored
+memory file is left for explicit user handling rather than silently deleted.
+
+Not yet verified: native memory management UI, review before injection,
+project/global retention controls, encrypted storage, backup/export, automatic
+memory proposals, model-context injection, cross-device sync, Linux parity,
+and packaged acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
