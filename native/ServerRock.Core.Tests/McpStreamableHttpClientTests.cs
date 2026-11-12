@@ -9,6 +9,7 @@ internal static class McpStreamableHttpClientTests
 {
     public static async Task RunAsync()
     {
+        var sessionHeaders = new List<(string? Session, string? Protocol)>();
         var registry = new McpConnectionRegistry();
         registry.Configure("http-connection", "http-server", "streamable-http");
         registry.MarkHealthy("http-connection");
@@ -18,14 +19,16 @@ internal static class McpStreamableHttpClientTests
             using var message = await JsonDocument.ParseAsync(body);
             var method = message.RootElement.GetProperty("method").GetString();
             var id = message.RootElement.GetProperty("id").GetInt32();
+            if (method != "initialize") sessionHeaders.Add((request.Headers.GetValues("Mcp-Session-Id").SingleOrDefault(), request.Headers.GetValues("MCP-Protocol-Version").SingleOrDefault()));
             var responseJson = method switch
             {
                 "initialize" => $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{{\"protocolVersion\":\"2025-06-18\"}}}}",
                 "tools/list" => $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{{\"tools\":[{{\"name\":\"list-files\",\"description\":\"Lists files.\",\"inputSchema\":{{\"type\":\"object\"}},\"annotations\":{{\"readOnlyHint\":true}}}}]}}}}",
                 _ => $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{{\"content\":[{{\"type\":\"text\",\"text\":\"http result\"}}]}}}}"
             };
-            if (method == "tools/call") return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"event: message\n\ndata: {responseJson}\n\n", System.Text.Encoding.UTF8, "text/event-stream") };
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(responseJson, System.Text.Encoding.UTF8, "application/json") };
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(method == "tools/call" ? $"event: message\n\ndata: {responseJson}\n\n" : responseJson, System.Text.Encoding.UTF8, method == "tools/call" ? "text/event-stream" : "application/json") };
+            if (method == "initialize") httpResponse.Headers.TryAddWithoutValidation("Mcp-Session-Id", "session-1");
+            return httpResponse;
         });
         using var http = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
         await using var client = new McpStreamableHttpClient("http-server", "https://example.com/mcp", http, null, registry);
@@ -35,6 +38,7 @@ internal static class McpStreamableHttpClientTests
         var result = await client.CallToolAsync(tools[0], new McpToolGrant { ServerId = "http-server", ToolName = "list-files", ConnectionId = "http-connection", ApprovalId = "approval-http", Capabilities = [McpCapabilities.InvokeRead] }, arguments.RootElement);
         Check(!result.IsError && result.Text == "http result", "MCP Streamable HTTP invokes an approved read-only tool from SSE");
         Check(tools.Count == 1 && !tools[0].IsMutating, "MCP Streamable HTTP classifies explicit read-only metadata");
+        Check(sessionHeaders.Count == 2 && sessionHeaders.All(item => item.Session == "session-1" && item.Protocol == "2025-06-18"), "MCP Streamable HTTP preserves the negotiated session and protocol headers");
 
         registry.Revoke("http-connection");
         var refused = false;

@@ -22,6 +22,8 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
     private readonly TimeSpan _requestTimeout;
     private int _nextRequestId;
     private bool _initialized;
+    private string? _sessionId;
+    private string? _protocolVersion;
 
     public McpStreamableHttpClient(string serverId, string endpoint, HttpClient? httpClient = null, TimeSpan? requestTimeout = null, McpConnectionRegistry? connectionRegistry = null)
     {
@@ -40,6 +42,7 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
     {
         using var response = await SendRequestAsync("initialize", new { protocolVersion = "2025-06-18", capabilities = new { }, clientInfo = new { name = "Server Rock AI", version = "0.1" } }, cancellationToken).ConfigureAwait(false);
         if (!response.RootElement.TryGetProperty("result", out var result) || !result.TryGetProperty("protocolVersion", out var version) || version.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(version.GetString())) throw new InvalidDataException("The MCP initialize response did not declare a protocol version.");
+        _protocolVersion = version.GetString();
         _initialized = true;
     }
 
@@ -92,10 +95,18 @@ public sealed class McpStreamableHttpClient : IAsyncDisposable
             using var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+            if (!string.IsNullOrWhiteSpace(_protocolVersion)) request.Headers.TryAddWithoutValidation("MCP-Protocol-Version", _protocolVersion);
+            if (!string.IsNullOrWhiteSpace(_sessionId)) request.Headers.TryAddWithoutValidation("Mcp-Session-Id", _sessionId);
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
             if ((int)response.StatusCode is >= 300 and < 400) throw new HttpRequestException("MCP endpoint redirects are refused.");
             if (!response.IsSuccessStatusCode) throw new HttpRequestException($"The MCP endpoint returned {(int)response.StatusCode} {response.ReasonPhrase}.");
             using var document = await ReadJsonRpcResponseAsync(response.Content, timeout.Token).ConfigureAwait(false);
+            if (string.Equals(method, "initialize", StringComparison.Ordinal) && response.Headers.TryGetValues("Mcp-Session-Id", out var sessionValues))
+            {
+                var session = sessionValues.SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(session) || session.Length > 256 || session.Any(char.IsControl)) throw new InvalidDataException("The MCP session identifier is invalid.");
+                _sessionId = session;
+            }
             if (!document.RootElement.TryGetProperty("id", out var responseId) || responseId.ValueKind != JsonValueKind.Number || responseId.GetInt32() != id) throw new InvalidDataException("The MCP response did not match the outstanding request.");
             if (document.RootElement.TryGetProperty("error", out var error)) throw new InvalidOperationException($"The MCP server rejected {method}: {error.GetRawText()}");
             return JsonDocument.Parse(document.RootElement.GetRawText());

@@ -2038,6 +2038,40 @@ notifications/resources, health/reconnect, process supervision, UI lifecycle
 and revocation review, audit journal events, live external MCP server
 acceptance, Linux/Windows packaged evidence, and ACP adapters.
 
+## Slice 62 — MCP Streamable HTTP session negotiation
+
+Status: `implemented_verified_core`
+
+The Streamable HTTP client now captures a bounded `Mcp-Session-Id` from the
+initialize response and sends it, together with the negotiated
+`MCP-Protocol-Version`, on subsequent requests. Invalid or oversized session
+identifiers fail closed. The session is scoped to the client instance and is
+not persisted or treated as a credential; long-lived notification/resource
+subscriptions remain outside this slice.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
+- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including scripted initialize/session response, subsequent session/protocol headers, SSE tool invocation, revocation denial, and redirect refusal.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: session identifiers remain process-local, bounded,
+and never enter persistence, prompts, logs, or credentials. No endpoint
+redirects or secret-bearing URLs are accepted. No dependency or third-party
+code was added.
+
+Rollback: remove the session fields/header handling and the focused header
+assertion; JSON/SSE parsing and permission/revocation checks remain intact.
+
+Not yet verified: long-lived notifications/resources, session expiry and
+reconnect, health probes, process supervision, UI lifecycle/revocation review,
+audit journal events, live external MCP server acceptance, Linux/Windows
+packaged evidence, and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
