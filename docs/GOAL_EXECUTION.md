@@ -999,6 +999,40 @@ cross-device synchronization, durable context continuity, and packaged Linux
 parity. The next dependency is provider/runtime health or a deterministic
 local test endpoint before claiming successful end-to-end dispatch.
 
+## Slice 33 — queued-message reorder controls
+
+Status: `implemented_unverified`
+
+The Queue management dialog now supports bounded up/down reordering alongside
+remove and clear. Moves rebuild the same validated FIFO queue, persist through
+the existing atomic queue store, and disable at the first/last boundary. The
+active response is unaffected; only messages waiting for dispatch change order.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Core.Tests/ChatMessageQueueTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid move ordering, invalid/no-op rejection, attachment preservation, persistence, and drain behavior.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: reordering stays local and bounded; it neither
+changes the active request nor adds network, credential, shell, Git, or
+third-party behavior.
+
+Rollback: remove the Move method and three Queue dialog controls; existing
+FIFO, remove, clear, and durable queue behavior remains available.
+
+Not yet verified: live reorder accessibility, richer search, durable context
+continuity, successful live provider-response acceptance, and packaged Linux
+parity. The next dependency is live reorder acceptance or a separate
+conversation-search slice.
+
 ## Slice 25 — durable chat operation provider provenance
 
 Status: `implemented_unverified`

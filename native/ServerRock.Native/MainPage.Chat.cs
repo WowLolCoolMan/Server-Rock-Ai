@@ -359,9 +359,26 @@ public sealed partial class MainPage
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 var attachmentLabel = queued.Attachments is { Count: > 0 } ? $" · {queued.Attachments.Count} attachment(s)" : string.Empty;
                 var label = new TextBlock { Text = $"{index + 1}. {text}{attachmentLabel}", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
+                var up = new Button { Content = "↑", Style = (Style?)Application.Current.Resources["ContextButtonStyle"], IsEnabled = index > 0 };
+                var down = new Button { Content = "↓", Style = (Style?)Application.Current.Resources["ContextButtonStyle"], IsEnabled = index + 1 < snapshot.Count };
                 var remove = new Button { Content = "Remove", Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(up, $"Move queued message {index + 1} up");
+                AutomationProperties.SetName(down, $"Move queued message {index + 1} down");
                 AutomationProperties.SetName(remove, $"Remove queued message {index + 1}");
                 var capturedIndex = index;
+                up.Click += (_, _) =>
+                {
+                    _messageQueue.Move(capturedIndex, capturedIndex - 1);
+                    PersistMessageQueue();
+                    Render();
+                };
+                down.Click += (_, _) =>
+                {
+                    _messageQueue.Move(capturedIndex, capturedIndex + 1);
+                    PersistMessageQueue();
+                    Render();
+                };
                 remove.Click += (_, _) =>
                 {
                     _messageQueue.RemoveAt(capturedIndex);
@@ -369,9 +386,12 @@ public sealed partial class MainPage
                     UpdateQueueControl();
                     Render();
                 };
-                Grid.SetColumn(remove, 1);
+                actions.Children.Add(up);
+                actions.Children.Add(down);
+                actions.Children.Add(remove);
+                Grid.SetColumn(actions, 1);
                 row.Children.Add(label);
-                row.Children.Add(remove);
+                row.Children.Add(actions);
                 items.Children.Add(new Border { Background = Application.Current.Resources["SurfaceAltBrush"] as Microsoft.UI.Xaml.Media.Brush, BorderBrush = Application.Current.Resources["LineBrush"] as Microsoft.UI.Xaml.Media.Brush, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(8), Child = row });
             }
         }

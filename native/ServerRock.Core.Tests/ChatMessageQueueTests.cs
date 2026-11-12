@@ -14,7 +14,9 @@ internal static class ChatMessageQueueTests
         try { queue.Enqueue("third"); }
         catch (InvalidOperationException) { refused = true; }
         Check(refused, "queue refuses messages beyond its capacity");
-        Check(queue.TryDequeue(out var first) && first!.Text == "first" && first.Attachments!.Count == 1, "queue preserves FIFO order and attachments");
-        Check(queue.TryDequeue(out var second) && second!.Text == "second" && !queue.TryDequeue(out _), "queue drains and reports empty state");
+        Check(queue.Move(1, 0) && queue.Snapshot()[0].Text == "second" && queue.Snapshot()[1].Text == "first", "queue reorders bounded messages");
+        Check(!queue.Move(0, 0) && !queue.Move(-1, 0) && !queue.Move(0, 2), "queue rejects invalid or no-op moves");
+        Check(queue.TryDequeue(out var first) && first!.Text == "second" && first.Attachments is null, "queue preserves reordered FIFO order");
+        Check(queue.TryDequeue(out var second) && second!.Text == "first" && second.Attachments!.Count == 1 && !queue.TryDequeue(out _), "queue drains and preserves attachments");
     }
 }

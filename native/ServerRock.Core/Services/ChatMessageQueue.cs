@@ -38,5 +38,17 @@ public sealed class ChatMessageQueue(int capacity = 8)
         return true;
     }
 
+    public bool Move(int fromIndex, int toIndex)
+    {
+        if (fromIndex < 0 || fromIndex >= _items.Count || toIndex < 0 || toIndex >= _items.Count || fromIndex == toIndex) return false;
+        var remaining = _items.ToList();
+        var item = remaining[fromIndex];
+        remaining.RemoveAt(fromIndex);
+        remaining.Insert(toIndex, item);
+        _items.Clear();
+        foreach (var queued in remaining) _items.Enqueue(queued);
+        return true;
+    }
+
     public void Clear() => _items.Clear();
 }
