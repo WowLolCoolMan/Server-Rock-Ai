@@ -328,3 +328,42 @@ Not yet verified: workflow editor, dry-run, step runner, approval inbox,
 idempotent retries, background scheduling, or packaged Linux parity. The next
 dependency is durable per-step run state pinned to a workflow version before
 any tool/provider execution is connected.
+
+## Slice 10 — durable workflow step runs
+
+Status: `implemented_unverified`
+
+`WorkflowRunService` now creates durable runs pinned to a workflow ID and
+version, tracks each node through pending/executing/waiting-approval/complete/
+failed/cancelled states, persists approval IDs and event sequences, allows
+retries only for explicitly safe node types, preserves stable idempotency keys,
+and reconciles in-flight runs after restart. Approval completion and final
+verification are recorded as events. No run method dispatches tools, shell
+commands, Git, or model providers yet.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/WorkflowRun.cs`
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable approval pause/resume, safe retry attempt increment, cancellation, and restart reconciliation.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: run state and event payloads are bounded local
+metadata. Retry is conservative and refuses non-idempotent tool-like steps;
+approval identity is validated and recorded. No external dispatch, network
+call, credential, or third-party code was added.
+
+Rollback: remove the workflow run model, service, and tests; versioned
+definitions and all existing application stores remain independent.
+
+Not yet verified: workflow editor/dry-run, tool adapter capability gates,
+parallel resource limits, background scheduler/OS restart behavior, approval
+inbox UI, and packaged Linux parity. The next dependency is an explicit
+workflow-run activity surface before connecting any executor.

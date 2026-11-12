@@ -18,5 +18,6 @@ ExternalLinkTests.Run();
 OperationJournalTests.Run();
 OperationServiceTests.Run();
 WorkflowServiceTests.Run();
+WorkflowRunServiceTests.Run();
 
 Console.WriteLine("Native core checks passed.");

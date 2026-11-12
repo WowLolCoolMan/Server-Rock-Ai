@@ -28,7 +28,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks and measured local performance | Capability probes, hardware/resource scheduling, richer provider coverage and unload/queue states |
 | Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats | Explicit profiles, capability-aware routing, classified fallback consent and durable provider identity |
-| Workflows and scheduled tasks | partial | Activity surface exposes durable operation history; `WorkflowService` persists and validates versioned typed DAG definitions; no runner or schedule execution exists | Durable per-step runs, approvals, retries, cancellation, scheduling and audit events |
+| Workflows and scheduled tasks | partial | Activity surface, versioned typed DAG definitions, and durable per-step runs with approval, conservative retry, cancellation, and restart reconciliation | Workflow-run activity UI, tool adapter gates, parallel limits, scheduling and full audit/export |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
 | Images and media | partial | ComfyUI queue/poll flow, image attachments and local vision paths have Core tests | Resumable media jobs, richer artifact storage, capability gating and runtime acceptance |
@@ -54,8 +54,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Backlog ordering
 
-1. Add durable per-step workflow runs pinned to a definition version, then
-   connect approvals, safe retries, cancellation, scheduling, and audit events.
+1. Expose workflow-run state and approval decisions in Activity, then add
+   capability-gated tool adapters, parallel limits, scheduling, and full audit/export.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
 3. Add explicit provider capability discovery and routing policy before broad
