@@ -624,3 +624,39 @@ Not yet verified: adapter invocation from a workflow run, effect timeline UI,
 write/shell/network adapters, parallel limits, scheduling, and packaged Linux
 parity. The next dependency is wiring this adapter to a workflow step with a
 durable effect event while preserving approval and cancellation boundaries.
+
+## Slice 18 — durable workspace-read workflow effect
+
+Status: `implemented_unverified`
+
+`WorkflowRunService.ReadWorkspaceStep` now wires the exact-scope read grant to
+an executing tool-call step and the read-only workspace adapter. Successful
+reads complete the step and persist a `workspace.read_completed` event with
+node ID, relative path, character count, and `mutated=false`; file contents and
+absolute paths are not placed in the event payload. A completed final step
+advances through verifying to completed.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/WorkflowRunService.cs`
+- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including workflow adapter invocation and durable non-mutating effect event coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the adapter remains local, read-only, bounded,
+path-safe, and grant-scoped. Effect events deliberately omit file contents
+and absolute paths. No network, shell, provider, Git, credential, or
+third-party code path was added.
+
+Rollback: remove `ReadWorkspaceStep` and its test; the standalone adapter and
+condition-only executor remain available without changing existing files.
+
+Not yet verified: effect timeline UI, write/shell/network adapters, approval
+inbox queuing, parallel limits, scheduling, and packaged Linux parity. The
+next dependency is exposing this durable effect in Activity before any new
+side-effecting adapter is considered.

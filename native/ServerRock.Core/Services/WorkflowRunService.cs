@@ -13,6 +13,7 @@ public sealed class WorkflowRunService
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 24 };
     private readonly string _path;
     private readonly WorkflowService _definitions;
+    private readonly ReadOnlyWorkspaceAdapter _workspaceReader = new();
 
     public WorkflowRunService(WorkflowService definitions, string? path = null)
     {
@@ -101,6 +102,37 @@ public sealed class WorkflowRunService
         step.Status = WorkflowStepStatuses.Complete;
         Touch(run);
         AddEvent(snapshot, run, "step.completed", actor, new() { ["nodeId"] = nodeId, ["attempt"] = step.Attempt.ToString() });
+        if (run.Steps.All(item => item.Status is WorkflowStepStatuses.Complete or WorkflowStepStatuses.Skipped))
+        {
+            run.Status = WorkflowRunStatuses.Verifying;
+            AddEvent(snapshot, run, "run.verifying", actor, new());
+            run.Status = WorkflowRunStatuses.Completed;
+            AddEvent(snapshot, run, "run.completed", actor, new());
+        }
+        Save(snapshot);
+        return run;
+    }
+
+    public WorkflowRun ReadWorkspaceStep(string runId, string nodeId, string selectedRoot, string relativePath, WorkflowCapabilityGrant grant, string actor = "system")
+    {
+        var snapshot = Load();
+        var run = Find(snapshot, runId);
+        var step = FindStep(run, nodeId);
+        if (run.Status != WorkflowRunStatuses.Running || step.Status != WorkflowStepStatuses.Executing)
+            throw new InvalidOperationException("A workspace read requires a running workflow and an executing step.");
+        if (step.NodeType != WorkflowNodeTypes.ToolCall)
+            throw new InvalidOperationException("Only tool-call steps can use the workspace read adapter.");
+        var result = _workspaceReader.ReadText(runId, nodeId, selectedRoot, relativePath, grant);
+        step.Result = $"read {result.Effect.CharactersRead} characters";
+        step.Status = WorkflowStepStatuses.Complete;
+        Touch(run);
+        AddEvent(snapshot, run, "workspace.read_completed", actor, new()
+        {
+            ["nodeId"] = nodeId,
+            ["relativePath"] = result.Effect.RelativePath,
+            ["charactersRead"] = result.Effect.CharactersRead.ToString(),
+            ["mutated"] = result.Effect.Mutated ? "true" : "false"
+        });
         if (run.Steps.All(item => item.Status is WorkflowStepStatuses.Complete or WorkflowStepStatuses.Skipped))
         {
             run.Status = WorkflowRunStatuses.Verifying;

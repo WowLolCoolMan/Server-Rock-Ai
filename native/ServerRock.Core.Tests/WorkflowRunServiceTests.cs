@@ -49,6 +49,23 @@ internal static class WorkflowRunServiceTests
             try { runs.EvaluateCondition(denied.RunId, "tool", new Dictionary<string, string>()); }
             catch (InvalidOperationException error) { refused = error.Message.Contains("condition", StringComparison.OrdinalIgnoreCase); }
             Check(refused, "unsupported workflow node execution is capability-gated");
+
+            var workspaceRoot = Path.Combine(Path.GetTempPath(), $"server-rock-workflow-read-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(workspaceRoot);
+            try
+            {
+                File.WriteAllText(Path.Combine(workspaceRoot, "readme.md"), "workflow read");
+                var workspaceDefinition = new WorkflowDefinition { Id = "workspace-read-flow", Title = "Workspace read", Nodes = [new() { Id = "read", Type = WorkflowNodeTypes.ToolCall, Label = "Read README" }] };
+                var workspaceRun = runs.Create(workspaceDefinition);
+                runs.Queue(workspaceRun.RunId); runs.Start(workspaceRun.RunId); runs.BeginStep(workspaceRun.RunId, "read");
+                var workspaceGrant = new WorkflowCapabilityGrant { RunId = workspaceRun.RunId, NodeId = "read", Scope = Path.GetFullPath(workspaceRoot), ApprovalId = "approval-read", Capabilities = [WorkflowCapabilities.ReadWorkspace] };
+                workspaceRun = runs.ReadWorkspaceStep(workspaceRun.RunId, "read", workspaceRoot, "readme.md", workspaceGrant);
+                Check(workspaceRun.Status == WorkflowRunStatuses.Completed && workspaceRun.Steps.Single().Result == "read 13 characters" && runs.Load().Events.Any(item => item.Type == "workspace.read_completed" && item.Payload["mutated"] == "false"), "workflow workspace read records a non-mutating effect event");
+            }
+            finally
+            {
+                if (Directory.Exists(workspaceRoot)) Directory.Delete(workspaceRoot, recursive: true);
+            }
         }
         finally
         {
