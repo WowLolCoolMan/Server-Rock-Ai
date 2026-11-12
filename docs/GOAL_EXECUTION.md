@@ -1371,3 +1371,42 @@ three audit contracts; all existing sidebar and slash-command routes remain.
 Not yet verified: navigation back/forward history, persistent tabs/layout,
 inspector state, live resize/focus acceptance at every target width, Linux
 parity, and packaged-release acceptance.
+
+## Slice 38 — live compatible local-provider response
+
+Status: `implemented_verified_windows_with_model_compatibility_boundary`
+
+The live Windows chat journey was tested against the configured local
+OpenAI-compatible endpoint. The original selected model,
+`huihui_ai/Qwen3.8-abliterated:latest`, was advertised by `/v1/models` but
+closed the stream without returning content; the app rendered the distinct
+`The model server closed the stream without returning a response.` failure.
+Using the existing Settings route, a locally installed compatible model,
+`wtwk-qwen35-4b:latest`, connected successfully and returned `LIVE_OK` in the
+native conversation, including Copy and Retry actions. The original model
+selection was restored after validation.
+
+Evidence:
+
+- Local runtime inventory — passed: `/api/tags` and `/v1/models` exposed five
+  local models; no remote endpoint was used.
+- Direct local OpenAI-compatible probe — passed for
+  `wtwk-qwen35-4b:latest`, returning `RUNTIME_OK`.
+- Live Windows app — passed for Settings model selection, connection status,
+  prompt submission, assistant `LIVE_OK` rendering, and Copy/Retry actions.
+- Live Windows app — failed for the original selected model with the truthful
+  stream-closure error; this is retained as a model-specific compatibility
+  limitation rather than treated as a generic provider success.
+- The original `huihui_ai/Qwen3.8-abliterated:latest` selection was restored
+  before ending the live validation.
+
+Privacy/security/licensing: all probes and the successful response stayed on
+the local Ollama endpoint. No prompt, response, credential, or context was
+sent to a cloud provider, and no new dependency was added.
+
+Rollback: no source rollback is required; the only runtime setting changed
+during validation was restored to its original value.
+
+Not yet verified: durable restart/reopen of this successful response, automatic
+model compatibility recovery, explicit fallback consent, multi-provider
+routing, Linux parity, and packaged-release acceptance.
