@@ -102,3 +102,23 @@ Evidence:
 
 Not yet verified: live Windows/Linux visual and keyboard acceptance of the pin
 menu and ordering. Tags remain a separate future slice.
+
+## Slice 4 — bounded chat tags
+
+Status: `implemented_unverified`
+
+Saved chats now support up to eight local-only tags, each limited to 32
+characters. The existing chat action menu can edit tags, normalizes duplicate
+and empty entries, shows tags under the chat title, and persists them through
+the existing validated conversation store/archive path. Invalid imported or
+saved tag lists are rejected before replacing healthy history.
+
+Evidence:
+
+- Core persistence test covers two tags through save/reload.
+- Conversation storage validates tag count, length, control characters, and
+  case-insensitive duplicates before atomic write.
+- No new dependency, network call, credential, or external code was added.
+
+Not yet verified: live Windows/Linux visual, keyboard, and screen-reader
+acceptance of the tag editor and tag rendering.

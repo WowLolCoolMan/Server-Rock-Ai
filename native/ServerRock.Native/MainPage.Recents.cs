@@ -166,7 +166,7 @@ public sealed partial class MainPage
         var title = new TextBlock { Text = session.Pinned ? $"📌 {session.Title}" : session.Title, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 54, 74, 81)), FontSize = 12 };
         var updated = new TextBlock
         {
-            Text = string.Join(" · ", new[] { session.ProjectName, session.UpdatedAt.ToLocalTime().ToString("g") }.Where(value => !string.IsNullOrWhiteSpace(value))),
+            Text = string.Join(" · ", new[] { session.ProjectName, session.Tags.Count == 0 ? null : $"Tags: {string.Join(", ", session.Tags)}", session.UpdatedAt.ToLocalTime().ToString("g") }.Where(value => !string.IsNullOrWhiteSpace(value))),
             Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)), FontSize = 10
         };
         var button = new Button
@@ -291,6 +291,8 @@ public sealed partial class MainPage
         rename.Click += async (_, _) => await RunAsync(() => RenameSessionAsync(sessionId));
         var pin = new MenuFlyoutItem { Text = session.Pinned ? "Unpin chat" : "Pin chat", Tag = sessionId };
         pin.Click += (_, _) => Run(() => ToggleSessionPinned(sessionId));
+        var tags = new MenuFlyoutItem { Text = "Edit tags…", Tag = sessionId };
+        tags.Click += async (_, _) => await RunAsync(() => EditSessionTagsAsync(sessionId));
         var archive = new MenuFlyoutItem { Text = session.Archived ? "Restore from archive" : "Archive chat", Tag = sessionId };
         archive.Click += (_, _) => Run(() => ToggleSessionArchive(sessionId));
         var fork = new MenuFlyoutItem { Text = "Fork from here", Tag = sessionId };
@@ -299,6 +301,7 @@ public sealed partial class MainPage
         delete.Click += async (_, _) => await RunAsync(() => DeleteSessionAsync(sessionId));
         menu.Items.Add(rename);
         menu.Items.Add(pin);
+        menu.Items.Add(tags);
         menu.Items.Add(archive);
         menu.Items.Add(fork);
         if (!session.Archived && _settings.ChatFolders.Count > 0)
@@ -417,6 +420,55 @@ public sealed partial class MainPage
         }
         if (_activeSessionId == sessionId && _activeProjectName is null) PageTitle.Text = updatedTitle;
         RuntimeStatus.Text = "Chat renamed.";
+    }
+
+    private async Task EditSessionTagsAsync(string sessionId)
+    {
+        if (_requestCancellation is not null)
+        {
+            RuntimeStatus.Text = "Wait for the current response to finish before editing chat tags.";
+            return;
+        }
+        var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
+        if (session is null) return;
+        var tags = new TextBox
+        {
+            Text = string.Join(", ", session.Tags),
+            PlaceholderText = "research, writing, urgent",
+            MaxLength = 260,
+            AcceptsReturn = false
+        };
+        AutomationProperties.SetName(tags, "Chat tags");
+        AutomationProperties.SetHelpText(tags, "Enter up to eight comma-separated tags. Each tag can contain up to 32 characters.");
+        var hint = new TextBlock { Text = "Tags stay on this device and are shown under the chat title.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var panel = new StackPanel { Spacing = 8, Children = { tags, hint } };
+        var dialog = new ContentDialog
+        {
+            Title = "Edit chat tags",
+            Content = panel,
+            PrimaryButtonText = "Save tags",
+            CloseButtonText = "Cancel",
+            XamlRoot = XamlRoot
+        };
+        dialog.Opened += (_, _) => tags.Focus(FocusState.Programmatic);
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        var parsed = tags.Text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (parsed.Count > 8 || parsed.Any(tag => tag.Length > 32 || tag.Any(char.IsControl)))
+        {
+            RuntimeStatus.Text = "Use up to eight tags, with no tag longer than 32 characters.";
+            return;
+        }
+        var previous = session.Tags;
+        session.Tags = parsed;
+        if (!PersistConversationEdits())
+        {
+            session.Tags = previous;
+            RenderRecent();
+            return;
+        }
+        RuntimeStatus.Text = parsed.Count == 0 ? "Chat tags cleared." : $"Saved {parsed.Count} chat tag{(parsed.Count == 1 ? "" : "s")}.";
     }
 
     private async Task DeleteSessionAsync(string sessionId)

@@ -19,6 +19,8 @@ public sealed class ChatSession
     public string? FolderName { get; set; }
     /// <summary>Whether this chat is pinned above other chats in its list.</summary>
     public bool Pinned { get; set; }
+    /// <summary>User-controlled labels used to organize this chat.</summary>
+    public List<string> Tags { get; set; } = [];
     /// <summary>Whether this chat was intentionally archived in the source workspace.</summary>
     public bool Archived { get; set; }
     /// <summary>Source chat ID when this conversation was forked.</summary>

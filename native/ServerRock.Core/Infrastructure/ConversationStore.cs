@@ -39,6 +39,7 @@ public sealed class ConversationStore
                 session.Messages ??= [];
                 session.BaseMessages ??= [];
                 session.Branches ??= [];
+                session.Tags ??= [];
                 session.Mode ??= WorkspaceModes.Chat;
             }
             return sessions;

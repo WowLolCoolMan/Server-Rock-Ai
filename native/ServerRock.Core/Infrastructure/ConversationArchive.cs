@@ -87,6 +87,14 @@ public static class ConversationArchive
             if (session.Title.Length > 200) session.Title = session.Title[..200];
             if (session.Mode is not (WorkspaceModes.Chat or WorkspaceModes.CodingAgent)) session.Mode = WorkspaceModes.Chat;
             if (session.FolderName?.Length > 80) session.FolderName = session.FolderName[..80];
+            session.Tags ??= [];
+            if (session.Tags.Count > 8 || session.Tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32 || tag.Any(char.IsControl)))
+                throw new InvalidDataException("A conversation contains an invalid tag list.");
+            session.Tags = session.Tags
+                .Select(tag => tag.Trim())
+                .Where(tag => tag.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
             if (session.ForkedFrom is { Length: > 128 } || session.ForkedFrom?.Any(char.IsControl) == true)
                 throw new InvalidDataException("A conversation fork reference is invalid.");
             session.BaseMessages ??= [];
