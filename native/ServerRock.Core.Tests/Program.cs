@@ -13,6 +13,7 @@ await ConversationArchiveTests.RunAsync();
 await WebSearchTests.RunAsync();
 await GitHubTests.RunAsync();
 ChatMessageTests.Run();
+PromptVariableTests.Run();
 await LocalStorageAndWorkspaceTests.RunAsync();
 ExternalLinkTests.Run();
 OperationJournalTests.Run();

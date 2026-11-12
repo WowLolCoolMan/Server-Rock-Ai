@@ -1531,6 +1531,45 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 81 — deterministic date/time variables in reviewed skill prompts
+
+Status: `implemented_verified_core`
+
+Built-in and installed Markdown skill instructions now expand the bounded,
+deterministic variables `{{DATE}}`, `{{TIME}}`, and `{{DATETIME}}` before the
+prompt is placed in the composer for user review. Unknown variables remain
+unchanged, and the prompt is still visible and editable before it can be sent.
+Expansion is limited to local date/time values; it does not read account data,
+environment variables, files, or network state.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/PromptVariableExpander.cs`
+- `native/ServerRock.Core.Tests/PromptVariableTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deterministic expansion, case-insensitive names, unknown-variable preservation, and control-character rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (131 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only the local clock is consulted. No username,
+credentials, files, provider metadata, network data, dependency, or
+third-party code is introduced. The existing explicit skill enablement and
+user-review-before-send boundary remains in place.
+
+Rollback: remove `PromptVariableExpander`, its Core test and runner entry, the
+two skill-loading expansion calls, and the UI audit contract. Skill loading
+then returns the original Markdown instructions unchanged.
+
+Not yet verified: live Windows skill insertion with a variable-bearing
+installed package, user-configurable variables such as `{{USER_NAME}}`, and
+cross-platform/package acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

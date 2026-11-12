@@ -136,13 +136,13 @@ public sealed partial class MainPage
         {
             if (list.SelectedItem is SkillDefinition builtIn)
             {
-                PromptBox.Text = builtIn.Prompt;
+                PromptBox.Text = PromptVariableExpander.Expand(builtIn.Prompt, DateTimeOffset.Now);
                 PromptBox.Focus(FocusState.Programmatic);
                 status.Text = $"Loaded {builtIn.Name}. Review the prompt, then send it when ready.";
                 return;
             }
             if (installedList.SelectedItem is not InstalledSkill skill) return;
-            try { PromptBox.Text = _skillPackageInstaller.ReadInstructions(skill.Id); }
+            try { PromptBox.Text = PromptVariableExpander.Expand(_skillPackageInstaller.ReadInstructions(skill.Id), DateTimeOffset.Now); }
             catch (Exception ex) { status.Text = $"Skill instructions could not be read: {ex.Message}"; return; }
             PromptBox.Focus(FocusState.Programmatic);
             status.Text = $"Loaded {skill.Name}. Review the prompt, then send it when ready.";
