@@ -1680,7 +1680,7 @@ packaged acceptance.
 
 ## Slice 80 — enforce local-only policy on pinned route selection
 
-Status: `implemented_verified_core`
+Status: `implemented_verified_with_live_surface_boundary`
 
 Selecting a pinned model route from the composer hotswapper now reuses the same
 endpoint/model validator used by Settings. When local-only mode is enabled, a
@@ -1701,6 +1701,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (130 contracts).`
 - `git diff --check` — passed.
+- Live Windows boundary check — local-only mode was enabled and then restored
+  through Host configuration. The composer hotswapper exposed `No pinned models
+  yet`, so there was no pinned remote route available to exercise the rejection
+  message without adding or changing a provider configuration. No model,
+  endpoint, credential, pet setting, or cloud route was changed.
 
 Privacy/security/licensing: the guard prevents an explicit local-only setting
 from being bypassed through a previously pinned remote route. It adds no
@@ -1711,7 +1716,8 @@ Rollback: remove the selection validation and its audit/test assertion; the
 Settings save guard remains, but pinned-route selection would lose the same
 local-only boundary.
 
-Not yet verified: live Windows pinned-route rejection, capability-aware
+Not yet verified: the live Windows pinned-route rejection message itself (no
+pinned route was available), capability-aware
 multi-route selection, durable provider identity across fallback attempts,
 Linux parity, and packaged acceptance.
 
