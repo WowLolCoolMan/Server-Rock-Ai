@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `870b62b` plus the live local-provider validation
+Snapshot commit: `73dabe1` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -20,14 +20,14 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 | Domain | Status | Current evidence | Main gap / next dependency |
 | --- | --- | --- | --- |
-| Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 89 contracts; live Ctrl+K command palette filtering and settings routing verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
+| Shell and navigation | partial | `native/ServerRock.Native/MainPage.*`, `SidebarView.*`, `scripts/audit-native-ui.cjs`; static audit passes 98 contracts; live Ctrl+K command palette filtering and settings routing verified | Typed routes, navigation history, persistent tabs/layout, inspector and live focus/resize acceptance |
 | Conversations | partial | Streaming, persistence, attachments, folders, forks, archive import/export, pins, tags, bounded FIFO follow-up queue, Queue/remove/clear/reorder controls, queue persistence across restart, live restart/accessibility evidence, live automatic dispatch-after-failure evidence, bounded local search across message metadata/content, live search dialog/result/open-chat journey, and successful live response with a compatible local model | Durable context continuity, model-specific response compatibility/recovery |
 | Projects and Git workspaces | partial | `ProjectStore`, `GitHubWorkspaceService`, project context, guarded changes, undo and Git review tests | Full project workbench, conflict recovery, worktree isolation, tested Git push reconciliation |
 | Agent workbench | partial | Coding Agent proposals, approvals, terminal commands, reviewed file changes, durable operation run/event contract, chat lifecycle integration, and reviewed reconciliation decisions | Activity UI acceptance, scheduler, parallel agents and task artifacts |
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks, measured local performance, conservative capability profiles, persisted vision override, bounded provider-advertised model metadata, and connection status evidence | Hardware/resource scheduling, richer provider coverage and unload/queue states |
-| Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats; durable operation provenance; capability-aware preflight with persisted override, bounded discovery metadata, visible selected-model capability status, live compatible-local-model response acceptance, explicit local-only recovery, accessible fallback confirmation, and live model-compatibility failure classification | Capability-aware multi-route selection, proactive compatibility detection, and durable provider identity across all provider attempts |
+| Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats; durable operation provenance; capability-aware preflight with persisted override, bounded discovery metadata, visible selected-model capability status, live compatible-local-model response acceptance, explicit local-only recovery, accessible fallback confirmation, live model-compatibility failure classification, and explicit unavailable-selected-model policy with no silent switch | Capability-aware multi-route selection, proactive compatibility detection, and durable provider identity across all provider attempts |
 | Workflows and scheduled tasks | partial | Activity surface includes a durable concurrent approval inbox with approve/deny, expiry timestamps, identity/outcome summaries, stale-expiry handling, and a bounded accessible countdown; it also exposes dependency-ordered plans, dry-run previews, condition results, exact-scope grants, a read-only adapter, and durable effects; live Activity & tasks accessibility is verified | Seeded live pending-approval countdown acceptance, write/shell/network adapters, richer branching, parallel limits, scheduling and full audit/export |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
@@ -41,14 +41,14 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `870b62b`, with the user-provided
+- Live checkout: `main` at `73dabe1` before the current uncommitted slice, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
   uploaded remediation issues; every row initially declares
   `requires_live_repo_recheck`.
 - Current focused evidence: Core test harness, native desktop build, and the
-  83-contract native UI audit have passed in prior slices; no new claim of
+  98-contract native UI audit have passed for the current slice; no new claim of
   Linux or packaged-release validation is made here.
 - Existing slice evidence is recorded in `docs/GOAL_EXECUTION.md`.
 - Live search evidence: the native Windows app exposed `Search your workspace`,
@@ -77,6 +77,12 @@ capability prevents progress; `unverified` means evidence is insufficient.
   closure produced the accessible runtime status `Model compatibility issue ·
   choose another local model or check Settings`, while retaining the recovery
   chooser and without changing the selected model.
+- Live unavailable-selection evidence: Settings temporarily saved
+  `missing-model`; the app reported `Connected · selected model missing-model is
+  unavailable · choose a model in Model Library`, kept `missing-model` in the
+  accessible ModelButton description, and did not auto-save or switch to an
+  advertised model. The original model was restored afterward; no cloud route
+  was used.
 
 ## Backlog ordering
 
@@ -84,8 +90,8 @@ capability prevents progress; `unverified` means evidence is insufficient.
    then add richer branching, parallel limits, scheduling, and full audit/export.
 2. Finish the shell/navigation seams and live focus/resize acceptance around
    the existing native UI.
-3. Add explicit provider capability discovery and routing policy before broad
-   model/provider expansion.
+3. Extend the explicit model-selection policy into provider capability
+   discovery and multi-route selection before broad model/provider expansion.
 4. Build workflow/task execution on the durable operation contract, then add
    MCP/skills/integrations with provenance and permission gates.
 5. Complete cross-platform, accessibility, packaging, security and release

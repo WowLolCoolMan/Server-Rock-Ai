@@ -1,7 +1,8 @@
 // Model server connection status: on page load (and after Settings changes) asks the
 // configured endpoint for its model list, then updates the Local/Remote ready labels, the
-// connection dots, and the data-route label. If the saved model isn't installed, it switches to
-// the first available one. LocalEndpoint.IsLocal (Core) decides what counts as "on this device" (loopback only).
+// connection dots, and the data-route label. If the saved model isn't installed, it reports the
+// mismatch and waits for explicit user selection. LocalEndpoint.IsLocal (Core) decides what counts
+// as "on this device" (loopback only).
 // Depends on: OpenAiCompatibleProvider (_provider), GetProviderApiKey, SaveSettings, header
 // elements in MainPage.xaml.
 // Called by: Loaded in MainPage.xaml, Settings/model selection (RefreshModelConnectionAsync), and
@@ -12,6 +13,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Infrastructure;
 using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -44,13 +46,10 @@ public sealed partial class MainPage
             ConnectionDot.Fill = UiTheme.Brush("SuccessBrush");
             HeaderConnectionDot.Fill = ConnectionDot.Fill;
             ProcessingLabel.Text = local ? "● On-device model" : "● Remote model server";
-            if (!models.Contains(_settings.Model, StringComparer.Ordinal))
+            var selection = ModelSelectionPolicy.Evaluate(_settings.Model, models);
+            if (!selection.IsAvailable)
             {
-                var previouslySelected = _settings.Model;
-                _settings.Model = models[0];
-                SaveSettings();
-                UpdateModelLabel();
-                RuntimeStatus.Text = $"Selected installed model {_settings.Model}; {previouslySelected} was unavailable";
+                RuntimeStatus.Text = $"Connected · selected model {_settings.Model} is unavailable · choose a model in Model Library";
             }
             else
             {

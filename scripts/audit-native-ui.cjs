@@ -86,6 +86,8 @@ const requiredCode = [
   ['Fallback confirmation no cloud route', 'no cloud route or automatic retry will occur.'],
   ['Model compatibility failure classification', 'ProviderErrorText.Classify(ex, hasImages)'],
   ['Model compatibility status', 'ProviderFailureKind.ModelCompatibility'],
+  ['Unavailable model requires explicit selection', 'ModelSelectionPolicy.Evaluate(_settings.Model, models)'],
+  ['Unavailable model does not auto-save', 'selected model {_settings.Model} is unavailable'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

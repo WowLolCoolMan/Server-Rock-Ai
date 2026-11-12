@@ -1530,3 +1530,45 @@ existing error descriptions and explicit recovery remain available.
 Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
+
+## Slice 42 — preserve unavailable selected models until explicit choice
+
+Status: `implemented_verified_windows`
+
+The connection refresh path now evaluates the saved model against the provider's
+advertised model list without silently replacing it or persisting the first
+available model. When the saved model is unavailable, the runtime status tells
+the user to choose a model in Model Library while the selected model identity
+remains visible. Model changes continue to happen only through an explicit user
+selection path.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ModelSelectionPolicy.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/ServerRock.Native/MainPage.Connection.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (98 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: Settings temporarily saved
+  `missing-model`; runtime status announced that the selected model was
+  unavailable and directed the user to Model Library, while ModelButton still
+  exposed `missing-model`. The original model was restored afterward.
+
+Privacy/security/licensing: preserving the explicit selection prevents an
+unexpected local model change and avoids silently changing provider behavior.
+The policy uses only the locally advertised model list and adds no credentials,
+network route, prompt data, or dependency.
+
+Rollback: restore the prior unavailable-model branch in
+`MainPage.Connection.cs` and remove `ModelSelectionPolicy`; the existing
+explicit Model Library selection path remains available.
+
+Not yet verified: proactive compatibility detection before a request,
+multi-route provider selection, durable provider identity across fallback
+attempts, Linux parity, and packaged-release acceptance.

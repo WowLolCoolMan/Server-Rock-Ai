@@ -212,5 +212,9 @@ internal static class ChatProviderTests
             && ProviderErrorText.Classify(new HttpRequestException("bad", null, HttpStatusCode.BadRequest), hasImageAttachments: true) == ProviderFailureKind.ImageRejected
             && ProviderErrorText.Classify(new TaskCanceledException()) == ProviderFailureKind.Timeout,
             "provider failures classify model compatibility separately from endpoint, image, and timeout failures");
+        var selection = ModelSelectionPolicy.Evaluate("missing-model", ["local-a", "local-b"]);
+        Check(!selection.IsAvailable && selection.SelectedModel == "missing-model"
+            && ModelSelectionPolicy.Evaluate("local-b", ["local-a", "local-b"]).IsAvailable,
+            "unavailable selected models remain explicit until the user chooses a listed model");
     }
 }
