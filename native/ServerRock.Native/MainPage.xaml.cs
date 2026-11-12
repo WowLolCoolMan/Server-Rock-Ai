@@ -79,6 +79,7 @@ public sealed partial class MainPage : Page
     private string? _pendingWebContext;
     private List<ChatSource>? _pendingWebSources;
     private bool _providerConnected;
+    private string[] _advertisedModels = [];
     private bool _connectionCheckRunning;
     private int _selectedSlashSuggestion = -1;
     private Button? _lastUndoButton;

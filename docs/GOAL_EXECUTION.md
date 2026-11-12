@@ -1531,6 +1531,51 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 46 — block sends for definitively unavailable discovered models
+
+Status: `implemented_verified_windows`
+
+The native connection refresh now retains the provider-advertised model
+inventory, and the send path performs a local selection check before smart
+rewriting, web search, consent prompts, or provider streaming. When the
+inventory is non-empty and excludes the selected model, Send leaves the draft
+untouched and announces that the user must choose a model in Model Library.
+If discovery fails and no inventory is known, the guard stays permissive so the
+user can retry the connection instead of receiving a false incompatibility
+claim. No automatic fallback or cloud route is introduced.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Connection.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (106 contracts).`
+- `git diff --check` — passed.
+- Live Windows accessibility inspection — passed: after temporarily selecting
+  `missing-model`, sending `guard must block this request` kept the draft in
+  the composer and announced `Selected model missing-model is unavailable ·
+  choose a model in Model Library before sending`; no turn was created. The
+  original model was restored afterward.
+
+Privacy/security/licensing: the check uses only model IDs already returned by
+the configured endpoint. It prevents an unintended request and does not send
+prompt, attachment, project, credential, or web-search data.
+
+Rollback: remove `_advertisedModels`, the connection inventory assignment, the
+pre-send selection guard, and the two audit contracts; the existing connection
+status and provider failure recovery remain available.
+
+Not yet verified: proactive checks for richer advertised capability mismatches,
+multi-route provider selection, durable provider identity across fallback
+attempts, live Git dialog acceptance, remote fetch/reconciliation before push,
+worktree isolation, Linux parity, and packaged-release acceptance.
+
 ## Slice 45 — isolate selected Git commits from the user index
 
 Status: `implemented_verified_windows_core`

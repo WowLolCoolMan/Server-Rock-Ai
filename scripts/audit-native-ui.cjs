@@ -94,6 +94,8 @@ const requiredCode = [
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
   ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
   ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],
+  ['Pre-send model availability guard', 'ModelSelectionPolicy.Evaluate(_settings.Model, _advertisedModels)'],
+  ['Pre-send unavailable model status', 'choose a model in Model Library before sending'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

@@ -19,6 +19,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -108,6 +109,12 @@ public sealed partial class MainPage
         if (text.StartsWith('/'))
         {
             await ExecuteSlashCommandAsync(text);
+            return;
+        }
+        var selection = ModelSelectionPolicy.Evaluate(_settings.Model, _advertisedModels);
+        if (_advertisedModels.Length > 0 && !selection.IsAvailable)
+        {
+            RuntimeStatus.Text = $"Selected model {_settings.Model} is unavailable · choose a model in Model Library before sending";
             return;
         }
         if (_settings.SmartPromptRewritingEnabled)

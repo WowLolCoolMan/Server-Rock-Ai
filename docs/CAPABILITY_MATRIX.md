@@ -1,6 +1,6 @@
 # Live capability matrix
 
-Snapshot commit: `0d5e2c1` plus the live local-provider validation
+Snapshot commit: `26d1963` plus the live local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -27,7 +27,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Editor and review | partial | `WorkspaceFileEditor`, `WorkspaceTextDiff`, bounded previews and undo tests | Multi-tab editor, external-change conflicts, syntax-aware editing and inspector integration |
 | Terminal and tools | partial | Real interactive terminal session, bounded commands, cancellation and secret-shaped environment filtering | OS sandbox truth, richer tool transport, process isolation and cross-platform PTY acceptance |
 | Models and local runtimes | partial | Local runtime discovery, model library, downloads/import checks, measured local performance, conservative capability profiles, persisted vision override, bounded provider-advertised model metadata, and connection status evidence | Hardware/resource scheduling, richer provider coverage and unload/queue states |
-| Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats; durable operation provenance; capability-aware preflight with persisted override, bounded discovery metadata, visible selected-model capability status, live compatible-local-model response acceptance, explicit local-only recovery, accessible fallback confirmation, live model-compatibility failure classification, and explicit unavailable-selected-model policy with no silent switch | Capability-aware multi-route selection, proactive compatibility detection, and durable provider identity across all provider attempts |
+| Routing and providers | partial | OpenAI-compatible transport, local-only endpoint guard, OpenRouter session key and vision formats; durable operation provenance; capability-aware preflight with persisted override, bounded discovery metadata, visible selected-model capability status, live compatible-local-model response acceptance, explicit local-only recovery, accessible fallback confirmation, live model-compatibility failure classification, explicit unavailable-selected-model policy with no silent switch, and pre-send blocking when a discovered inventory excludes the selected model | Capability-aware multi-route selection, richer proactive compatibility detection for advertised capabilities, and durable provider identity across all provider attempts |
 | Workflows and scheduled tasks | partial | Activity surface includes a durable concurrent approval inbox with approve/deny, expiry timestamps, identity/outcome summaries, stale-expiry handling, and a bounded accessible countdown; it also exposes dependency-ordered plans, dry-run previews, condition results, exact-scope grants, a read-only adapter, and durable effects; live Activity & tasks accessibility is verified | Seeded live pending-approval countdown acceptance, write/shell/network adapters, richer branching, parallel limits, scheduling and full audit/export |
 | Skills marketplace | partial | Read-only built-in catalog and truthful unavailable states in `SkillCatalogService` | Provenance-aware discovery, staged install, fixture testing, enablement, update diff and rollback |
 | MCP and integrations | partial | Plugin catalog and GitHub integration exist; unavailable integrations are labeled honestly | MCP/ACP connections, scoped grants, health/revocation, diagnostics and real integrations |
@@ -41,7 +41,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 
 ## Gate 0 evidence collected
 
-- Live checkout: `main` at `0d5e2c1`, with the user-provided
+- Live checkout: `main` at `26d1963`, with the user-provided
   `ServerRock_AI_FINAL_COMPLETE_HANDOFF/` directory intentionally left
   untracked and untouched.
 - Handoff register: 126 rows consisting of 86 premium requirements and 40
@@ -95,6 +95,11 @@ capability prevents progress; `unverified` means evidence is insufficient.
   `pre-staged-user-work.md`, committed a separate reviewed selection, and
   verified that the new commit omitted that file while the original index kept
   it staged. No force push or remote mutation was used.
+- Live pre-send model-guard evidence: after temporarily selecting
+  `missing-model`, the native Windows app preserved the draft and announced
+  `Selected model missing-model is unavailable · choose a model in Model Library
+  before sending`; no conversation turn was created. The original model was
+  restored afterward.
 
 ## Backlog ordering
 

@@ -39,6 +39,7 @@ public sealed partial class MainPage
         {
             var profiles = await _provider.DiscoverModelProfilesAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
             var models = profiles.Select(profile => profile.Model).ToArray();
+            _advertisedModels = models;
             _providerConnected = true;
             var local = LocalEndpoint.IsLocal(_settings.Endpoint);
             ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
@@ -65,6 +66,7 @@ public sealed partial class MainPage
         }
         catch (Exception ex)
         {
+            _advertisedModels = [];
             _providerConnected = false;
             ConnectionLabel.Text = "Not connected";
             HeaderConnectionLabel.Text = "Not connected";
