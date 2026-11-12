@@ -52,7 +52,7 @@ public static class OpenApiToolDiscovery
                     var name = string.IsNullOrWhiteSpace(operationId) ? method.ToUpperInvariant() + " " + path.Name : operationId!;
                     ValidateText(name, 128, "OpenAPI operation name");
                     var description = ReadDescription(operation.Value);
-                    var schema = BuildInputSchema(operation.Value);
+                    var schema = BuildInputSchema(operation.Value, root);
                     var mutating = method is "post" or "put" or "patch" or "delete";
                     operations.Add(new OpenApiDiscoveredOperation(name, method.ToUpperInvariant(), path.Name, description, schema,
                         mutating,
@@ -75,7 +75,7 @@ public static class OpenApiToolDiscovery
         return "Discovered OpenAPI operation; review its schema and permissions before use.";
     }
 
-    private static string BuildInputSchema(JsonElement operation)
+    private static string BuildInputSchema(JsonElement operation, JsonElement root)
     {
         var parameterProperties = new JsonObject();
         var required = new JsonArray();
@@ -86,7 +86,7 @@ public static class OpenApiToolDiscovery
                 var name = nameElement.GetString() ?? "";
                 if (name.Length is 0 or > 128 || name.Any(char.IsControl)) continue;
                 var schema = parameter.TryGetProperty("schema", out var schemaElement) && schemaElement.ValueKind == JsonValueKind.Object
-                    ? JsonNode.Parse(schemaElement.GetRawText())
+                    ? ResolveLocalSchema(schemaElement, root)
                     : new JsonObject { ["type"] = "string" };
                 parameterProperties[name] = schema;
                 if (parameter.TryGetProperty("required", out var requiredElement) && requiredElement.ValueKind == JsonValueKind.True) required.Add(name);
@@ -97,16 +97,37 @@ public static class OpenApiToolDiscovery
             content.TryGetProperty("application/json", out var jsonContent) && jsonContent.ValueKind == JsonValueKind.Object &&
             jsonContent.TryGetProperty("schema", out var bodySchema) && bodySchema.ValueKind == JsonValueKind.Object)
         {
-            var body = JsonNode.Parse(bodySchema.GetRawText());
+            var body = ResolveLocalSchema(bodySchema, root);
             parameterProperties["body"] = body;
             if (requestBody.TryGetProperty("required", out var bodyRequired) && bodyRequired.ValueKind == JsonValueKind.True) required.Add("body");
         }
 
-        var root = new JsonObject { ["type"] = "object", ["properties"] = parameterProperties };
-        if (required.Count > 0) root["required"] = required;
-        var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+        var result = new JsonObject { ["type"] = "object", ["properties"] = parameterProperties };
+        if (required.Count > 0) result["required"] = required;
+        var json = result.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
         if (json.Length > MaxSchemaCharacters) throw new InvalidDataException("The discovered OpenAPI input schema is oversized.");
         return json;
+    }
+
+    private static JsonNode? ResolveLocalSchema(JsonElement schema, JsonElement root, int depth = 0)
+    {
+        if (depth > 8) throw new InvalidDataException("The OpenAPI schema reference depth exceeds the bounded limit.");
+        if (schema.TryGetProperty("$ref", out var reference) && reference.ValueKind == JsonValueKind.String)
+        {
+            var value = reference.GetString() ?? "";
+            const string prefix = "#/components/schemas/";
+            if (!value.StartsWith(prefix, StringComparison.Ordinal))
+                throw new InvalidDataException("Only local OpenAPI component schema references are supported.");
+            var name = value[prefix.Length..];
+            if (name.Length is 0 or > 128 || name.Any(char.IsControl) || name.Contains('/', StringComparison.Ordinal))
+                throw new InvalidDataException("The OpenAPI component schema reference is invalid.");
+            if (!root.TryGetProperty("components", out var components) || components.ValueKind != JsonValueKind.Object ||
+                !components.TryGetProperty("schemas", out var schemas) || schemas.ValueKind != JsonValueKind.Object ||
+                !schemas.TryGetProperty(name, out var target) || target.ValueKind != JsonValueKind.Object)
+                throw new InvalidDataException("The OpenAPI component schema reference could not be resolved locally.");
+            return ResolveLocalSchema(target, root, depth + 1);
+        }
+        return JsonNode.Parse(schema.GetRawText());
     }
 
     private static void ValidateText(string value, int maxLength, string label)

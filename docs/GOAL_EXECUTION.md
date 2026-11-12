@@ -1722,9 +1722,41 @@ contracts. Core schema discovery remains available for a future integration
 surface.
 
 Not yet verified: selecting and rendering a real user-provided OpenAPI file,
-authenticated document retrieval, `$ref` resolution, explicit per-operation
+authenticated document retrieval, explicit per-operation
 grants, execution adapters, live integration acceptance, Linux parity, and
 packaged acceptance.
+
+## Slice 86 — bounded local OpenAPI component references
+
+Status: `implemented_verified_core`
+
+Core OpenAPI discovery now resolves bounded local component schema references
+from `#/components/schemas/...` while building reviewable input schemas. It
+rejects external, malformed, missing, or excessively nested references before
+returning a descriptor; it does not retrieve remote schemas or execute an
+operation.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/OpenApiToolDiscovery.cs`
+- `native/ServerRock.Core.Tests/OpenApiToolDiscoveryTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: resolution is limited to the in-document
+`components.schemas` object, with a maximum reference depth of 8 and bounded
+component names. External references fail closed, so this slice adds no
+network access, credentials, dependency, or implicit authorization.
+
+Rollback: remove the local reference resolver and its focused tests; direct
+inline schemas remain supported.
+
+Not yet verified: successful selection/rendering of a real user-provided file,
+authenticated retrieval, explicit per-operation grants, execution adapters,
+live integration acceptance, Linux parity, and packaged acceptance.
 
 ## Slice 76 — live queued-follow-up journey
 

@@ -9,6 +9,7 @@ internal static class OpenApiToolDiscoveryTests
         const string document = """
         {
           "openapi": "3.0.3",
+          "components": { "schemas": { "Note": { "type": "object", "properties": { "text": { "type": "string" } } } } },
           "paths": {
             "/notes/{id}": {
               "get": {
@@ -25,7 +26,7 @@ internal static class OpenApiToolDiscoveryTests
                   "required": true,
                   "content": {
                     "application/json": {
-                      "schema": { "type": "object", "properties": { "text": { "type": "string" } } }
+                      "schema": { "$ref": "#/components/schemas/Note" }
                     }
                   }
                 }
@@ -39,8 +40,8 @@ internal static class OpenApiToolDiscoveryTests
         var write = operations.Single(item => item.Name == "POST /notes");
         Check(operations.Count == 2 && read.Method == "GET" && !read.IsMutating && read.RequiredCapabilities.Contains(McpCapabilities.InvokeRead),
             "OpenAPI discovery produces bounded read-only operation descriptors");
-        Check(write.IsMutating && write.RequiredCapabilities.Contains(McpCapabilities.InvokeWrite) && write.InputSchemaJson.Contains("body", StringComparison.Ordinal),
-            "OpenAPI discovery classifies mutating operations and preserves JSON body schema");
+        Check(write.IsMutating && write.RequiredCapabilities.Contains(McpCapabilities.InvokeWrite) && write.InputSchemaJson.Contains("body", StringComparison.Ordinal) && write.InputSchemaJson.Contains("text", StringComparison.Ordinal),
+            "OpenAPI discovery classifies mutating operations and resolves local JSON body schemas");
 
         try
         {
@@ -60,6 +61,16 @@ internal static class OpenApiToolDiscoveryTests
         catch (ArgumentException)
         {
             Check(true, "OpenAPI discovery keeps source identity bounded and credential-free");
+        }
+
+        try
+        {
+            OpenApiToolDiscovery.Parse("{\"openapi\":\"3.0.3\",\"paths\":{\"/x\":{\"post\":{\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"https://example.test/schema.json\"}}}}}}}}}", "local-test");
+            throw new Exception("Expected external references to be rejected.");
+        }
+        catch (InvalidDataException)
+        {
+            Check(true, "OpenAPI discovery rejects external schema references without network access");
         }
     }
 }
