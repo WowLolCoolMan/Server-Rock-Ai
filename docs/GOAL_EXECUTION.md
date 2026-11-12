@@ -1033,6 +1033,41 @@ continuity, successful live provider-response acceptance, and packaged Linux
 parity. The next dependency is live reorder acceptance or a separate
 conversation-search slice.
 
+## Slice 34 — richer local conversation search
+
+Status: `implemented_unverified`
+
+Saved-chat search now uses a bounded Core service and searches title, project,
+folder, tags, message text, attachment filenames, and web-source title/URL
+metadata. Results remain local and are capped at 100 recent hits. The search
+dialog displays archive/folder/tag context without exposing full message text,
+and oversized or control-character queries are rejected safely.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ConversationSearchService.cs`
+- `native/ServerRock.Native/MainPage.Composer.cs`
+- `native/ServerRock.Core.Tests/ConversationSearchTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including tag, attachment, source metadata, recent ordering, and query-bound coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search is local-only and does not send query text
+or saved content to a provider. Results expose bounded labels and organization
+metadata, not full message bodies. No third-party code was added.
+
+Rollback: restore the inline title/message/project predicate and list binding;
+saved conversations remain unchanged.
+
+Not yet verified: live search dialog accessibility, durable context
+continuity, successful live provider-response acceptance, and packaged Linux
+parity. The next dependency is live search acceptance or context continuity.
+
 ## Slice 25 — durable chat operation provider provenance
 
 Status: `implemented_unverified`

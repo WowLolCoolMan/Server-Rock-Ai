@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -193,23 +194,17 @@ public sealed partial class MainPage
     private async Task SearchClickAsync()
     {
         var query = new TextBox { PlaceholderText = "Search chats in both workspaces", MinWidth = 360 };
-        var results = new ListView { DisplayMemberPath = "Title", MinHeight = 240, SelectionMode = ListViewSelectionMode.Single };
+        var results = new ListView { DisplayMemberPath = nameof(ConversationSearchHit.Display), MinHeight = 240, SelectionMode = ListViewSelectionMode.Single };
         void Refresh()
         {
-            var value = query.Text.Trim();
-            var hits = _sessions
-                .Where(session => value.Length == 0 || session.Title.Contains(value, StringComparison.CurrentCultureIgnoreCase) ||
-                    session.Messages.Any(message => message.Content.Contains(value, StringComparison.CurrentCultureIgnoreCase)) ||
-                    (session.ProjectName?.Contains(value, StringComparison.CurrentCultureIgnoreCase) ?? false))
-                .OrderByDescending(session => session.UpdatedAt)
-                .ToArray();
-            results.ItemsSource = hits;
+            try { results.ItemsSource = ConversationSearchService.Search(_sessions, query.Text); }
+            catch (ArgumentException) { results.ItemsSource = Array.Empty<ConversationSearchHit>(); }
         }
         query.TextChanged += (_, _) => Refresh();
         Refresh();
         var dialog = new ContentDialog { Title = "Search your workspace", Content = new StackPanel { Spacing = 10, Children = { query, results } }, PrimaryButtonText = "Open chat", CloseButtonText = "Close", XamlRoot = XamlRoot };
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary && results.SelectedItem is ChatSession session)
-            RecentClick(new Button { Tag = session.Id }, new RoutedEventArgs());
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && results.SelectedItem is ConversationSearchHit hit)
+            RecentClick(new Button { Tag = hit.Session.Id }, new RoutedEventArgs());
     }
 
     private void UpdateWebSearchButton()
