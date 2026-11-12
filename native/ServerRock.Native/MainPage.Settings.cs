@@ -31,6 +31,7 @@ public sealed partial class MainPage
         var tags = new TextBox { Header = "Tags", PlaceholderText = "comma-separated" };
         var enabled = new CheckBox { Content = "Use this memory when enabled by a future context review", IsChecked = true };
         var save = new Button { Content = "Save memory", MinWidth = 120 };
+        var export = new Button { Content = "Export backup", MinWidth = 120 };
         var newEntry = new Button { Content = "New", MinWidth = 80 };
         var disable = new Button { Content = "Disable", MinWidth = 90, IsEnabled = false };
         var remove = new Button { Content = "Delete", MinWidth = 80, IsEnabled = false };
@@ -42,6 +43,7 @@ public sealed partial class MainPage
         AutomationProperties.SetName(content, "Memory content");
         AutomationProperties.SetHelpText(content, "Saving is explicit user approval. Notes remain local and are not automatically sent to a model.");
         AutomationProperties.SetName(save, "Save memory");
+        AutomationProperties.SetName(export, "Export saved memory backup");
         AutomationProperties.SetName(remove, "Delete memory");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
 
@@ -105,6 +107,29 @@ public sealed partial class MainPage
             }
             catch (Exception ex) { status.Text = $"Memory was not saved: {ex.Message}"; }
         };
+        export.Click += async (_, _) =>
+        {
+            try
+            {
+                var picker = new Windows.Storage.Pickers.FileSavePicker
+                {
+                    SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                    SuggestedFileName = $"server-rock-memory-{DateTime.Now:yyyy-MM-dd}"
+                };
+                picker.FileTypeChoices.Add("Server Rock memory backup", new List<string> { ".json" });
+#if WINDOWS
+                var window = (Application.Current as App)?.MainWindow;
+                if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+                await Task.Delay(50);
+                var file = await picker.PickSaveFileAsync();
+                if (file is null) return;
+                await Windows.Storage.FileIO.WriteTextAsync(file, _memoryStore.ExportJson());
+                status.Text = $"Exported local memory backup to {file.Name}. Nothing was sent to a model.";
+            }
+            catch (Exception ex) { status.Text = $"Memory backup could not be exported: {ex.Message}"; }
+        };
         disable.Click += (_, _) =>
         {
             if (selected is null) return;
@@ -139,7 +164,7 @@ public sealed partial class MainPage
                         content,
                         tags,
                         enabled,
-                        new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, disable, remove } },
+                        new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, export, disable, remove } },
                         status
                     }
                 },

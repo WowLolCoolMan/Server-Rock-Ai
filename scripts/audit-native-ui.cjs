@@ -105,6 +105,7 @@ const requiredCode = [
   ['Memory local-only disclosure', 'Saved memory is local, explicit, and reviewable. Nothing is extracted from chats automatically'],
   ['Memory editor accessible label', 'AutomationProperties.SetName(content, "Memory content")'],
   ['Memory delete action', 'AutomationProperties.SetName(remove, "Delete memory")'],
+  ['Memory export action', 'AutomationProperties.SetName(export, "Export saved memory backup")'],
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
   ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
   ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],

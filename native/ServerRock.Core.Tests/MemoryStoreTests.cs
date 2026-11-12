@@ -17,6 +17,8 @@ internal static class MemoryStoreTests
             store.Update(entry.Id, "The project requires signed releases.", "project:demo", "user-edit", "approval-2", ["release"]);
             var reloaded = new MemoryStore(path);
             Check(reloaded.Load().Single().Content.Contains("signed releases", StringComparison.Ordinal), "memory edits survive reload");
+            var backup = reloaded.ExportJson();
+            Check(backup.Contains("server-rock-memory-v1", StringComparison.Ordinal) && backup.Contains("signed releases", StringComparison.Ordinal) && backup.Contains("\"enabled\": false", StringComparison.Ordinal), "memory export is a validated local backup");
             store.Remove(entry.Id);
             Check(new MemoryStore(path).Load().Count == 0, "memory deletion is explicit and durable");
             var refused = false;

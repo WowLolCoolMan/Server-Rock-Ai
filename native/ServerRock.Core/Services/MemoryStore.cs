@@ -79,6 +79,19 @@ public sealed class MemoryStore
         return Load().Where(entry => (!enabledOnly || entry.Enabled) && (scope is null || entry.Scope.Equals(scope, StringComparison.Ordinal)) && (normalizedQuery.Length == 0 || entry.Content.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase) || entry.Tags.Any(tag => tag.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase)))).ToArray();
     }
 
+    /// <summary>Returns a validated, local-only JSON backup without changing the store.</summary>
+    public string ExportJson()
+    {
+        var entries = Load().Select(Copy).ToList();
+        Validate(entries);
+        return JsonSerializer.Serialize(new MemoryBackup
+        {
+            Format = "server-rock-memory-v1",
+            ExportedAtUtc = DateTimeOffset.UtcNow,
+            Entries = entries
+        }, Options);
+    }
+
     private void Save(IEnumerable<MemoryEntry> entries)
     {
         var list = entries.Select(Copy).ToList();
@@ -119,4 +132,11 @@ public sealed class MemoryStore
         return values;
     }
     private static MemoryEntry Copy(MemoryEntry source) => new() { Id = source.Id, Scope = source.Scope, Content = source.Content, Source = source.Source, ApprovalId = source.ApprovalId, Tags = source.Tags.ToList(), Enabled = source.Enabled, CreatedAtUtc = source.CreatedAtUtc, UpdatedAtUtc = source.UpdatedAtUtc };
+
+    private sealed class MemoryBackup
+    {
+        public string Format { get; set; } = "server-rock-memory-v1";
+        public DateTimeOffset ExportedAtUtc { get; set; }
+        public List<MemoryEntry> Entries { get; set; } = [];
+    }
 }

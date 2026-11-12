@@ -2196,6 +2196,43 @@ encrypted storage, retention controls, review-before-injection,
 automatic memory proposals, model-context injection, cross-device sync, Linux
 parity, and packaged acceptance.
 
+## Slice 66 — explicit local memory backup export
+
+Status: `implemented_verified_core`
+
+The Memory manager now offers an explicit JSON backup export. The export is
+generated from the validated local store, includes enabled and disabled entries
+with approval/provenance metadata, uses a versioned format marker, and writes
+only after the user chooses a destination in the native save picker. There is
+no automatic import, provider upload, or model injection.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/MemoryStore.cs`
+- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the versioned backup marker and disabled-entry preservation assertion.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after closing the development app process that held its output DLL.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (121 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: backup content stays local until the user chooses
+the destination and is written through the native file picker. The export does
+not send memory to a provider, add credentials, or alter the source store. No
+dependency or third-party code was added.
+
+Rollback: remove `MemoryStore.ExportJson`, the export button/picker, its test,
+and its static UI contract; saved memory management remains available.
+
+Not yet verified: live Windows export-picker acceptance, memory restore/import,
+encrypted storage, retention controls, review-before-injection, automatic
+memory proposals, model-context injection, cross-device sync, Linux parity,
+and packaged acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
