@@ -110,6 +110,7 @@ const requiredCode = [
   ['Activity evidence export action', 'AutomationProperties.SetName(exportActivity, "Export activity evidence")'],
   ['Activity evidence search action', 'AutomationProperties.SetName(searchActivity, "Search activity evidence")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
+  ['Skill explicit enablement control', 'AutomationProperties.SetName(enable, "Enable or disable selected skill")'],
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
   ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
   ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],

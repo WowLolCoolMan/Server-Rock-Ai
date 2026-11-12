@@ -8,6 +8,7 @@ public sealed class SkillPackageManifest
     public string Publisher { get; set; } = string.Empty;
     public string SourceRef { get; set; } = string.Empty;
     public string PackageSha256 { get; set; } = string.Empty;
+    public bool Enabled { get; set; }
     public List<string> RequiredPermissions { get; set; } = [];
 }
 
@@ -19,4 +20,5 @@ public sealed record InstalledSkill(
     string SourceRef,
     string PackageSha256,
     string ActivePath,
-    IReadOnlyList<string> RequiredPermissions);
+    IReadOnlyList<string> RequiredPermissions,
+    bool Enabled);

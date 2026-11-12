@@ -2343,6 +2343,44 @@ Not yet verified: live Windows recurring-task creation and pause/resume,
 timezone/locale matrix, backoff policies, autonomous background execution,
 parallel agents, Linux parity, and packaged acceptance.
 
+## Slice 73 — explicit installed-skill enablement
+
+Status: `implemented_verified_core`
+
+Installed local skills are now disabled by default and must be explicitly
+enabled before their Markdown instructions can be loaded into the composer.
+Enablement is stored atomically in the active manifest, displayed with the
+publisher/source/digest details, and can be revoked without uninstalling the
+package. Updates remain disabled until the new package is reviewed; rollback
+restores the prior package and its prior enablement state.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/InstalledSkill.cs`
+- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including disabled-by-default, durable enablement, update, rollback, and executable-rejection checks.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (126 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: skill content remains local Markdown and is never
+executed. The explicit grant state prevents a newly installed or updated
+package from entering a prompt until the user reviews and enables it. No
+dependency or third-party code was added.
+
+Rollback: remove `Enabled`, `SetEnabled`, the UI control, test assertions, and
+static UI contract; the existing package validation and rollback paths remain.
+
+Not yet verified: GitHub transport/ref verification, publisher trust, live
+Windows permission-control acceptance, cross-platform packaging, and update
+diff review.
+
 ## Slice 67 — explicit local activity evidence export
 
 Status: `implemented_verified_core`

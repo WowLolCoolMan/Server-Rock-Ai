@@ -89,6 +89,7 @@ public sealed partial class MainPage
         var installedList = new ListView { MinHeight = 80, MaxHeight = 180, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(InstalledSkill.Name) };
         var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
         var run = new Button { Content = "Use skill", IsEnabled = false, MinWidth = 100 };
+        var enable = new Button { Content = "Enable selected", IsEnabled = false, MinWidth = 140 };
         var install = new Button { Content = "Install local package", MinWidth = 170 };
         var rollback = new Button { Content = "Rollback selected", IsEnabled = false, MinWidth = 150 };
         var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
@@ -97,11 +98,14 @@ public sealed partial class MainPage
         AutomationProperties.SetHelpText(install, "Choose a local skill package containing a manifest and Markdown instructions. Scripts are rejected and never executed.");
         AutomationProperties.SetName(rollback, "Rollback selected installed skill");
         AutomationProperties.SetHelpText(rollback, "Restore the previous atomically activated version of the selected installed skill.");
+        AutomationProperties.SetName(enable, "Enable or disable selected skill");
+        AutomationProperties.SetHelpText(enable, "A skill must be explicitly enabled before its Markdown instructions can be loaded into the composer.");
         void RefreshInstalled() => installedList.ItemsSource = _skillPackageInstaller.ListInstalled();
         list.SelectionChanged += (_, _) =>
         {
             installedList.SelectedItem = null;
             rollback.IsEnabled = false;
+            enable.IsEnabled = false;
             if (list.SelectedItem is not SkillDefinition skill) { run.IsEnabled = false; details.Text = string.Empty; return; }
             details.Text = $"{skill.Name}\n\n{skill.Description}\n\nPermissions: {string.Join(", ", skill.RequiredPermissions)}";
             run.IsEnabled = true;
@@ -109,10 +113,24 @@ public sealed partial class MainPage
         installedList.SelectionChanged += (_, _) =>
         {
             list.SelectedItem = null;
-            if (installedList.SelectedItem is not InstalledSkill skill) { rollback.IsEnabled = false; details.Text = string.Empty; return; }
-            details.Text = $"{skill.Name} · v{skill.Version}\n\nPublisher: {skill.Publisher}\nSource: {skill.SourceRef}\nDigest: {skill.PackageSha256}\nPermissions: {string.Join(", ", skill.RequiredPermissions)}\n\nInstalled package content is treated as instructions and is never executed automatically.";
+            if (installedList.SelectedItem is not InstalledSkill skill) { rollback.IsEnabled = false; enable.IsEnabled = false; details.Text = string.Empty; return; }
+            details.Text = $"{skill.Name} · v{skill.Version}\n\nPublisher: {skill.Publisher}\nSource: {skill.SourceRef}\nDigest: {skill.PackageSha256}\nPermissions: {string.Join(", ", skill.RequiredPermissions)}\nState: {(skill.Enabled ? "enabled" : "disabled; explicit enablement required")}\n\nInstalled package content is treated as instructions and is never executed automatically.";
             rollback.IsEnabled = true;
-            run.IsEnabled = true;
+            enable.IsEnabled = true;
+            enable.Content = skill.Enabled ? "Disable selected" : "Enable selected";
+            run.IsEnabled = skill.Enabled;
+        };
+        enable.Click += (_, _) =>
+        {
+            if (installedList.SelectedItem is not InstalledSkill skill) return;
+            try
+            {
+                var updated = _skillPackageInstaller.SetEnabled(skill.Id, !skill.Enabled);
+                status.Text = updated.Enabled ? $"Enabled {updated.Name}. Review its permissions before use." : $"Disabled {updated.Name}. It cannot be loaded until enabled again.";
+                RefreshInstalled();
+                installedList.SelectedItem = updated;
+            }
+            catch (Exception ex) { status.Text = $"Skill permission state could not be changed: {ex.Message}"; }
         };
         run.Click += (_, _) =>
         {
@@ -179,7 +197,7 @@ public sealed partial class MainPage
                     installedList,
                     details,
                     run,
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { install, rollback } },
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { install, enable, rollback } },
                     status
                 }
             }

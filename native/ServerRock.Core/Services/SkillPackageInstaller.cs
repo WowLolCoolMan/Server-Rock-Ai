@@ -92,6 +92,18 @@ public sealed class SkillPackageInstaller
         }
     }
 
+    public InstalledSkill SetEnabled(string id, bool enabled)
+    {
+        ValidateId(id);
+        var active = Path.Combine(_root, "active", id);
+        var manifestPath = Path.Combine(active, ManifestFileName);
+        if (!File.Exists(manifestPath)) throw new InvalidOperationException("The installed skill is no longer available.");
+        var manifest = ReadManifest(manifestPath);
+        manifest.Enabled = enabled;
+        AtomicFileWriter.WriteText(manifestPath, JsonSerializer.Serialize(manifest, JsonOptions));
+        return ToInstalled(manifest, active);
+    }
+
     public InstalledSkill Rollback(string id)
     {
         ValidateId(id);
@@ -183,7 +195,7 @@ public sealed class SkillPackageInstaller
     private static string DecodeUtf8(byte[] content) => new UTF8Encoding(false, true).GetString(content);
 
     private static InstalledSkill ToInstalled(SkillPackageManifest manifest, string path) =>
-        new(manifest.Id, manifest.Name, manifest.Version, manifest.Publisher, manifest.SourceRef, manifest.PackageSha256, path, manifest.RequiredPermissions.ToArray());
+        new(manifest.Id, manifest.Name, manifest.Version, manifest.Publisher, manifest.SourceRef, manifest.PackageSha256, path, manifest.RequiredPermissions.ToArray(), manifest.Enabled);
 
     private static bool IsLink(string path)
     {
