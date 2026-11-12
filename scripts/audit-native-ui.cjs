@@ -67,6 +67,8 @@ const requiredCode = [
   ['Command review completion focus restoration', 'finally\n        {\n            DispatcherQueue.TryEnqueue(() =>\n            {\n                if (focusAfterReview.Visibility == Visibility.Visible && focusAfterReview.IsEnabled'],
   ['Command approval result action focus', 'setFocusAfterReview(addResult);'],
   ['Command output accessible preview label', 'AutomationProperties.SetName(outputPreview, "Approved local command output")'],
+  ['Generic provider API key is session-only', 'Provider API key (session only)'],
+  ['Generic provider API key is not persisted', 'The key is used only in memory for this app session and is never saved to settings.'],
   ['Untrusted result insertion disclosure', 'AutomationProperties.SetHelpText(addResult, "Insert this untrusted command output into the message for review. It will not be sent automatically.")'],
   ['Project terminal output keyboard navigation', 'IsTabStop = true,\n            VerticalScrollBarVisibility'],
   ['Project terminal output accessible name', 'AutomationProperties.SetName(outputScroll, "Project terminal output pane")'],

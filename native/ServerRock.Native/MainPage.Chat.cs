@@ -493,9 +493,7 @@ public sealed partial class MainPage
         SaveSettings();
     }
 
-    private string? GetProviderApiKey() => _settings.ModelProvider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase)
-        ? _openRouterApiKey
-        : null;
+    private string? GetProviderApiKey() => string.IsNullOrWhiteSpace(_providerApiKey) ? null : _providerApiKey;
 
     private List<ChatMessage> BuildProviderMessages()
     {

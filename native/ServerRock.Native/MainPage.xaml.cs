@@ -23,7 +23,7 @@ public sealed partial class MainPage : Page
     private readonly List<ChatMessage> _messages = [];
     private readonly OpenAiCompatibleProvider _provider = new();
     // OpenRouter keys are session-only; they are never written to settings.json.
-    private string _openRouterApiKey = string.Empty;
+    private string _providerApiKey = string.Empty;
     private readonly ModelLibraryService _modelLibrary = new();
     private readonly ComfyImageProvider _comfyImageProvider = new();
     private readonly WebSearchProvider _webSearchProvider = new();

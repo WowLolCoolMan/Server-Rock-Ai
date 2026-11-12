@@ -1531,6 +1531,44 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 48 — session-only BYOK for compatible providers
+
+Status: `implemented_verified_core`
+
+The native connection dialog now accepts one optional bearer token for any
+OpenAI-compatible endpoint. The same session-only value is used for model
+discovery, chat streaming, prompt rewriting, and local benchmark requests;
+the value is cleared or replaced when the user saves connection settings and
+is never added to `AppSettings` or ordinary persistence. The OpenRouter
+shortcut continues to prefill its endpoint and free-model route, but the
+credential path is no longer provider-specific.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the token remains in process memory only, is
+passed as a bearer header by the existing bounded provider transport, and is
+not written to settings, logs, prompts, diagnostics, or URLs. No dependency
+or third-party code was added.
+
+Rollback: restore the OpenRouter-only key field and `GetProviderApiKey` branch;
+the existing local endpoint flow remains unchanged.
+
+Not yet verified: live hosted-provider discovery/chat with a real user key,
+OS keyring-backed hosted credentials, provider-specific scopes/quotas, Linux
+parity, and packaged-release acceptance.
+
 ## Slice 46 — block sends for definitively unavailable discovered models
 
 Status: `implemented_verified_windows`

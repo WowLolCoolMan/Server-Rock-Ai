@@ -115,9 +115,9 @@ public sealed partial class MainPage
     {
         var endpoint = new TextBox { Header = "OpenAI-compatible endpoint", Text = _settings.Endpoint, PlaceholderText = "http://localhost:11434/v1" };
         var model = new TextBox { Header = "Model ID", Text = _settings.Model, PlaceholderText = "Model ID reported by the server" };
-        var openRouterKey = new PasswordBox { Header = "OpenRouter API key (session only)", PlaceholderText = "sk-or-v1-…", Password = _openRouterApiKey };
-        AutomationProperties.SetName(openRouterKey, "OpenRouter API key");
-        AutomationProperties.SetHelpText(openRouterKey, "Required by OpenRouter, including its free models. The key is used only in memory for this app session and is never saved to settings.");
+        var providerKey = new PasswordBox { Header = "Provider API key (session only)", PlaceholderText = "Optional bearer token", Password = _providerApiKey };
+        AutomationProperties.SetName(providerKey, "Provider API key");
+        AutomationProperties.SetHelpText(providerKey, "Optional bearer token for OpenAI-compatible hosted endpoints. The key is used only in memory for this app session and is never saved to settings.");
         var openRouter = new Button { Content = "Use OpenRouter free models", MinWidth = 190 };
         AutomationProperties.SetName(openRouter, "Use OpenRouter free models");
         AutomationProperties.SetHelpText(openRouter, "Set the OpenRouter endpoint and automatic free-model router.");
@@ -296,7 +296,7 @@ public sealed partial class MainPage
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
             pageBody.Children.Add(openRouter);
-            pageBody.Children.Add(openRouterKey);
+            pageBody.Children.Add(providerKey);
             pageBody.Children.Add(smartRewrite);
             pageBody.Children.Add(note);
             pageBody.Children.Add(checkConnection);
@@ -544,7 +544,7 @@ public sealed partial class MainPage
             endpoint.Text = "https://openrouter.ai/api/v1";
             model.Text = "openrouter/free";
             checkStatus.Text = "OpenRouter free-model routing selected. Enter your API key, then check the connection.";
-            openRouterKey.Focus(FocusState.Programmatic);
+            providerKey.Focus(FocusState.Programmatic);
         };
         checkConnection.Click += async (_, _) =>
         {
@@ -559,7 +559,7 @@ public sealed partial class MainPage
             checkStatus.Text = "Checking local model servers…";
             try
             {
-                var models = await _provider.DiscoverModelsAsync(candidateEndpoint, apiKey: openRouterKey.Password.Trim());
+                var models = await _provider.DiscoverModelsAsync(candidateEndpoint, apiKey: providerKey.Password.Trim());
                 checkStatus.Text = models.Count switch
                 {
                     0 => "No local models responded. Start the server, confirm its address, then check again. Models in navigation can help you find compatible downloads.",
@@ -599,7 +599,7 @@ public sealed partial class MainPage
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
             _settings.Model = model.Text.Trim();
             _settings.ModelProvider = _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) ? "OpenRouter" : "Custom endpoint";
-            _openRouterApiKey = _settings.ModelProvider == "OpenRouter" ? openRouterKey.Password.Trim() : string.Empty;
+            _providerApiKey = providerKey.Password.Trim();
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };
             _settings.VisionCapabilityOverride = visionCapability.SelectedIndex switch { 1 => "supported", 2 => "unsupported", _ => "auto" };
