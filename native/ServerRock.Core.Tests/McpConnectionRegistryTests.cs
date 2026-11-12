@@ -6,7 +6,10 @@ internal static class McpConnectionRegistryTests
 {
     public static void Run()
     {
-        var registry = new McpConnectionRegistry();
+        var path = Path.Combine(Path.GetTempPath(), "server-rock-mcp-" + Guid.NewGuid().ToString("N"), "connections.json");
+        try
+        {
+        var registry = new McpConnectionRegistry(new McpConnectionStore(path));
         var configured = registry.Configure("connection-1", "test-server", "stdio", "sha256:manifest");
         Check(configured.State == McpConnectionStates.Configured, "MCP connection starts configured");
         registry.MarkHealthy("connection-1");
@@ -22,5 +25,9 @@ internal static class McpConnectionRegistryTests
         try { registry.MarkHealthy("connection-1"); }
         catch (InvalidOperationException) { refused = true; }
         Check(refused, "revoked MCP connection cannot be silently reactivated");
+        var reloaded = new McpConnectionRegistry(new McpConnectionStore(path));
+        Check(reloaded.Get("connection-1").State == McpConnectionStates.Revoked, "MCP connection revocation survives store reload");
+        }
+        finally { if (File.Exists(path)) Directory.Delete(Path.GetDirectoryName(path)!, recursive: true); }
     }
 }

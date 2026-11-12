@@ -1928,6 +1928,44 @@ cleanup, health probes, disconnect recovery, Streamable HTTP, UI permission
 review/revocation, audit journal events, live external MCP server acceptance,
 Linux/Windows packaged evidence, and ACP adapters.
 
+## Slice 59 — durable MCP connection metadata
+
+Status: `implemented_verified_core`
+
+MCP connection metadata now persists atomically in the application-data area.
+The store is bounded to 64 connections, validates identities, transport and
+lifecycle states, rejects duplicates, and stores no endpoint credentials or
+environment values. The registry reloads this metadata on startup, persists
+configuration and state changes, and retains terminal revocation across a
+reload. This slice does not launch or supervise a server process and does not
+claim a UI connector journey.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/McpConnectionStore.cs`
+- `native/ServerRock.Core/Services/McpConnectionRegistry.cs`
+- `native/ServerRock.Core.Tests/McpConnectionRegistryTests.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including atomic store reload and persisted revocation.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only reviewed connection identity, transport,
+manifest digest, state, and bounded error metadata are persisted. Writes use
+the existing temp-file-then-rename store primitive; malformed data is rejected
+without replacing the file. No credentials, prompts, executable paths, or
+third-party code were added.
+
+Rollback: remove `McpConnectionStore` and pass no store to
+`McpConnectionRegistry`; the process-local lifecycle and permission gate can
+continue without persistence.
+
+Not yet verified: encrypted credential references, process supervision and
+cleanup, health probes, disconnect recovery, Streamable HTTP, UI lifecycle and
+revocation review, audit journal events, live external MCP server acceptance,
+Linux/Windows packaged evidence, and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

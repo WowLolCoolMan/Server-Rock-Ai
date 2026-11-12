@@ -7,6 +7,13 @@ public sealed class McpConnectionRegistry
 {
     private readonly Dictionary<string, McpConnection> _connections = new(StringComparer.Ordinal);
     private readonly object _sync = new();
+    private readonly McpConnectionStore? _store;
+
+    public McpConnectionRegistry(McpConnectionStore? store = null)
+    {
+        _store = store;
+        foreach (var connection in store?.Load() ?? []) _connections[connection.ConnectionId] = Copy(connection);
+    }
 
     public McpConnection Configure(string connectionId, string serverId, string transport, string manifestDigest = "")
     {
@@ -18,6 +25,7 @@ public sealed class McpConnectionRegistry
         {
             var connection = new McpConnection { ConnectionId = connectionId, ServerId = serverId, Transport = transport, ManifestDigest = manifestDigest, UpdatedAtUtc = DateTimeOffset.UtcNow };
             _connections[connectionId] = connection;
+            _store?.Save(_connections.Values);
             return Copy(connection);
         }
     }
@@ -64,6 +72,7 @@ public sealed class McpConnectionRegistry
             connection.State = state;
             connection.LastError = error;
             connection.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            _store?.Save(_connections.Values);
             return Copy(connection);
         }
     }
