@@ -25,5 +25,6 @@ ReadOnlyWorkspaceAdapterTests.Run();
 ChatMessageQueueTests.Run();
 ChatMessageQueueStoreTests.Run();
 ConversationSearchTests.Run();
+ScheduledTaskTests.Run();
 
 Console.WriteLine("Native core checks passed.");

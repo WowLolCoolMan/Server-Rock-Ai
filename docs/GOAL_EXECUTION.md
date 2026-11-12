@@ -1567,6 +1567,45 @@ Not yet verified: cross-process/external-editor race behavior, multi-tab
 editing, Linux parity, packaged-release acceptance, and full live editor
 accessibility.
 
+## Slice 50 — durable one-shot scheduler state
+
+Status: `implemented_verified_core`
+
+Added a bounded `ScheduledTaskStore` and `ScheduledTask` model for one-shot
+tasks. Scheduling persists a future UTC due time and workspace mode; claiming
+atomically records `running` before any future executor is allowed to act;
+completed and failed outcomes are durable; paused tasks do not claim and can
+only resume explicitly. A claimed task is never replayed after restart, which
+is the safe default until a reviewed execution adapter is wired into the
+Activity & tasks UI.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ScheduledTask.cs`
+- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
+- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `scheduled task persistence, claim, no-replay, outcome, pause, and resume`.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).` No UI files changed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the store persists only the user-authored prompt,
+workspace mode, timestamps, bounded status, and bounded outcome. It does not
+execute prompts, contact a provider, grant tools, or persist credentials. No
+dependency or third-party code was added.
+
+Rollback: remove the scheduler model/store/test registration and leave the
+existing Activity & tasks placeholder in place; conversation, settings, and
+operation stores are unaffected.
+
+Not yet verified: Activity UI creation/list controls, OS session process host,
+reviewed prompt execution, timezone selection, recurring tasks, backoff,
+cross-process locking, Linux parity, and packaged-release acceptance.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`
