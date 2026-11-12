@@ -1805,6 +1805,48 @@ health, cancellation/revocation, UI permission review, real read-only MCP
 server invocation, write-tool confirmation, MCP audit records, Linux parity,
 and packaged-release acceptance.
 
+## Slice 56 — bounded MCP stdio JSON-RPC client
+
+Status: `implemented_verified_core`
+
+The Core layer now has a supervised stdio MCP JSON-RPC client for the
+initialize, initialized notification, tools/list, and tools/call exchange.
+Tool manifests are parsed conservatively: only an explicit `readOnlyHint`
+produces a read-only descriptor; all other tools are treated as mutating.
+Every call passes through the explicit local permission gate. Requests,
+arguments, response lines, result text, and request duration are bounded, and
+caller cancellation is combined with a 30-second default timeout. The client
+does not launch processes, store credentials, or expose a UI connection yet.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/McpTool.cs`
+- `native/ServerRock.Core/Services/McpStdioClient.cs`
+- `native/ServerRock.Core.Tests/McpStdioClientTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including a scripted MCP exchange covering initialization, conservative tool classification, approved read-only invocation, denied mutating invocation, and emitted JSON-RPC messages.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the transport is stream-only and makes no
+network or credential decisions. Server responses remain untrusted text;
+bounded parsing, conservative mutability classification, explicit grants,
+request serialization, cancellation, and timeout handling limit exposure. No
+dependency or third-party code was added.
+
+Rollback: remove `McpStdioClient`, its focused test, and the result record;
+the existing standalone permission gate remains available and no current UI
+or provider route changes.
+
+Not yet verified: supervised process creation/cleanup, Streamable HTTP,
+protocol negotiation beyond the bounded initialize response, schema-change
+re-consent, connection health/revocation UI, audit journal events, a live
+external MCP server, Linux/Windows packaged acceptance, and ACP adapters.
+
 ## Slice 48 — session-only BYOK for compatible providers
 
 Status: `implemented_verified_core`

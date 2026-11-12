@@ -26,3 +26,5 @@ public sealed class McpToolGrant
     public string ApprovalId { get; set; } = "";
     public List<string> Capabilities { get; set; } = [];
 }
+
+public sealed record McpToolCallResult(bool IsError, string Text);
