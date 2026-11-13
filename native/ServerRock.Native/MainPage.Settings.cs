@@ -261,7 +261,7 @@ public sealed partial class MainPage
         var temperatureValue = new TextBlock
         {
             Text = _settings.Temperature.ToString("0.0"),
-            FontSize = 13,
+            FontSize = UiTheme.FontSize("BodyFontSize"),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
@@ -289,14 +289,14 @@ public sealed partial class MainPage
         temperatureRow.Children.Add(temperatureValue);
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock { Text = "Temperature", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        panel.Children.Add(new TextBlock { Text = "Lower values usually keep answers more focused; higher values allow more variation. Some local servers may ignore this setting.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
+        panel.Children.Add(new TextBlock { Text = "Lower values usually keep answers more focused; higher values allow more variation. Some local servers may ignore this setting.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") });
         panel.Children.Add(temperatureRow);
         panel.Children.Add(reset);
         panel.Children.Add(new TextBlock { Text = "Effort mode", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        panel.Children.Add(new TextBlock { Text = "Adaptive chooses a bounded response budget from request size; fixed modes send 512, 1,024, 2,048, or 4,096 max tokens.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
+        panel.Children.Add(new TextBlock { Text = "Adaptive chooses a bounded response budget from request size; fixed modes send 512, 1,024, 2,048, or 4,096 max tokens.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") });
         panel.Children.Add(effort);
         panel.Children.Add(fullText);
-        panel.Children.Add(new TextBlock { Text = "Full-text mode is explicit and still uses the existing per-file limits. It can use more model context than query-ranked retrieval.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
+        panel.Children.Add(new TextBlock { Text = "Full-text mode is explicit and still uses the existing per-file limits. It can use more model context than query-ranked retrieval.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") });
         var dialog = new ContentDialog { Title = "Advanced generation", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
@@ -385,7 +385,7 @@ public sealed partial class MainPage
         visionFormat.Items.Add("OpenAI-compatible image_url object");
         visionFormat.Items.Add("Ollama-compatible image_url string");
         visionFormat.SelectedIndex = _settings.VisionApiFormat.ToLowerInvariant() switch { "openai" => 1, "ollama" => 2, _ => 0 };
-        var visionNote = new TextBlock { Text = "Choose a vision-capable model. Automatic selects Ollama format for its standard local port and OpenAI format for other endpoints.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.75 };
+        var visionNote = new TextBlock { Text = "Choose a vision-capable model. Automatic selects Ollama format for its standard local port and OpenAI format for other endpoints.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.75 };
         var visionCapability = new ComboBox { Header = "Vision capability profile", MinWidth = 300 };
         visionCapability.Items.Add("Automatic (conservative detection)");
         visionCapability.Items.Add("This model supports images");
@@ -399,8 +399,8 @@ public sealed partial class MainPage
         {
             Text = "Save to make this connection the active model server. Use Models in the navigation to browse and install compatible local models.",
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 78, 105, 111))
+            FontSize = UiTheme.FontSize("SmallFontSize"),
+            Foreground = UiTheme.Brush("StatusInkBrush")
         };
         AutomationProperties.SetName(checkConnection, "Check model connection");
         AutomationProperties.SetHelpText(checkConnection, "Probe the entered local endpoint without saving changes.");
@@ -416,7 +416,7 @@ public sealed partial class MainPage
         {
             Visibility = Visibility.Collapsed,
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12,
+            FontSize = UiTheme.FontSize("SmallFontSize"),
             Foreground = UiTheme.Brush("DangerBrush"),
             Margin = new Thickness(0, 0, 0, 12)
         };
@@ -428,7 +428,7 @@ public sealed partial class MainPage
         pageContent.Children.Add(pageDescription);
         pageContent.Children.Add(saveValidation);
         pageContent.Children.Add(pageBody);
-        var noSearchMatches = new TextBlock { Text = "No settings sections match that search.", FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 10, 8, 0) };
+        var noSearchMatches = new TextBlock { Text = "No settings sections match that search.", FontSize = UiTheme.FontSize("SmallFontSize"), TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 10, 8, 0) };
         var rootWidth = XamlRoot?.Size.Width ?? 1024;
         var rootHeight = XamlRoot?.Size.Height ?? 768;
         // The settings grid is sized to the window; the dialog's width cap is lifted to match
@@ -475,7 +475,7 @@ public sealed partial class MainPage
         {
             var copy = new StackPanel { Spacing = 3, Children =
             {
-                new TextBlock { Text = title, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush"), TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = title, FontSize = UiTheme.FontSize("BodyFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("InkBrush"), TextWrapping = TextWrapping.Wrap },
                 new TextBlock { Text = description, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextWrapping = TextWrapping.Wrap }
             } };
             var row = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 14, VerticalAlignment = VerticalAlignment.Center };
@@ -549,7 +549,7 @@ public sealed partial class MainPage
             var reset = new Button { Content = "Reset appearance" };
             reset.Click += (_, _) => { theme.SelectedIndex = 0; backdrop.SelectedIndex = 0; reduceMotion.IsChecked = false; accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
             pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the light palette, no backdrop, calm cyan accent, and comfortable spacing.", reset));
-            pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
+            pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 2, 4, 0) });
         }
 
         void BuildPetsPage()
@@ -565,7 +565,7 @@ public sealed partial class MainPage
             var reset = new Button { Content = "Reset pet preferences" };
             reset.Click += (_, _) => { showPet.IsChecked = false; petCompletion.IsChecked = true; petErrors.IsChecked = true; petQuestions.IsChecked = true; RuntimeStatus.Text = "Pet preferences will be restored when you save settings."; };
             pageBody.Children.Add(MakeSettingsCard("Defaults", "Show the pet only when requested, with helpful notifications enabled.", reset));
-            pageBody.Children.Add(new TextBlock { Text = "The pet stays local. These notifications update its speech and state without sending telemetry.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 6, 4, 0) });
+            pageBody.Children.Add(new TextBlock { Text = "The pet stays local. These notifications update its speech and state without sending telemetry.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 6, 4, 0) });
         }
 
         void BuildHostPage()
@@ -574,19 +574,19 @@ public sealed partial class MainPage
             pageBody.Children.Add(MakeSettingsCard("Host identity", "Give this local workspace a recognizable label in status messages and support diagnostics.", hostLabel));
             pageBody.Children.Add(MakeSettingsCard("Reviewed prompt variables", "Optionally provide a name for the explicit {{USER_NAME}} variable. Skill prompts remain visible and editable before sending.", promptUserName));
             pageBody.Children.Add(localOnly);
-            pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), VerticalAlignment = VerticalAlignment.Center }));
-            pageBody.Children.Add(new TextBlock { Text = "Model endpoint and credentials remain in General. Local-only mode is a safety guard for environments where remote model hosts are not allowed.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
+            pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), VerticalAlignment = VerticalAlignment.Center }));
+            pageBody.Children.Add(new TextBlock { Text = "Model endpoint and credentials remain in General. Local-only mode is a safety guard for environments where remote model hosts are not allowed.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 2, 4, 0) });
         }
 
         void BuildChatsPage()
         {
             chatRestoreButtons.Clear();
             var archived = _sessions.Where(session => session.Archived).OrderByDescending(session => session.UpdatedAt).ToArray();
-            var count = new TextBlock { Text = archived.Length == 1 ? "1 archived conversation" : $"{archived.Length} archived conversations", FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 78, 105, 111)), Margin = new Thickness(0, 0, 0, 4) };
+            var count = new TextBlock { Text = archived.Length == 1 ? "1 archived conversation" : $"{archived.Length} archived conversations", FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("StatusInkBrush"), Margin = new Thickness(0, 0, 0, 4) };
             pageBody.Children.Add(MakeSettingsCard("Archived chats", "Archived chats stay saved on this device and are hidden from the main conversation list until restored.", count));
             if (archived.Length == 0)
             {
-                pageBody.Children.Add(new TextBlock { Text = "Nothing is archived yet. Use a chat’s menu to move it out of Recents; it will appear here so you can restore it later.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 8) });
+                pageBody.Children.Add(new TextBlock { Text = "Nothing is archived yet. Use a chat’s menu to move it out of Recents; it will appear here so you can restore it later.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 2, 4, 8) });
             }
             foreach (var session in archived)
             {
@@ -631,7 +631,7 @@ public sealed partial class MainPage
                 inventory.Children.Clear();
                 if (models.Count == 0)
                 {
-                    inventory.Children.Add(new TextBlock { Text = "No downloaded models were found on the configured local runtimes. Start Ollama, LM Studio, or another compatible server, then refresh.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)) });
+                    inventory.Children.Add(new TextBlock { Text = "No downloaded models were found on the configured local runtimes. Start Ollama, LM Studio, or another compatible server, then refresh.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush") });
                 }
                 foreach (var model in models)
                 {
@@ -698,7 +698,7 @@ public sealed partial class MainPage
             var manage = new Button { Content = "Open Model Library" };
             manage.Click += (_, _) => { actionAfterClose = () => OpenModelLibraryAndRestoreFocusAsync(false, ModelButton); dialog.Hide(); };
             var refresh = new Button { Content = "Refresh now" };
-            var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+            var status = new TextBlock { FontSize = UiTheme.FontSize("CaptionFontSize"), TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
             var inventory = new StackPanel { Spacing = 8 };
             pageBody.Children.Add(MakeSettingsCard("Models & downloads", "Downloaded models from local runtimes appear below. Pin models for the composer, delete Ollama models, and watch live performance samples update as you use them.", manage));
             pageBody.Children.Add(new TextBlock { Text = "DOWNLOADED MODELS", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 12, 0, 2) });

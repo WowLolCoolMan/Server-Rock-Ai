@@ -7408,6 +7408,42 @@ Remaining: other code-built dialogs still have legacy literal typography and
 some historical color values; those will be migrated in focused surfaces with
 visual review rather than a broad mechanical rewrite.
 
+## Slice 213 — Tokenize Settings dialog typography and status text
+
+Status: `implemented_ui_audit_build_verified`
+
+Requirement alignment: the Settings dialog is the main customization and
+connection surface, so its code-built explanatory text must follow the same
+semantic type and contrast tokens as the XAML shell. This slice migrates the
+advanced-generation, appearance, pets, host, archive, and local-model status
+copy from raw font sizes and historical muted colors to the shared resources.
+The user-selected accent preset definitions remain explicit by design; they
+are input data for the accent picker, not incidental view styling.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 286 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- Settings now has no incidental numeric `FontSize` or historical `ColorHelper` styling literals; only accent presets and transparent state remain.
+
+Privacy/security/licensing: presentation-only resource references; settings
+persistence, local model discovery/deletion safeguards, credentials, and
+provider behavior are unchanged.
+
+Risk and rollback: restore the previous Settings presentation values. No
+stored preferences or network behavior changes.
+
+Remaining: other code-built surfaces still require focused migration and visual
+review; this slice does not claim full application-wide token coverage.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

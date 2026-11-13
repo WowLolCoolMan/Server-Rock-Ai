@@ -253,6 +253,11 @@ dialog typography to those semantic tokens, including the device-code control;
 the native UI audit and desktop/Windows build pass. Other code-built dialogs
 remain in the migration backlog.
 
+Slice 213 migrated the Settings dialog's advanced-generation, appearance,
+companion, host, archive, and local-model status copy to semantic typography
+and muted/status brushes. Accent preset definitions remain intentional data;
+application-wide code-built token coverage is still open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
