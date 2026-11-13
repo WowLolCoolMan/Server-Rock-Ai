@@ -1731,6 +1731,38 @@ environment produces current-checkout evidence.
 Not yet verified: Linux build/run, accessibility, packaging, model-server
 connectivity, writable profile paths, and exact supported distro scope.
 
+## Slice 105 — repository hygiene, release configuration, and rebrand gate
+
+Status: `verified_windows_repository_gates`
+
+The current synchronized repository passed the release/security hygiene gates.
+The runtime display identity search also confirmed that the product name is
+centralized in `native/ServerRock.Core/Models/ProductIdentity.cs` rather than
+duplicated through feature UI code, preserving the ability to rebrand the app
+without editing every surface. Release packaging metadata remains an explicit
+manifest/configuration input, not a hidden runtime fallback.
+
+Evidence:
+
+- `npm run check:hygiene` — passed: `Repository hygiene check passed (325 tracked files).`
+- `npm run check:release-config` — passed: `Release configuration is internally consistent.`
+- `npm run check:syntax` — passed.
+- Source search across `native`, `scripts`, and `packaging` found runtime
+  display identity in `ProductIdentity` and build/package identity inputs, with
+  no scattered feature-level hardcoded display-name literals.
+
+Privacy/security/licensing: the hygiene gate rejects tracked secrets and
+generated artifacts; the release validator does not access credentials unless
+signing mode is explicitly enabled. The identity check changes no data flow,
+provider routing, persistence, or dependency set.
+
+Rollback: documentation-only; remove this evidence entry if the gate outputs or
+identity ownership changes.
+
+Not yet verified: signed release publication, clean-machine install/upgrade/
+rollback/uninstall, OS isolation, keyring parity, full negative security suite,
+and Linux parity.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
