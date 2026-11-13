@@ -63,6 +63,8 @@ validate parity.
   history controls.
 - The active chat now exposes bounded folder and comma-separated tag fields
   with an explicit Save labels action.
+- While a response is active, the Electron composer can queue bounded follow-up
+  messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
   safe durable task states; every action refreshes from the host after the
   transition.
@@ -95,6 +97,8 @@ validate parity.
   bounded display results against disposable history.
 - `npm run smoke:conversation-metadata` verifies pin, folder, tag, and
   persistence round trips against disposable history.
+- `npm run smoke:chat-queue` verifies disposable FIFO enqueue, persistence, and
+  indexed removal.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and

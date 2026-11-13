@@ -3,6 +3,49 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 251 — Port the durable Electron chat message queue
+
+Status: `implemented_host_renderer_queue_smoke_verified`
+
+The replacement host now exposes bounded `chat.queue.list`,
+`chat.queue.enqueue`, and `chat.queue.remove` routes backed by the Core
+`ChatMessageQueueStore`. The renderer can type while a response is active,
+queue the follow-up explicitly, view queued FIFO messages, and remove one by
+index. Queue state is persisted locally and never sent to a provider until a
+future dispatch flow consumes it.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-chat-queue.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors after
+  isolating a stale smoke process lock.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:chat-queue` — passed disposable persistence, FIFO enqueue,
+  and indexed removal assertions.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: queued text stays in the explicit local queue
+store, uses Core bounds, and is not silently dispatched or routed to a model.
+No dependency or network capability was added.
+
+Rollback: remove the queue routes, renderer controls, smoke command, and CI
+step; normal synchronous chat remains available.
+
+Remaining: queue consumption after responses, attachments in queued turns,
+fork/export workflows, RAG, and final replacement retirement gates remain
+open.
+
 ## Slice 250 — Add Electron conversation folder and tag controls
 
 Status: `implemented_renderer_metadata_controls_build_verified`
