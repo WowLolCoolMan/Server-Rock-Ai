@@ -15,6 +15,12 @@ const sidebarCode = readText(path.join(nativeDir, "SidebarView.xaml.cs"));
 const companionCode = readText(path.join(nativeDir, "MainPage.Companion.cs"));
 const companionStore = readText(path.join(nativeDir, "CompanionStateStore.cs"));
 const nativeProject = readText(path.join(nativeDir, "ServerRock.Native.csproj"));
+const nativeXamlFiles = fs.readdirSync(nativeDir)
+  .filter((name) => name.endsWith(".xaml") && name !== "App.xaml")
+  .map((name) => ({ name, text: readText(path.join(nativeDir, name)) }));
+const hardCodedViewColors = nativeXamlFiles.flatMap(({ name, text }) =>
+  [...text.matchAll(/(?:Color|Background|Foreground|BorderBrush|Fill)="\s*#[0-9A-Fa-f]{3,8}/g)]
+    .map((match) => `${name}:${match[0]}`));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -324,6 +330,7 @@ const missing = [
   ...requiredPercyContracts.filter(([, text]) => !(companionCode + companionStore + nativeProject).includes(text)),
   ...requiredPercyFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Official Percy asset", file]),
   ...requiredAnimationFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Pet animation asset", file]),
+  ...(hardCodedViewColors.length ? [["Semantic view color tokens", hardCodedViewColors.join(", ")]] : []),
 ];
 
 if (missing.length) {
@@ -332,4 +339,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 1} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 2} contracts).`);

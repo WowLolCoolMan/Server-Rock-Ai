@@ -4,9 +4,9 @@
   <Grid x:Name="ConversationContent" Background="{StaticResource SurfaceBrush}">
     <Border Margin="18,14,18,10" Style="{StaticResource WorkspaceFrameStyle}" />
     <StackPanel x:Name="WelcomePanel" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="14" MaxWidth="660" Margin="28,28,28,20">
-      <TextBlock Text="◈" FontSize="29" Foreground="#20a9c0" HorizontalAlignment="Center" />
-      <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#26373d" />
-      <TextBlock x:Name="WelcomeSubtitle" Text="Chat with a model running on your computer, or turn on web search when you need current sources." FontSize="15" TextWrapping="Wrap" Foreground="#74858a" HorizontalAlignment="Center" TextAlignment="Center" />
+      <TextBlock Text="◈" FontSize="{StaticResource DisplayFontSize}" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+      <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="{StaticResource DisplayFontSize}" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{StaticResource InkBrush}" />
+      <TextBlock x:Name="WelcomeSubtitle" Text="Chat with a model running on your computer, or turn on web search when you need current sources." FontSize="{StaticResource ReadingFontSize}" TextWrapping="Wrap" Foreground="{StaticResource MutedInkBrush}" HorizontalAlignment="Center" TextAlignment="Center" />
       <Button x:Name="ConnectionSetupButton" Content="Connect a model" Click="SettingsClick" Style="{StaticResource PrimaryActionButtonStyle}" HorizontalAlignment="Center" Visibility="Collapsed" AutomationProperties.Name="Connect a model" AutomationProperties.HelpText="Open connection settings to choose and check a local or hosted model endpoint." />
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,12,0,0">
         <Button x:Name="SuggestionOne" Content="Help me write" Click="SuggestionClick" Tag="Help me write" Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use writing prompt suggestion" />

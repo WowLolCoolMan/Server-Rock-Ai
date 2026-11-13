@@ -4,12 +4,12 @@
              xmlns:local="using:ServerRock.Native">
   <StackPanel x:Name="ComposerInput" MaxWidth="{StaticResource ComposerMaxWidth}" HorizontalAlignment="Stretch" Margin="24,0,24,18">
     <StackPanel x:Name="AttachmentList" Visibility="Collapsed" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8" />
-    <Border x:Name="RuntimeStatusBanner" Visibility="Collapsed" Background="#f3f8f9" BorderBrush="#dce8ea" BorderThickness="1" CornerRadius="9" Padding="10,7" Margin="0,0,0,8">
+    <Border x:Name="RuntimeStatusBanner" Visibility="Collapsed" Background="{StaticResource StatusSoftBrush}" BorderBrush="{StaticResource StatusLineBrush}" BorderThickness="1" CornerRadius="9" Padding="10,7" Margin="0,0,0,8">
       <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-        <TextBlock x:Name="RuntimeStatus" Text="" FontSize="12" Foreground="#526a70" VerticalAlignment="Center" TextWrapping="Wrap" MaxHeight="72" AutomationProperties.LiveSetting="Polite" />
-        <Button x:Name="ManageQueueButton" Grid.Column="1" Content="Queue" Click="ManageQueueClick" Visibility="Collapsed" Background="Transparent" Foreground="#236b78" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Manage queued messages" AutomationProperties.HelpText="Review, remove, or clear messages waiting to send." />
-        <Button x:Name="StatusHistoryButton" Grid.Column="2" Content="History" Click="StatusHistoryClick" Background="Transparent" Foreground="#236b78" BorderThickness="0" Padding="6,2" AutomationProperties.Name="View status history" AutomationProperties.HelpText="Review recent actionable status messages that were not dismissed." />
-        <Button Grid.Column="3" Content="×" Click="DismissRuntimeStatusClick" Background="Transparent" Foreground="#60777d" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Dismiss status message" />
+        <TextBlock x:Name="RuntimeStatus" Text="" FontSize="{StaticResource SmallFontSize}" Foreground="{StaticResource StatusInkBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxHeight="72" AutomationProperties.LiveSetting="Polite" />
+        <Button x:Name="ManageQueueButton" Grid.Column="1" Content="Queue" Click="ManageQueueClick" Visibility="Collapsed" Background="Transparent" Foreground="{StaticResource AccentInkBrush}" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Manage queued messages" AutomationProperties.HelpText="Review, remove, or clear messages waiting to send." />
+        <Button x:Name="StatusHistoryButton" Grid.Column="2" Content="History" Click="StatusHistoryClick" Background="Transparent" Foreground="{StaticResource AccentInkBrush}" BorderThickness="0" Padding="6,2" AutomationProperties.Name="View status history" AutomationProperties.HelpText="Review recent actionable status messages that were not dismissed." />
+        <Button Grid.Column="3" Content="×" Click="DismissRuntimeStatusClick" Background="Transparent" Foreground="{StaticResource MutedInkBrush}" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Dismiss status message" />
       </Grid>
     </Border>
     <local:ComposerToolbarView x:Name="ToolbarView" />
@@ -38,11 +38,11 @@
           <Button Grid.Column="2" x:Name="VoiceButton" Click="VoiceInputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Dictate a message" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model."><FontIcon x:Name="VoiceButtonIcon" Glyph="&#xE720;" FontSize="15" /></Button>
           <Button Grid.Column="3" x:Name="VoiceOutputButton" Click="VoiceOutputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Read replies aloud: off" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer."><FontIcon x:Name="VoiceOutputIcon" Glyph="&#xE74F;" FontSize="15" /></Button>
           <TextBlock Grid.Column="4" x:Name="ProcessingLabel" Text="● Local model" Foreground="{StaticResource MutedInkBrush}" FontSize="{StaticResource CaptionFontSize}" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" Margin="8,0,12,0" />
-          <Button x:Name="StopButton" Grid.Column="5" Click="StopClick" Background="{StaticResource DangerBrush}" Foreground="White" CornerRadius="10" Width="34" Height="34" Padding="0" Visibility="Collapsed" ToolTipService.ToolTip="Stop generating" AutomationProperties.Name="Stop generating response"><FontIcon Glyph="&#xE71A;" FontSize="13" /></Button>
+          <Button x:Name="StopButton" Grid.Column="5" Click="StopClick" Background="{StaticResource DangerBrush}" Foreground="{StaticResource DangerInkBrush}" CornerRadius="10" Width="34" Height="34" Padding="0" Visibility="Collapsed" ToolTipService.ToolTip="Stop generating" AutomationProperties.Name="Stop generating response"><FontIcon Glyph="&#xE71A;" FontSize="{StaticResource CaptionFontSize}" /></Button>
           <Button x:Name="SendButton" Grid.Column="5" Click="SendClick" Style="{StaticResource PrimaryActionButtonStyle}" Padding="0" Width="34" Height="34" ToolTipService.ToolTip="Send (Enter)" AutomationProperties.Name="Send message"><FontIcon Glyph="&#xE724;" FontSize="14" /></Button>
         </Grid>
       </Grid>
     </Border>
-    <TextBlock x:Name="PrivacyFootnote" Text="Your prompt goes to the model server shown above. Web search is off until you enable it." FontSize="11" Foreground="#8b999d" HorizontalAlignment="Center" Margin="0,9,0,0" TextAlignment="Center" />
+    <TextBlock x:Name="PrivacyFootnote" Text="Your prompt goes to the model server shown above. Web search is off until you enable it." FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource SubtleInkBrush}" HorizontalAlignment="Center" Margin="0,9,0,0" TextAlignment="Center" />
   </StackPanel>
 </UserControl>

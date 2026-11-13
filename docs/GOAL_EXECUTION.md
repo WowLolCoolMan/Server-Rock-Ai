@@ -7292,6 +7292,46 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 201 — Refactor native shell views onto semantic design tokens
+
+Status: `implemented_build_audit_and_visual_smoke_verified`
+
+Audited the high-traffic native shell surfaces against `DESIGN.md` and moved
+the header badges, Coding Agent workspace bar, composer status banner, stop
+action, privacy footnote, and empty-state hero onto shared semantic brushes and
+type-scale resources. This keeps accent/theme changes coherent and prevents
+view-level hex colors from silently bypassing the design system.
+
+Changed files:
+
+- `native/ServerRock.Native/App.xaml`
+- `native/ServerRock.Native/MainPageHeader.xaml`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml`
+- `native/ServerRock.Native/ComposerInputView.xaml`
+- `native/ServerRock.Native/ConversationSurface.xaml`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 264 contracts, including the new
+  no-hard-coded-view-color guard.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed for 747 tracked files.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- Visual smoke: the native shell rendered at the desktop viewport without an
+  observed clipping or overlap failure.
+
+Privacy/security/licensing: visual resources only; no provider, filesystem,
+credential, or network behavior changed.
+
+Rollback: restore the five view/token files and remove the audit guard; runtime
+behavior and persisted data are unaffected.
+
+Remaining: migrate the remaining hard-coded type sizes to the token scale,
+verify High Contrast and compact-window states live, and continue the broader
+handoff UI gaps (persistent tabs, inspector, and full project workbench).
+
 ## Slice 200 — Quick open for bounded project files
 
 Status: `implemented_native_build_audit_verified_live_ui_blocked_by_picker_host`

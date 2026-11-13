@@ -44,6 +44,20 @@
       <Color x:Key="WarningLineColor">#EFDEB8</Color>
       <Color x:Key="WarningInkColor">#71522A</Color>
       <Color x:Key="DangerColor">#A64D43</Color>
+      <!-- Semantic status surfaces used by badges and the composer banner. -->
+      <Color x:Key="InfoSoftColor">#E8F5F6</Color>
+      <Color x:Key="InfoLineColor">#D5E9EB</Color>
+      <Color x:Key="InfoInkColor">#46666C</Color>
+      <Color x:Key="FolderSoftColor">#F0F3FB</Color>
+      <Color x:Key="FolderLineColor">#DFE5F2</Color>
+      <Color x:Key="FolderInkColor">#53617C</Color>
+      <Color x:Key="TemporarySoftColor">#FFF5E6</Color>
+      <Color x:Key="TemporaryLineColor">#F1DFC2</Color>
+      <Color x:Key="TemporaryInkColor">#805D2C</Color>
+      <Color x:Key="StatusSoftColor">#F3F8F9</Color>
+      <Color x:Key="StatusLineColor">#DCE8EA</Color>
+      <Color x:Key="StatusInkColor">#526A70</Color>
+      <Color x:Key="DangerInkColor">#FFFFFF</Color>
 
       <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
       <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
@@ -68,6 +82,19 @@
       <SolidColorBrush x:Key="WarningLineBrush" Color="{StaticResource WarningLineColor}" />
       <SolidColorBrush x:Key="WarningInkBrush" Color="{StaticResource WarningInkColor}" />
       <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+      <SolidColorBrush x:Key="InfoSoftBrush" Color="{StaticResource InfoSoftColor}" />
+      <SolidColorBrush x:Key="InfoLineBrush" Color="{StaticResource InfoLineColor}" />
+      <SolidColorBrush x:Key="InfoInkBrush" Color="{StaticResource InfoInkColor}" />
+      <SolidColorBrush x:Key="FolderSoftBrush" Color="{StaticResource FolderSoftColor}" />
+      <SolidColorBrush x:Key="FolderLineBrush" Color="{StaticResource FolderLineColor}" />
+      <SolidColorBrush x:Key="FolderInkBrush" Color="{StaticResource FolderInkColor}" />
+      <SolidColorBrush x:Key="TemporarySoftBrush" Color="{StaticResource TemporarySoftColor}" />
+      <SolidColorBrush x:Key="TemporaryLineBrush" Color="{StaticResource TemporaryLineColor}" />
+      <SolidColorBrush x:Key="TemporaryInkBrush" Color="{StaticResource TemporaryInkColor}" />
+      <SolidColorBrush x:Key="StatusSoftBrush" Color="{StaticResource StatusSoftColor}" />
+      <SolidColorBrush x:Key="StatusLineBrush" Color="{StaticResource StatusLineColor}" />
+      <SolidColorBrush x:Key="StatusInkBrush" Color="{StaticResource StatusInkColor}" />
+      <SolidColorBrush x:Key="DangerInkBrush" Color="{StaticResource DangerInkColor}" />
 
       <!-- WinUI accent buttons (dialog primary actions) use the app accent, including hover and
            pressed states, so every "do it" button looks the same everywhere. -->
