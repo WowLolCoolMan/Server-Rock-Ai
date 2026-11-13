@@ -52,7 +52,11 @@ async function run() {
   if (!restoredView.ok || restoredView.result.length !== 1 || restoredView.result[0].archived !== true) throw new Error("archived conversation view did not return the archived item.");
   const exportResult = await request("conversations.export", { includeArchived: true });
   if (!exportResult.ok || exportResult.result?.conversationCount !== 1 || !String(exportResult.result?.markdown).includes("Organized chat")) throw new Error("conversation Markdown export did not include the archived fixture.");
-  console.log("Conversation metadata smoke passed: labels, archive, active filtering, archived view, and Markdown export.");
+  const forked = await request("conversation.fork", { id: saved.result.id, throughIndex: 0 });
+  if (!forked.ok || forked.result?.forkedFrom !== saved.result.id || forked.result?.messageCount !== 1) throw new Error("conversation fork did not create the expected message prefix.");
+  const forkList = await request("conversations.list", { includeArchived: true });
+  if (!forkList.ok || forkList.result.length !== 2 || !forkList.result.some(item => item.id === forked.result.id)) throw new Error("forked conversation did not persist in history.");
+  console.log("Conversation metadata smoke passed: labels, archive, active filtering, archived view, Markdown export, and fork.");
 }
 
 run().catch(error => {

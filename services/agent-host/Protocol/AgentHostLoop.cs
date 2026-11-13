@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -71,6 +71,7 @@ public static class AgentHostLoop
             "conversation.save" => SaveConversation(request),
             "conversation.metadata.save" => SaveConversationMetadata(request),
             "conversations.export" => ExportConversations(request),
+            "conversation.fork" => ForkConversation(request),
             "chat.queue.list" => ListQueuedMessages(request),
             "chat.queue.enqueue" => EnqueueChatMessage(request),
             "chat.queue.remove" => RemoveQueuedMessage(request),
@@ -400,6 +401,37 @@ public static class AgentHostLoop
         if (!sessions.Contains(session)) sessions.Add(session);
         store.Save(sessions);
         return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, projectId = session.ProjectId, updatedAt = session.UpdatedAt });
+    }
+
+    private static AgentResponse ForkConversation(AgentRequest request)
+    {
+        var sourceId = RequiredBoundedString(request, "id", 128);
+        var store = CreateConversationStore();
+        var sessions = store.Load();
+        var source = sessions.SingleOrDefault(item => item.Id == sourceId)
+            ?? throw new KeyNotFoundException("The conversation to fork does not exist.");
+        int? throughIndex = null;
+        if (request.Params?.TryGetProperty("throughIndex", out var throughValue) == true && throughValue.ValueKind != JsonValueKind.Null)
+        {
+            if (!throughValue.TryGetInt32(out var parsedIndex)) throw new InvalidOperationException("throughIndex must be an integer.");
+            throughIndex = parsedIndex;
+        }
+        var fork = new ChatSession
+        {
+            Title = string.IsNullOrWhiteSpace(source.Title) ? "Forked chat" : $"Fork: {source.Title}",
+            Messages = ConversationForkService.CopyMessages(source.Messages, throughIndex).ToList(),
+            ProjectId = source.ProjectId,
+            ProjectName = source.ProjectName,
+            ProjectInstructions = source.ProjectInstructions,
+            Mode = source.Mode,
+            IncludeProjectFilesInChat = source.IncludeProjectFilesInChat,
+            FolderName = source.FolderName,
+            ForkedFrom = source.Id,
+            BaseMessages = source.Messages.ToList(),
+        };
+        sessions.Add(fork);
+        store.Save(sessions);
+        return new(ProtocolVersion, request.Id, true, new { id = fork.Id, title = fork.Title, forkedFrom = fork.ForkedFrom, messageCount = fork.Messages.Count });
     }
 
     private static AgentResponse SaveConversationMetadata(AgentRequest request)

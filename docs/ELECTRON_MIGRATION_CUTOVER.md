@@ -69,6 +69,8 @@ validate parity.
 - Electron can request a bounded Markdown export of active or archived chat
   history; the renderer downloads the returned text without direct filesystem
   access.
+- Electron can fork the current conversation through the host into an
+  independent persisted branch, with Core enforcing bounded message copying.
 - While a response is active, the Electron composer can queue bounded follow-up
   messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
@@ -103,7 +105,7 @@ validate parity.
   bounded display results against disposable history.
 - `npm run smoke:conversation-metadata` verifies pin, folder, tag, archive,
   active filtering, archived-view, Markdown export, and persistence round
-  trips against disposable history.
+  trips plus persisted fork behavior against disposable history.
 - `npm run smoke:chat-queue` verifies disposable FIFO enqueue, persistence, and
   indexed removal.
 
