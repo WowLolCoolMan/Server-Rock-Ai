@@ -80,9 +80,8 @@ public sealed partial class MainPage
             AutomationProperties.SetName(edit, "Edit and resend this message");
             edit.Click += EditMessageClick;
             actions.Children.Add(edit);
-            return actions;
         }
-        if (!string.IsNullOrWhiteSpace(content))
+        else if (!string.IsNullOrWhiteSpace(content))
         {
             var copy = new Button
             {
@@ -104,6 +103,14 @@ public sealed partial class MainPage
             retry.Click += RetryMessageClick;
             actions.Children.Add(retry);
         }
+        var fork = new Button
+        {
+            Content = "Fork from here", Tag = messageIndex, Padding = new Thickness(8, 4, 8, 4),
+            Style = UiTheme.Style("ContextButtonStyle")
+        };
+        AutomationProperties.SetName(fork, "Fork conversation from this message");
+        fork.Click += ForkFromMessageClick;
+        actions.Children.Add(fork);
         return actions;
     }
 

@@ -9,7 +9,9 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -59,7 +61,7 @@ public sealed partial class MainPage
         RuntimeStatus.Text = $"Showing conversation branch {selected + 1} of {session.Branches.Count + 1}.";
     }
 
-    private void ForkSession(string sessionId)
+    private void ForkSession(string sessionId, int? throughMessageIndex = null)
     {
         if (_requestCancellation is not null) { RuntimeStatus.Text = "Wait for the current response to finish before creating a fork."; return; }
         var source = _sessions.FirstOrDefault(item => item.Id == sessionId);
@@ -67,16 +69,19 @@ public sealed partial class MainPage
         var sourceMessages = _activeSessionId == sessionId ? _messages : SelectedBranchMessages(source);
         if (sourceMessages.Count == 0) { RuntimeStatus.Text = "Send at least one message before creating a fork."; return; }
         if (_activeSessionId == sessionId) SaveCurrentSession();
+        IReadOnlyList<ChatMessage> forkMessages;
+        try { forkMessages = ConversationForkService.CopyMessages(sourceMessages, throughMessageIndex); }
+        catch (ArgumentOutOfRangeException) { RuntimeStatus.Text = "That message is no longer available to fork."; return; }
         var fork = new ChatSession
         {
-            Title = $"{source.Title} · fork",
+            Title = throughMessageIndex is int messageIndex ? $"{source.Title} · fork from message {messageIndex + 1}" : $"{source.Title} · fork",
             Mode = source.Mode,
             ProjectId = source.ProjectId,
             ProjectName = source.ProjectName,
             ProjectInstructions = source.ProjectInstructions,
             IncludeProjectFilesInChat = source.IncludeProjectFilesInChat,
             ForkedFrom = source.Id,
-            Messages = [.. sourceMessages.Select(message => message with { Attachments = message.Attachments is null ? null : [.. message.Attachments], Sources = message.Sources is null ? null : [.. message.Sources] })]
+            Messages = [.. forkMessages]
         };
         _sessions.Add(fork);
         if (!PersistConversationEdits()) { _sessions.Remove(fork); return; }
@@ -95,6 +100,14 @@ public sealed partial class MainPage
         RenderRecent();
         RebuildConversationView();
         UpdateBranchControls();
-        RuntimeStatus.Text = "Fork created from the selected conversation branch.";
+        RuntimeStatus.Text = throughMessageIndex is int selectedIndex
+            ? $"Fork created from message {selectedIndex + 1}; the original conversation is unchanged."
+            : "Fork created from the selected conversation branch.";
+    }
+
+    private void ForkFromMessageClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: int messageIndex } || _activeSessionId is null) return;
+        ForkSession(_activeSessionId, messageIndex);
     }
 }

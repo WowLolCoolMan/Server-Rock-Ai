@@ -2158,6 +2158,45 @@ folder, pin, tags, archive, and fork actions, plus packaged/Linux accessibility
 parity. The future-features item `Folders, tags, and pinned chats` therefore
 remains unchecked.
 
+## Slice 126 — fork a conversation from any message
+
+The existing full-chat fork path now supports a `Fork from here` action on
+every rendered message. The new fork copies the selected message prefix into a
+new conversation, preserves the source chat and selected branch, and deep-copies
+attachment/source lists so later edits cannot mutate the original conversation.
+The existing recent-chat `Fork from here` action remains a full-conversation
+fork.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ConversationForkService.cs`
+- `native/ServerRock.Core.Tests/ConversationForkTests.cs`
+- `native/ServerRock.Native/MainPage.Branches.cs`
+- `native/ServerRock.Native/MainPage.Messages.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (172 contracts)`.
+- `npm run check:syntax` — passed.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including selected-prefix bounds, full-fork behavior, attachment/source list isolation, and invalid-index rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after stopping the exact validation executable that held the output assembly.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: forking is local-only and copies bounded existing
+conversation data. It does not send content to a provider, create credentials,
+invoke tools, access files, or add dependencies. The original conversation is
+left unchanged.
+
+Rollback: remove the per-message action and `ConversationForkService`; the
+existing full-chat fork path can remain by restoring its prior clone expression.
+
+Not yet verified: live activation of the per-message action and save/reload
+acceptance in a disposable chat, plus packaged/Linux accessibility parity. The
+future-features item `Fork a chat from any message` remains unchecked until
+those journeys are exercised.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
