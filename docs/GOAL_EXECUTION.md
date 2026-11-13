@@ -2047,6 +2047,44 @@ Not yet verified: live Windows comparison with two healthy pinned models, live
 remote-consent acceptance, provider-specific model capabilities, durable result
 history, and Linux/packaged accessibility behavior.
 
+## Slice 94 — exact Windows Release artifact smoke correction
+
+Status: `implemented_verified_windows_artifact_smoke`
+
+The exact current Release `win-x64` self-contained artifact was published and
+smoke-tested. The artifact contains 496 files and 320,042,070 bytes. The bounded
+startup smoke passed for eight seconds, and the strict startup-plus-top-level-
+window smoke passed for eight seconds. During verification, the window check
+initially failed because the smoke harness always launched the child with
+`windowsHide: true`; the harness now keeps the child visible when
+`NATIVE_SMOKE_REQUIRE_WINDOW=1`, then the strict check passed against the same
+published executable.
+
+Changed files:
+
+- `scripts/smoke-native-artifact.cjs`
+- `docs/NATIVE_RELEASE_ACCEPTANCE.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet publish native/ServerRock.Native/ServerRock.Native.csproj -c Release -f net10.0-desktop -r win-x64 -p:SelfContained=true --output <temporary artifact>` — passed; 496 files, 320,042,070 bytes.
+- `npm run smoke:native:artifact -- <exact ServerRock.Native.exe>` with `NATIVE_SMOKE_SECONDS=8` — passed.
+- The same command with `NATIVE_SMOKE_REQUIRE_WINDOW=1` — passed after the harness fix.
+- `node --check scripts/smoke-native-artifact.cjs` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the smoke ran the published app with a disposable
+temporary output directory and did not claim installer, signing, cloud, or
+Linux acceptance. No user profile data was targeted and no dependency was added.
+
+Rollback: revert the `windowsHide` conditional and the evidence-only document
+updates; the ordinary startup smoke remains available.
+
+Not yet verified: signed release publication, clean-machine install/upgrade/
+uninstall/rollback, exact Linux artifact interaction, and full accessibility or
+workflow acceptance from the packaged artifact.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

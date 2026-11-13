@@ -24,7 +24,7 @@ const resolved = path.resolve(executable);
 const child = spawn(resolved, [], {
   cwd: path.dirname(resolved),
   stdio: ['ignore', 'pipe', 'pipe'],
-  windowsHide: true
+  windowsHide: !requireWindow
 });
 
 let output = '';
