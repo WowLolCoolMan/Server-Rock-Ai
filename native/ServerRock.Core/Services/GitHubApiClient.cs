@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Services;
 
@@ -105,7 +106,7 @@ public sealed class GitHubApiClient
         using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(ApiBaseUri, relativePath));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         request.Headers.Accept.ParseAdd("application/vnd.github+json");
-        request.Headers.UserAgent.ParseAdd("ServerRock-AI/1.0");
+        request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("GitHub API"));
         request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", ApiVersion);
         var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         if ((int)response.StatusCode is >= 300 and < 400)

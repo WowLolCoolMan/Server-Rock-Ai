@@ -7261,3 +7261,42 @@ stable values and credential storage behavior are otherwise unchanged.
 Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
+
+## Slice 186 — Centralize outbound protocol identity
+
+Status: `implemented_build_tests_audit_verified`
+
+Outbound User-Agent headers for GitHub, web search, and model-library catalog
+requests now use a stable technical identifier from `ProductIdentity` instead
+of duplicated literals. The identifier is deliberately independent from the
+display name so a future rebrand does not alter protocol identity or require
+manual service-by-service edits.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/ServerRock.Core/Services/ModelLibraryService.cs`
+- `native/ServerRock.Core/Services/WebSearchProvider.cs`
+- `native/ServerRock.Core/Services/GitHubApiClient.cs`
+- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including the stable protocol-identity contract.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only outbound User-Agent construction changed;
+request destinations, payloads, credentials, and provider consent boundaries
+are unchanged. No new dependency or third-party code was added.
+
+Rollback: restore the service-local User-Agent literals and remove the added
+identity contract; no persisted data or network behavior other than the same
+header values is affected.
+
+Remaining: complete rebrand verification across packaging metadata, installers,
+localization, and all release artifacts; full keyring parity and OS isolation
+remain open.
