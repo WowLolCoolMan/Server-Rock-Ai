@@ -5,7 +5,6 @@
 // the active project's FolderPaths.
 // Called by: the Terminal button in the Coding Agent workspace bar (MainPage.xaml).
 
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
@@ -40,9 +39,9 @@ public sealed partial class MainPage
         var output = new TextBlock
         {
             FontFamily = new FontFamily("Consolas, Cascadia Mono, monospace"),
-            FontSize = 12,
+            FontSize = UiTheme.FontSize("SmallFontSize"),
             TextWrapping = TextWrapping.NoWrap,
-            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 224, 235, 237)),
+            Foreground = UiTheme.Brush("BrandMarkInkBrush"),
             IsTextSelectionEnabled = true
         };
         var outputScroll = new ScrollViewer
@@ -51,7 +50,7 @@ public sealed partial class MainPage
             IsTabStop = true,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 20, 27, 30)),
+            Background = UiTheme.Brush("BrandMarkBrush"),
             Padding = new Thickness(14),
             MinHeight = 300,
             MaxHeight = 520
@@ -66,14 +65,14 @@ public sealed partial class MainPage
         };
         AutomationProperties.SetName(input, "Project terminal input");
         AutomationProperties.SetHelpText(input, "Type into the shell running in the active project folder. Commands use your account permissions on this device.");
-        var status = new TextBlock { Text = "Starting project shell…", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 122, 127)) };
+        var status = new TextBlock { Text = "Starting project shell…", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         AutomationProperties.SetName(status, "Project terminal status");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
         var cancel = new CancellationTokenSource();
         WorkspaceTerminalSession? session = null;
         var content = new Grid { RowSpacing = 10, RowDefinitions = { new RowDefinition { Height = GridLength.Auto }, new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }, new RowDefinition { Height = GridLength.Auto }, new RowDefinition { Height = GridLength.Auto } } };
         var top = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }, new ColumnDefinition { Width = GridLength.Auto } }, ColumnSpacing = 10 };
-        top.Children.Add(new TextBlock { Text = $"{project!.Name} · {root}", TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 83, 102, 106)) });
+        top.Children.Add(new TextBlock { Text = $"{project!.Name} · {root}", TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") });
         Grid.SetColumn(shellPicker, 1);
         top.Children.Add(shellPicker);
         content.Children.Add(top);

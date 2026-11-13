@@ -15,6 +15,8 @@ const sidebarCode = readText(path.join(nativeDir, "SidebarView.xaml.cs"));
 const companionCode = readText(path.join(nativeDir, "MainPage.Companion.cs"));
 const companionStore = readText(path.join(nativeDir, "CompanionStateStore.cs"));
 const nativeProject = readText(path.join(nativeDir, "ServerRock.Native.csproj"));
+const workbenchCodeFiles = ["MainPage.CodingAgent.cs", "MainPage.Terminal.cs"]
+  .map((name) => ({ name, text: readText(path.join(nativeDir, name)) }));
 const nativeXamlFiles = fs.readdirSync(nativeDir)
   .filter((name) => name.endsWith(".xaml") && name !== "App.xaml")
   .map((name) => ({ name, text: readText(path.join(nativeDir, name)) }));
@@ -24,6 +26,9 @@ const hardCodedViewColors = nativeXamlFiles.flatMap(({ name, text }) =>
 const hardCodedViewFontSizes = nativeXamlFiles.flatMap(({ name, text }) =>
   [...text.matchAll(/FontSize="\s*[0-9]+(?:\.[0-9]+)?/g)]
     .map((match) => `${name}:${match[0]}`));
+const hardCodedWorkbenchUiStyles = workbenchCodeFiles.flatMap(({ name, text }) => [
+  ...text.matchAll(/(?:ColorHelper\.FromArgb|FontSize\s*=\s*[0-9]+(?:\.[0-9]+)?|new SolidColorBrush\()/g),
+].map((match) => `${name}:${match[0]}`));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -340,6 +345,7 @@ const missing = [
   ...requiredAnimationFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Pet animation asset", file]),
   ...(hardCodedViewColors.length ? [["Semantic view color tokens", hardCodedViewColors.join(", ")]] : []),
   ...(hardCodedViewFontSizes.length ? [["Typography view tokens", hardCodedViewFontSizes.join(", ")]] : []),
+  ...(hardCodedWorkbenchUiStyles.length ? [["Project workbench semantic styles", hardCodedWorkbenchUiStyles.join(", ")]] : []),
 ];
 
 if (missing.length) {

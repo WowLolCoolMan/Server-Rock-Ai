@@ -7292,6 +7292,52 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 205 — Tokenize project workbench code-built surfaces
+
+Status: `implemented_build_and_audit_verified`
+
+Requirement alignment: the project workbench must keep file browsing, quick
+open, reviewed edits, undo history, and terminal work readable across the
+shared light/dark/native theme system. The XAML shell had already been moved to
+semantic tokens, but the code-built project file and terminal surfaces still
+used literal colors and font sizes. This slice routes those controls through
+the existing `UiTheme` brushes, font-scale resources, and code font resource.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `native/ServerRock.Native/MainPage.Terminal.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+The targeted audit now rejects literal `ColorHelper.FromArgb`, numeric
+`FontSize`, and `new SolidColorBrush` styling in the project file/terminal
+partial classes while leaving intentional appearance-backdrop and other
+feature-specific rendering contracts out of scope for later slices.
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 270 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- Full native Core suite — passed (`Native core checks passed.`).
+- `npm run check:hygiene` — passed (748 tracked files).
+- `npm run check:release-config` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: local visual styling only; no provider routing,
+filesystem permissions, credentials, network behavior, or dependencies changed.
+
+Risk and rollback: remove the semantic substitutions and targeted audit guard
+to roll back; the underlying project editor, undo, and terminal behavior is
+unchanged. The semantic brushes intentionally inherit the current palette, so
+future theme work must preserve terminal contrast.
+
+Remaining: persistent tabs, conflict recovery, worktree isolation, live
+packaged project-workbench acceptance, and broader code-built UI tokenization
+remain open.
+
 ## Slice 204 — Extend native UI responsive regression contracts
 
 Status: `implemented_audit_verified_live_resize_unverified`

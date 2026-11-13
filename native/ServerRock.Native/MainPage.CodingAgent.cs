@@ -8,7 +8,6 @@
 // review dialog (MainPage.CodingAgent.Proposals.cs), and project/mode changes that call
 // RenderProjectFiles().
 
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
@@ -86,11 +85,11 @@ public sealed partial class MainPage
             item.Content = new StackPanel { Spacing = 2, Children =
             {
                 new TextBlock { Text = $"{entry.ProjectName} · {entry.RelativePath}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis },
-                new TextBlock { Text = $"{entry.CreatedUtc.LocalDateTime:g} · {entry.RootPath}", FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 105, 124, 129)), TextTrimming = TextTrimming.CharacterEllipsis }
+                new TextBlock { Text = $"{entry.CreatedUtc.LocalDateTime:g} · {entry.RootPath}", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextTrimming = TextTrimming.CharacterEllipsis }
             } };
             list.Items.Add(item);
         }
-        var details = new TextBlock { Text = "Select a change to review its location. Undo stops if the file changed after the approved edit.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 84, 102, 107)) };
+        var details = new TextBlock { Text = "Select a change to review its location. Undo stops if the file changed after the approved edit.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var panel = new StackPanel { Spacing = 8, Children = { list, details } };
         var dialog = new ContentDialog { Title = "Project change history", Content = panel, PrimaryButtonText = "Undo selected", CloseButtonText = "Done", IsPrimaryButtonEnabled = false, XamlRoot = XamlRoot };
         list.SelectionChanged += (_, _) =>
@@ -123,17 +122,17 @@ public sealed partial class MainPage
                 Content = "▤　" + file.Path,
                 Tag = (project.FolderPaths[0], file.Path),
                 HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 223, 243, 247)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 57, 82, 90)),
+                Background = UiTheme.Brush("AccentSoftBrush"),
+                Foreground = UiTheme.Brush("AccentInkBrush"),
                 Padding = new Thickness(9, 6, 6, 6),
                 CornerRadius = new CornerRadius(7),
-                FontSize = 11
+                FontSize = UiTheme.FontSize("CaptionFontSize")
             };
             button.Click += ProjectFileClick;
             ProjectFileList.Children.Add(button);
         }
         if (ProjectFileList.Children.Count == 0)
-            ProjectFileList.Children.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 103, 126, 133)), Margin = new Thickness(8, 4, 8, 4) });
+            ProjectFileList.Children.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
     }
 
     private async Task OpenQuickFileAsync()
@@ -174,7 +173,7 @@ public sealed partial class MainPage
         var dialog = new ContentDialog
         {
             Title = "Quick open project file",
-            Content = new StackPanel { Spacing = 8, Children = { query, list, new TextBlock { Text = "Only bounded, secret-filtered text files from the selected project folder are shown. Opening a file uses the existing reviewable local editor.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
+            Content = new StackPanel { Spacing = 8, Children = { query, list, new TextBlock { Text = "Only bounded, secret-filtered text files from the selected project folder are shown. Opening a file uses the existing reviewable local editor.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.78 } } },
             PrimaryButtonText = "Open selected",
             CloseButtonText = "Cancel",
             IsPrimaryButtonEnabled = false,
@@ -210,7 +209,7 @@ public sealed partial class MainPage
                 MaxLength = WorkspaceFileEditor.MaxCharacters
             };
             AutomationProperties.SetName(editor, $"Edit project file {relativePath}");
-            var saveHint = new TextBlock { Text = "No unsaved changes", FontSize = 11, Opacity = 0.75 };
+            var saveHint = new TextBlock { Text = "No unsaved changes", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Opacity = 0.75 };
             var dialog = new ContentDialog
             {
                 Title = $"Edit project file · {relativePath}",
