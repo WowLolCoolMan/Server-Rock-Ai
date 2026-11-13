@@ -6286,3 +6286,42 @@ the loaded-content retries and dialog actions remain independently reversible.
 Remaining: a supported Uno/Win32 Popup focus bridge or dedicated accessibility
 harness is still required for authoritative focus acceptance, along with
 Narrator, Linux/Skia, and packaged-runtime coverage.
+
+## Slice 163 — Dialog-container focus attempt
+
+Status: `implemented_build_verified_popup_bridge_gap`
+
+Activity and status-history dialogs now mark the `ContentDialog` itself as a
+tab stop and enqueue a container focus after the content focus attempt. This
+keeps both the first action and the dialog-level focus path explicit in the
+native implementation. It does not alter provider routing, task execution, or
+close behavior.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 216 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: rebuilt and opened Activity & tasks. The dialog tree
+  still exposed the correct Activity controls, but native accessibility still
+  reported `PromptBox` as focused after both child and container focus calls.
+  Full Popup keyboard/screen-reader acceptance therefore remains unverified.
+
+Privacy/security/licensing: local focus metadata only; no prompt, provider,
+credential, file, network, task, or pets state was changed.
+
+Rollback: revert the `IsTabStop` assignments and container focus calls; the
+existing explicit close defaults and loaded-content retries remain separate.
+
+Remaining: resolve through a supported Uno/Win32 Popup accessibility bridge or
+dedicated harness, then verify Narrator, keyboard traversal, Linux/Skia, and
+packaged-runtime behavior.

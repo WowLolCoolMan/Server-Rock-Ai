@@ -475,7 +475,12 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Activity and tasks");
-        void FocusActivityEntryPoint() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => exportActivity.Focus(FocusState.Programmatic));
+        dialog.IsTabStop = true;
+        void FocusActivityEntryPoint() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            exportActivity.Focus(FocusState.Programmatic);
+            dialog.Focus(FocusState.Programmatic);
+        });
         content.Loaded += (_, _) => FocusActivityEntryPoint();
         dialog.Opened += (_, _) => FocusActivityEntryPoint();
         if (approvalTimer is not null)
