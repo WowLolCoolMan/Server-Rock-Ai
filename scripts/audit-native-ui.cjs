@@ -35,6 +35,7 @@ const requiredSplitXaml = [
   ['Split chat accessibility name', 'AutomationProperties.Name="Split chat view"'],
   ['Comparison chat picker', 'AutomationProperties.Name="Choose comparison chat"'],
   ['Comparison chat empty state', 'AutomationProperties.Name="Comparison chat empty state"'],
+  ['Split ratio control', 'AutomationProperties.Name="Split pane ratio"'],
 ];
 const requiredCode = [
   ['Model source label', 'AutomationProperties.SetName(source, "Model source")'],
@@ -186,6 +187,8 @@ const requiredCode = [
   ['Split chat header action', 'MainPageHeaderControl.SplitChatRequested += SplitChatClick'],
   ['Split chat refresh path', 'SplitConversationView.Render(PageTitle.Text, _messages, comparisons, _splitComparisonSessionId)'],
   ['Split chat comparison selection', 'SplitConversationViewControl.ComparisonChanged += SplitComparisonChanged'],
+  ['Split ratio persistence wiring', 'SplitConversationViewControl.RatioChanged += SplitRatioChanged'],
+  ['Split ratio bounded persistence', '_settings.SplitChatRatios[SplitLayoutKey] = Math.Clamp(ratio, 25, 75)'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

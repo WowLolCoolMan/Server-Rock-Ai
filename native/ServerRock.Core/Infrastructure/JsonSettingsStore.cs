@@ -59,6 +59,7 @@ public sealed class JsonSettingsStore
         settings.PinnedModelConnections ??= [];
         settings.LocalModelPerformance ??= new(StringComparer.OrdinalIgnoreCase);
         settings.ChatFolders ??= [];
+        settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);
         return settings;
     }
 

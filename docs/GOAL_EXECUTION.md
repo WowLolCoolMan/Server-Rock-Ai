@@ -5769,3 +5769,54 @@ export remain available.
 Not yet verified: draggable/resizable split ratios, persisted pane geometry,
 cross-platform packaged rendering, and editing or composing independently in
 both panes. Those remain separate layout/workspace requirements.
+
+## Slice 151 — persisted split ratio control
+
+Status: `implemented_verified_windows_split_ratio_persistence`
+
+The split view now includes a bounded, keyboard-accessible vertical ratio
+slider. Values are constrained to 25–75 percent, apply immediately to the two
+chat columns, and persist in the existing local settings store under a key
+derived from the workspace mode and active project context. This provides a
+safe remembered layout preference without introducing a new dependency or
+allowing an unreadable zero-width pane.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/SplitConversationView.xaml`
+- `native/ServerRock.Native/SplitConversationView.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.SplitChat.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including settings round-trip coverage for the split ratio.
+- `npm run audit:native-ui` — passed with 195 contracts, including the ratio
+  control, accessibility help text, event wiring, and bounded persistence.
+- `npm run audit:future-features` and `git diff --check` — passed.
+- Live Windows disposable journey: initial saved ratio `62` was visible in
+  `SplitRatioSlider`; changing it to `68` updated the live accessibility state
+  and disposable settings JSON; after closing and relaunching the app, opening
+  split view again reported `Value: 68`.
+
+Privacy/security/licensing: only a numeric local layout preference is stored.
+No prompt content, secrets, remote endpoint data, pets state, or handoff files
+are involved. The ratio is clamped before both layout application and save.
+
+Rollback: remove the ratio slider, settings field, persistence wiring, focused
+test, audit contracts, and this evidence entry. The fixed two-pane split view
+continues to work.
+
+Not yet verified: draggable divider semantics, drag-and-drop pane layouts,
+multiple independently editable/composing panes, cross-platform packaged
+rendering, and full workspace-wide geometry persistence.

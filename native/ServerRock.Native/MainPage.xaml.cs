@@ -177,5 +177,6 @@ public sealed partial class MainPage : Page
     private bool _splitChatVisible;
     private string? _splitComparisonSessionId;
     private SplitConversationView SplitConversationView => SplitConversationViewControl;
+    private string SplitLayoutKey => $"{_mode}:{_activeProjectId ?? _activeProjectName ?? "default"}";
 
 }

@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 
@@ -10,12 +11,24 @@ namespace ServerRock.Native;
 public sealed partial class SplitConversationView : UserControl
 {
     private bool _updatingPicker;
+    private bool _updatingRatio;
 
     public event EventHandler<string?>? ComparisonChanged;
+    public event EventHandler<double>? RatioChanged;
 
     public SplitConversationView()
     {
         InitializeComponent();
+    }
+
+    public double Ratio => SplitRatioSlider.Value;
+
+    public void SetRatio(double ratio)
+    {
+        _updatingRatio = true;
+        SplitRatioSlider.Value = Math.Clamp(ratio, SplitRatioSlider.Minimum, SplitRatioSlider.Maximum);
+        _updatingRatio = false;
+        ApplyRatio();
     }
 
     public void Render(
@@ -50,6 +63,21 @@ public sealed partial class SplitConversationView : UserControl
         ComparisonEmpty.Visibility = selected is null ? Visibility.Visible : Visibility.Collapsed;
         ComparisonScroll.Visibility = selected is null ? Visibility.Collapsed : Visibility.Visible;
         RenderMessages(ComparisonMessages, selected?.Messages ?? [], "Select a saved chat to compare.");
+        ApplyRatio();
+    }
+
+    private void SplitRatioChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        ApplyRatio();
+        if (!_updatingRatio) RatioChanged?.Invoke(this, SplitRatioSlider.Value);
+    }
+
+    private void ApplyRatio()
+    {
+        if (Root.ColumnDefinitions.Count < 3) return;
+        var left = Math.Clamp(SplitRatioSlider.Value, 25, 75);
+        Root.ColumnDefinitions[0].Width = new GridLength(left, GridUnitType.Star);
+        Root.ColumnDefinitions[2].Width = new GridLength(100 - left, GridUnitType.Star);
     }
 
     private void ComparisonPickerChanged(object sender, SelectionChangedEventArgs e)

@@ -6,7 +6,7 @@
   <Grid x:Name="Root" Padding="18,14,18,10" Background="{StaticResource SurfaceBrush}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="1" />
+      <ColumnDefinition Width="36" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
@@ -19,7 +19,9 @@
       </Grid>
     </Border>
 
-    <Border Grid.Column="1" Margin="10,0" Background="{StaticResource LineBrush}" />
+    <Border Grid.Column="1" Margin="10,0" Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8" Padding="2">
+      <Slider x:Name="SplitRatioSlider" Orientation="Vertical" Minimum="25" Maximum="75" Value="50" StepFrequency="1" HorizontalAlignment="Center" VerticalAlignment="Center" Height="180" Width="24" ValueChanged="SplitRatioChanged" AutomationProperties.Name="Split pane ratio" AutomationProperties.HelpText="Drag or use the arrow keys to resize the current and comparison chat panes. The ratio is saved for this workspace." />
+    </Border>
 
     <Border Grid.Column="2" Style="{StaticResource WorkspaceFrameStyle}" Padding="14,12,14,10">
       <Grid RowDefinitions="Auto,Auto,*">

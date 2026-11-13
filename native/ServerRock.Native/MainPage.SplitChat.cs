@@ -20,6 +20,7 @@ public sealed partial class MainPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(SplitChatButton, "Close split chat view");
         ConversationSurfaceControl.Visibility = Visibility.Collapsed;
         SplitConversationView.Visibility = Visibility.Visible;
+        SplitConversationView.SetRatio(GetSavedSplitRatio());
         RefreshSplitChat();
     }
 
@@ -50,5 +51,19 @@ public sealed partial class MainPage
     {
         _splitComparisonSessionId = sessionId;
         RefreshSplitChat();
+    }
+
+    private double GetSavedSplitRatio()
+    {
+        if (_settings.SplitChatRatios is not null && _settings.SplitChatRatios.TryGetValue(SplitLayoutKey, out var ratio))
+            return Math.Clamp(ratio, 25, 75);
+        return 50;
+    }
+
+    private void SplitRatioChanged(object? sender, double ratio)
+    {
+        _settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);
+        _settings.SplitChatRatios[SplitLayoutKey] = Math.Clamp(ratio, 25, 75);
+        SaveSettings();
     }
 }
