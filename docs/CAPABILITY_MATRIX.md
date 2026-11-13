@@ -205,11 +205,12 @@ Windows accessibility tree still reports `PromptBox` after Activity opens, so
 the Popup focus gap remains open pending a supported focus bridge or dedicated
 accessibility harness.
 
-Recent slice note — Slice 163: Activity and status-history dialogs also mark
-their ContentDialog containers as tab stops and retry container focus. The
-native audit passes 216 contracts, but live Windows accessibility still reports
-`PromptBox`; this confirms the remaining issue is the Popup accessibility
-bridge, not an omitted dialog focus target.
+Recent slice note — Slice 163 continuation: Activity and status-history dialogs
+now also use the supported WinUI `FocusManager.TryFocusAsync` bridge and cycle
+their local tab navigation. Build and the 218-contract native audit pass, but
+live Windows accessibility still reports `PromptBox` after Activity opens. The
+remaining issue is therefore the Uno/Win32 Popup accessibility bridge, not an
+omitted dialog focus target or an unsupported focus API.
 
 Recent slice note — Slice 164: scheduled tasks now support durable Cancel from
 Activity while scheduled or paused. Core cancellation/non-claimability tests,

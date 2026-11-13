@@ -6,6 +6,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace ServerRock.Native;
 
@@ -31,8 +32,13 @@ public sealed partial class MainPage
         };
         AutomationProperties.SetName(dialog, "Status history");
         dialog.IsTabStop = true;
-        void FocusStatusHistory() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, ()
-            => { historyScroll.Focus(FocusState.Programmatic); dialog.Focus(FocusState.Programmatic); });
+        dialog.TabFocusNavigation = KeyboardNavigationMode.Cycle;
+        async Task FocusStatusHistoryAsync()
+        {
+            if ((await FocusManager.TryFocusAsync(historyScroll, FocusState.Keyboard)).Succeeded) return;
+            await FocusManager.TryFocusAsync(dialog, FocusState.Keyboard);
+        }
+        void FocusStatusHistory() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => _ = FocusStatusHistoryAsync());
         historyScroll.Loaded += (_, _) => FocusStatusHistory();
         dialog.Opened += (_, _) => FocusStatusHistory();
         await dialog.ShowAsync();

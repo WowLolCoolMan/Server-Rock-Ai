@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
@@ -481,11 +482,13 @@ public sealed partial class MainPage
         };
         AutomationProperties.SetName(dialog, "Activity and tasks");
         dialog.IsTabStop = true;
-        void FocusActivityEntryPoint() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        dialog.TabFocusNavigation = KeyboardNavigationMode.Cycle;
+        async Task FocusActivityEntryPointAsync()
         {
-            exportActivity.Focus(FocusState.Programmatic);
-            dialog.Focus(FocusState.Programmatic);
-        });
+            if ((await FocusManager.TryFocusAsync(exportActivity, FocusState.Keyboard)).Succeeded) return;
+            await FocusManager.TryFocusAsync(dialog, FocusState.Keyboard);
+        }
+        void FocusActivityEntryPoint() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => _ = FocusActivityEntryPointAsync());
         content.Loaded += (_, _) => FocusActivityEntryPoint();
         dialog.Opened += (_, _) => FocusActivityEntryPoint();
         if (approvalTimer is not null)
