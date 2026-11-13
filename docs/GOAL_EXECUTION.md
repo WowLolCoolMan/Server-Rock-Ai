@@ -1608,6 +1608,42 @@ subscriptions and accessors.
 Not yet verified: live packaged-release interaction after this extraction,
 narrow-window visual QA, Linux parity, and the remaining handoff slices.
 
+## Slice 101 — live Activity & Tasks acceptance evidence
+
+Status: `verified_windows_accessibility_inspection`
+
+The current Windows desktop build was launched from the synchronized checkout
+and the existing Activity & Tasks journey was inspected without creating,
+editing, cancelling, or deleting user data. The navigation surface exposed
+`Open activity and tasks`; the dialog exposed `Activity & tasks`, `Export
+activity evidence`, `Search activity evidence`, and `Schedule task`. It also
+rendered completed and failed provider-attempt records with model/provider,
+local-route, run identity, and sequence metadata, plus an interrupted
+operation with separate accessible `Mark interrupted operation cancelled` and
+`Mark interrupted operation failed` decisions. This closes the prior gap for
+live rendering of provider-attempt events and reconciliation choices; it does
+not claim that every action was activated.
+
+Evidence:
+
+- Windows native app launched from `scripts/start-native.cjs` and remained live.
+- Computer-use accessibility tree exposed the Activity & Tasks popup and its
+  accessible action labels and result rows.
+- The rendered surface showed completed/failed entries and an interrupted run
+  with both bounded decision buttons.
+
+Privacy/security/licensing: inspection read only existing local activity
+records. No provider request, export, schedule creation, credential use,
+network transmission, or third-party dependency was introduced.
+
+Rollback: documentation-only; remove this evidence entry and the corresponding
+capability-matrix wording if the live surface is later invalidated.
+
+Not yet verified: keyboard activation of every Activity action, seeded live
+workflow-event matching, full status-history screen-reader acceptance, OS
+session hosting, parallel-agent artifacts, Linux parity, and packaged
+acceptance.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
