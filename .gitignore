@@ -6,6 +6,8 @@ release-check*/
 native/**/artifacts/
 native/**/bin/
 native/**/obj/
+services/**/bin/
+services/**/obj/
 .env
 .env.*
 !.env.example
