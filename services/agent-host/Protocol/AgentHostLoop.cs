@@ -52,13 +52,15 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "tasks.list" => ListTasks(request),
             "scheduled.list" => ListScheduledTasks(request),
             "conversations.list" => ListConversations(request),
             "conversation.save" => SaveConversation(request),
+            "settings.get" => GetSettings(request),
+            "settings.save" => SaveSettings(request),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -184,6 +186,42 @@ public static class AgentHostLoop
 
     private static ConversationStore CreateConversationStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
+
+    private static AgentResponse GetSettings(AgentRequest request)
+    {
+        var settings = CreateSettingsStore().Load();
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            endpoint = settings.Endpoint,
+            model = settings.Model,
+            themeMode = settings.ThemeMode,
+            accentColor = settings.AccentColor,
+            interfaceDensity = settings.InterfaceDensity,
+            backdropPreset = settings.BackdropPreset,
+            reduceMotion = settings.ReduceMotion,
+            developerMode = settings.DeveloperMode,
+        });
+    }
+
+    private static AgentResponse SaveSettings(AgentRequest request)
+    {
+        var store = CreateSettingsStore();
+        var settings = store.Load();
+        settings.Endpoint = RequiredBoundedString(request, "endpoint", 2_000);
+        settings.Model = RequiredBoundedString(request, "model", 256);
+        if (request.Params is { } parameters)
+        {
+            if (parameters.TryGetProperty("themeMode", out var theme) && theme.ValueKind == JsonValueKind.String)
+                settings.ThemeMode = theme.GetString() ?? settings.ThemeMode;
+            if (parameters.TryGetProperty("reduceMotion", out var reduceMotion) && reduceMotion.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.ReduceMotion = reduceMotion.GetBoolean();
+        }
+        store.Save(settings);
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model });
+    }
+
+    private static JsonSettingsStore CreateSettingsStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_SETTINGS_PATH"));
 
     private static string RequiredString(AgentRequest request, string name)
     {
