@@ -805,9 +805,10 @@ public static class AgentHostLoop
         if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
             || uri is null
             || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || !uri.IsLoopback
             || !string.IsNullOrEmpty(uri.UserInfo)
             || !string.IsNullOrEmpty(uri.Fragment))
-            throw new InvalidOperationException("Enter an HTTP or HTTPS model endpoint without embedded credentials or a URL fragment.");
+            throw new InvalidOperationException("Skai Desktop only connects to a local loopback model endpoint without embedded credentials or a URL fragment.");
         return endpoint;
     }
 
