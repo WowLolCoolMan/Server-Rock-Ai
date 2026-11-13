@@ -7193,3 +7193,31 @@ Chat routing and existing attachment behavior remain unchanged.
 Remaining: durable uploaded-document corpus management, vector/hybrid retrieval,
 OCR, semantic grounding evaluation, cross-platform acceptance, and full
 NotebookLM-style project isolation.
+
+## Slice 184 — Reconcile bounded backlog evidence
+
+Status: `implemented_documentation_reconciled`
+
+The future-feature inventory now distinguishes bounded implementations from
+their broader unchecked requirements: the nested project file browser, local
+text/image/PDF previews, workspace session-state bar, and session-only
+documents-only Chat guard are described without marking the full feature
+families complete. Full tree/mutation workflows, app previews, background task
+status, durable document corpora, and packaged/live acceptance remain open.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Repository inspection confirmed the referenced bounded implementations and
+  their existing Slice 178–183 build, test, and audit records.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: documentation only; no application behavior,
+provider route, credentials, user data, or pet state changed.
+
+Rollback: revert the explanatory parentheticals and this slice record; prior
+unchecked backlog labels remain unchanged.
