@@ -7643,6 +7643,42 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 223 — Tokenize skills dialog surfaces
+
+Status: `implemented_native_ui_token_audit_verified`
+
+Requirement alignment: the Skills dialog still used raw font sizes and a
+hard-coded muted brush for installed-skill details, status, and its section
+label. These now use shared semantic typography and ink tokens, keeping the
+dialog legible across appearance presets while preserving explicit enablement,
+preview, rollback, and Markdown-only safety behavior.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `node scripts/audit-native-ui.cjs` — passed with 312 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: visual token substitutions only. Skill packages
+remain local, Markdown-only, disabled by default, explicitly enabled, and
+rollback-capable; no execution or network behavior changes.
+
+Risk and rollback: restore the three previous local assignments and remove
+the three focused audit contracts. No installed skill or user data changes.
+
+Remaining: broader code-built legacy typography/color migration and live
+cross-preset visual acceptance remain open.
+
 ## Slice 222 — Tokenize model-library status surfaces
 
 Status: `implemented_native_ui_token_audit_verified`

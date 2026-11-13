@@ -3,12 +3,10 @@
 // Depends on: PluginCatalogService, SkillCatalogService (ServerRock.Core).
 // Called by: the sidebar Plugins button in MainPage.xaml and the /plugins and /skills slash commands.
 
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
-using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Infrastructure;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
@@ -184,12 +182,12 @@ public sealed partial class MainPage
         var list = new ListView { MinHeight = 260, MaxHeight = 420, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(SkillDefinition.Name) };
         list.ItemsSource = SkillCatalogService.BuiltIns;
         var installedList = new ListView { MinHeight = 80, MaxHeight = 180, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(InstalledSkill.Name) };
-        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+        var details = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("InkBrush") };
         var run = new Button { Content = "Use skill", IsEnabled = false, MinWidth = 100 };
         var enable = new Button { Content = "Enable selected", IsEnabled = false, MinWidth = 140 };
         var install = new Button { Content = "Install local package", MinWidth = 170 };
         var rollback = new Button { Content = "Rollback selected", IsEnabled = false, MinWidth = 150 };
-        var status = new TextBlock { FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+        var status = new TextBlock { FontSize = UiTheme.FontSize("CaptionFontSize"), TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
         AutomationProperties.SetName(installedList, "Installed skills");
         AutomationProperties.SetName(install, "Install local skill package");
         AutomationProperties.SetHelpText(install, "Choose a local skill package containing a manifest and Markdown instructions. Scripts are rejected and never executed.");
@@ -293,7 +291,7 @@ public sealed partial class MainPage
                 {
                     new TextBlock { Text = "Built-in skills are read-only workflow templates. Review the requested permissions before using one.", TextWrapping = TextWrapping.Wrap },
                     list,
-                    new TextBlock { Text = "INSTALLED LOCAL SKILLS", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75 },
+                    new TextBlock { Text = "INSTALLED LOCAL SKILLS", FontSize = UiTheme.FontSize("SectionLabelFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = UiTheme.Brush("MutedInkBrush") },
                     installedList,
                     details,
                     run,

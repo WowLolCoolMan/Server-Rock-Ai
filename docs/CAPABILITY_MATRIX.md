@@ -284,6 +284,11 @@ connection status onto shared semantic typography and muted ink tokens. Broader
 code-built legacy token migration and live cross-preset visual acceptance
 remain open.
 
+Slice 223 moves installed-skill details, status, and section-label typography
+onto shared semantic tokens while preserving the explicit enablement and
+Markdown-only safety boundary. Broader code-built legacy token migration and
+live cross-preset visual acceptance remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
