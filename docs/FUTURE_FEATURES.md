@@ -20,7 +20,7 @@ and acceptance evidence.
 ## Core chat
 
 - [ ] Multi-model picker supporting any compatible provider.
-- [ ] Side-by-side model comparison.
+- [x] Side-by-side model comparison.
 - [ ] File, image, and PDF upload with retrieval-augmented generation (RAG).
 - [x] Web search with citations.
 - [x] Persistent memory with a view/edit management UI.

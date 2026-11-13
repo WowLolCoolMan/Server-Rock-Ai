@@ -5504,3 +5504,45 @@ unchecked/evidence-pending state. Runtime behavior is unchanged.
 Not yet verified: web-search freshness and answer-grounding evaluations,
 provider-side citation enforcement, cross-platform/package acceptance, and
 the remaining multi-provider/RAG backlog.
+
+## Slice 145 — live side-by-side local model comparison
+
+Status: `implemented_verified_windows_local_comparison`
+
+The existing bounded comparison path is now verified in the native Windows
+app. A disposable local-only profile exposed two distinct pinned Ollama
+models: `wtwk-qwen35-4b:latest` and the installed 1.5B Qwen coder model. The
+model picker exposed `Compare pinned models`; its dialog selected both models,
+accepted one plain-text prompt, and explicitly stated that attachments, saved
+memory, project files, and web results were excluded. The comparison completed
+with separate model-labeled responses in the results dialog.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Live Windows disposable profile — passed: two pinned local models were
+  visible, the comparison prompt was reviewed, both models ran, and the
+  results dialog rendered one response column per model.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including minimum-model, local-only, prompt-bound, and bounded
+  comparison-policy coverage.
+- `npm run audit:future-features` and `git diff --check` — passed after the
+  evidence update.
+
+Privacy/security/licensing: both routes were loopback Ollama endpoints and
+the settings required local model endpoints. The comparison intentionally
+excluded attachments, memory, project context, and web results; no remote
+consent, credential, network route, third-party dependency, or pet state was
+used.
+
+Rollback: revert the three documentation changes to return the comparison
+item to its evidence-pending state. Runtime behavior is unchanged.
+
+Not yet verified: remote comparison consent and provider diversity, resource
+scheduling/unloading, comparison cancellation, cross-platform/package
+acceptance, and the broader multi-model picker requirement.
