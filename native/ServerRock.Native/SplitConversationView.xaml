@@ -12,7 +12,7 @@
 
     <Border Grid.Column="0" Style="{StaticResource WorkspaceFrameStyle}" Padding="14,12,14,10">
       <Grid RowDefinitions="Auto,*">
-        <TextBlock x:Name="CurrentTitle" Text="Current chat" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="Current split chat title" />
+        <TextBlock x:Name="CurrentTitle" Text="Current chat" FontSize="{StaticResource ReadingFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="Current split chat title" />
         <ScrollViewer Grid.Row="1" x:Name="CurrentScroll" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
           <StackPanel x:Name="CurrentMessages" Spacing="10" />
         </ScrollViewer>
@@ -27,7 +27,7 @@
 
     <Border Grid.Column="2" Style="{StaticResource WorkspaceFrameStyle}" Padding="14,12,14,10">
       <Grid RowDefinitions="Auto,Auto,*">
-        <TextBlock x:Name="ComparisonTitle" Text="Compare another chat" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" AutomationProperties.Name="Comparison split chat title" />
+        <TextBlock x:Name="ComparisonTitle" Text="Compare another chat" FontSize="{StaticResource ReadingFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" AutomationProperties.Name="Comparison split chat title" />
         <ComboBox x:Name="ComparisonPicker" Grid.Row="1" Margin="0,8,0,0" PlaceholderText="Choose a saved chat" SelectionChanged="ComparisonPickerChanged" AutomationProperties.Name="Choose comparison chat" AutomationProperties.HelpText="Select a saved conversation to show beside the current chat." />
         <TextBlock x:Name="ComparisonEmpty" Grid.Row="2" Text="Save another conversation to compare it here." TextWrapping="Wrap" Foreground="{StaticResource MutedInkBrush}" Margin="0,14,0,0" Visibility="Collapsed" AutomationProperties.Name="Comparison chat empty state" />
         <ScrollViewer x:Name="ComparisonScroll" Grid.Row="2" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">

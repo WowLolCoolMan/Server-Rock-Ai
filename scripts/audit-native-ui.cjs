@@ -21,6 +21,9 @@ const nativeXamlFiles = fs.readdirSync(nativeDir)
 const hardCodedViewColors = nativeXamlFiles.flatMap(({ name, text }) =>
   [...text.matchAll(/(?:Color|Background|Foreground|BorderBrush|Fill)="\s*#[0-9A-Fa-f]{3,8}/g)]
     .map((match) => `${name}:${match[0]}`));
+const hardCodedViewFontSizes = nativeXamlFiles.flatMap(({ name, text }) =>
+  [...text.matchAll(/FontSize="\s*[0-9]+(?:\.[0-9]+)?/g)]
+    .map((match) => `${name}:${match[0]}`));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -331,6 +334,7 @@ const missing = [
   ...requiredPercyFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Official Percy asset", file]),
   ...requiredAnimationFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Pet animation asset", file]),
   ...(hardCodedViewColors.length ? [["Semantic view color tokens", hardCodedViewColors.join(", ")]] : []),
+  ...(hardCodedViewFontSizes.length ? [["Typography view tokens", hardCodedViewFontSizes.join(", ")]] : []),
 ];
 
 if (missing.length) {
@@ -339,4 +343,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 2} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 3} contracts).`);

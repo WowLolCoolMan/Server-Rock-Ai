@@ -7292,6 +7292,42 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 202 — Complete native view typography tokenization
+
+Status: `implemented_build_and_audit_verified`
+
+Completed the second pass of the native UI audit by replacing remaining literal
+`FontSize` values in view XAML with the shared type scale. Composer actions,
+conversation navigation tools, header controls, companion actions, and split
+conversation headings now inherit the same typography contract as the rest of
+the shell.
+
+Changed files:
+
+- `native/ServerRock.Native/ComposerInputView.xaml`
+- `native/ServerRock.Native/ConversationNavigationView.xaml`
+- `native/ServerRock.Native/MainPageHeader.xaml`
+- `native/ServerRock.Native/SidebarView.xaml`
+- `native/ServerRock.Native/SplitConversationView.xaml`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 265 contracts, including the new
+  no-literal-view-font-size guard.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: typography-only view changes; no provider,
+filesystem, credential, or network behavior changed.
+
+Rollback: restore the five view files and remove the typography audit guard;
+runtime behavior and persisted data are unaffected.
+
+Remaining: live High Contrast and compact-window verification, plus the
+broader handoff UI gaps and release-artifact acceptance.
+
 ## Slice 201 — Refactor native shell views onto semantic design tokens
 
 Status: `implemented_build_audit_and_visual_smoke_verified`

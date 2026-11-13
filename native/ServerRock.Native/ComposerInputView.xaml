@@ -18,7 +18,7 @@
         <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
           <StackPanel x:Name="CommandSuggestions" Spacing="2" />
         </ScrollViewer>
-        <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="10" Foreground="{StaticResource MutedInkBrush}" Margin="8,2,8,3" />
+        <TextBlock Text="↑ ↓ navigate　·　Enter complete　·　Esc close" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" Margin="8,2,8,3" />
       </StackPanel>
     </Border>
     <Border x:Name="ComposerBorder" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1.5" CornerRadius="17" Padding="14,10" Style="{StaticResource WorkspaceFrameStyle}">
@@ -33,13 +33,13 @@
           </TextBox.Resources>
         </TextBox>
         <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="0,8,0,0">
-          <Button Click="AttachClick" Style="{StaticResource ComposerIconButtonStyle}" ToolTipService.ToolTip="Attach files (text, code, PDF, PNG or JPEG)" AutomationProperties.Name="Attach a file"><FontIcon Glyph="&#xE723;" FontSize="15" /></Button>
-          <Button Grid.Column="1" Content="/" FontSize="15" FontWeight="SemiBold" Click="CommandsClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Slash commands" AutomationProperties.Name="Slash commands" />
-          <Button Grid.Column="2" x:Name="VoiceButton" Click="VoiceInputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Dictate a message" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model."><FontIcon x:Name="VoiceButtonIcon" Glyph="&#xE720;" FontSize="15" /></Button>
-          <Button Grid.Column="3" x:Name="VoiceOutputButton" Click="VoiceOutputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Read replies aloud: off" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer."><FontIcon x:Name="VoiceOutputIcon" Glyph="&#xE74F;" FontSize="15" /></Button>
+          <Button Click="AttachClick" Style="{StaticResource ComposerIconButtonStyle}" ToolTipService.ToolTip="Attach files (text, code, PDF, PNG or JPEG)" AutomationProperties.Name="Attach a file"><FontIcon Glyph="&#xE723;" FontSize="{StaticResource ReadingFontSize}" /></Button>
+          <Button Grid.Column="1" Content="/" FontSize="{StaticResource ReadingFontSize}" FontWeight="SemiBold" Click="CommandsClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Slash commands" AutomationProperties.Name="Slash commands" />
+          <Button Grid.Column="2" x:Name="VoiceButton" Click="VoiceInputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Dictate a message" AutomationProperties.Name="Speak a message" AutomationProperties.HelpText="Use the system speech recognizer to dictate a message for any selected model."><FontIcon x:Name="VoiceButtonIcon" Glyph="&#xE720;" FontSize="{StaticResource ReadingFontSize}" /></Button>
+          <Button Grid.Column="3" x:Name="VoiceOutputButton" Click="VoiceOutputClick" Style="{StaticResource ComposerIconButtonStyle}" Margin="4,0,0,0" ToolTipService.ToolTip="Read replies aloud: off" AutomationProperties.Name="Toggle spoken responses" AutomationProperties.HelpText="Read completed model responses aloud using the system speech synthesizer."><FontIcon x:Name="VoiceOutputIcon" Glyph="&#xE74F;" FontSize="{StaticResource ReadingFontSize}" /></Button>
           <TextBlock Grid.Column="4" x:Name="ProcessingLabel" Text="● Local model" Foreground="{StaticResource MutedInkBrush}" FontSize="{StaticResource CaptionFontSize}" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" Margin="8,0,12,0" />
           <Button x:Name="StopButton" Grid.Column="5" Click="StopClick" Background="{StaticResource DangerBrush}" Foreground="{StaticResource DangerInkBrush}" CornerRadius="10" Width="34" Height="34" Padding="0" Visibility="Collapsed" ToolTipService.ToolTip="Stop generating" AutomationProperties.Name="Stop generating response"><FontIcon Glyph="&#xE71A;" FontSize="{StaticResource CaptionFontSize}" /></Button>
-          <Button x:Name="SendButton" Grid.Column="5" Click="SendClick" Style="{StaticResource PrimaryActionButtonStyle}" Padding="0" Width="34" Height="34" ToolTipService.ToolTip="Send (Enter)" AutomationProperties.Name="Send message"><FontIcon Glyph="&#xE724;" FontSize="14" /></Button>
+          <Button x:Name="SendButton" Grid.Column="5" Click="SendClick" Style="{StaticResource PrimaryActionButtonStyle}" Padding="0" Width="34" Height="34" ToolTipService.ToolTip="Send (Enter)" AutomationProperties.Name="Send message"><FontIcon Glyph="&#xE724;" FontSize="{StaticResource BodyFontSize}" /></Button>
         </Grid>
       </Grid>
     </Border>

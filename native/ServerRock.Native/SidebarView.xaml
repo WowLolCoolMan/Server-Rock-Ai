@@ -10,7 +10,7 @@
   <Grid x:Name="Root" Background="{StaticResource SidebarBrush}" Padding="15,18" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="4,0,4,18">
       <Border Width="34" Height="34" CornerRadius="11" Background="{StaticResource BrandMarkBrush}">
-        <TextBlock Text="◈" Foreground="{StaticResource BrandMarkInkBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Text="◈" Foreground="{StaticResource BrandMarkInkBrush}" FontSize="{StaticResource SubtitleFontSize}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Border>
       <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
         <TextBlock x:Name="ProductName" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" />
@@ -51,14 +51,14 @@
       <StackPanel Spacing="7">
         <!-- Connection status lives in the header pill and the composer label; this sidebar
              copy was a fourth repeat, so it stays collapsed (code still updates it). -->
-        <StackPanel Orientation="Horizontal" Spacing="7" Visibility="Collapsed"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="11" Foreground="{StaticResource InkBrush}" /><TextBlock Text="· local history" FontSize="11" Foreground="{StaticResource MutedInkBrush}" /></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="7" Visibility="Collapsed"><Ellipse x:Name="ConnectionDot" Width="8" Height="8" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="ConnectionLabel" Text="Checking model" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource InkBrush}" /><TextBlock Text="· local history" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" /></StackPanel>
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
           <!-- Update notice (from main): shown only when an update is available; Auto width so the
                pet button keeps the full row when it is hidden. -->
           <Button x:Name="UpdateButton" Visibility="Collapsed" Click="UpdateClick" Style="{StaticResource ContextButtonStyle}" Background="{StaticResource AccentSoftBrush}" Foreground="{StaticResource AccentInkBrush}" HorizontalContentAlignment="Left" Content="↓　Update available" AutomationProperties.Name="Open available app update" AutomationProperties.HelpText="Review and install the available app update." />
           <!-- Pet controls: show/hide plus a clearly labelled "choose pet" icon (was a bare ···). -->
-          <Button Grid.Column="1" x:Name="CompanionButton" Click="ToggleCompanionClick" Style="{StaticResource ContextButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window."><StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE76E;" FontSize="14" /><TextBlock x:Name="CompanionButtonLabel" Text="Show pet" /></StackPanel></Button>
-          <Button Grid.Column="2" Click="CustomizeCompanionClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Choose pet" AutomationProperties.Name="Choose pet companion" AutomationProperties.HelpText="Choose which local companion to show."><FontIcon Glyph="&#xE70F;" FontSize="13" /></Button>
+          <Button Grid.Column="1" x:Name="CompanionButton" Click="ToggleCompanionClick" Style="{StaticResource ContextButtonStyle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="Show pet companion" AutomationProperties.HelpText="Show or hide a local companion in this app window."><StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE76E;" FontSize="{StaticResource BodyFontSize}" /><TextBlock x:Name="CompanionButtonLabel" Text="Show pet" /></StackPanel></Button>
+          <Button Grid.Column="2" Click="CustomizeCompanionClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Choose pet" AutomationProperties.Name="Choose pet companion" AutomationProperties.HelpText="Choose which local companion to show."><FontIcon Glyph="&#xE70F;" FontSize="{StaticResource SmallFontSize}" /></Button>
         </Grid>
       </StackPanel>
     </Border>
