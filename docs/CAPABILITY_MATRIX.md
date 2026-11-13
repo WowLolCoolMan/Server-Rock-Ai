@@ -271,3 +271,11 @@ Recent slice note — Slice 173: the desktop target now defines an explicit
 `SRAI_DESKTOP` picker bridge so Win32 window-handle initialization is compiled
 for native picker surfaces. The desktop build passed, but the picker still did
 not appear during repeated live activation; preview acceptance remains open.
+
+Recent slice note — Slice 174: Composer Tools now includes an explicit local
+path fallback for attachment workflows when the native picker is unavailable.
+The path dialog reads only after the user chooses Attach, applies the existing
+type, signature, size, character, image-byte, and file-count checks, and keeps
+the result removable before sending. Live Windows acceptance attached the
+handoff README, opened its bounded read-only preview, then removed the pending
+attachment. Full RAG, OCR, and app-preview coverage remain open.

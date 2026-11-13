@@ -21,6 +21,126 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
+    private async void AttachLocalPathClick(object sender, RoutedEventArgs e)
+    {
+        var path = new TextBox
+        {
+            PlaceholderText = "E:\\path\\to\\file.pdf",
+            TextWrapping = TextWrapping.NoWrap,
+        };
+        AutomationProperties.SetName(path, "Local attachment path");
+        var note = new TextBlock
+        {
+            Text = "Enter a full local path to one supported text, PDF, PNG, or JPEG file. Nothing is read until you choose Attach.",
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.82
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "Attach a local path",
+            Content = new StackPanel { Spacing = 10, Children = { note, path } },
+            PrimaryButtonText = "Attach",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = XamlRoot
+        };
+        AutomationProperties.SetName(dialog, "Attach a local file path");
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary || string.IsNullOrWhiteSpace(path.Text)) return;
+        try
+        {
+            var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(path.Text.Trim());
+            await AttachLocalFileAsync(file);
+        }
+        catch (Exception ex)
+        {
+            RuntimeStatus.Text = $"Could not attach that path: {ex.Message}";
+        }
+    }
+
+    private async Task AttachLocalFileAsync(Windows.Storage.StorageFile file)
+    {
+        if (_requestCancellation is not null) return;
+        if (_pendingAttachments.Count >= ChatAttachmentPolicy.MaxFiles)
+        {
+            RuntimeStatus.Text = $"Could not attach {file.Name}: maximum of {ChatAttachmentPolicy.MaxFiles} files per message.";
+            return;
+        }
+        var mediaType = ChatAttachmentPolicy.GetImageMediaType(file.Name);
+        var isPdf = ChatAttachmentPolicy.IsAllowedPdfName(file.Name);
+        if (!ChatAttachmentPolicy.IsAllowedName(file.Name))
+        {
+            RuntimeStatus.Text = $"Could not attach {file.Name}: file type is unsupported or blocked for safety.";
+            return;
+        }
+        var properties = await file.GetBasicPropertiesAsync();
+        var fileLimit = isPdf ? ChatAttachmentPolicy.MaxPdfBytes : ChatAttachmentPolicy.MaxFileBytes;
+        if (properties.Size > (ulong)fileLimit)
+        {
+            RuntimeStatus.Text = isPdf ? $"Could not attach {file.Name}: larger than the 20 MB PDF limit." : $"Could not attach {file.Name}: larger than the 2 MB limit.";
+            return;
+        }
+        ChatAttachment? attachment = null;
+        if (mediaType is not null)
+        {
+            if (properties.Size > (ulong)ChatAttachmentPolicy.RemainingImageBytes(_pendingAttachments))
+            {
+                RuntimeStatus.Text = $"Could not attach {file.Name}: image total exceeds the 6 MB limit.";
+                return;
+            }
+            var bytes = await ChatAttachmentPolicy.ReadBytesAsync(file.Path, ChatAttachmentPolicy.MaxFileBytes);
+            if (!ChatAttachmentPolicy.HasValidImageSignature(mediaType, bytes))
+            {
+                RuntimeStatus.Text = $"Could not attach {file.Name}: file content does not match its PNG/JPEG extension.";
+                return;
+            }
+            attachment = new ChatAttachment(file.Name, Convert.ToBase64String(bytes), mediaType);
+        }
+        else if (isPdf)
+        {
+            var bytes = await ChatAttachmentPolicy.ReadBytesAsync(file.Path, ChatAttachmentPolicy.MaxPdfBytes);
+            if (!PdfAttachmentTextExtractor.HasPdfSignature(bytes))
+            {
+                RuntimeStatus.Text = $"Could not attach {file.Name}: file content does not have a valid PDF signature.";
+                return;
+            }
+            var remaining = ChatAttachmentPolicy.RemainingCharacters(_pendingAttachments);
+            if (remaining <= 0)
+            {
+                RuntimeStatus.Text = "Could not attach the PDF: message text limit reached.";
+                return;
+            }
+            var text = await Task.Run(() => PdfAttachmentTextExtractor.Extract(bytes, Math.Min(ChatAttachmentPolicy.MaxCharactersPerFile, remaining)));
+            attachment = new ChatAttachment(file.Name, text);
+        }
+        else
+        {
+            if (!ChatAttachmentPolicy.IsAllowedTextName(file.Name))
+            {
+                RuntimeStatus.Text = $"Could not attach {file.Name}: file type is unsupported or blocked for safety.";
+                return;
+            }
+            var content = ChatAttachmentPolicy.BoundContent(await Windows.Storage.FileIO.ReadTextAsync(file));
+            var take = Math.Min(content.Length, ChatAttachmentPolicy.RemainingCharacters(_pendingAttachments));
+            if (take == 0)
+            {
+                RuntimeStatus.Text = $"Could not attach {file.Name}: message text limit reached.";
+                return;
+            }
+            attachment = new ChatAttachment(file.Name, content[..take]);
+        }
+        var duplicate = _pendingAttachments.Any(item => item.FileName.Equals(attachment.FileName, StringComparison.OrdinalIgnoreCase));
+        if (duplicate)
+        {
+            var suffix = _pendingAttachments.Count + 2;
+            attachment = new ChatAttachment($"{Path.GetFileNameWithoutExtension(attachment.FileName)} ({suffix}){Path.GetExtension(attachment.FileName)}", attachment.Content, attachment.MediaType);
+        }
+        _pendingAttachments.Add(attachment);
+        PersistPendingAttachments();
+        RenderPendingAttachments();
+        RuntimeStatus.Text = $"Attached {attachment.FileName}. Review or remove it before sending.";
+    }
+
     private async void AttachClick(object sender, RoutedEventArgs e)
     {
         if (_requestCancellation is not null) return;

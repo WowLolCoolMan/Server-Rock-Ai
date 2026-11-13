@@ -15,6 +15,7 @@ public sealed partial class ComposerToolbarView : UserControl
     public event RoutedEventHandler? SmartRewriteRequested;
     public event RoutedEventHandler? ImageStudioRequested;
     public event RoutedEventHandler? AdvancedRequested;
+    public event RoutedEventHandler? AttachPathRequested;
 
     public ComposerToolbarView()
     {
@@ -42,4 +43,5 @@ public sealed partial class ComposerToolbarView : UserControl
     private void SmartRewriteClick(object sender, RoutedEventArgs e) => SmartRewriteRequested?.Invoke(sender, e);
     private void ImageStudioClick(object sender, RoutedEventArgs e) => ImageStudioRequested?.Invoke(sender, e);
     private void AdvancedClick(object sender, RoutedEventArgs e) => AdvancedRequested?.Invoke(sender, e);
+    private void AttachLocalPathClick(object sender, RoutedEventArgs e) => AttachPathRequested?.Invoke(sender, e);
 }

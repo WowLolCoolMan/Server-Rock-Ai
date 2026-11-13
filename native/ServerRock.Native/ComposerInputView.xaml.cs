@@ -16,6 +16,7 @@ public sealed partial class ComposerInputView : UserControl
     public event RoutedEventHandler? SmartRewriteRequested;
     public event RoutedEventHandler? ImageStudioRequested;
     public event RoutedEventHandler? AdvancedRequested;
+    public event RoutedEventHandler? AttachPathRequested;
     public event RoutedEventHandler? ManageQueueRequested;
     public event RoutedEventHandler? StatusHistoryRequested;
     public event RoutedEventHandler? DismissStatusRequested;
@@ -44,6 +45,7 @@ public sealed partial class ComposerInputView : UserControl
         ToolbarView.SmartRewriteRequested += (sender, args) => SmartRewriteRequested?.Invoke(sender, args);
         ToolbarView.ImageStudioRequested += (sender, args) => ImageStudioRequested?.Invoke(sender, args);
         ToolbarView.AdvancedRequested += (sender, args) => AdvancedRequested?.Invoke(sender, args);
+        ToolbarView.AttachPathRequested += (sender, args) => AttachPathRequested?.Invoke(sender, args);
     }
 
     public StackPanel AttachmentListControl => AttachmentList;

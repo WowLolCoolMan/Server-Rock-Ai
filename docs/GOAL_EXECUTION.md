@@ -6786,3 +6786,48 @@ the packaged Windows path and existing picker validation remain separate.
 
 Remaining: identify the Uno/Win32 picker-hosting requirement or use a supported
 desktop picker harness, then live-test text, PDF, and image previews.
+
+## Slice 174 — Explicit local attachment path fallback
+
+Status: `implemented_build_tests_audit_live_verified`
+
+Composer Tools now exposes an `Attach path` action for supported local files.
+The user enters a full path in an explicit dialog; the app does not read the
+path until the user confirms Attach. The fallback applies the existing local
+attachment policy: supported names, secret-like-name blocking, byte limits,
+PNG/JPEG signatures, PDF signatures and local extraction, bounded text, image
+budgets, and the five-file message cap. Pending content is still a local draft,
+with the existing Preview and Remove actions available before Send.
+
+Changed files:
+
+- `native/ServerRock.Native/ComposerToolbarView.xaml`
+- `native/ServerRock.Native/ComposerToolbarView.xaml.cs`
+- `native/ServerRock.Native/ComposerInputView.xaml.cs`
+- `native/ServerRock.Native/MainPage.Attachments.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Composer Tools, opened Attach a local file path,
+  attached `ServerRock_AI_FINAL_COMPLETE_HANDOFF/README.md`, verified the local
+  read-only Preview dialog and bounded content, then removed the attachment.
+
+Privacy/security/licensing: the fallback performs no network request and no
+provider call. It is explicit-path only, read-only until attachment creation,
+bounded by the existing policy, and preserves the untrusted-content warning.
+No pets code/settings or new dependency is involved.
+
+Rollback: remove the Attach path control, event forwarding, and
+`AttachLocalFileAsync`; the existing picker path remains available.
+
+Remaining: full RAG/vector backends/reranking, OCR, image-model acceptance,
+cross-platform picker behavior, and app-preview coverage remain open.

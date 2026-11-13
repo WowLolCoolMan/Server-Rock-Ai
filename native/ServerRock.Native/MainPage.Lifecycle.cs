@@ -51,6 +51,7 @@ public sealed partial class MainPage
         ComposerToolbarControl.SmartRewriteRequested += SmartRewriteClick;
         ComposerToolbarControl.ImageStudioRequested += ImageStudioClick;
         ComposerToolbarControl.AdvancedRequested += AdvancedClick;
+        ComposerToolbarControl.AttachPathRequested += AttachLocalPathClick;
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
         SidebarView.CodingModeRequested += CodingModeClick;
