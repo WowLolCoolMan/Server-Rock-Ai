@@ -8,7 +8,7 @@ export function routeFromLocation(): Route {
 }
 
 export function isRoute(value: string): value is Route {
-  return ["chat", "coding", "settings", "models", "images", "workbench", "terminal", "memory"].includes(value);
+  return ["chat", "coding", "settings", "models", "images", "marketplace", "workbench", "terminal", "memory"].includes(value);
 }
 
 export function navigate(route: Route, replace = false) {

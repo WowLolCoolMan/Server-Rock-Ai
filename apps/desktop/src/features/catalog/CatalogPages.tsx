@@ -12,11 +12,13 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
 }
 
 export function MarketplacePage() {
-  type Category = "All" | "Models" | "Skills" | "Integrations";
+  type Category = "All" | "LLMs" | "Voices" | "Image models" | "Skills" | "Tools";
   const cards = [
-    { title: "Models", category: "Models" as const, description: "Compare local and compatible providers.", detail: "A single place to inspect model capabilities, connection health, and setup requirements.", icon: "◌" },
-    { title: "Skills", category: "Skills" as const, description: "Install focused instruction packs for agents.", detail: "Reusable instruction packs can add focused behavior without changing the core application.", icon: "✦" },
-    { title: "Integrations", category: "Integrations" as const, description: "Connect tools only when you choose.", detail: "Review external tools, permissions, and connection ownership before enabling them.", icon: "⊕" }
+    { title: "LLMs", category: "LLMs" as const, description: "Download coding, chat, reasoning, and vision models.", detail: "Find local model packages and compatible runtimes, then install them into your local model directory.", icon: "◌" },
+    { title: "Voices & TTS", category: "Voices" as const, description: "Add voices for conversation and narration.", detail: "Choose speech-to-speech engines, streaming TTS voices, and voice packs for Voice Studio.", icon: "◖" },
+    { title: "Image models", category: "Image models" as const, description: "Add checkpoints, LoRAs, and workflows.", detail: "Bring new local image models and ComfyUI workflow packs into Image Studio.", icon: "▧" },
+    { title: "Skills", category: "Skills" as const, description: "Install focused instruction packs for agents.", detail: "Skills are local folders with a manifest and instructions. Review them before enabling them.", icon: "✦" },
+    { title: "Tools & integrations", category: "Tools" as const, description: "Add MCP servers and developer tools.", detail: "Connect tools explicitly, inspect their permissions, and keep ownership on your machine.", icon: "⊕" }
   ];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("All");
@@ -38,7 +40,7 @@ export function MarketplacePage() {
           <span>{filtered.length} {filtered.length === 1 ? "category" : "categories"}</span>
         </div>
         <div className="marketplace-filters" role="group" aria-label="Marketplace categories">
-          {(["All", "Models", "Skills", "Integrations"] as Category[]).map((item) => <button className={`marketplace-filter${category === item ? " is-active" : ""}`} key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
+          {(["All", "LLMs", "Voices", "Image models", "Skills", "Tools"] as Category[]).map((item) => <button className={`marketplace-filter${category === item ? " is-active" : ""}`} key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
         </div>
       </div>
       <div className="marketplace-layout">
