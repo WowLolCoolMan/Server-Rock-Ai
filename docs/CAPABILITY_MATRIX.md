@@ -152,3 +152,9 @@ for Activity & tasks, status history, and agent-task planning, with 206 native
 UI audit contracts passing. A live Windows accessibility check still reported
 the underlying composer as focused after Activity opened, so keyboard and
 screen-reader focus acceptance remains an explicit open gap.
+
+Recent slice note — Slice 158: dialog focus now retries after loaded content at
+low dispatcher priority and the native audit passes 208 contracts. Activity
+rendering and actions were rechecked live on Windows, but the accessibility
+tree still reports `PromptBox` as focused; this remains an explicit release
+gap pending a supported Popup focus bridge or dedicated accessibility harness.

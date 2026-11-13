@@ -6086,3 +6086,44 @@ Next: isolate the native Popup/ContentDialog focus race with a targeted
 keyboard test for Activity export, status-history dismissal, and agent-task
 planning before marking this seam verified on Windows. Narrator announcements,
 Linux/Skia parity, and packaged-runtime acceptance also remain open.
+
+## Slice 158 — Loaded-content focus retry
+
+Status: `implemented_verified_dialog_rendering_accessibility_gap_open`
+
+The focus handoff now retries from both the dialog `Opened` event and the
+loaded dialog content at low dispatcher priority. This covers the native
+Popup/ContentDialog ordering case where the control tree is not yet loaded
+when `Opened` fires. Activity export, status history, and agent-task planning
+each use a named local focus helper; the existing search dialogs retain their
+dispatcher-backed query focus.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after
+  closing the exact verification process that held the output assembly.
+- `npm run audit:native-ui` — passed with 208 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: rebuilt and launched the desktop app, opened Activity &
+  tasks, confirmed the rendered dialog and all local action controls, then
+  closed it without sending a provider request or writing evidence. The native
+  accessibility tree continued to report `PromptBox` as focused, so focus is
+  not marked fully accepted.
+
+Privacy/security/licensing: the retry only changes local UI focus scheduling;
+it does not route data, access credentials, write user files, or modify pets.
+
+Rollback: revert the loaded-content hooks and low-priority focus helpers; the
+dialog actions and search behavior remain otherwise unchanged.
+
+Next: add a focused Windows accessibility harness or a supported Popup focus
+bridge before claiming keyboard/screen-reader acceptance. Narrator behavior,
+Linux/Skia parity, and packaged-runtime acceptance remain open.

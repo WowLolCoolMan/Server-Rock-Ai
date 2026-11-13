@@ -29,7 +29,9 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Status history");
-        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => historyScroll.Focus(FocusState.Programmatic));
+        void FocusStatusHistory() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => historyScroll.Focus(FocusState.Programmatic));
+        historyScroll.Loaded += (_, _) => FocusStatusHistory();
+        dialog.Opened += (_, _) => FocusStatusHistory();
         await dialog.ShowAsync();
     }
 

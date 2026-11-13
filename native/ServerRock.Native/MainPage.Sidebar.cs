@@ -474,7 +474,9 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Activity and tasks");
-        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => exportActivity.Focus(FocusState.Programmatic));
+        void FocusActivityEntryPoint() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => exportActivity.Focus(FocusState.Programmatic));
+        content.Loaded += (_, _) => FocusActivityEntryPoint();
+        dialog.Opened += (_, _) => FocusActivityEntryPoint();
         if (approvalTimer is not null)
         {
             dialog.Closed += (_, _) => approvalTimer.Stop();
@@ -519,10 +521,11 @@ public sealed partial class MainPage
         AutomationProperties.SetName(title, "Agent task title");
         AutomationProperties.SetName(instruction, "Agent task instruction");
         AutomationProperties.SetName(role, "Agent task role");
+        var content = new StackPanel { Spacing = 9, Children = { title, instruction, role, dependencyBlock, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } };
         var dialog = new ContentDialog
         {
             Title = "Plan agent task",
-            Content = new StackPanel { Spacing = 9, Children = { title, instruction, role, dependencyBlock, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
+            Content = content,
             PrimaryButtonText = "Save task plan",
             CloseButtonText = "Cancel",
             XamlRoot = XamlRoot
@@ -530,7 +533,9 @@ public sealed partial class MainPage
         var dependencies = Array.Empty<string>();
         dialog.PrimaryButtonClick += (_, _) => dependencies = selectedDependencyIds.ToArray();
         AutomationProperties.SetName(dialog, "Plan agent task");
-        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => title.Focus(FocusState.Programmatic));
+        void FocusAgentTaskTitle() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () => title.Focus(FocusState.Programmatic));
+        content.Loaded += (_, _) => FocusAgentTaskTitle();
+        dialog.Opened += (_, _) => FocusAgentTaskTitle();
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try
         {
