@@ -41,6 +41,8 @@ folders, restoring only paths present in the current safe browser view.
 It also includes the first durable Electron chat-history route: the host lists
 and saves bounded local conversations, and the renderer restores the latest
 conversation before sending new turns.
+It also includes an explicit local retry transition for interrupted blocked
+agent tasks, refusing retries while a retained worktree still needs review.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

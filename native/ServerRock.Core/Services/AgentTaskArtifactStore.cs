@@ -107,6 +107,26 @@ public sealed class AgentTaskArtifactStore
         return Copy(task);
     }
 
+    /// <summary>
+    /// Re-queues a blocked task only after an explicit user decision. Retained
+    /// worktrees must be reviewed or released first; retry never starts work.
+    /// </summary>
+    public AgentTaskArtifact RetryBlocked(string id)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Blocked)
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be retried from the blocked state.");
+        if (task.WorktreePath is not null)
+            throw new InvalidOperationException("Review or release the retained worktree before retrying this task.");
+        task.Status = AgentTaskStatuses.Queued;
+        task.ResultSummary = "Retry approved locally; waiting for an explicit executor.";
+        task.ArtifactLabels = [];
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     /// <summary>Returns the oldest dependency-ready queued task without changing local state or dispatching work.</summary>
     public AgentTaskArtifact? GetNextReady()
     {

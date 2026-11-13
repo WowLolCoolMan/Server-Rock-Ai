@@ -30,6 +30,13 @@ internal static class AgentTaskArtifactTests
             store.Queue(cancelled.Id);
             var cancelledPlan = store.CancelPlanned(cancelled.Id, "User withdrew the plan before execution.");
             Check(cancelledPlan.Status == AgentTaskStatuses.Cancelled && store.GetNextReady() is null, "proposed agent task plans can be cancelled before execution");
+            var interruptedPlan = store.Create("Retry interrupted review", "Review an interrupted task before retrying.");
+            store.Queue(interruptedPlan.Id);
+            Check(store.TryClaimReady()?.Status == AgentTaskStatuses.Running, "retry fixture claims an agent task before simulated restart");
+            store.ReconcileAfterRestart();
+            var retriedPlan = store.RetryBlocked(interruptedPlan.Id);
+            Check(retriedPlan.Status == AgentTaskStatuses.Queued && retriedPlan.ResultSummary?.Contains("Retry approved", StringComparison.Ordinal) == true,
+                "blocked agent tasks can be explicitly re-queued without starting execution");
             var reloaded = new AgentTaskArtifactStore(Path.Combine(root, "agent-tasks.json")).Load();
             Check(reloaded.Any(task => task.Id == first.Id && task.Status == AgentTaskStatuses.Completed && task.ArtifactLabels.Contains("local-review")), "completed agent task artifacts persist bounded result labels");
             Check(reloaded.Any(task => task.Id == second.Id && task.Status == AgentTaskStatuses.Failed), "failed agent task artifacts persist their terminal status");

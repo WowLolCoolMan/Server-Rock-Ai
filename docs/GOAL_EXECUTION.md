@@ -3,6 +3,41 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 238 — Add explicit retry for interrupted agent tasks
+
+Status: `implemented_core_tests_verified`
+
+Blocked tasks created by startup reconciliation can now be explicitly
+re-queued through `AgentTaskArtifactStore.RetryBlocked`. The transition clears
+stale result labels, records that retry was approved locally, and never starts
+an executor. Tasks with retained worktrees are refused until the worktree is
+reviewed or released, preventing implicit reuse of an unresolved filesystem
+state.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including restart, explicit retry, and no-dispatch assertions.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: retry changes only bounded local task metadata;
+no model, tool, process, network, or worktree deletion is started. No
+dependency or third-party code was added.
+
+Rollback: remove `RetryBlocked`; blocked tasks remain reviewable and existing
+startup reconciliation remains safe.
+
+Remaining: renderer retry/approval controls, actual model/tool dispatch,
+parallel isolation, background execution, and cross-platform acceptance remain
+open.
+
 ## Slice 237 — Add selectable Electron chat history
 
 Status: `implemented_renderer_history_navigation_build_verified`
