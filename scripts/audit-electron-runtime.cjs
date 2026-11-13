@@ -21,6 +21,8 @@ expect(main.includes("sandbox: true"), "renderer sandbox must remain enabled");
 expect(preload.includes("contextBridge.exposeInMainWorld"), "renderer communication must use preload");
 expect(!preload.includes("require(\"node:fs\")"), "preload must not expose filesystem access");
 expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
+expect(main.includes("HOST_TIMEOUT"), "Electron bridge must bound pending host requests");
+expect(main.includes("taskkill") && main.includes("/T"), "Electron shutdown must terminate the full Windows host process tree");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");

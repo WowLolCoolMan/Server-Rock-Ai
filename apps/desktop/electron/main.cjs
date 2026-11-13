@@ -10,6 +10,8 @@ let host;
 let hostReader;
 let nextRequestId = 1;
 const pending = new Map();
+const standardRequestTimeoutMs = 30_000;
+const chatRequestTimeoutMs = 5 * 60_000;
 const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
 const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
 const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
@@ -38,10 +40,11 @@ function startAgentHost() {
     } catch {
       return;
     }
-    const resolve = pending.get(message.id);
-    if (!resolve) return;
+    const entry = pending.get(message.id);
+    if (!entry) return;
     pending.delete(message.id);
-    resolve(message);
+    clearTimeout(entry.timer);
+    entry.resolve(message);
   });
 
   host.stderr.on("data", (chunk) => {
@@ -50,7 +53,11 @@ function startAgentHost() {
 
   host.on("exit", (code, signal) => {
     const error = { v: 1, ok: false, error: { code: "HOST_EXITED", message: `Agent host exited (${code ?? signal}).` } };
-    for (const resolve of pending.values()) resolve(error);
+    hostReader?.close();
+    for (const entry of pending.values()) {
+      clearTimeout(entry.timer);
+      entry.resolve(error);
+    }
     pending.clear();
     if (host === startedHost) host = undefined;
   });
@@ -61,11 +68,18 @@ function stopAgentHost() {
   const currentHost = host;
   host = undefined;
   const error = { v: 1, ok: false, error: { code: "HOST_STOPPED", message: "Agent host is shutting down." } };
-  for (const resolve of pending.values()) resolve(error);
+  for (const entry of pending.values()) {
+    clearTimeout(entry.timer);
+    entry.resolve(error);
+  }
   pending.clear();
   if (!currentHost.stdin.destroyed) currentHost.stdin.end();
   const forceStop = setTimeout(() => {
-    if (!currentHost.killed) currentHost.kill();
+    if (currentHost.exitCode !== null) return;
+    if (process.platform === "win32" && currentHost.pid) {
+      const killer = spawn("taskkill", ["/pid", String(currentHost.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
+      killer.on("error", () => { if (!currentHost.killed) currentHost.kill(); });
+    } else if (!currentHost.killed) currentHost.kill("SIGTERM");
   }, 1500);
   currentHost.once("exit", () => clearTimeout(forceStop));
 }
@@ -81,8 +95,22 @@ function requestAgent(method, params) {
     return Promise.resolve({ v: 1, ok: false, error: { code: "HOST_UNAVAILABLE", message: "Agent host is not running." } });
   }
   const id = `desktop-${nextRequestId++}`;
-  host.stdin.write(`${JSON.stringify({ v: 1, id, method, params })}\n`);
-  return new Promise((resolve) => pending.set(id, resolve));
+  return new Promise((resolve) => {
+    const timeoutMs = method === "chat.complete" ? chatRequestTimeoutMs : standardRequestTimeoutMs;
+    const timer = setTimeout(() => {
+      if (!pending.has(id)) return;
+      pending.delete(id);
+      resolve({ v: 1, ok: false, error: { code: "HOST_TIMEOUT", message: `The local agent host did not answer ${method} within the allowed time.` } });
+    }, timeoutMs);
+    pending.set(id, { resolve, timer });
+    try {
+      host.stdin.write(`${JSON.stringify({ v: 1, id, method, params })}\n`);
+    } catch {
+      clearTimeout(timer);
+      pending.delete(id);
+      resolve({ v: 1, ok: false, error: { code: "HOST_WRITE_FAILED", message: "The local agent host could not accept the request." } });
+    }
+  });
 }
 
 function createWindow() {
