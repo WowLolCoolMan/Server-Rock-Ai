@@ -16,6 +16,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("New chat", "new conversation", () => { NewChatClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("Search conversations", "find chats coding sessions", () => { SearchClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("Find in current chat", "search this conversation message", SearchCurrentConversationAsync),
+            new CommandPaletteItem("Review memory context", "approved local notes injection", ReviewMemoryContextAsync),
             new CommandPaletteItem("Activity & tasks", "operations approvals history", () => { ScheduledTasksClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("Model store", "models downloads benchmark", () => RunUiActionAsync(ModelClickAsync)),
             new CommandPaletteItem("Projects & folders", "workspace project files", () => { NewProjectClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),

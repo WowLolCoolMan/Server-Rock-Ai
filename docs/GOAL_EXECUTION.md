@@ -2273,6 +2273,39 @@ new feature is checked in the future-features register because the native
 Windows journey is now evidenced; broader global search and semantic search
 remain separate capabilities.
 
+## Slice 129 — live review of approved memory context
+
+The exact Windows desktop executable was launched and the command palette was
+filtered to `Review memory context`. The dialog exposed a local read-only
+disclosure, `Allow approved memory injection`, a bounded `Approved memory
+context preview`, `Save memory setting`, and `Cancel`. With the current local
+profile there were no eligible global or active-project notes, so the preview
+truthfully stated that no notes were eligible. The dialog was cancelled; the
+setting and memory store were not changed.
+
+Evidence:
+
+- Live Windows accessibility state exposed the dialog title and the complete
+  injection/preview/save/cancel control set.
+- The checkbox help text stated that only enabled global or active-project
+  notes become untrusted reference context for the next request.
+- The preview was read-only and contained no provider or web content.
+- Native UI audit passed with 181 contracts, the full Core runner passed, and
+  the desktop build passed before the live inspection.
+
+Privacy/security/licensing: this journey read only local memory metadata and
+did not transmit, persist, or alter it. Enabling the setting remains an
+explicit user action and does not automatically send a prompt.
+
+Rollback: revert the implementation commit to remove the command-palette
+review surface; existing Settings memory management and the existing guarded
+injection path remain independently removable.
+
+Not yet verified: saving the toggle with an eligible disposable note, observing
+the resulting prompt context before provider dispatch, cross-restart behavior,
+and packaged/Linux accessibility parity. The broad persistent-memory backlog
+item remains unchecked.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

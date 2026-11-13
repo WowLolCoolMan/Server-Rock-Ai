@@ -167,6 +167,10 @@ const requiredCode = [
   ['Current conversation search results', 'AutomationProperties.SetName(results, "Current conversation search results")'],
   ['Current conversation search focus', 'dialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);'],
   ['Current conversation jump', 'JumpToConversationMessage(hit.MessageIndex)'],
+  ['Memory context review action', 'Review memory context'],
+  ['Memory context injection control', 'AutomationProperties.SetName(injection, "Allow approved memory injection")'],
+  ['Memory context preview', 'AutomationProperties.SetName(preview, "Approved memory context preview")'],
+  ['Memory context review focus', 'dialog.Opened += (_, _) => injection.Focus(FocusState.Programmatic);'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
