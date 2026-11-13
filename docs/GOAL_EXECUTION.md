@@ -1712,6 +1712,43 @@ Not yet verified: task-artifact UI, actual sub-agent delegation, parallel
 execution limits, process/container/worktree isolation, background execution,
 cross-platform acceptance, and packaged release acceptance.
 
+## Slice 114 — surface agent task artifacts in Activity & Tasks
+
+Status: `implemented_verified_build`
+
+Activity & Tasks now includes a read-only `AGENT TASK ARTIFACTS` section backed
+by the bounded local task store. It shows status, specialist role, updated time,
+title, dependency count, bounded result summaries, and artifact labels. Empty
+state copy makes the no-dispatch boundary explicit. No button or timer executes
+tasks, starts a model, invokes a tool, or grants a capability.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (154 contracts).`
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the Activity section reads bounded local metadata
+only. It does not expose credentials, file contents, command output, prompts,
+provider responses, or absolute paths, and adds no network or execution path.
+
+Rollback: remove the task-store field, read-only Activity section, and audit
+contract; the durable task store and existing Activity operation records remain
+independent.
+
+Not yet verified: live packaged Activity rendering with seeded task artifacts,
+actual sub-agent delegation, parallel execution limits, process/container/
+worktree isolation, background execution, cross-platform acceptance, and
+packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

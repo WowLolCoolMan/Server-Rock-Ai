@@ -131,6 +131,53 @@ public sealed partial class MainPage
         AutomationProperties.SetName(scheduleButton, "Schedule task");
         scheduleButton.Click += async (_, _) => await CreateScheduledTaskAsync(dialog);
         content.Children.Add(scheduleButton);
+        IReadOnlyList<AgentTaskArtifact> agentTasks = [];
+        try { agentTasks = _agentTaskStore.Load(); }
+        catch (Exception ex) { RuntimeStatus.Text = $"Agent task artifacts are unavailable: {ex.Message}"; }
+        var agentTaskHeader = new TextBlock
+        {
+            Text = "AGENT TASK ARTIFACTS",
+            FontSize = 11,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Opacity = 0.75,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+        AutomationProperties.SetName(agentTaskHeader, "Agent task artifacts");
+        content.Children.Add(agentTaskHeader);
+        if (agentTasks.Count == 0)
+        {
+            content.Children.Add(new TextBlock { Text = "No agent task artifacts have been recorded. Task planning remains local and does not dispatch agents automatically.", TextWrapping = TextWrapping.Wrap });
+        }
+        else
+        {
+            foreach (var task in agentTasks.Take(50))
+            {
+                var dependencyText = task.DependsOn.Count == 0 ? "no dependencies" : $"after {task.DependsOn.Count} task{(task.DependsOn.Count == 1 ? "" : "s")}";
+                var taskPanel = new StackPanel
+                {
+                    Spacing = 3,
+                    Children =
+                    {
+                        new TextBlock { Text = $"{task.Status} · {task.Role} · {task.UpdatedAtUtc.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                        new TextBlock { Text = task.Title, TextWrapping = TextWrapping.Wrap },
+                        new TextBlock { Text = $"{dependencyText} · task {task.Id[..Math.Min(8, task.Id.Length)]}", FontSize = 11, Opacity = 0.7 }
+                    }
+                };
+                if (!string.IsNullOrWhiteSpace(task.ResultSummary))
+                    taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                if (task.ArtifactLabels.Count > 0)
+                    taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                content.Children.Add(new Border
+                {
+                    Background = ResourceBrush("SurfaceAltBrush"),
+                    BorderBrush = ResourceBrush("LineBrush"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(10),
+                    Child = taskPanel
+                });
+            }
+        }
         foreach (var task in scheduledTasks.OrderBy(item => item.Status == ScheduledTaskStatuses.Scheduled ? 0 : 1).ThenBy(item => item.DueAtUtc).Take(20))
         {
             var taskPanel = new StackPanel { Spacing = 3 };

@@ -123,6 +123,7 @@ const requiredCode = [
   ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
   ['Scheduled task run-now control', 'AutomationProperties.SetName(runNow, "Run scheduled task now")'],
+  ['Agent task artifact section', 'AutomationProperties.SetName(agentTaskHeader, "Agent task artifacts")'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],

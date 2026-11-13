@@ -46,6 +46,7 @@ public sealed partial class MainPage : Page
     private readonly ChatMessageQueueStore _messageQueueStore = new();
     private readonly WorkspaceDraftStore _workspaceDrafts = new();
     private readonly ScheduledTaskStore _scheduledTaskStore = new();
+    private readonly AgentTaskArtifactStore _agentTaskStore = new();
     private readonly SkillPackageInstaller _skillPackageInstaller = new();
     private readonly MemoryStore _memoryStore = new();
     private bool _restoringWorkspaceDraft;
