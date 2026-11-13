@@ -1,0 +1,30 @@
+flowchart TD
+    U[User selects a model and sends a message]
+    R[Electron renderer]
+    P[Preload and main-process allowlist]
+    H[C#/.NET agent host]
+    C[SkaiDesktop.Core provider strategy]
+    N[Normal local provider]
+    A[AirLLM adapter and Python worker]
+    S[(Local settings, conversations, provenance)]
+    L[Legacy Uno caller]
+    X[Hosted provider]
+    Q[Current discrepancy: AirLLM is only reachable here]
+    G[Proposed gate: local-only, capability, trust, budget, cancellation]
+
+    U --> R --> P --> H --> C
+    C --> N
+    C --> X
+    C -. missing route .-> A
+    L --> A
+    C --> S
+    A --> S
+    C --> G
+    G --> A
+
+    classDef observed fill:#1f2937,stroke:#94a3b8,color:#f8fafc
+    classDef discrepancy fill:#5b241c,stroke:#f97316,color:#fff
+    classDef proposed fill:#173b3f,stroke:#22d3ee,color:#ecfeff
+    class U,R,P,H,C,N,S,L,X observed
+    class Q discrepancy
+    class A,G proposed
