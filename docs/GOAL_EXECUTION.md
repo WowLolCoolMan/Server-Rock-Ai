@@ -5958,3 +5958,50 @@ snapshot APIs; existing in-memory workspace switching still remains available.
 
 Not yet verified: encrypted-at-rest draft storage, cross-device synchronization,
 attachment-draft persistence, and cross-platform packaged restart behavior.
+
+## Slice 155 — durable local attachment drafts
+
+Status: `implemented_verified_windows_restart`
+
+Unsent attachments now persist in a separate atomic local store keyed by
+workspace, independent of general preferences. The store validates a maximum
+of four files and 12 million content characters per workspace, preserves
+existing files on malformed input, restores the active workspace at startup,
+flushes on selection/removal/workspace changes, and clears after send or new
+chat. Text, extracted PDF content, and bounded image data use the same local
+attachment model as the existing send path.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceAttachmentDraftStore.cs`
+- `native/ServerRock.Core.Tests/AttachmentTests.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.Attachments.cs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including local round-trip and clear/remove coverage.
+- `npm run audit:native-ui`, `npm run audit:future-features`, and
+  `git diff --check` — passed.
+- Live Windows disposable journey: seeded an isolated attachment-drafts file
+  with `notes.md`, launched the native app with isolated settings/history, and
+  observed the accessible `Remove attachment notes.md` chip in the composer.
+
+Privacy/security/licensing: pending content remains on the local profile and
+is never sent merely by being restored. Size/file bounds, atomic replacement,
+and the existing attachment policy limit local exposure; no credentials, pets
+state, or handoff files are involved.
+
+Rollback: remove the separate store and restore/flush hooks; existing
+attachments still work for the current process and queued messages remain
+independently persisted.
+
+Not yet verified: encrypted-at-rest attachment drafts, cross-device sync,
+cross-platform packaged restart behavior, and a picker-based add/remove live
+journey in the current desktop runtime.

@@ -97,6 +97,11 @@ Slice 154 verified durable workspace composer drafts. A debounced local settings
 write and startup restore survived a disposable Windows process restart; the
 remaining gap is encrypted or cross-device draft synchronization and
 attachment-draft persistence.
+
+Slice 155 verified separate durable attachment drafts. A bounded atomic local
+store restored a seeded `notes.md` chip into the native composer on Windows;
+encrypted storage, cross-device synchronization, and picker-based add/remove
+acceptance remain open.
 - Live unavailable-selection evidence: Settings temporarily saved
   `missing-model`; the app reported `Connected · selected model missing-model is
   unavailable · choose a model in Model Library`, kept `missing-model` in the

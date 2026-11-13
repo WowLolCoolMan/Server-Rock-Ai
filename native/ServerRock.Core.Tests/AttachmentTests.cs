@@ -65,6 +65,20 @@ internal static class AttachmentTests
         Check(ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [notes]) != ChatAttachmentPolicy.ConsentKey("https://remote.example/v1", [notes with { Content = "changed" }])
             && ChatAttachmentPolicy.ConsentKey("https://a.example/v1", [notes]) != ChatAttachmentPolicy.ConsentKey("https://b.example/v1", [notes]),
             "attachment consent key changes with file content and endpoint");
+        var attachmentDraftPath = Path.Combine(Path.GetTempPath(), "server-rock-attachment-drafts-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            var draftStore = new WorkspaceAttachmentDraftStore(attachmentDraftPath);
+            draftStore.Save("ChatBot", [notes, spec]);
+            var restored = draftStore.Load("ChatBot");
+            Check(restored.Count == 2 && restored[0].Content == "alpha" && restored[1].Content == "beta", "workspace attachment drafts round-trip locally");
+            draftStore.Save("ChatBot", []);
+            Check(draftStore.Load("ChatBot").Count == 0, "clearing workspace attachment drafts removes only the local pending set");
+        }
+        finally
+        {
+            if (File.Exists(attachmentDraftPath)) File.Delete(attachmentDraftPath);
+        }
         var fencedPrompt = ChatAttachmentPrompt.AppendTo("Review this", [
             new ChatAttachment("snippet.md", "before\n```\ninside\n```"),
             new ChatAttachment("photo.png", "iVBORw0KGgo=", "image/png"),

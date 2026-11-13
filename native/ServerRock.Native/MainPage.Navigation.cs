@@ -91,7 +91,9 @@ public sealed partial class MainPage
         PersistWorkspaceDrafts();
         CloseSplitChat();
         SaveCurrentSession();
-        ClearPendingAttachments();
+        PersistPendingAttachments();
+        _pendingAttachments.Clear();
+        RenderPendingAttachments();
         _mode = selected;
         _activeSessionId = null;
         _activeChatFolder = null;
@@ -101,6 +103,7 @@ public sealed partial class MainPage
         ConversationMessages.Children.Clear();
         _restoringWorkspaceDraft = true;
         PromptBox.Text = _workspaceDrafts.Get(_mode);
+        RestorePendingAttachments();
         _restoringWorkspaceDraft = false;
         WelcomePanel.Visibility = Visibility.Visible;
         ConversationScroll.Visibility = Visibility.Collapsed;

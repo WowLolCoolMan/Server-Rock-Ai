@@ -44,6 +44,7 @@ public sealed partial class MainPage : Page
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteModelComparisonConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
+    private readonly WorkspaceAttachmentDraftStore _attachmentDraftStore = new(Environment.GetEnvironmentVariable("SRAI_ATTACHMENT_DRAFTS_PATH"));
     private readonly ChatMessageQueue _messageQueue = new();
     private readonly ChatMessageQueueStore _messageQueueStore = new();
     private WorkspaceDraftStore _workspaceDrafts = new();

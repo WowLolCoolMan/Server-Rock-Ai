@@ -141,6 +141,7 @@ public sealed partial class MainPage
                 if (take < content.Length) rejected.Add($"{file.Name}: content trimmed to fit the 48,000 character message limit");
             }
             _pendingAttachments.AddRange(accepted);
+            PersistPendingAttachments();
             RenderPendingAttachments();
             var textCount = accepted.Count(item => !item.IsImage && !ChatAttachmentPolicy.IsAllowedPdfName(item.FileName));
             var pdfCount = accepted.Count(item => ChatAttachmentPolicy.IsAllowedPdfName(item.FileName));
@@ -159,10 +160,24 @@ public sealed partial class MainPage
         }
     }
 
-    private void ClearPendingAttachments()
+    private void ClearPendingAttachments(bool persist = true)
     {
         _pendingAttachments.Clear();
+        if (persist) PersistPendingAttachments();
         RenderPendingAttachments();
+    }
+
+    private void RestorePendingAttachments()
+    {
+        _pendingAttachments.Clear();
+        _pendingAttachments.AddRange(_attachmentDraftStore.Load(_mode));
+        RenderPendingAttachments();
+    }
+
+    private void PersistPendingAttachments()
+    {
+        try { _attachmentDraftStore.Save(_mode, _pendingAttachments); }
+        catch (Exception ex) { RuntimeStatus.Text = $"Pending attachments could not be saved: {ex.Message}"; }
     }
 
     private void RenderPendingAttachments()
@@ -186,6 +201,7 @@ public sealed partial class MainPage
             chip.Click += (_, _) =>
             {
                 _pendingAttachments.Remove(attachment);
+                PersistPendingAttachments();
                 RenderPendingAttachments();
             };
             AttachmentList.Children.Add(chip);

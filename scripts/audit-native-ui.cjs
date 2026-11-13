@@ -203,6 +203,8 @@ const requiredCode = [
   ['Split ratio bounded persistence', '_settings.SplitChatRatios[SplitLayoutKey] = Math.Clamp(ratio, 25, 75)'],
   ['Markdown folder export action wiring', 'ExportMarkdownFolderRequested += ExportMarkdownFolderClick'],
   ['Markdown folder export implementation', 'ConversationMarkdownExporter.WriteDirectoryAsync(_sessions, exportFolder.Path)'],
+  ['Attachment draft restore wiring', 'RestorePendingAttachments();'],
+  ['Attachment draft persistence wiring', 'PersistPendingAttachments();'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

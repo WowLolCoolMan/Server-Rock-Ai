@@ -110,6 +110,14 @@ public sealed partial class MainPage
         var warnings = new List<string>();
         try
         {
+            RestorePendingAttachments();
+        }
+        catch (Exception ex)
+        {
+            warnings.Add($"Pending attachment drafts could not be restored; the saved draft file was left untouched: {ex.Message}");
+        }
+        try
+        {
             foreach (var queued in _messageQueueStore.Load()) _messageQueue.Enqueue(queued.Text, queued.Attachments);
             if (_messageQueue.Count > 0) warnings.Add($"Restored {_messageQueue.Count} queued message{(_messageQueue.Count == 1 ? "" : "s")}; review the Queue control before sending.");
         }
@@ -190,6 +198,7 @@ public sealed partial class MainPage
         UpdateSmartRewriteButton();
         UpdateTemporaryControls();
         UpdateQueueControl();
+        RenderPendingAttachments();
         ApplySavedCustomization();
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
