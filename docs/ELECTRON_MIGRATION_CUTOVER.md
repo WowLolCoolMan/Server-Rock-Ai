@@ -74,6 +74,9 @@ validate parity.
 - Electron chat can explicitly attach bounded text and PNG/JPEG files through
   the isolated bridge; attachment policy and provider capability checks remain
   in the host/Core path before dispatch.
+- Electron settings now expose persisted accent, density, deep-sea/deep-space
+  backdrop, reduced-motion, and developer-diagnostics options through the same
+  host-backed settings contract.
 - While a response is active, the Electron composer can queue bounded follow-up
   messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the

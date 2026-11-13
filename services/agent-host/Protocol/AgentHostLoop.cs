@@ -526,11 +526,19 @@ public static class AgentHostLoop
         {
             if (parameters.TryGetProperty("themeMode", out var theme) && theme.ValueKind == JsonValueKind.String)
                 settings.ThemeMode = theme.GetString() ?? settings.ThemeMode;
+            if (parameters.TryGetProperty("accentColor", out var accent) && accent.ValueKind == JsonValueKind.String)
+                settings.AccentColor = accent.GetString() ?? settings.AccentColor;
+            if (parameters.TryGetProperty("interfaceDensity", out var density) && density.ValueKind == JsonValueKind.String)
+                settings.InterfaceDensity = density.GetString() ?? settings.InterfaceDensity;
+            if (parameters.TryGetProperty("backdropPreset", out var backdrop) && backdrop.ValueKind == JsonValueKind.String)
+                settings.BackdropPreset = backdrop.GetString() ?? settings.BackdropPreset;
+            if (parameters.TryGetProperty("developerMode", out var developer) && developer.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.DeveloperMode = developer.GetBoolean();
             if (parameters.TryGetProperty("reduceMotion", out var reduceMotion) && reduceMotion.ValueKind is JsonValueKind.True or JsonValueKind.False)
                 settings.ReduceMotion = reduceMotion.GetBoolean();
         }
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode });
     }
 
     private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)

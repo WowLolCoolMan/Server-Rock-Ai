@@ -3,6 +3,40 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 256 — Expand Electron workspace customization options
+
+Status: `implemented_renderer_settings_host_persistence_build_verified`
+
+The Electron settings surface now exposes the existing preference contract for
+accent color, interface density, deep-sea and deep-space backdrops, reduced
+motion, and developer diagnostics. Preferences are applied live through data
+attributes and persisted by the .NET host; backdrop animation is disabled by
+the existing reduced-motion setting.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+
+Evidence:
+
+- `node --check apps/desktop/electron/main.cjs` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: settings remain local and use existing host
+persistence; no remote assets, third-party runtime, or new permission was
+added.
+
+Rollback: remove the added settings fields, data attributes, and preset CSS;
+the existing dark/light controls remain available.
+
+Remaining: visual screenshot acceptance, native parity for every preset, and
+additional theme customization remain separate validation slices.
+
 ## Slice 255 — Port bounded Electron chat text/image attachments
 
 Status: `implemented_renderer_bridge_host_provider_build_verified`
