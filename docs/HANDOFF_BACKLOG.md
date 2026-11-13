@@ -1,6 +1,7 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through the bounded Quick Open slice.
+Snapshot: `main` at the current checkout through Slice 203, including the
+bounded Quick Open slice, native UI tokenization, and release workflow audit.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

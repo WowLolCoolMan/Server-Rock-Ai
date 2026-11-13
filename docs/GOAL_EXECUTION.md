@@ -7292,6 +7292,50 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 203 — Add fail-closed release workflow contract audit
+
+Status: `implemented_script_verified`
+
+Requirement alignment: release acceptance requires tagged publishing to remain
+fail-closed, signing gates to be explicit, and checksum/signature evidence to
+be present before a GitHub Release can be published. The existing workflow had
+these runtime checks, but no repository-local guard detected accidental
+removal during later edits. This slice adds a bounded static audit and exposes
+it as `npm run audit:release-workflow`.
+
+Changed files:
+
+- `scripts/audit-release-workflow.cjs`
+- `package.json`
+- `docs/NATIVE_RELEASE_ACCEPTANCE.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+The audit checks the tracked workflow for the tag trigger, diagnostic manual
+dispatch, tag-only release job, literal `true` gates for migration/signing/
+packaged smoke, Windows Authenticode inputs and evidence, Linux GPG inputs and
+detached-signature evidence, non-empty signature enforcement, checksum
+generation, and release write permission. It does not inspect or require
+secrets on a developer workstation and does not publish anything.
+
+Evidence:
+
+- `npm run audit:release-workflow` — passed with the tag-only,
+  gated, signed-evidence contract.
+- `node --check scripts/audit-release-workflow.cjs` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: local static inspection only; no credentials,
+network calls, release tags, artifacts, or third-party code were introduced.
+
+Risk and rollback: the script can fail CI if the workflow contract is changed
+without updating the guard. Roll back by removing the script and package
+entry; the workflow itself remains unchanged.
+
+Remaining: actual signing material, clean-machine lifecycle runs, and Linux
+distro acceptance still require external release infrastructure and owner
+decisions documented in the backlog.
+
 ## Slice 202 — Complete native view typography tokenization
 
 Status: `implemented_build_and_audit_verified`
