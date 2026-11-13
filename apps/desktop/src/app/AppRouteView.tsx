@@ -86,7 +86,7 @@ export type AppRouteActions = {
   onSearchMemory: (query: string) => void;
   onSaveMemory: (content: string, scope: string, tags: string, id?: string) => Promise<boolean>;
   onToggleMemory: (entry: MemoryEntry) => void;
-  onRemoveMemory: (entry: MemoryEntry) => void;
+  onRemoveMemory: (entry: MemoryEntry) => Promise<boolean>;
   onExportMemory: () => void;
   onRunProjectCommand: (projectId: string, command: string, cwd: string) => void;
 };
