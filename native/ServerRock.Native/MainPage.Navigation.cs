@@ -76,6 +76,13 @@ public sealed partial class MainPage
             return;
         }
 
+        if (controlPressed && e.Key == Windows.System.VirtualKey.P && _mode == WorkspaceModes.CodingAgent)
+        {
+            e.Handled = true;
+            _ = OpenQuickFileAsync();
+            return;
+        }
+
         if (e.Key == Windows.System.VirtualKey.Escape && CommandHintPanel.Visibility == Visibility.Visible)
         {
             e.Handled = true;

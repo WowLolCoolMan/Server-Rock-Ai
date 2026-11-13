@@ -240,6 +240,36 @@ silhouettes). Reduced decorative motion pauses the animation while retaining the
 selected visual. Core settings persistence and desktop build verification passed;
 live Windows visual acceptance remains required before this is release-complete.
 
+## Handoff refresh — current through Slice 200
+
+The live checkout has advanced beyond the older matrix snapshot. The following
+new evidence is authoritative for the current `main` branch:
+
+- Release package identifiers were restored to stable lowercase `server-rock-ai`
+  values while the display name remains `Skai Desktop`; `npm run
+  check:release-config`, syntax, hygiene and diff checks pass.
+- The Core/native feature slices after the previous matrix checkpoint added
+  adaptive effort, explicit full-text attachment context, bounded Model Council
+  synthesis, and a command-palette/More entry for documents-only mode. These
+  paths have Core coverage, native UI audit contracts and Windows build
+  evidence; live UI acceptance remains separate.
+- Slice 200 adds bounded Quick open project file (`Ctrl+P`) in Coding Agent. It
+  reuses secret-filtered `WorkspaceFileContext` enumeration and the existing
+  reviewable editor. Core tests pass, the Windows target builds with 0 warnings
+  and 0 errors, and the native UI audit passes 263 contracts. Live keyboard,
+  search and open acceptance is still pending.
+- The handoff source register has been counted locally as 126 combined rows,
+  86 premium requirements, 40 remediation issues, 70 acceptance scenarios and
+  250 research-only skill candidates. The row-level source statuses remain
+  `requires_live_repo_recheck`; see `docs/HANDOFF_BACKLOG.md` for the current
+  conservative dependency order.
+
+The remaining release-critical gaps are signed artifacts, clean-machine
+install/upgrade/uninstall/rollback, Linux runtime/package/accessibility
+evidence, Popup focus acceptance, full project workbench/worktree isolation,
+parallel/background agent execution, and row-level acceptance across the
+remaining register.
+
 Recent slice note — Slice 167: added a review-first built-in translator reachable
 from Ctrl+K and More. A disposable phrase was translated to Spanish through the
 selected local model, shown in an editable review dialog, and explicitly inserted

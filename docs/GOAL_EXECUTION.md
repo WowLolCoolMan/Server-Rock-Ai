@@ -7292,6 +7292,41 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 200 — Quick open for bounded project files
+
+Status: `implemented_native_build_audit_verified_live_ui_pending`
+
+Coding Agent users can now press `Ctrl+P` or choose Quick open project file from
+the command palette. The dialog searches the existing bounded,
+secret-filtered text-file enumeration and opens the selected path through the
+same reviewable editor used by the project sidebar. It does not add roots,
+read excluded files, or bypass approval before a write.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 263 contracts after updating the
+  focus-restoration contract for the shared editor helper.
+
+Privacy/security/licensing: the feature reuses `WorkspaceFileContext` bounds,
+secret exclusions and the existing local editor; no provider or external
+service is contacted.
+
+Rollback: remove the command/shortcut and quick-open method; sidebar file
+opening and workspace permissions remain unchanged.
+
+Remaining: live Windows keyboard/search/open acceptance, Linux parity and a
+full virtualized project explorer remain open.
+
 ## Slice 190 — Local reusable Personas (Gems)
 
 Status: `implemented_core_ui_build_verified`

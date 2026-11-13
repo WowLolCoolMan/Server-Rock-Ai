@@ -22,6 +22,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("Projects & folders", "workspace project files", () => { NewProjectClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("Chat workspace", "switch mode conversation", () => SwitchModeFromSidebarAsync(WorkspaceModes.Chat)),
             new CommandPaletteItem("Coding Agent workspace", "switch mode code project", () => SwitchModeFromSidebarAsync(WorkspaceModes.CodingAgent)),
+            new CommandPaletteItem("Quick open project file", "search files coding agent ctrl p", OpenQuickFileAsync),
             new CommandPaletteItem("Documents-only mode", "NotebookLM grounded uploaded files attachments", () => { DocumentsOnlyClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("GitHub & source control", "repository git push pull", () => { GitHubClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
             new CommandPaletteItem("Images", "image studio generation", () => { ImageStudioClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),

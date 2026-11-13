@@ -136,14 +136,70 @@ public sealed partial class MainPage
             ProjectFileList.Children.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 103, 126, 133)), Margin = new Thickness(8, 4, 8, 4) });
     }
 
+    private async Task OpenQuickFileAsync()
+    {
+        if (_mode != WorkspaceModes.CodingAgent)
+        {
+            RuntimeStatus.Text = "Quick file open is available in the Coding Agent workspace.";
+            return;
+        }
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        if (project is null || project.FolderPaths.Count == 0)
+        {
+            RuntimeStatus.Text = "Choose a project folder before opening a file.";
+            return;
+        }
+        var root = project.FolderPaths[0];
+        var files = WorkspaceFileContext.EnumeratePreviewableFiles([root])
+            .Where(file => file.Kind.Equals("text", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(file => file.RelativePath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var query = new TextBox { PlaceholderText = "Search project files", MaxLength = 200 };
+        var list = new ListView { MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single };
+        AutomationProperties.SetName(query, "Search project files");
+        AutomationProperties.SetName(list, "Quick open project file results");
+        void Refresh()
+        {
+            list.Items.Clear();
+            var needle = query.Text.Trim();
+            foreach (var file in files.Where(file => string.IsNullOrWhiteSpace(needle) || file.RelativePath.Contains(needle, StringComparison.OrdinalIgnoreCase)))
+            {
+                var item = new ListViewItem { Content = file.RelativePath, Tag = file.RelativePath };
+                AutomationProperties.SetName(item, $"Open project file {file.RelativePath}");
+                list.Items.Add(item);
+            }
+            if (list.Items.Count > 0) list.SelectedIndex = 0;
+        }
+        query.TextChanged += (_, _) => Refresh();
+        var dialog = new ContentDialog
+        {
+            Title = "Quick open project file",
+            Content = new StackPanel { Spacing = 8, Children = { query, list, new TextBlock { Text = "Only bounded, secret-filtered text files from the selected project folder are shown. Opening a file uses the existing reviewable local editor.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
+            PrimaryButtonText = "Open selected",
+            CloseButtonText = "Cancel",
+            IsPrimaryButtonEnabled = false,
+            XamlRoot = XamlRoot
+        };
+        list.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = list.SelectedItem is ListViewItem;
+        dialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+        Refresh();
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && list.SelectedItem is ListViewItem { Tag: string relativePath })
+            await OpenProjectFileAsync(root, relativePath);
+    }
+
     private async void ProjectFileClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: ValueTuple<string, string> selection }) return;
+        await OpenProjectFileAsync(selection.Item1, selection.Item2);
+    }
+
+    private async Task OpenProjectFileAsync(string root, string relativePath)
+    {
         try
         {
-            var originalHash = _workspaceEditor.GetCurrentHash(selection.Item1, selection.Item2)
+            var originalHash = _workspaceEditor.GetCurrentHash(root, relativePath)
                 ?? throw new FileNotFoundException("This file no longer exists in the selected project.");
-            var originalText = _workspaceEditor.ReadText(selection.Item1, selection.Item2);
+            var originalText = _workspaceEditor.ReadText(root, relativePath);
             var editor = new TextBox
             {
                 Text = originalText,
@@ -153,11 +209,11 @@ public sealed partial class MainPage
                 Height = 420,
                 MaxLength = WorkspaceFileEditor.MaxCharacters
             };
-            AutomationProperties.SetName(editor, $"Edit project file {selection.Item2}");
+            AutomationProperties.SetName(editor, $"Edit project file {relativePath}");
             var saveHint = new TextBlock { Text = "No unsaved changes", FontSize = 11, Opacity = 0.75 };
             var dialog = new ContentDialog
             {
-                Title = $"Edit project file · {selection.Item2}",
+                Title = $"Edit project file · {relativePath}",
                 Content = new StackPanel
                 {
                     Spacing = 8,
@@ -186,11 +242,11 @@ public sealed partial class MainPage
                     : "No unsaved changes";
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            var receipt = _workspaceEditor.Apply(selection.Item1, selection.Item2, editor.Text, originalHash);
+            var receipt = _workspaceEditor.Apply(root, relativePath, editor.Text, originalHash);
             RenderProjectFiles();
-            RuntimeStatus.Text = $"Saved {selection.Item2} in the selected project.";
-            var projectName = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, selection.Item1)))?.Name ?? "Project";
-            var undoEntry = RecordWorkspaceUndo(projectName, selection.Item1, selection.Item2, receipt);
+            RuntimeStatus.Text = $"Saved {relativePath} in the selected project.";
+            var projectName = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, root)))?.Name ?? "Project";
+            var undoEntry = RecordWorkspaceUndo(projectName, root, relativePath, receipt);
             if (!_persistedUndoIds.Contains(undoEntry.Id))
             {
                 var fallback = new ContentDialog
@@ -205,12 +261,12 @@ public sealed partial class MainPage
                 {
                     _workspaceEditor.Undo(receipt);
                     RenderProjectFiles();
-                    RuntimeStatus.Text = $"Undid changes to {selection.Item2}.";
+                    RuntimeStatus.Text = $"Undid changes to {relativePath}.";
                 }
             }
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Project file could not be opened or saved: {ex.Message}"; }
-        finally { RestoreProjectFileFocus(selection.Item1, selection.Item2); }
+        finally { RestoreProjectFileFocus(root, relativePath); }
     }
 
     private void RestoreProjectFileFocus(string root, string relativePath)
