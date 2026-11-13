@@ -128,11 +128,19 @@ public static class AgentHostLoop
 
     private static AgentResponse ListModels(AgentRequest request)
     {
-        var endpoint = RequiredString(request, "endpoint");
+        var endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
         var provider = new OpenAiCompatibleProvider();
         var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, OptionalString(request, "apiKey"))
             .GetAwaiter().GetResult();
-        return new(ProtocolVersion, request.Id, true, models);
+        var providerId = OptionalString(request, "provider")?.Trim();
+        if (string.IsNullOrWhiteSpace(providerId)) providerId = CreateSettingsStore().Load().ModelProvider;
+        return new(ProtocolVersion, request.Id, true, models.Select(model => new
+        {
+            model = model.Model,
+            vision = model.Vision,
+            capabilities = model.Capabilities,
+            provider = providerId,
+        }).ToArray());
     }
 
     private static AgentResponse ListProjects(AgentRequest request)
@@ -154,7 +162,7 @@ public static class AgentHostLoop
 
     private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
     {
-        var endpoint = RequiredString(request, "endpoint");
+        var endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
         var model = RequiredString(request, "model");
         var messages = request.Params?.GetProperty("messages").Deserialize<List<ChatMessage>>(JsonOptions)
             ?? throw new InvalidOperationException("chat.complete requires a messages array.");
@@ -171,16 +179,66 @@ public static class AgentHostLoop
             if (!string.IsNullOrWhiteSpace(context)) messages.Insert(0, new ChatMessage("system", context));
         }
 
-        var settings = new AppSettings { Endpoint = endpoint, Model = model, Temperature = OptionalDouble(request, "temperature") ?? 0.7 };
+        var storedSettings = CreateSettingsStore().Load();
+        var requestedProvider = OptionalString(request, "provider")?.Trim();
+        var settings = new AppSettings
+        {
+            Endpoint = endpoint,
+            Model = model,
+            ModelProvider = string.IsNullOrWhiteSpace(requestedProvider) ? storedSettings.ModelProvider : requestedProvider,
+            Temperature = OptionalDouble(request, "temperature") ?? 0.7,
+            AirLlmAutoFallbackEnabled = storedSettings.AirLlmAutoFallbackEnabled,
+            AirLlmAllowRemoteCode = storedSettings.AirLlmAllowRemoteCode,
+            AirLlmPythonPath = storedSettings.AirLlmPythonPath,
+            AirLlmCachePath = storedSettings.AirLlmCachePath,
+            AirLlmCompression = storedSettings.AirLlmCompression,
+            AirLlmDevice = storedSettings.AirLlmDevice,
+            AirLlmDeleteOriginal = storedSettings.AirLlmDeleteOriginal,
+        };
         if (CreateSettingsStore().Load().MemoryInjectionEnabled)
         {
             var memoryContext = MemoryPromptContext.Build(CreateMemoryStore().Load(), true, projectName);
             if (!string.IsNullOrWhiteSpace(memoryContext)) messages.Insert(0, new ChatMessage("system", memoryContext));
         }
         var text = new System.Text.StringBuilder();
-        await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
-            OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
-        return new(ProtocolVersion, request.Id, true, new { model, content = text.ToString() });
+        var airLlm = new AirLlmProvider();
+        var explicitAirLlm = AirLlmProvider.IsAirLlmProvider(settings.ModelProvider);
+        var usedFallback = false;
+        if (explicitAirLlm)
+        {
+            await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+                OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+        }
+        else
+        {
+            try
+            {
+                await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+                    OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+            }
+            catch (Exception error) when (AirLlmProvider.ShouldAutoFallback(settings, endpoint, error, airLlm.IsRuntimeAvailable(settings)))
+            {
+                usedFallback = true;
+                text.Clear();
+                settings.ModelProvider = "AirLLM";
+                try
+                {
+                    await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+                        OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+                }
+                catch (Exception fallbackError)
+                {
+                    throw new InvalidOperationException($"The local provider exceeded capacity and the AirLLM fallback failed: {fallbackError.Message}", fallbackError);
+                }
+            }
+        }
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            model,
+            provider = explicitAirLlm || usedFallback ? "AirLLM" : settings.ModelProvider,
+            fallback = usedFallback,
+            content = text.ToString(),
+        });
     }
 
     private static string BuildProjectContext(LocalProject project)
@@ -653,6 +711,7 @@ public static class AgentHostLoop
         {
             endpoint = settings.Endpoint,
             model = settings.Model,
+            provider = settings.ModelProvider,
             themeMode = settings.ThemeMode,
             accentColor = settings.AccentColor,
             interfaceDensity = settings.InterfaceDensity,
@@ -667,10 +726,20 @@ public static class AgentHostLoop
     {
         var store = CreateSettingsStore();
         var settings = store.Load();
-        settings.Endpoint = RequiredBoundedString(request, "endpoint", 2_000);
+        settings.Endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
         settings.Model = RequiredBoundedString(request, "model", 256);
         if (request.Params is { } parameters)
         {
+            if (parameters.TryGetProperty("provider", out var provider) && provider.ValueKind == JsonValueKind.String)
+            {
+                var requestedProvider = provider.GetString();
+                if (!string.IsNullOrWhiteSpace(requestedProvider))
+                {
+                    if (requestedProvider.Length > 128 || requestedProvider.Any(char.IsControl))
+                        throw new InvalidOperationException("provider exceeds the safety limit.");
+                    settings.ModelProvider = requestedProvider.Trim();
+                }
+            }
             if (parameters.TryGetProperty("themeMode", out var theme) && theme.ValueKind == JsonValueKind.String)
                 settings.ThemeMode = theme.GetString() ?? settings.ThemeMode;
             if (parameters.TryGetProperty("accentColor", out var accent) && accent.ValueKind == JsonValueKind.String)
@@ -687,7 +756,7 @@ public static class AgentHostLoop
                 settings.ReduceMotion = reduceMotion.GetBoolean();
         }
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
     }
 
     private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)
@@ -728,6 +797,18 @@ public static class AgentHostLoop
         var value = RequiredString(request, name);
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
         return value.Trim();
+    }
+
+    private static string RequiredHttpEndpoint(AgentRequest request, string name, int maxLength)
+    {
+        var endpoint = RequiredBoundedString(request, name, maxLength);
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
+            || uri is null
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || !string.IsNullOrEmpty(uri.UserInfo)
+            || !string.IsNullOrEmpty(uri.Fragment))
+            throw new InvalidOperationException("Enter an HTTP or HTTPS model endpoint without embedded credentials or a URL fragment.");
+        return endpoint;
     }
 
     private static string RequiredSpeechText(AgentRequest request, string name, int maxLength)

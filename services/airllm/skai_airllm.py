@@ -19,7 +19,9 @@ def main(request):
         from airllm import AutoModel
         import torch
 
-        kwargs = {"trust_remote_code": True}
+        # Custom repository code is a separate trust decision in Skai. The
+        # host keeps this disabled unless the user explicitly approves it.
+        kwargs = {"trust_remote_code": bool(request.get("allow_remote_code", False))}
         if request.get("compression") in ("4bit", "8bit"):
             kwargs["compression"] = request["compression"]
         if request.get("cache_path"):

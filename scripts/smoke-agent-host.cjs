@@ -68,6 +68,10 @@ async function run() {
   if (!settings.ok || typeof settings.result?.endpoint !== "string") throw new Error("settings.get did not return bounded settings.");
   const savedSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model });
   if (!savedSettings.ok) throw new Error("settings.save failed in the disposable profile.");
+  const remoteSettings = await request("settings.save", { endpoint: "https://api.example.invalid/v1", model: "remote-model", provider: "Hosted compatible" });
+  if (!remoteSettings.ok || remoteSettings.result?.provider !== "Hosted compatible") throw new Error("settings.save did not preserve an explicit hosted provider identity.");
+  const restoredSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model, provider: "Ollama" });
+  if (!restoredSettings.ok) throw new Error("settings.save could not restore the disposable local profile.");
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
   if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
   const tasks = await request("tasks.list");

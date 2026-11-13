@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using SkaiDesktop.Core.Infrastructure;
 using SkaiDesktop.Core.Models;
 
 namespace SkaiDesktop.Core.Services;
@@ -20,6 +21,42 @@ public sealed class AirLlmProvider
 
     public bool IsInstalled => ResolveScriptPath() is not null;
 
+    public bool IsRuntimeAvailable(AppSettings settings)
+    {
+        var script = ResolveScriptPath();
+        if (script is null) return false;
+        try
+        {
+            var start = new ProcessStartInfo
+            {
+                FileName = ResolvePythonPath(settings.AirLlmPythonPath),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = Path.GetDirectoryName(script) ?? AppContext.BaseDirectory,
+            };
+            start.ArgumentList.Add("-c");
+            start.ArgumentList.Add("import airllm, torch");
+            using var process = Process.Start(start);
+            if (process is null) return false;
+            if (!process.WaitForExit(10_000))
+            {
+                try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+                return false;
+            }
+            return process.ExitCode == 0;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     public static bool IsAirLlmProvider(string? provider)
         => string.Equals(provider, "AirLLM", StringComparison.OrdinalIgnoreCase);
 
@@ -38,6 +75,14 @@ public sealed class AirLlmProvider
             || text.Contains("does not fit", StringComparison.OrdinalIgnoreCase)
             || text.Contains("model compatibility", StringComparison.OrdinalIgnoreCase);
     }
+
+    public static bool ShouldAutoFallback(AppSettings settings, string endpoint, Exception exception, bool runtimeInstalled)
+        => settings.AirLlmAutoFallbackEnabled
+            && runtimeInstalled
+            && LocalEndpoint.IsLocal(endpoint)
+            && !IsAirLlmProvider(settings.ModelProvider)
+            && IsHuggingFaceModel(settings.Model)
+            && IsCapacityFailure(exception);
 
     public async Task StreamChatAsync(AppSettings settings, IReadOnlyList<ChatMessage> messages, Action<string> onText,
         CancellationToken cancellationToken, int? maxTokens = null, string? hfToken = null)
@@ -66,6 +111,7 @@ public sealed class AirLlmProvider
                 device = NormalizeDevice(settings.AirLlmDevice),
                 cache_path = settings.AirLlmCachePath,
                 delete_original = settings.AirLlmDeleteOriginal,
+                allow_remote_code = settings.AirLlmAllowRemoteCode,
                 hf_token = string.IsNullOrWhiteSpace(hfToken) ? null : hfToken.Trim()
             };
             await RunWorkerAsync(ResolvePythonPath(settings.AirLlmPythonPath), script, JsonSerializer.Serialize(request, JsonOptions), onText, cancellationToken).ConfigureAwait(false);

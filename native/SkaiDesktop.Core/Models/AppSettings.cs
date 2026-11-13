@@ -12,6 +12,8 @@ public sealed class AppSettings
     public string ModelProvider { get; set; } = "Ollama";
     /// <summary>Automatically retry a local model through AirLLM after a capacity/compatibility failure.</summary>
     public bool AirLlmAutoFallbackEnabled { get; set; } = true;
+    /// <summary>Allows model repositories that require custom Python code. Off by default.</summary>
+    public bool AirLlmAllowRemoteCode { get; set; }
     /// <summary>Python executable used by the built-in AirLLM sidecar.</summary>
     public string AirLlmPythonPath { get; set; } = "python";
     /// <summary>Optional local directory for Hugging Face downloads and AirLLM layer shards.</summary>
