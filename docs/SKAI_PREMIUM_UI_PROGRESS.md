@@ -17,6 +17,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `e95ed81` — deepened Memory and Agent Workbench with loading/error recovery, full task lifecycle columns, dependency context, timestamps, and responsive reflow.
 - `e68bde5` — added keyboard-accessible Workbench task-detail disclosures with dependency/result context and honest approval/failure capability notes.
 - `373f56e` — added roving keyboard selection, semantic combobox/listbox state, focus-on-open, and focus restoration after close in the command palette.
+- `325af1d` — preserved active theme contrast while adding restrained Deep Sea and Deep Space backdrop atmosphere.
 
 ## Current evidence
 
@@ -37,13 +38,14 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Memory/Workbench interaction checks: passed for loading, empty state, Memory failure/retry, lifecycle columns, dependency context, and responsive overflow.
 - Workbench detail interaction check: passed for opening every task-detail disclosure, keyboard focus on native summaries, dependency/result rendering, approval/failure capability notes, and responsive overflow at 960px. Screenshot: `output/playwright/skai-workbench-details.png`.
 - Command palette interaction check: passed for Ctrl+K open, initial focus, ArrowDown selection, filtered Enter navigation, Escape close, focus restoration to the invoking control, and responsive overflow at 1280px. Screenshots: `output/playwright/skai-command-palette-open.png` and `output/playwright/skai-command-palette.png`.
+- Theme/backdrop visual audit: passed for light/dark × Deep Sea/Deep Space combinations, readable headings and surfaces, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-theme-light-deep-sea.png`, `output/playwright/skai-theme-light-deep-space.png`, `output/playwright/skai-theme-dark-deep-sea.png`, and `output/playwright/skai-theme-dark-deep-space.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
 
 ## Current task
 
-Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. The command palette now has a complete keyboard/focus interaction pass. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
+Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. The command palette and theme/backdrop contrast now have verified interaction/visual passes. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
 
 ## Outstanding priorities
 
@@ -51,7 +53,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the command palette to dialogs and other overlay surfaces, including real Electron capture when the provider can target the correct window.
-5. Audit dark/light/system themes and density/backdrop combinations across every major route.
+5. Extend the theme audit from Settings to every major route, including system appearance, density, reduced motion, and backdrop combinations.
 6. Add workflow/skills/integration surfaces only where the existing runtime has a real capability; do not fabricate integrations.
 
 ## Scope guard
