@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const readline = require("node:readline");
@@ -83,8 +83,22 @@ function createWindow() {
   else window.loadFile(path.join(repoRoot, "apps", "desktop", "dist", "index.html"));
 }
 
+function applyProductionContentSecurityPolicy() {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://127.0.0.1:8188 http://localhost:8188; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+        ],
+      },
+    });
+  });
+}
+
 app.whenReady().then(() => {
   startAgentHost();
+  if (!process.env.SERVER_ROCK_RENDERER_URL) applyProductionContentSecurityPolicy();
   ipcMain.handle("agent:request", async (event, method, params) => {
     if (method === "workspace.pickFolder") {
       const window = BrowserWindow.fromWebContents(event.sender);
