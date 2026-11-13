@@ -232,6 +232,7 @@ public sealed partial class MainPage
     private void ApplySavedCustomization()
     {
         UiTheme.ApplyTheme(_settings.ThemeMode);
+        AppearanceBackdrop.Apply(_settings.BackdropPreset, _settings.ReduceMotion);
         // Accent choices are darkened so white text on them passes WCAG AA (4.5:1); the
         // default comes from the AccentColor token. UiTheme.ApplyAccent updates every
         // accent brush in place, so the send button and dialog primary actions follow.
@@ -341,6 +342,14 @@ public sealed partial class MainPage
         AutomationProperties.SetHelpText(theme, "Choose the light or dark palette for the native workspace.");
         theme.Items.Add("Light"); theme.Items.Add("Dark");
         theme.SelectedIndex = _settings.ThemeMode.Equals("dark", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        var backdrop = new ComboBox { MinWidth = 220 };
+        AutomationProperties.SetName(backdrop, "Ambient backdrop");
+        AutomationProperties.SetHelpText(backdrop, "Choose a calm visual backdrop. It is separate from the light or dark color palette and stays local to this device.");
+        backdrop.Items.Add("None"); backdrop.Items.Add("Deep Sea"); backdrop.Items.Add("Deep Space");
+        backdrop.SelectedIndex = _settings.BackdropPreset.ToLowerInvariant() switch { "deep-sea" => 1, "deep-space" => 2, _ => 0 };
+        var reduceMotion = new CheckBox { Content = "Reduce decorative motion", IsChecked = _settings.ReduceMotion };
+        AutomationProperties.SetName(reduceMotion, "Reduce decorative motion");
+        AutomationProperties.SetHelpText(reduceMotion, "Keep the selected backdrop visible but pause bubbles, stars, planets, and UFO movement.");
         var density = new ComboBox { MinWidth = 220 };
         AutomationProperties.SetName(density, "Interface density");
         density.Items.Add("Comfortable"); density.Items.Add("Compact");
@@ -518,11 +527,13 @@ public sealed partial class MainPage
         {
             pageBody.Children.Add(new TextBlock { Text = "WORKSPACE APPEARANCE", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Color theme", "Use the light or dark palette across the native workspace and dialogs.", theme));
+            pageBody.Children.Add(MakeSettingsCard("Ambient backdrop", "Add a local Deep Sea bubble field or Deep Space scene with stars, planets, and drifting UFOs.", backdrop));
+            pageBody.Children.Add(MakeSettingsCard("Motion", "Pause decorative animation for a calmer workspace while retaining the selected backdrop.", reduceMotion));
             pageBody.Children.Add(MakeSettingsCard("Accent color", "Choose the highlight color used for send and connection actions.", accent));
             pageBody.Children.Add(MakeSettingsCard("Interface density", "Use comfortable spacing for readability or compact spacing for smaller screens.", density));
             var reset = new Button { Content = "Reset appearance" };
-            reset.Click += (_, _) => { theme.SelectedIndex = 0; accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
-            pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the light theme, calm cyan accent, and comfortable spacing.", reset));
+            reset.Click += (_, _) => { theme.SelectedIndex = 0; backdrop.SelectedIndex = 0; reduceMotion.IsChecked = false; accent.SelectedIndex = 0; density.SelectedIndex = 0; RuntimeStatus.Text = "Appearance defaults will be restored when you save settings."; };
+            pageBody.Children.Add(MakeSettingsCard("Defaults", "Restore the light palette, no backdrop, calm cyan accent, and comfortable spacing.", reset));
             pageBody.Children.Add(new TextBlock { Text = "Changes apply when you save settings.", FontSize = 11, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 130, 134)), Margin = new Thickness(4, 2, 4, 0) });
         }
 
@@ -821,6 +832,8 @@ public sealed partial class MainPage
             _settings.VisionCapabilityOverride = visionCapability.SelectedIndex switch { 1 => "supported", 2 => "unsupported", _ => "auto" };
             _settings.AccentColor = accent.SelectedIndex switch { 1 => "violet", 2 => "green", 3 => "orange", _ => "cyan" };
             _settings.ThemeMode = theme.SelectedIndex == 1 ? "dark" : "light";
+            _settings.BackdropPreset = backdrop.SelectedIndex switch { 1 => "deep-sea", 2 => "deep-space", _ => "none" };
+            _settings.ReduceMotion = reduceMotion.IsChecked == true;
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
             _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
             _settings.PromptUserName = promptUserName.Text.Trim();

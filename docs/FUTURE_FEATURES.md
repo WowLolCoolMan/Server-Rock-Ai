@@ -102,7 +102,7 @@ and acceptance evidence.
 - [ ] Side chats spawned with a keyboard shortcut.
 - [ ] Detachable chats in their own windows.
 - [ ] Drag-and-drop pane layouts.
-- [ ] Custom themes.
+- [x] Custom themes. (Light/dark palettes plus persisted Deep Sea and Deep Space ambient presets with reduced-motion support.)
 - [ ] Cloud sync across devices.
 - [ ] Built-in translator.
 - [ ] Text snippets with AI expansion.

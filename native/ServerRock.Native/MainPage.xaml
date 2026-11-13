@@ -23,6 +23,7 @@
       <local:ComposerInputView x:Name="ComposerToolbarControl" Grid.Row="1" AutomationProperties.Name="Message composer" AutomationProperties.HelpText="Write a message. Press Enter to send, Shift+Enter for a new line, or Control+L from anywhere to focus this composer." />
       </Grid>
     </Grid>
+    <local:AppearanceBackdropView x:Name="AppearanceBackdrop" Grid.ColumnSpan="2" />
     <!-- Drawer scrim: must stretch over the whole window. Without Stretch alignment the Button
          sized to nothing, so the content was never dimmed and clicking outside did not close it. -->
     <Button x:Name="SidebarBackdrop" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{StaticResource ScrimBrush}" BorderThickness="0" CornerRadius="0" Visibility="Collapsed" Click="CloseSidebarClick" AutomationProperties.Name="Close navigation menu">

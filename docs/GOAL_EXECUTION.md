@@ -6372,3 +6372,49 @@ Remaining: autonomous/background scheduling, automatic result logging,
 timezone/locale coverage, recurrence backoff, cross-platform packaging, and
 full Popup focus acceptance remain open. The broader “Scheduled automations”
 future feature remains unchecked because the current scheduler is review-first.
+
+## Slice 165 — Custom ambient appearance presets
+
+Status: `implemented_build_and_core_verified_live_visual_acceptance_pending`
+
+Settings → Appearance now offers persisted ambient presets separate from the
+light/dark palette: None, Deep Sea, and Deep Space. Deep Sea renders a blue
+gradient with translucent bubbles that drift upward. Deep Space renders a dark
+gradient with stars, two planets, and drifting UFO silhouettes. All decoration
+is procedural, local, and hit-test-free so it does not intercept chat, sidebar,
+composer, or pet interactions. A reduced-motion option keeps the selected scene
+visible while pausing animation.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Native/AppearanceBackdropView.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including persisted backdrop and reduced-motion
+  settings.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the visuals are generated locally from vector
+elements and do not load images, call a provider, access credentials, inspect
+files, or send telemetry. No pets code or pet state was changed. Motion is
+bounded to a small in-memory element set and the overlay is non-interactive.
+
+Rollback: set the backdrop to None in Settings or remove the appearance overlay;
+the existing light/dark palette and other settings remain independent.
+
+Remaining: complete live Windows visual acceptance for both presets, verify
+restart persistence and reduced-motion behavior, then extend the preset catalog
+only through similarly bounded, accessible visual components. Cross-platform
+Skia, packaged-runtime, localization, and full accessibility coverage remain
+open.
