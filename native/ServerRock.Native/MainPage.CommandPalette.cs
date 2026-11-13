@@ -31,6 +31,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("In-app documentation", "help guide privacy safety local workflow", ShowInAppDocumentationAsync),
             new CommandPaletteItem("Prompt snippets", "saved prompts templates expand composer", OpenSnippetsAsync),
             new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync),
+            new CommandPaletteItem("Quicklinks", "bookmarks frequent web links", OpenQuicklinksAsync),
         };
 
         var query = new TextBox { PlaceholderText = "Search actions", MinWidth = 420 };

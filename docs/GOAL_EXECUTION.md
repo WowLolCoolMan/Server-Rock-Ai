@@ -6520,3 +6520,51 @@ not migrated or rewritten.
 Remaining: provider failure/cancellation acceptance, richer language detection,
 localization, full cross-platform accessibility, and packaged-runtime coverage
 remain open.
+
+## Slice 168 — Local quicklinks
+
+Status: `implemented_verified_windows_save_select_remove`
+
+Added bounded local Quicklinks reachable from Ctrl+K and More workspace options.
+Users can save up to 32 named `http` or `https` bookmarks, select one, explicitly
+open it through the operating system, or remove it. URLs with embedded
+credentials, unsupported schemes, duplicates, and oversized values are refused.
+The manager does not fetch links or send them to a model while saving or listing.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/Quicklink.cs`
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.Quicklinks.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including Quicklink settings persistence.
+- `npm run audit:native-ui` — passed with 227 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Quicklinks from Ctrl+K, saved disposable
+  `Handoff docs` at `https://example.com/handoff`, selected it, observed enabled
+  Open selected and Remove selected controls, then removed it and observed the
+  local-removal status. The composer and provider state were unchanged.
+
+Privacy/security/licensing: bookmarks are local JSON preferences. Validation
+rejects non-web schemes and embedded credentials; no URL is opened or fetched
+until the user chooses Open selected. No provider, file, credential, or pets
+state was accessed.
+
+Rollback: remove the Quicklinks command and More action or delete saved entries
+from local settings; existing settings and conversation data remain intact.
+
+Remaining: folders/sync, richer metadata, browser-panel integration, and full
+cross-platform accessibility and packaged-runtime coverage remain open.

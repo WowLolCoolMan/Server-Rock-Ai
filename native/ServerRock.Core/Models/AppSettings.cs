@@ -42,6 +42,8 @@ public sealed class AppSettings
     public List<string> ChatFolders { get; set; } = [];
     /// <summary>Bounded local prompt snippets; never sent unless inserted or explicitly expanded.</summary>
     public List<PromptSnippet> PromptSnippets { get; set; } = [];
+    /// <summary>Bounded local web bookmarks; links open only after explicit user action.</summary>
+    public List<Quicklink> Quicklinks { get; set; } = [];
     public List<string> InstalledPlugins { get; set; } = [];
     public string? ProjectPath { get; set; }
     public string? ProjectInstructions { get; set; }

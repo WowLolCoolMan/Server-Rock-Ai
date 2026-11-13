@@ -60,6 +60,7 @@ public sealed class JsonSettingsStore
         settings.LocalModelPerformance ??= new(StringComparer.OrdinalIgnoreCase);
         settings.ChatFolders ??= [];
         settings.PromptSnippets ??= [];
+        settings.Quicklinks ??= [];
         settings.WorkspaceDrafts ??= new(StringComparer.Ordinal);
         settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);
         return settings;

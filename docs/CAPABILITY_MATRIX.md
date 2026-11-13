@@ -238,3 +238,8 @@ from Ctrl+K and More. A disposable phrase was translated to Spanish through the
 selected local model, shown in an editable review dialog, and explicitly inserted
 into the composer without sending a message. Provider failure, cancellation,
 localization, and cross-platform accessibility coverage remain open.
+
+Recent slice note — Slice 168: added bounded local Quicklinks reachable from
+Ctrl+K and More. A disposable bookmark was saved, selected, exposed through the
+explicit Open/Remove controls, and removed locally in a live Windows journey.
+Only credential-free http/https URLs are accepted; opening remains user-driven.

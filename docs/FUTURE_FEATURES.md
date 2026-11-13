@@ -107,7 +107,7 @@ and acceptance evidence.
 - [x] Built-in translator. (Review-first translation through the selected model with explicit composer insertion.)
 - [x] Text snippets with AI expansion. (Bounded local save/insert plus review-first model expansion.)
 - [ ] Window management.
-- [ ] Quicklinks for frequent-access bookmarks.
+- [x] Quicklinks for frequent-access bookmarks. (Bounded local http/https bookmarks with explicit open and remove actions.)
 - [x] In-app documentation.
 - [ ] Developer mode.
 - [ ] Global quick-AI fallback for non-command input.
