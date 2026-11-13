@@ -54,7 +54,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -64,6 +64,7 @@ public static class AgentHostLoop
             "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
+            "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
@@ -289,6 +290,25 @@ public static class AgentHostLoop
             })
             .ToArray();
         return new(ProtocolVersion, request.Id, true, tasks);
+    }
+
+    private static AgentResponse PlanTask(AgentRequest request)
+    {
+        var environment = OptionalString(request, "environment") ?? "local";
+        if (!string.Equals(environment, "local", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Only the Local environment is configured in this build. Worktree execution is not connected yet.");
+
+        var task = CreateTaskStore().Create(
+            RequiredBoundedString(request, "title", AgentTaskArtifactStore.MaxTitleCharacters),
+            RequiredBoundedString(request, "instruction", AgentTaskArtifactStore.MaxInstructionCharacters),
+            OptionalString(request, "role") ?? "specialist");
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = task.Id,
+            title = task.Title,
+            status = task.Status,
+            updatedAt = task.UpdatedAtUtc,
+        });
     }
 
     private static AgentResponse TransitionTask(AgentRequest request, string operation)

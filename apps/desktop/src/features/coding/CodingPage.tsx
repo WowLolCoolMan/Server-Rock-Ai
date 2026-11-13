@@ -1,7 +1,8 @@
-import type { DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
+import type { DesktopProject, DesktopProjectFile, TaskEnvironment } from "../../../shared/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
 import { ModalDialog } from "../../components/ui/ModalDialog";
+import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 
 type DiffRow = { kind: "removed" | "added" | "unchanged"; line: string };
@@ -39,10 +40,11 @@ type CodingPageProps = {
   onSaveFile: () => void;
   onUndoFile: () => void;
   onRunTerminal: (projectId: string, command: string, cwd: string) => void;
+  onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingPage({ projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onNavigate }: CodingPageProps) {
+export function CodingPage({ projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingPageProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -51,6 +53,10 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
   const [fileQuery, setFileQuery] = useState("");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskInstruction, setTaskInstruction] = useState("");
+  const [taskEnvironment, setTaskEnvironment] = useState<TaskEnvironment>("local");
+  const [planningTask, setPlanningTask] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
   const diffRows = useMemo(() => createDiff(fileOriginal, fileDraft), [fileDraft, fileOriginal]);
@@ -84,6 +90,14 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     if (saved) { setName(""); setInstructions(""); setFolders([]); setDialogOpen(false); }
   };
 
+  const planTask = async () => {
+    if (!selectedProject || !taskTitle.trim() || !taskInstruction.trim() || planningTask) return;
+    setPlanningTask(true);
+    const planned = await onPlanTask(taskTitle.trim(), `${taskInstruction.trim()}\n\nProject: ${selectedProject.name}`, taskEnvironment);
+    setPlanningTask(false);
+    if (planned) { setTaskTitle(""); setTaskInstruction(""); onNavigate("workbench"); }
+  };
+
   const addFolder = async () => {
     const folder = await onPickFolder();
     if (folder && !folders.includes(folder)) setFolders((current) => [...current, folder]);
@@ -114,6 +128,12 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     {selectedProject && <Card className="project-browser-card">
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>{selectedProject.name}</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
+      <form className="task-composer" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
+        <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>Write the outcome you want, then review it in Agent Workbench before anything runs.</p></div><span className="task-composer-badge">Local only</span></div>
+        <div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Improve the project browser" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome, constraints, and how you will verify it." rows={3} /></label></div>
+        <EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} />
+        <div className="task-composer-footer"><span>Creates a proposed local task. It does not start an agent or run tools.</span><Button variant="primary" type="submit" disabled={planningTask || !taskTitle.trim() || !taskInstruction.trim()}>{planningTask ? "Planning…" : "Add to task plan"}</Button></div>
+      </form>
       <div className="project-file-layout">
         <div className="project-file-explorer"><div className="file-list-toolbar"><input ref={fileSearchRef} value={fileQuery} onChange={(event) => setFileQuery(event.target.value)} placeholder="Filter files…" aria-label="Filter project files" /><kbd>Ctrl P</kbd></div><div className="project-file-list">{projectFiles.length === 0 ? <EmptyState title="No readable files" description="Protected names and unsupported files are hidden." /> : filteredFiles.length === 0 ? <EmptyState title="No matching files" description="Try a shorter path or filename." /> : filteredFiles.map((file) => <button className={selectedFile === file.relativePath ? "is-selected" : ""} key={file.relativePath} onClick={() => openFile(file.relativePath)} type="button"><span>{file.relativePath}</span><small>{file.bytes.toLocaleString()} bytes</small></button>)}</div></div>
         <div className="file-editor-panel">

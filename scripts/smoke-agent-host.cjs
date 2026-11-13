@@ -15,6 +15,7 @@ const env = {
   ...process.env,
   SRAI_SETTINGS_PATH: path.join(tempRoot, "settings.json"),
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
+  SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
 };
 const child = spawn("dotnet", ["run", "--project", path.join(root, "services", "agent-host", "ServerRock.AgentHost.csproj"), "--no-build", "--", "--stdio"], {
   cwd: root,
@@ -60,7 +61,13 @@ async function run() {
   if (!settings.ok || typeof settings.result?.endpoint !== "string") throw new Error("settings.get did not return bounded settings.");
   const savedSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model });
   if (!savedSettings.ok) throw new Error("settings.save failed in the disposable profile.");
-  console.log("Agent host replacement smoke passed: health, disposable conversation persistence, and disposable settings persistence.");
+  const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
+  if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
+  const tasks = await request("tasks.list");
+  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task") throw new Error("tasks.plan persistence round-trip failed.");
+  const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
+  if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
+  console.log("Agent host replacement smoke passed: health, disposable conversation/settings persistence, and local task planning.");
 }
 
 run().catch(error => {

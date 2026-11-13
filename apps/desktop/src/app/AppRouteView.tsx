@@ -1,4 +1,4 @@
-import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask } from "../../shared/contracts";
+import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, TaskEnvironment } from "../../shared/contracts";
 import type { MemoryEntry, Message, Model, Route, ThemeMode } from "./types";
 import { ChatPage } from "../features/chat/ChatPage";
 import { CodingPage } from "../features/coding/CodingPage";
@@ -73,6 +73,7 @@ export type AppRouteActions = {
   onSaveFile: () => void;
   onUndoFile: () => void;
   onRunTerminal: (projectId: string, command: string, cwd: string) => void;
+  onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onSettingsChange: (key: string, value: string | boolean) => void;
   onSaveSettings: () => void;
   onDiscoverModels: () => void;
@@ -93,7 +94,7 @@ export type AppRouteActions = {
 export function AppRouteView({ state, actions }: { state: AppRouteState; actions: AppRouteActions }) {
   const { route } = state;
   if (route === "chat") return <ChatPage model={state.model} models={state.models} messages={state.messages} busy={state.busy} attachments={state.attachments} queuedMessages={state.queuedMessages} conversationId={state.conversationId} pinned={state.pinned} archived={state.archived} onSend={actions.onSend} onQueue={actions.onQueue} onRemoveQueued={actions.onRemoveQueued} onAttach={actions.onAttach} onRemoveAttachment={actions.onRemoveAttachment} onModelChange={actions.onModelChange} onNavigate={actions.onNavigate} onExport={actions.onExportConversations} onFork={actions.onFork} onForkFromMessage={actions.onForkFromMessage} onTogglePinned={actions.onTogglePinned} onArchive={actions.onArchive} />;
-  if (route === "coding") return <CodingPage projects={state.projects} selectedProject={state.selectedProject} projectFiles={state.projectFiles} selectedFile={state.selectedFile} fileDraft={state.fileDraft} fileOriginal={state.fileOriginal} fileSummary={state.fileSummary} fileBusy={state.fileBusy} terminalBusy={state.terminalBusy} terminalOutput={state.terminalOutput} terminalExitCode={state.terminalExitCode} onPickFolder={actions.onPickFolder} onSaveProject={actions.onSaveProject} onOpenProject={actions.onOpenProject} onOpenFile={actions.onOpenFile} onCloseFile={actions.onCloseFile} onDraftChange={actions.onDraftChange} onSaveFile={actions.onSaveFile} onUndoFile={actions.onUndoFile} onRunTerminal={actions.onRunTerminal} onNavigate={actions.onNavigate} />;
+  if (route === "coding") return <CodingPage projects={state.projects} selectedProject={state.selectedProject} projectFiles={state.projectFiles} selectedFile={state.selectedFile} fileDraft={state.fileDraft} fileOriginal={state.fileOriginal} fileSummary={state.fileSummary} fileBusy={state.fileBusy} terminalBusy={state.terminalBusy} terminalOutput={state.terminalOutput} terminalExitCode={state.terminalExitCode} onPickFolder={actions.onPickFolder} onSaveProject={actions.onSaveProject} onOpenProject={actions.onOpenProject} onOpenFile={actions.onOpenFile} onCloseFile={actions.onCloseFile} onDraftChange={actions.onDraftChange} onSaveFile={actions.onSaveFile} onUndoFile={actions.onUndoFile} onRunTerminal={actions.onRunTerminal} onPlanTask={actions.onPlanTask} onNavigate={actions.onNavigate} />;
   if (route === "settings") return <SettingsPage themeMode={state.themeMode} accentColor={state.accentColor} density={state.density} backdrop={state.backdrop} reduceMotion={state.reduceMotion} onChange={actions.onSettingsChange} onSave={actions.onSaveSettings} />;
   if (route === "models") return <ModelsPage models={state.models} onDiscover={actions.onDiscoverModels} onSelect={actions.onSelectModel} />;
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;

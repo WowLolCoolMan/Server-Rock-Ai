@@ -66,6 +66,8 @@ export type DesktopTask = {
   updatedAt: string;
 };
 
+export type TaskEnvironment = "local" | "worktree";
+
 export type DesktopScheduledTask = {
   id: string;
   prompt: string;

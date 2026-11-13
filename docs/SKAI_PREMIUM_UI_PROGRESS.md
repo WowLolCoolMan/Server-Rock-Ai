@@ -25,6 +25,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `890e42d` — moved renderer state, persistence effects, backend commands, and feature callbacks into `useDesktopWorkspace`; `App.tsx` is now shell composition only.
 - `c3adcc7` — isolated chat conversations, queueing, attachments/PDF extraction, fork/export, metadata, and send/complete commands in `useChatWorkspace`.
 - `559f642` — isolated coding/project discovery, folder selection, guarded file editing/undo, and bounded terminal commands in `useCodingWorkspace`.
+- `PENDING` — added a local-only task brief composer, truthful Local/Worktree environment state, and a review-first `tasks.plan` Agent Host capability; Cloud is intentionally out of scope.
 
 ## Current evidence
 
@@ -53,6 +54,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Workspace-coordinator regression sweep: passed after extraction for all nine routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the rebuilt renderer.
 - Chat runtime regression: passed the existing FIFO queue smoke plus renderer interaction coverage for conversation loading, queued follow-up while the model is busy, indexed removal, completion response rendering, and 1280px overflow.
 - Coding runtime regression: passed project-browser, project-terminal, and project-editor smoke tests plus renderer coverage for project selection, file read, diff review, guarded save, docked terminal execution, output rendering, and 1280px overflow. Screenshot: `output/playwright/skai-coding-coordinator.png`.
+- Task composer interaction check: passed project selection, task brief entry, disabled Worktree state, local proposed-task creation, Agent Workbench handoff, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-coding-task-composer.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
@@ -63,7 +65,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 ## Outstanding priorities
 
-1. Use the workflow reference to add a truthful per-task environment selector and task-oriented composer affordances to the coding/chat flow; Local is functional today, while Worktree/Cloud must remain visibly unavailable until supported.
+1. Use the workflow reference to extend the truthful per-task environment selector and task-oriented composer into the chat flow; Local is functional today, while Worktree must remain visibly unavailable until supported. Cloud is not a Skai Desktop capability.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the shared modal surfaces to remaining overlay and menu surfaces, including real Electron capture when the provider can target the correct window.
