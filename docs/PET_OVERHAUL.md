@@ -111,3 +111,4 @@ Not started.
 | --- | --- | --- |
 | 23:49 | 2582816, 32c4668 | Smoke test round 1, bug list and fix plan; one-line Linux fix for the Markdown export file-name test (owner's file, see commit). |
 | 00:01 | f338d8c 7ec2887 3be18c6 c2f2735 | Re-cut frames, state animations, cross-fades, bubble, Stop/idle fixes; round-2 smoke table. |
+| 00:04 | 0b6dfa6 | Wander planner + Core tests (not wired to the UI yet). |
