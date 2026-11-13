@@ -90,3 +90,4 @@ Not started.
 
 | Time (local) | Commit | What |
 | --- | --- | --- |
+| 23:49 | 2582816, 32c4668 | Smoke test round 1, bug list and fix plan; one-line Linux fix for the Markdown export file-name test (owner's file, see commit). |
