@@ -1,6 +1,6 @@
 # Skai Desktop — Production Readiness Gaps
 
-This is the current release roadmap. It records what remains before Skai Desktop can be described as a production-ready native replacement and a signed public release. Skai Desktop is the rebrand of Server Rock AI; stable local data and credential identifiers remain unchanged.
+This is the current release roadmap. It records what remains before Skai Desktop can be described as a production-ready native replacement and a signed public release. Stable local data and credential identifiers remain unchanged across the product rename.
 
 ## P0 — release blockers
 

@@ -16,7 +16,7 @@ The app requests offline_access so expiring GitHub App user tokens can be refres
 
 1. Open Settings → GitHub, enter the app client ID if the build has not preconfigured it, and choose Connect.
 2. Approve the app on GitHub using the one-time device code.
-3. Open GitHub repositories, choose a repository, and choose its local parent folder. Server Rock clones it and adds it as a Coding Agent project.
+3. Open GitHub repositories, choose a repository, and choose its local parent folder. Skai Desktop clones it and adds it as a Coding Agent project.
 4. Ask the Coding Agent to make changes. Use Push to owner/repository or `/push <commit message>` to open a review of the current branch and changed file list, then explicitly commit and push after checking the paths and commit message. The reviewed status and contents are fingerprinted; if the repository changes before confirmation, the push is rejected and the review must be reopened.
 
 The push action stages all changes Git sees in that repository, including untracked files not excluded by `.gitignore`. The review dialog shows changed paths, not a line-by-line diff. Review file contents and exclude local-only data before confirming. Commits are made locally before network push; if push fails, the local commit remains and the current branch can be retried after checking its status.

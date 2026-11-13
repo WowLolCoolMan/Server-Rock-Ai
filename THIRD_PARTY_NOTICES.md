@@ -1,6 +1,6 @@
 # Third-party notices
 
-Server Rock: AI includes these renderer libraries. The packages are bundled for offline use; neither package contacts a service.
+Skai Desktop includes these renderer libraries. The packages are bundled for offline use; neither package contacts a service.
 
 - `marked` — MIT License. Copyright (c) 2018+, MarkedJS. The complete license is included at `node_modules/marked/LICENSE` in the source distribution and in the packaged application.
 - `DOMPurify` — Apache License 2.0 (one of the package's offered license choices). Copyright (c) 2014-2025 Cure53 and contributors. The complete Apache license is included at `node_modules/dompurify/LICENSE` in the source distribution and packaged application. The package also distributes its MPL-2.0 license text.

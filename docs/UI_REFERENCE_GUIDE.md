@@ -4,7 +4,7 @@ This guide records the product direction supplied by the project owner and keeps
 
 ## Product direction from the owner
 
-Skai Desktop is an independent desktop AI app and the rebrand of Server Rock AI. It is not connected to Server Rock web services or Core services. GitHub is a user-authorized workspace connection for browsing repositories, opening a repository as a project, and reviewing/committing/pushing project changes.
+Skai Desktop is an independent desktop AI app. It is not connected to hosted web or Core services. GitHub is a user-authorized workspace connection for browsing repositories, opening a repository as a project, and reviewing/committing/pushing project changes.
 
 The app should feel approachable for everyday chat while giving advanced users direct access to project work and configuration. The primary surfaces must make the mode clear:
 
@@ -15,7 +15,7 @@ The app should feel approachable for everyday chat while giving advanced users d
 - Model management should support many installed models while keeping a small set of pinned models available for fast switching above the composer. Model cards should show measured performance on this computer, clearly distinguishing measurements from estimates.
 - Model discovery should separate regular and uncensored/obliterated catalog views and make the source and license visible.
 - Pets are optional local companions that can be selected, shown or hidden, and customized. Do not reuse ChatGPT brand assets.
-- Updates should have a clear source and channel and verify downloaded artifacts. Any GitHub-based rolling update behavior must be attached to this app's GitHub repository and must not silently depend on Server Rock services.
+- Updates should have a clear source and channel and verify downloaded artifacts. Any GitHub-based rolling update behavior must be attached to this app's GitHub repository and must not silently depend on Skai Desktop services.
 - Keep the default surface calm and understandable. Advanced settings, provider details, and rarely used actions should be grouped by purpose rather than piled into one long menu or dialog.
 - Cross-platform packaging is a goal for Linux and Windows. State exact tested distributions and Windows versions; do not claim support from build targets alone.
 

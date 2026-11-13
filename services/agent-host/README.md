@@ -1,4 +1,4 @@
-# Server Rock Agent Host
+# Skai Desktop Agent Host
 
 This is the first migration seam for the Electron desktop prototype. It is a
 small, local-only .NET process that speaks versioned JSON lines over stdin/stdout.

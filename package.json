@@ -1,8 +1,8 @@
 {
-  "name": "server-rock-ai",
+  "name": "skai-desktop",
   "version": "0.1.2",
-  "description": "A local-first desktop AI workspace with pluggable model providers",
-  "author": "Server Rock",
+  "description": "Skai Desktop — a local-first desktop AI workspace with pluggable model providers",
+  "author": "Skai Desktop",
   "license": "MIT",
   "private": false,
   "scripts": {

@@ -6,14 +6,14 @@ The goal is to combine the strongest user-facing workflows from the listed proje
 
 ## Product capabilities to combine
 
-| Reference | Useful capability | Server Rock approach |
+| Reference | Useful capability | Skai Desktop approach |
 | --- | --- | --- |
 | Open WebUI | Model/workspace organization, tools and knowledge around one chat surface | Use the capability layout; keep independent provider and tool adapters. Its current license includes an additional branding condition, so no upstream source/assets are copied into this branded product. |
-| LobeChat | Polished multi-provider interaction and multimodal workflows | Reproduce the workflow patterns in Server Rock's existing desktop shell; audit current repository and component licenses before any code reuse. |
+| LobeChat | Polished multi-provider interaction and multimodal workflows | Reproduce the workflow patterns in Skai Desktop's existing desktop shell; audit current repository and component licenses before any code reuse. |
 | LibreChat | Broad provider switching, agents, code interpreter | Treat API/provider adapters as a capability target; MIT-licensed source portions may be reused only with copyright/license notices and dependency review. |
 | Jan | Offline-first desktop UX | Connect to Jan's local OpenAI-compatible server; don't bundle its app/runtime. |
 | GPT4All | Accessible local model setup and local API | Detect the GPT4All server on `127.0.0.1:4891` and use its OpenAI-compatible API. Individual model weights have their own terms. |
-| AnythingLLM | Local documents, workspaces and retrieval | Build a local knowledge collection and retrieval layer in Server Rock; MIT source is a potential reuse option after source/dependency review. |
+| AnythingLLM | Local documents, workspaces and retrieval | Build a local knowledge collection and retrieval layer in Skai Desktop; MIT source is a potential reuse option after source/dependency review. |
 | Khoj | Personal knowledge and scheduled research | Add local knowledge/search and later scheduled workflows as optional modules, without making the first-run chat screen busy. |
 | text-generation-webui | Runtime flexibility for local model backends | Detect its compatible API and let it handle model formats and hardware-specific backends. |
 | LocalAI | OpenAI-compatible local API | Support its configured endpoint as an ordinary local provider. |

@@ -1,4 +1,4 @@
-# Server Rock: AI – native design system
+# Skai Desktop – native design system
 
 Design rules for the Uno/XAML app in `native/ServerRock.Native`. Follow them for every UI change so the app stays consistent. Product intent and reference screenshots are in `docs/UI_REFERENCE_GUIDE.md`.
 

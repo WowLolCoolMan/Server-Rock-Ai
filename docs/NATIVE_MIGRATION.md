@@ -26,7 +26,7 @@ Use the user-provided Jan and Open WebUI screenshots as layout references, not a
 - Keep first-run actions direct. Put model connectivity feedback and a Connect a model action on the empty state when no compatible model server is responding. Keep generation tuning behind Advanced.
 - Use the default view for common chat and only surface project files, file changes, and advanced controls in the workspace where they belong.
 
-OpenAI's current [ChatGPT Work and Codex desktop guide](https://help.openai.com/en/articles/20001275/) similarly separates Chat, Work, and Codex experiences, while [Projects](https://help.openai.com/en/articles/10169521-projects) keep related conversations, files, and instructions together. These are interaction references; Skai Desktop stays a standalone local-first app and does not connect to Server Rock services.
+OpenAI's current [ChatGPT Work and Codex desktop guide](https://help.openai.com/en/articles/20001275/) similarly separates Chat, Work, and Codex experiences, while [Projects](https://help.openai.com/en/articles/10169521-projects) keep related conversations, files, and instructions together. These are interaction references; Skai Desktop stays a standalone local-first app and does not depend on hosted product services.
 
 ## Implemented native slice
 

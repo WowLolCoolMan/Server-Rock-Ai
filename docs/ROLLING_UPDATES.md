@@ -1,6 +1,6 @@
 # App updates through GitHub Releases
 
-The app checks its public GitHub Releases feed directly. The check does not require a Server Rock account or a service operated by the developer. Stable and beta tags use `vMAJOR.MINOR.PATCH` and `vMAJOR.MINOR.PATCH-beta.N` respectively.
+The app checks its public GitHub Releases feed directly. The check does not require a Skai Desktop account or a service operated by the developer. Stable and beta tags use `vMAJOR.MINOR.PATCH` and `vMAJOR.MINOR.PATCH-beta.N` respectively.
 
 The update screen selects the newest matching published release, locates a compatible installer, and displays the SHA-256 digest supplied by GitHub’s release asset API. It links to that exact release page so users can review the release notes and download the installer themselves. Drafts, malformed tags, unsupported operating systems, missing digests, and unexpected GitHub URLs are ignored. If no release exists, the screen shows that state and keeps the download action disabled.
 
