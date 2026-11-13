@@ -10,9 +10,9 @@ let hostReader;
 let nextRequestId = 1;
 const pending = new Map();
 const allowedMethods = new Set([
-  "runtime.health", "models.list", "projects.list", "project.save", "tasks.list",
+  "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "conversations.list", "conversation.save", "settings.get",
-  "settings.save", "image.generate", "project.command.run", "chat.complete",
+  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.complete",
   "workspace.pickFolder",
 ]);
 

@@ -52,12 +52,14 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
             "project.file.read" => ReadProjectFile(request),
+            "project.file.write" => WriteProjectFile(request),
+            "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -162,13 +164,40 @@ public static class AgentHostLoop
         {
             try
             {
-                var content = new WorkspaceFileEditor().ReadText(root, relativePath);
-                return new(ProtocolVersion, request.Id, true, new { projectId = id, relativePath, content });
+                var editor = new WorkspaceFileEditor();
+                var content = editor.ReadText(root, relativePath);
+                return new(ProtocolVersion, request.Id, true, new { projectId = id, relativePath, content, hash = editor.GetCurrentHash(root, relativePath) });
             }
             catch (FileNotFoundException) { }
             catch (DirectoryNotFoundException) { }
         }
         throw new FileNotFoundException("The selected project file is unavailable or protected.");
+    }
+
+    private static AgentResponse WriteProjectFile(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var relativePath = RequiredBoundedString(request, "relativePath", 512);
+        var content = request.Params?.TryGetProperty("content", out var contentValue) == true ? contentValue.GetString() : null;
+        var expectedHash = RequiredBoundedString(request, "expectedHash", 128);
+        if (content is null) throw new InvalidOperationException("project.file.write requires content.");
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault() ?? throw new InvalidOperationException("Select a project folder before editing a file.");
+        var receipt = new WorkspaceFileEditor().Apply(root, relativePath, content, expectedHash);
+        var undoId = Guid.NewGuid().ToString("N");
+        var undoStore = CreateUndoStore();
+        undoStore.Add(undoStore.Load(), new WorkspaceUndoEntry(undoId, DateTimeOffset.UtcNow, project.Name, root, relativePath, receipt.PreviousContent, receipt.AppliedHash));
+        return new(ProtocolVersion, request.Id, true, new { undoId, hash = receipt.AppliedHash });
+    }
+
+    private static AgentResponse UndoProjectFile(AgentRequest request)
+    {
+        var undoId = RequiredBoundedString(request, "undoId", 128);
+        var undoStore = CreateUndoStore();
+        var entry = undoStore.Load().SingleOrDefault(item => item.Id == undoId) ?? throw new KeyNotFoundException("The file edit is no longer available for undo.");
+        undoStore.Undo(entry, new WorkspaceFileEditor());
+        undoStore.Remove(undoStore.Load(), undoId);
+        return new(ProtocolVersion, request.Id, true, new { undone = true, relativePath = entry.RelativePath });
     }
 
     private static async Task<AgentResponse> RunProjectCommandAsync(AgentRequest request)
@@ -338,6 +367,9 @@ public static class AgentHostLoop
 
     private static ProjectStore CreateProjectStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_PROJECTS_PATH"));
+
+    private static WorkspaceUndoStore CreateUndoStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_UNDO_PATH"));
 
     private static AgentTaskArtifactStore CreateTaskStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_TASKS_PATH"));
