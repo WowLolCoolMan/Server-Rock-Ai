@@ -9,11 +9,11 @@
 - **Developer tooling:** .NET SDK for the product. Node.js is used only for repository checks and artifact smoke helpers. Python is optional for model/runtime tools where the selected upstream runtime requires it, not a required desktop dependency.
 - **Migration:** the native product is now the only shipped application. The bounded archive parser remains backward-compatible with previously exported legacy chat envelopes, but no legacy runtime or UI is built.
 
-The initial boundary is implemented as `ServerRock.Core` (plain `net10.0` library) referenced by `ServerRock.Native`. The XAML view calls provider and settings services; it no longer owns HTTP request construction or settings file operations. Keep future application services in Core and isolate OS-specific capabilities behind interfaces/adapters.
+The initial boundary is implemented as `SkaiDesktop.Core` (plain `net10.0` library) referenced by `ServerRock.Native`. The XAML view calls provider and settings services; it no longer owns HTTP request construction or settings file operations. Keep future application services in Core and isolate OS-specific capabilities behind interfaces/adapters.
 
 ## Legacy stack boundary
 
-Uno/.NET is the product stack. The former Electron runtime, HTML shell, packaging configuration, and browser UI tests have been removed. The archive parser and fixtures retain the legacy envelope shape solely so users can recover previously exported chats; that compatibility code is isolated in `ServerRock.Core` and cannot start or render a legacy client.
+Uno/.NET is the product stack. The former Electron runtime, HTML shell, packaging configuration, and browser UI tests have been removed. The archive parser and fixtures retain the legacy envelope shape solely so users can recover previously exported chats; that compatibility code is isolated in `SkaiDesktop.Core` and cannot start or render a legacy client.
 
 ## UI reference principles
 
@@ -60,7 +60,7 @@ OpenAI's current [ChatGPT Work and Codex desktop guide](https://help.openai.com/
 - Opt-in web search results are attached to the assistant message and saved with conversation history. Up to six result cards show the validated site, title, and snippet; opening a card permits only HTTP/HTTPS URLs. Results are provided by DuckDuckGo snippets, not source-page extraction or independent fact checking.
 - Assistant replies use [Markdig](https://github.com/xoofx/markdig) to render Markdown as selectable native text, lists, tables, quotes, and code cards with a copy action. Code lines preserve indentation and scroll horizontally instead of wrapping; the code block and copy action expose screen-reader names/help text. Raw HTML is disabled, and only HTTP/HTTPS links open externally. Syntax highlighting remains to do.
 - Conversation turns have native `Copy response`, `Edit & resend`, and latest-turn `Retry` actions. Editing keeps prior context, carries the selected text attachments forward, and only replaces the selected turn plus later turns once the revised prompt is sent. A visible Cancel edit control clears the draft and staged attachments without changing saved history. Remote attachment/project consent and opt-in web search still run during retries.
-- Core service checks exercise endpoint normalization, multi-runtime model discovery, Hugging Face catalog classification, Ollama pull progress, SSE text and content-part deltas, request serialization, provider errors, and settings persistence. Run with `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`.
+- Core service checks exercise endpoint normalization, multi-runtime model discovery, Hugging Face catalog classification, Ollama pull progress, SSE text and content-part deltas, request serialization, provider errors, and settings persistence. Run with `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`.
 
 No native response may be simulated. A backend feature that is not connected must be labelled as not available or still migrating.
 

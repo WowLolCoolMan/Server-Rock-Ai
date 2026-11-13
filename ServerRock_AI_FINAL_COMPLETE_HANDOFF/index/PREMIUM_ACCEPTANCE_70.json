@@ -1,0 +1,562 @@
+[
+  {
+    "caseId": "UX-01",
+    "group": "Navigation",
+    "setup": "Rapid route changes with open model picker",
+    "expected": "Palette closes; no focus loss or underlying clicks",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-02",
+    "group": "Navigation",
+    "setup": "Two dialogs requested simultaneously",
+    "expected": "Second queued; only one active approval surface",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-03",
+    "group": "Navigation",
+    "setup": "Resize modal to 760x560 at 200% text",
+    "expected": "All actions reachable by keyboard and scroll",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-04",
+    "group": "Navigation",
+    "setup": "Press Escape in native file chooser",
+    "expected": "No project added; focus returns to opener",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-05",
+    "group": "Navigation",
+    "setup": "Back from nested settings",
+    "expected": "Previous project and scroll restored",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-06",
+    "group": "Navigation",
+    "setup": "Open command palette during streaming",
+    "expected": "Stream persists; navigation not blocked",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-07",
+    "group": "Navigation",
+    "setup": "Right click archived conversation",
+    "expected": "Working restore/rename/delete only",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-08",
+    "group": "Accessibility",
+    "setup": "Screen reader cycles all app regions",
+    "expected": "Meaningful labels/order and statuses",
+    "level": "manual",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-09",
+    "group": "Accessibility",
+    "setup": "Reduced motion enabled",
+    "expected": "No essential information in animation",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "UX-10",
+    "group": "Accessibility",
+    "setup": "Keyboard-only workflow canvas editing",
+    "expected": "Nodes and edges editable without dragging",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-01",
+    "group": "Chat",
+    "setup": "Cancel stream mid-response",
+    "expected": "No false completion or duplicate turn",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-02",
+    "group": "Chat",
+    "setup": "Cloud provider auth expires",
+    "expected": "Draft preserved, auth error and reauth",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-03",
+    "group": "Chat",
+    "setup": "Temporary chat then quit",
+    "expected": "No persisted conversation/messages",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-04",
+    "group": "Chat",
+    "setup": "Import same archive twice",
+    "expected": "Idempotent, edited imports preserved",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-05",
+    "group": "Chat",
+    "setup": "Huge message with code blocks",
+    "expected": "Virtual list and horizontal code scrolling",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-06",
+    "group": "Chat",
+    "setup": "Untrusted markdown HTML/script",
+    "expected": "Not executed and links policy enforced",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-07",
+    "group": "Chat",
+    "setup": "Send attachment under Local profile",
+    "expected": "No outbound cloud transfer",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-08",
+    "group": "Chat",
+    "setup": "Switch model after queued tool call",
+    "expected": "Status and capability reconsideration",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-09",
+    "group": "Chat",
+    "setup": "Restart while streaming",
+    "expected": "Interrupted state and partial content retained",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CHAT-10",
+    "group": "Chat",
+    "setup": "Search with archived and temporary histories",
+    "expected": "Privacy filter and stable results",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-01",
+    "group": "Coding",
+    "setup": "Reject diff proposal",
+    "expected": "Working tree unchanged",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-02",
+    "group": "Coding",
+    "setup": "External file modified after preview",
+    "expected": "Stale hash blocks write",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-03",
+    "group": "Coding",
+    "setup": "Symlink points outside root",
+    "expected": "Unauthorized write blocked",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-04",
+    "group": "Coding",
+    "setup": "Windows junction/reparse escape",
+    "expected": "Unauthorized write blocked",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-05",
+    "group": "Coding",
+    "setup": "Cancel agent terminal with grandchild",
+    "expected": "Whole process tree stops",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-06",
+    "group": "Coding",
+    "setup": "Two write agents same root",
+    "expected": "Isolated worktrees or safe explicit failure",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-07",
+    "group": "Coding",
+    "setup": "Git push to wrong remote",
+    "expected": "Requires precise reviewed remote/ref",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-08",
+    "group": "Coding",
+    "setup": "Git nonfastforward",
+    "expected": "No force push, explain recoverable conflict",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-09",
+    "group": "Coding",
+    "setup": "Undo after unrelated user edit",
+    "expected": "Never overwrite later change silently",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "CODE-10",
+    "group": "Coding",
+    "setup": "Large binary proposed as text edit",
+    "expected": "Clear blocked/unsupported state",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-01",
+    "group": "Agent Runtime",
+    "setup": "Replay duplicated event ID",
+    "expected": "No duplicate applied side effect",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-02",
+    "group": "Agent Runtime",
+    "setup": "Cancel vs completion race",
+    "expected": "One consistent terminal state",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-03",
+    "group": "Agent Runtime",
+    "setup": "Kill app after write before confirmation",
+    "expected": "Journal reconciles actual files",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-04",
+    "group": "Agent Runtime",
+    "setup": "Provider timeout before/after tool effect",
+    "expected": "Safe retry classification and idempotency",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-05",
+    "group": "Agent Runtime",
+    "setup": "Wrong approval ID reused",
+    "expected": "Operation denied",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-06",
+    "group": "Agent Runtime",
+    "setup": "Agent attempts privilege increase",
+    "expected": "Backend policy rejects",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-07",
+    "group": "Agent Runtime",
+    "setup": "Local GPU memory exhausted",
+    "expected": "Bounded queue or actionable failure",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-08",
+    "group": "Agent Runtime",
+    "setup": "Run survives renderer redraw",
+    "expected": "No duplicated task or missing events",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-09",
+    "group": "Agent Runtime",
+    "setup": "Restart with unreaped prior process",
+    "expected": "No fake resume or orphan claim",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "AGENT-10",
+    "group": "Agent Runtime",
+    "setup": "Out-of-order stream event",
+    "expected": "Ordered projection/reconciliation",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-01",
+    "group": "Models",
+    "setup": "Local-only with remote endpoint labeled local",
+    "expected": "Cloud egress prevented",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-02",
+    "group": "Models",
+    "setup": "Auto fallback with new provider",
+    "expected": "Consent and route reason visible",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-03",
+    "group": "Models",
+    "setup": "Auth failure considered fallback",
+    "expected": "No silent bypass",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-04",
+    "group": "Models",
+    "setup": "Same model ID across 2 local hosts",
+    "expected": "Separate discovered entries",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-05",
+    "group": "Models",
+    "setup": "Unsupported vision model with image",
+    "expected": "Preflight explains incompatibility",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-06",
+    "group": "Models",
+    "setup": "Canceled 5GB model download",
+    "expected": "No corrupt activated model",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-07",
+    "group": "Models",
+    "setup": "Model host crashed",
+    "expected": "Health degraded and recovery",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MODEL-08",
+    "group": "Models",
+    "setup": "Model resource estimation absent",
+    "expected": "Display unknown, not fabricated value",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-01",
+    "group": "Marketplace",
+    "setup": "Catalog row has stale GitHub URL",
+    "expected": "Unverified; no install",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-02",
+    "group": "Marketplace",
+    "setup": "Zip-slip/path traversal payload",
+    "expected": "Extraction rejected",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-03",
+    "group": "Marketplace",
+    "setup": "Skill asks new network host during update",
+    "expected": "Permission diff + fresh consent",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-04",
+    "group": "Marketplace",
+    "setup": "Uninstall with shared dependency",
+    "expected": "Preserve shared files and inform",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-05",
+    "group": "Marketplace",
+    "setup": "Disabled skill relevance high",
+    "expected": "Never invoked",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-06",
+    "group": "Marketplace",
+    "setup": "Model lacks required tool capability",
+    "expected": "Not eligible, reason surfaced",
+    "level": "unit",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-07",
+    "group": "Marketplace",
+    "setup": "Catalog offline",
+    "expected": "Cached metadata clearly stale",
+    "level": "native-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "SKILL-08",
+    "group": "Marketplace",
+    "setup": "Source has unknown license",
+    "expected": "No verified install badge",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MCP-01",
+    "group": "MCP",
+    "setup": "Tool server hangs indefinitely",
+    "expected": "Timeout and process cleanup",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MCP-02",
+    "group": "MCP",
+    "setup": "MCP response spoofing trusted instruction",
+    "expected": "Tool output treated untrusted",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MCP-03",
+    "group": "MCP",
+    "setup": "Connection revoked mid-run",
+    "expected": "New calls denied, state visible",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "MCP-04",
+    "group": "MCP",
+    "setup": "Tool schema changes silently",
+    "expected": "Reinspect/consent as required",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-01",
+    "group": "Release",
+    "setup": "Windows signed installer clean machine",
+    "expected": "Pass with artifact ID, identity and data paths",
+    "level": "packaged-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-02",
+    "group": "Release",
+    "setup": "Linux Ubuntu actual desktop installation",
+    "expected": "Runtime deps/Skia/keyring/PTy checked",
+    "level": "packaged-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-03",
+    "group": "Release",
+    "setup": "Linux Debian/Fedora/Arch installation",
+    "expected": "Per-distro reports, no broad claim without results",
+    "level": "packaged-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-04",
+    "group": "Release",
+    "setup": "Installer upgrade with active saved chats",
+    "expected": "History/undo/project/settings preserved",
+    "level": "packaged-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-05",
+    "group": "Release",
+    "setup": "Invalid signed update manifest",
+    "expected": "Update rejected; current app safe",
+    "level": "security",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-06",
+    "group": "Release",
+    "setup": "Restore corrupted backup",
+    "expected": "No partial destructive overwrite",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-07",
+    "group": "Release",
+    "setup": "Linux Secret Service absent",
+    "expected": "No plaintext credential persistence",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-08",
+    "group": "Release",
+    "setup": "Disk full during migration",
+    "expected": "Prior profile recoverable",
+    "level": "integration",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-09",
+    "group": "Release",
+    "setup": "Uninstall default mode",
+    "expected": "User data retained",
+    "level": "packaged-ui",
+    "status": "not_executed"
+  },
+  {
+    "caseId": "PLAT-10",
+    "group": "Release",
+    "setup": "Diagnostics export with canary secrets",
+    "expected": "No secrets in output",
+    "level": "security",
+    "status": "not_executed"
+  }
+]

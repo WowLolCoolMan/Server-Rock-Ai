@@ -2,7 +2,7 @@
 // or Coding Agent task runs in. Covers the sidebar project list and its overflow menu, the
 // create/edit/remove dialogs, selecting the active project, the folder manager, and saving
 // projects.json.
-// Depends on: ProjectStore and LocalProject (ServerRock.Core), the folder picker, and page state
+// Depends on: ProjectStore and LocalProject (SkaiDesktop.Core), the folder picker, and page state
 // in MainPage.xaml.cs (_projects, _activeProjectId, _activeProjectName, _projectsAvailable).
 // Called by: project buttons in MainPage.xaml and the sidebar list built by RenderProjects, the
 // /project, /newproject, and /folders slash commands, SwitchModeAsync (Coding Agent without
@@ -14,8 +14,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 

@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Filesystem",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Scoped local file operations"
+  },
+  {
+    "name": "GitHub",
+    "url": "https://github.com/github/github-mcp-server",
+    "purpose": "Repositories, issues, pull requests"
+  },
+  {
+    "name": "Playwright",
+    "url": "https://github.com/microsoft/playwright-mcp",
+    "purpose": "Browser interaction and UI testing"
+  },
+  {
+    "name": "Docker gateway",
+    "url": "https://github.com/docker/mcp-gateway",
+    "purpose": "Containerized MCP orchestration"
+  },
+  {
+    "name": "Context7",
+    "url": "https://github.com/upstash/context7",
+    "purpose": "Library documentation"
+  },
+  {
+    "name": "Memory",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Knowledge persistence reference"
+  },
+  {
+    "name": "Fetch",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Web retrieval reference"
+  },
+  {
+    "name": "Git",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Git repository operations reference"
+  },
+  {
+    "name": "SQLite",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "SQLite access reference"
+  },
+  {
+    "name": "PostgreSQL",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Database schema and queries reference"
+  },
+  {
+    "name": "Sequential thinking",
+    "url": "https://github.com/modelcontextprotocol/servers",
+    "purpose": "Structured reasoning reference"
+  },
+  {
+    "name": "Sentry",
+    "url": "https://github.com/getsentry/sentry-mcp",
+    "purpose": "Issue and error investigation"
+  },
+  {
+    "name": "Cloudflare",
+    "url": "https://github.com/cloudflare/mcp-server-cloudflare",
+    "purpose": "Cloudflare infrastructure"
+  },
+  {
+    "name": "Kubernetes",
+    "url": "https://github.com/containers/kubernetes-mcp-server",
+    "purpose": "Kubernetes operations"
+  },
+  {
+    "name": "Unity",
+    "url": "https://github.com/CoplayDev/unity-mcp",
+    "purpose": "Unity editor automation"
+  }
+]

@@ -1,0 +1,1466 @@
+[
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/00_AGENT_READ_FIRST.md",
+    "bytes": 5202,
+    "sha256": "0628a055ead37fbd4a9604100e253918ba30eafdb130b42aba88318ea508c12c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/00_START_HERE_FINAL.md",
+    "bytes": 2364,
+    "sha256": "5fcac0db141b3b6a51b6c610dd0ad7dd14b5a64956768045327994fb9c5a36c0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/AGENT_HANDOFF_PROMPT.md",
+    "bytes": 2793,
+    "sha256": "d39388c59ba3c032d12f9985e343a1868b1f073886db40d47a79a706231ffb43"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/BUNDLE_MANIFEST.json",
+    "bytes": 33765,
+    "sha256": "1ce211d336bee17ad449ab47b36c4924f038f39712a0d9529df166b4953bcda9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/MASTER_INDEX.md",
+    "bytes": 2522,
+    "sha256": "6f11beb702a488bdffcbf7b8d31fe07d14d917a07c88ddc9451737216b66c67c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/README.md",
+    "bytes": 1306,
+    "sha256": "521fb8783a487e19573942aac24fdefe472fcd63036418327f859f547088f637"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/SPEC_PRECEDENCE.md",
+    "bytes": 1535,
+    "sha256": "af54cdb0cb89d13ffcccff177c4b845fb6f10996f443ab7b0e78bbfc6162bed6"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/START_HERE_PREMIUM.md",
+    "bytes": 5003,
+    "sha256": "cb3599cb29a72543cca5ad8d586c01c9a992b0134a8672f8b8d4b976ba6f7532"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/SUPERSEDED_OLD_SPEC_NOTICE.md",
+    "bytes": 143,
+    "sha256": "c1e5337b0124c861e2572c8ec78ed251948c0c8bcd339ff9e933c1b8b0ce3c17"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/VERIFICATION_REPORT.md",
+    "bytes": 562,
+    "sha256": "9455e9957051ceb273f1364397ecfeda9747c9a153feed8c853512f234b08db2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/acceleration/AGENT_DONOR_PROTOCOL.md",
+    "bytes": 1011,
+    "sha256": "c8b4f16517a6727ad9773b07d2e5b22efc4bfd03b06387b44fa52b31e2fe00bf"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/acceleration/DONOR_REPOSITORIES.csv",
+    "bytes": 6592,
+    "sha256": "e41552cf774dc66a2131855e5af5895d41609d90e9b41d55b63e2c915a63e11f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/acceleration/FAST_TRACK_EXECUTION.md",
+    "bytes": 2801,
+    "sha256": "9269ac548301b838eaac972fe09570f4db8bc17b9caa0ed8fac852d909cf3ab0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/acceleration/REPOSITORY_TRIAGE_TEMPLATE.md",
+    "bytes": 348,
+    "sha256": "bda4d15ae5ccfdc6fb50227734324ef1c0d27450bd631cfa312810940eeac08b"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/acceleration/REUSE_AND_LICENSE_POLICY.md",
+    "bytes": 2359,
+    "sha256": "471fd90dad1706c7a6b3e7eeeff87dbfc862c10be4b92dbbafbb8109d8a6f4d0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/00_READ_FIRST_FOUNDATION.md",
+    "bytes": 1011,
+    "sha256": "a9ccc0da62da66040d00865d500ce502614b380e82625b1d69d95a2f5fba4544"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/01_STACK_DECISION_AND_SPIKE.md",
+    "bytes": 1955,
+    "sha256": "08e5b946fde9adf19e1336764e9b85891bacfb31f6f8e9d0b80b119fb378a0b2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/02_SYSTEM_BOUNDARIES.md",
+    "bytes": 1689,
+    "sha256": "e16469a4eede1b84509883cb7477a665d4eb6f2976306b11f3dd7052123865eb"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/03_RUNTIME_CONTRACTS.md",
+    "bytes": 1740,
+    "sha256": "7a00eaac9b6c486b01edece1053965482a80d65c78874798455dd560b60170a7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/04_USER_WORKFLOWS.md",
+    "bytes": 1810,
+    "sha256": "b87a7a33111df83e9ff70fb11bebf00355293b5ebe3079c71e8bb31a39332933"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/05_INTEGRATION_SPEC.md",
+    "bytes": 1509,
+    "sha256": "5bbece02e7dbd89060e930e965e2feb15f1555aa4cffbf459019a6caa0d7342d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/06_QUALITY_GATES.md",
+    "bytes": 1490,
+    "sha256": "d5746dbbcfa8328df11578f4b4bd1917ec4e0586554875e599d540ad3d2c96d8"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/07_IMPLEMENTATION_BACKLOG.csv",
+    "bytes": 4375,
+    "sha256": "c73328561af6b74eb915e8df8c85ce0a30b34194cf131e29a4e8670a28b46ff2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/architecture/08_ADR_TEMPLATE.md",
+    "bytes": 407,
+    "sha256": "ecd9fa76a54b0ae6cf9ac1e21a38a86ce37a3686dacf34c10e2d9ce6e292cd04"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/archive/00_START_HERE_FINAL_ORIGINAL.md",
+    "bytes": 2176,
+    "sha256": "3f8c269618e26c877aa37a0c56630585b79f2780efad00b4d6e6c232fed33cd2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/COMPONENT_OWNERSHIP_AND_REMOVAL.md",
+    "bytes": 958,
+    "sha256": "9bebf2b110ceb9bda6dc6e7bfafb0ce7b6c463d3a113094b13428e07746d5947"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/CROSS_PLATFORM_AGENT_HANDOFF.md",
+    "bytes": 755,
+    "sha256": "3493d4a939cee6820ad7189fba1cc8ddd231a715139e1382b6c48755c4ce4e8d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/DATA_CONTRACTS_AND_SCHEMA.md",
+    "bytes": 2010,
+    "sha256": "259a759b465c82edd50f442538a021d4158a1391f0c59e22a1c595e9f4135c19"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/IMPLEMENTATION_READINESS.md",
+    "bytes": 2210,
+    "sha256": "11f27fae9d04db25252b4e8d6121773d99ed60fbd3379b606f0d139ffa4b698a"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/MASTER_TRACEABILITY.csv",
+    "bytes": 3056,
+    "sha256": "c283ec9e4f2eb9638d02b8975ee118e071e90398e0174c090c0d74fa711a3ec4"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/NEGATIVE_TEST_SUITE.md",
+    "bytes": 2146,
+    "sha256": "d1e4d35d9578226495e2c48a705532a3ebd6ccd1feec21ffd7c3df20e949d1ac"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/QUALITY_AND_COMPARISON_SCORECARD.md",
+    "bytes": 1003,
+    "sha256": "e20771fa6f1218f281363b207dab68a7d11157a76613962dd7e3485a3a67e1c6"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/REQUIREMENTS_AND_CONFLICT_RESOLUTION.md",
+    "bytes": 3505,
+    "sha256": "c07f8192f512bdc6e7ff0fbbb877f00946ea9fe748c2e14806d7309b649852c1"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/RESEARCH_COMPLETENESS_AND_PROVENANCE.md",
+    "bytes": 1701,
+    "sha256": "e43c86732ab433aed7aa4ca550d61160b682d2deab785b59318e8cee8e6f9388"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/SKILL_SELECTION_POLICY.md",
+    "bytes": 1132,
+    "sha256": "bd5a3587993a5928e420b819e6748b6ea15acc88c41450c3d4ce7be2ab154d27"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/audit/SOURCE_FILE_INVENTORY.csv",
+    "bytes": 14918,
+    "sha256": "04f003c24b2b91af79c69c93a554736656cdcfcbbb389e0fcbcb78eb105fedd2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/competitive/DIFFERENTIATION_GATES.md",
+    "bytes": 2463,
+    "sha256": "00206c6a17a1b1813315b6f4c8a243a1b77860fd2d77c3746395041ac77c6b2d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/competitive/EXTRA_20_STEPS.csv",
+    "bytes": 3751,
+    "sha256": "ffc5662758ac6f300c0015f7289032475f47b43e454914a594dbdb21a80e415e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/competitive/EXTRA_20_STEPS.md",
+    "bytes": 2472,
+    "sha256": "cc1c89c3c71fa89dc9fea3c91bacd9c5d8916a280988e31027caaa39dc485d59"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/CONFLICTS_AND_GAPS.md",
+    "bytes": 1949,
+    "sha256": "3ce52bf5938c71af57f4e059bf97211c93a372fceb161d92fd915f27b09119d6"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/DECISIONS_AND_NONNEGOTIABLES.md",
+    "bytes": 2879,
+    "sha256": "13cbca0a8bfb9d03f88701a0af5880a480d2888397bf5b9a1c1f229b88f519b3"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/FEATURE_BACKLOG_FROM_CHATS.md",
+    "bytes": 2194,
+    "sha256": "ed8603ffd9225014736cc8c9ffe27fb780214f2b6eac6388caecf4bafe9a1568"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/HYBRID_ROUTER_SEPARATE_PROJECT.md",
+    "bytes": 1757,
+    "sha256": "59cf7348a3cf3acef4eeddec0ab25f26e989f3bc7e7b6d3a51c6979416940d2f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/IMPLEMENTED_VS_PLANNED.md",
+    "bytes": 2234,
+    "sha256": "ce15dc00e1fd2ae6654ef5995c7dd37f057bb4318337f26a21c61afea89213f7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/PRIOR_ARTIFACTS_AND_REUSE.md",
+    "bytes": 1879,
+    "sha256": "4608840b707237bf3428dc039f370affbf50f61f0f49019c1818c1a9e5da9001"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/READ_FIRST_HISTORY_INTEGRATION.md",
+    "bytes": 1209,
+    "sha256": "2cd30ccb6d83a79b855b042132a8ea4da61a84b7ad94041f36994c846d0b3b79"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/history/REQUIREMENTS_TRACEABILITY.csv",
+    "bytes": 2135,
+    "sha256": "26da15694e15dff0617cd2b35cc376d3056104abf32be23daff8346223bd664d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/00_READ_ME_FIRST.md",
+    "bytes": 2230,
+    "sha256": "a1ba2e1da37f20eecd7e3fe9dc59308ee02c1813d14b09e62a3d33ea0dbcc87e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/01_MARKETPLACE_AND_SKILL_LIFECYCLE.md",
+    "bytes": 2157,
+    "sha256": "ab628e5c4f03b0d24c8a911bea1428920ce00a9cee6b559d2492de31f19ef459"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/02_MODEL_AWARE_AUTOMATIC_SKILL_ROUTER.md",
+    "bytes": 1895,
+    "sha256": "b6aa64f146e8d554567411e6038108b39dc6df17b15a89afe28eea410ccae063"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/03_TAURI_MIGRATION_AND_DESKTOP_UI.md",
+    "bytes": 1558,
+    "sha256": "434ffc72447417357ae314f8d4f6e8616b0d336b0304cea2020de0d8a22b7a79"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/04_CHAT_HISTORY_AND_DATA_SAFETY.md",
+    "bytes": 921,
+    "sha256": "2ccbd1c1e21381b62f616479df142b507c0f602adb96c200e6c72f1aeda2377a"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/05_PRODUCTION_GRADE_ENGINEERING_PACK.md",
+    "bytes": 1193,
+    "sha256": "75b1edbe72e1962835037b8479305b79111ae926d5993a383c5deb3bb2fd2a3e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/implementation_spec/06_QA_AND_DELIVERY_CHECKLIST.md",
+    "bytes": 1198,
+    "sha256": "924b363de7ee767fff1fab44bb6cabb06d8dd4be15cdee6268286012ec6dd711"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/MCP_SHORTLIST.json",
+    "bytes": 2092,
+    "sha256": "43eac641fbea962582d61510bc6372535a19f23c75db929f662e603e7f10db59"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/MCP_SHORTLIST.md",
+    "bytes": 2118,
+    "sha256": "3e468f946ef1a1d9d8b4e6634835345411bb62595e5597fec1597c9f3103c65f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/REPOSITORY_SHORTLIST.csv",
+    "bytes": 3288,
+    "sha256": "734c72308136889a2e09f2772b497a9bebb5581770b1bd3d8d4e866fd324a51f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/REPOSITORY_SHORTLIST.md",
+    "bytes": 4386,
+    "sha256": "97b4a68b64f1c27ffc8e510a5d1d4efc6bf652b8aa52047204865a0f10622fd0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/original_top_50/INTEGRATION_GUIDE.md",
+    "bytes": 2109,
+    "sha256": "178993c60c7575311e2a9016257fcde49750a71b13d29abcb2674d47e138f5b9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/original_top_50/README.md",
+    "bytes": 9478,
+    "sha256": "321a4eb41bac0bddda7cb9043da202959de819855de51bae41748d9677d60c78"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/original_top_50/top_50_skills.csv",
+    "bytes": 14971,
+    "sha256": "bcb2e6fd2c40319041bfef6e2a59bad0bf1b1b9f90db09aaa4477d14b125fdc0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Complete_Skills_Marketplace_Spec/research/original_top_50/top_50_skills.json",
+    "bytes": 20615,
+    "sha256": "610f0c9bbafae9b61d31ae33c8cfaef7c0dd211cd276c369ea4d4e4ca7e127ca"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/MCP_SHORTLIST.json",
+    "bytes": 2092,
+    "sha256": "43eac641fbea962582d61510bc6372535a19f23c75db929f662e603e7f10db59"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/MCP_SHORTLIST.md",
+    "bytes": 2118,
+    "sha256": "3e468f946ef1a1d9d8b4e6634835345411bb62595e5597fec1597c9f3103c65f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/REPOSITORY_SHORTLIST.csv",
+    "bytes": 3288,
+    "sha256": "734c72308136889a2e09f2772b497a9bebb5581770b1bd3d8d4e866fd324a51f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/REPOSITORY_SHORTLIST.md",
+    "bytes": 4386,
+    "sha256": "97b4a68b64f1c27ffc8e510a5d1d4efc6bf652b8aa52047204865a0f10622fd0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/original_top_50/INTEGRATION_GUIDE.md",
+    "bytes": 2109,
+    "sha256": "178993c60c7575311e2a9016257fcde49750a71b13d29abcb2674d47e138f5b9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/original_top_50/README.md",
+    "bytes": 9478,
+    "sha256": "321a4eb41bac0bddda7cb9043da202959de819855de51bae41748d9677d60c78"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/original_top_50/top_50_skills.csv",
+    "bytes": 14971,
+    "sha256": "bcb2e6fd2c40319041bfef6e2a59bad0bf1b1b9f90db09aaa4477d14b125fdc0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Skills_MCP_GitHub_Research/original_top_50/top_50_skills.json",
+    "bytes": 20615,
+    "sha256": "610f0c9bbafae9b61d31ae33c8cfaef7c0dd211cd276c369ea4d4e4ca7e127ca"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/SUPERSEDED_OLD_SPEC_NOTICE.md",
+    "bytes": 143,
+    "sha256": "c1e5337b0124c861e2572c8ec78ed251948c0c8bcd339ff9e933c1b8b0ce3c17"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/00_READ_ME_FIRST.md",
+    "bytes": 2176,
+    "sha256": "ed45d5e83265bc049154b7951a9acde9d705c1d8dabe45c90d5f33058265e834"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/01_CURRENT_VS_TARGET_GAP_ANALYSIS.md",
+    "bytes": 2357,
+    "sha256": "c48df35ac89821368409e9e4da11dfa2dbaecad62dc09212048ae9aef32160c7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/02_IMPLEMENT_NATIVE_MARKETPLACE.md",
+    "bytes": 3467,
+    "sha256": "f2151ec95510476cace853be3bbe28a4deb3d03b1b5f722aec254ef2870f5b4f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/03_MODEL_ROUTER_AND_COMPATIBILITY.md",
+    "bytes": 1866,
+    "sha256": "9e1803723a56e19bcac5029a529b54f57a496b0dc492c0670c9b7820e5304613"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/04_MCP_DEPENDENCIES_UPDATES_REMOVAL.md",
+    "bytes": 1281,
+    "sha256": "2f4f4c92ebd905a168ac67fee5df3ce982882885359552cf2d7375ae5d29b7e7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/05_NATIVE_UI_CHAT_HISTORY_AND_RELEASE.md",
+    "bytes": 1643,
+    "sha256": "df9008210138e5088978f46caeef3c52415e838bf62bd5dbd95aca30f9fe1f68"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/native_upgrade/06_ACCEPTANCE_MATRIX.md",
+    "bytes": 1498,
+    "sha256": "18ef83fc1877ad05f7d932a0cc5872527a95f44928abf62e3c987261f1a65f10"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/MCP_SHORTLIST.json",
+    "bytes": 2092,
+    "sha256": "43eac641fbea962582d61510bc6372535a19f23c75db929f662e603e7f10db59"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/MCP_SHORTLIST.md",
+    "bytes": 2118,
+    "sha256": "3e468f946ef1a1d9d8b4e6634835345411bb62595e5597fec1597c9f3103c65f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/REPOSITORY_SHORTLIST.csv",
+    "bytes": 3288,
+    "sha256": "734c72308136889a2e09f2772b497a9bebb5581770b1bd3d8d4e866fd324a51f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/REPOSITORY_SHORTLIST.md",
+    "bytes": 4386,
+    "sha256": "97b4a68b64f1c27ffc8e510a5d1d4efc6bf652b8aa52047204865a0f10622fd0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/original_top_50/INTEGRATION_GUIDE.md",
+    "bytes": 2109,
+    "sha256": "178993c60c7575311e2a9016257fcde49750a71b13d29abcb2674d47e138f5b9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/original_top_50/README.md",
+    "bytes": 9478,
+    "sha256": "321a4eb41bac0bddda7cb9043da202959de819855de51bae41748d9677d60c78"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/original_top_50/top_50_skills.csv",
+    "bytes": 14971,
+    "sha256": "bcb2e6fd2c40319041bfef6e2a59bad0bf1b1b9f90db09aaa4477d14b125fdc0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/legacy_references/Server_Rock_AI_Uno_Native_Marketplace_Upgrade_Plan/research/original_top_50/top_50_skills.json",
+    "bytes": 20615,
+    "sha256": "610f0c9bbafae9b61d31ae33c8cfaef7c0dd211cd276c369ea4d4e4ca7e127ca"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/00_READ_ME_FIRST.md",
+    "bytes": 2176,
+    "sha256": "ed45d5e83265bc049154b7951a9acde9d705c1d8dabe45c90d5f33058265e834"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/01_CURRENT_VS_TARGET_GAP_ANALYSIS.md",
+    "bytes": 2357,
+    "sha256": "c48df35ac89821368409e9e4da11dfa2dbaecad62dc09212048ae9aef32160c7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/02_IMPLEMENT_NATIVE_MARKETPLACE.md",
+    "bytes": 3467,
+    "sha256": "f2151ec95510476cace853be3bbe28a4deb3d03b1b5f722aec254ef2870f5b4f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/03_MODEL_ROUTER_AND_COMPATIBILITY.md",
+    "bytes": 1866,
+    "sha256": "9e1803723a56e19bcac5029a529b54f57a496b0dc492c0670c9b7820e5304613"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/04_MCP_DEPENDENCIES_UPDATES_REMOVAL.md",
+    "bytes": 1281,
+    "sha256": "2f4f4c92ebd905a168ac67fee5df3ce982882885359552cf2d7375ae5d29b7e7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/05_NATIVE_UI_CHAT_HISTORY_AND_RELEASE.md",
+    "bytes": 1643,
+    "sha256": "df9008210138e5088978f46caeef3c52415e838bf62bd5dbd95aca30f9fe1f68"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/native_upgrade/06_ACCEPTANCE_MATRIX.md",
+    "bytes": 1498,
+    "sha256": "18ef83fc1877ad05f7d932a0cc5872527a95f44928abf62e3c987261f1a65f10"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/AGENT_COLLABORATION.md",
+    "bytes": 1621,
+    "sha256": "d45f32f943b4be12a856ae51079967d29b338edbb7a4246ebd8acda1b2939f68"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/ARCHITECTURE_TARGET.md",
+    "bytes": 1659,
+    "sha256": "f4fc4c315dfbad3925a126d60a755455bc8770351ebd90bdd252cb8e6ad86b4c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/CURRENT_STATE_VERIFICATION.md",
+    "bytes": 1717,
+    "sha256": "9f1714dc3b754494897c8dedf21f857fb5f41e75afcc801daf1ae147675ea097"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/DECISION_REGISTER.md",
+    "bytes": 1034,
+    "sha256": "dbda2688d2f15363736ca41385d8dc94a85aadcb90da148c8a2e903eea0f34c2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/FEATURE_DEPENDENCY_GRAPH.md",
+    "bytes": 1088,
+    "sha256": "c4356a07a0289b53346ccd0156440c7ac899251b7308021ef52082a44fd532d0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/IDE_DESKTOP_ARCHITECTURE_DECISION.md",
+    "bytes": 4699,
+    "sha256": "6a6f11f2bb9a949eb1c184cc2b67bdc48a882486e44de61b813838c7dd1cd15f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/IMPLEMENTATION_PLAYBOOK.md",
+    "bytes": 1257,
+    "sha256": "0ad0f0dcfefd2f3bc9d6ed799a7fd7637d2f35e34a349e023be3b72fd6d2f376"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/INSTALL_AND_PORTABILITY.md",
+    "bytes": 1114,
+    "sha256": "0ae9a220610f9e9db56c43131d8068dc59c54481ca522d260653e5d17b014884"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/ISSUE_TEMPLATE.md",
+    "bytes": 249,
+    "sha256": "0e6f7e64e85eb2d6fc225f96f3271b503d452bcbcda0bd0bd4939a52e60da80a"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/PRODUCT_CONTRACT.md",
+    "bytes": 1675,
+    "sha256": "fe4f38ee3869e2697c84018e60790c0f65b74c317684108fd80ba78472511ce0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/PROVIDER_AND_AGENT_SPEC.md",
+    "bytes": 1182,
+    "sha256": "21a6c3e5896bc469cc723625e613f1350ca16ec96a02c9ffc7bd20a75b4e2a3d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/PR_TEMPLATE.md",
+    "bytes": 381,
+    "sha256": "3df82ebb7171a4e96dfcc9c7473a0541e85816d7d428cb5b74602ec365b6ce04"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/RELEASE_ACCEPTANCE.md",
+    "bytes": 1028,
+    "sha256": "706ee4f5a5d76053726822287cd2490a77a6a7e78c04bb320cb80d9c3a42eba6"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/RELIABILITY_AND_RECOVERY.md",
+    "bytes": 940,
+    "sha256": "aa817422d9412d89d843ea75c64904df3d8296d62461a75306744bf305a3757b"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/SECURITY_AND_PRIVACY.md",
+    "bytes": 1734,
+    "sha256": "73ebf8ab74e9fb84b6ee8a25a29eade09c107f43aac8b2d7a4f620b73944ef3c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/SKILL_MARKETPLACE_SPEC.md",
+    "bytes": 1504,
+    "sha256": "d284a0f8a3e8467201fb9f72ad19c7e8e0aefedfd8f9f4a07f56478743b70209"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/TESTING_MATRIX.md",
+    "bytes": 1129,
+    "sha256": "d5ec4306b11a4cd05da65353a3f31ff1b6c66dde3df42cfbf7311e223e6260d9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/planning/UX_INFORMATION_ARCHITECTURE.md",
+    "bytes": 2153,
+    "sha256": "0b99e362310cff946d925f35537a12b3813fed8bf23458169f059c1c4a4fe78e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/product_experience/DESKTOP_WORKFLOW_CONTRACT.md",
+    "bytes": 1013,
+    "sha256": "0669e48fedf40df760c8e95b0b6baed40d93fb509ee522fa7e6df7c777762323"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/product_experience/USER_NEEDS_30_FEATURES.md",
+    "bytes": 12266,
+    "sha256": "b056f5a4676ba327d3d9a7cc5b2f2397a8e24ca14a6a7d4083f4349e86fefa12"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/MCP_SHORTLIST.json",
+    "bytes": 2092,
+    "sha256": "43eac641fbea962582d61510bc6372535a19f23c75db929f662e603e7f10db59"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/MCP_SHORTLIST.md",
+    "bytes": 2118,
+    "sha256": "3e468f946ef1a1d9d8b4e6634835345411bb62595e5597fec1597c9f3103c65f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/REPOSITORY_SHORTLIST.csv",
+    "bytes": 3288,
+    "sha256": "734c72308136889a2e09f2772b497a9bebb5581770b1bd3d8d4e866fd324a51f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/REPOSITORY_SHORTLIST.md",
+    "bytes": 4386,
+    "sha256": "97b4a68b64f1c27ffc8e510a5d1d4efc6bf652b8aa52047204865a0f10622fd0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/original_top_50/INTEGRATION_GUIDE.md",
+    "bytes": 2109,
+    "sha256": "178993c60c7575311e2a9016257fcde49750a71b13d29abcb2674d47e138f5b9"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/original_top_50/README.md",
+    "bytes": 9478,
+    "sha256": "321a4eb41bac0bddda7cb9043da202959de819855de51bae41748d9677d60c78"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/original_top_50/top_50_skills.csv",
+    "bytes": 14971,
+    "sha256": "bcb2e6fd2c40319041bfef6e2a59bad0bf1b1b9f90db09aaa4477d14b125fdc0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/research/original_top_50/top_50_skills.json",
+    "bytes": 20615,
+    "sha256": "610f0c9bbafae9b61d31ae33c8cfaef7c0dd211cd276c369ea4d4e4ca7e127ca"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/roadmap/100_STEP_ROADMAP.md",
+    "bytes": 23134,
+    "sha256": "6ed06bb95bc5e404f948d9d394d45d31f6d9233259f828d6b0c32f846a30a8a4"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/roadmap/100_STEP_TRACKER.csv",
+    "bytes": 26679,
+    "sha256": "ff72a23c49519cc9c8afbb5d34e9efedf70d03f9dc3b3e1e9f31e6ba0bf5be0c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/roadmap/START_HERE.md",
+    "bytes": 262,
+    "sha256": "8544607b8d5482bf951385558113f6cbd0e96dc6c6cdcc90ccbe0721c2ee4010"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/storage/EXTRA_10_STORAGE_STEPS.md",
+    "bytes": 951,
+    "sha256": "2675b16ad7f427cca43b1ca0d727f7b1dc6fa21433332d8dba86e892cf8db48d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/storage/SINGLE_ROOT_STORAGE_AND_DIAGNOSTICS.md",
+    "bytes": 6280,
+    "sha256": "9a1ae66546cf63b91a809ff43e4b6a1f8595662a2f2b43d2cdab858daa9df106"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/tools/validate_pack.py",
+    "bytes": 2775,
+    "sha256": "847f578ad314cdff5f6b0cdd11c882d405f68dac479d086047035c04c7537de4"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/README_RELEASE_AND_USAGE.md",
+    "bytes": 1858,
+    "sha256": "990821b8f0e0a77e9f354d2015a302c6822e0e6ed70e288afebc2ad50c88eb14"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/agents/ANTIPATTERNS_AND_REVIEW.md",
+    "bytes": 1926,
+    "sha256": "c3b931fc2c17827e393f0e2dc1349ed29d240931940415d11f5501c5f10b6100"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/agents/EXECUTION_PLAYBOOK.md",
+    "bytes": 2576,
+    "sha256": "2602f6b2f590a5f6d8d16895d9c718d71756b8c239a6b61e1e0b809ab9088cac"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/agents/TWO_AGENT_COLLABORATION.md",
+    "bytes": 1780,
+    "sha256": "fed5674b5ab8d1dbaada68141e9ddc64b2237a97fbab3670a1195a0d7a93b350"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/AGENT_RUNTIME.md",
+    "bytes": 4474,
+    "sha256": "a1bfc3edc8b0193c3c5acf69af9f598fc67d5d394bad439780a88d823c3c3e6c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/CORE_BOUNDARIES.md",
+    "bytes": 3726,
+    "sha256": "2d6fd344b1175ae4f734adc797974e00ca73f48a005658b84d5eeb4a606d5650"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/DATA_STORAGE.md",
+    "bytes": 3321,
+    "sha256": "96a4f14e08c1596be24d40055179a308fcc4675a91f6c11b53aec2c88bb0b2d7"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/MCP_ACP_AND_TOOLS.md",
+    "bytes": 2294,
+    "sha256": "03501fd23a9eddfa851685035a8b9f8b502d1ac64d8e4c5210d09e1dad07c549"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/OBSERVABILITY_RECOVERY.md",
+    "bytes": 1538,
+    "sha256": "5a4b9f5c8733faf6db2bf597d0097a14edd9ceab5090bc8971091415e52cf9fa"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/PERMISSIONS_AND_THREAT_MODEL.md",
+    "bytes": 3355,
+    "sha256": "b0986a85e2aaae3d1254ff096f3c5fddac53dd2a628aab1372db2bdd7a620670"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/PROVIDER_ROUTING.md",
+    "bytes": 3734,
+    "sha256": "9c484d335442146167eff45ad3d11085e4de040ff345db1a0565fcc859fafb91"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/WORKFLOW_ENGINE.md",
+    "bytes": 1568,
+    "sha256": "3df825126a9d304641626f44e26665e5a56df31020ca6cd5484bcfd3064ea30c"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/architecture/WORKSPACE_AND_GIT.md",
+    "bytes": 2782,
+    "sha256": "0b63123e9e1bb3c308d77b62e8dc7ae6c57585ab2365176b118cd9bc6534a1b0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/README.md",
+    "bytes": 909,
+    "sha256": "6ae31479513d50781eb76044485cc9508ec85f3b31084ded440f38e09a92e530"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/acceptance_cases.csv",
+    "bytes": 7508,
+    "sha256": "0be9d6016c6133f3d9d1ca1431b9fb016d484358110eefd5025f1d157ee94fe8"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/acceptance_cases.json",
+    "bytes": 15013,
+    "sha256": "fd57344aa76f934057aa5688fbffaebc8f3322fa6b13b29d7bcf8e4bc1a8b14f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/component_contracts.json",
+    "bytes": 29453,
+    "sha256": "a3fd2ca8cde695d4d2b275a528e2de1d6979f8292202bcbe6b8a8140ee064e86"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/event_catalog.json",
+    "bytes": 16267,
+    "sha256": "785f6679c172b3db914598648aff624fc5f80b1e9e310fbdf8b40ba7d3b9b9b5"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/requirements.csv",
+    "bytes": 16872,
+    "sha256": "82198b5a3aa20237becd095eb58296ad1e12d89ec4ee6d31dc3ed5461d2bb157"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/requirements.json",
+    "bytes": 36326,
+    "sha256": "1a3e8ad9d06d4ae00623398255f60abe0746f9c8b7c8939b48e94c33be0807fa"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/routes.json",
+    "bytes": 14568,
+    "sha256": "befad9a70cf7dba02317da750874c8556c4c9c8d153fcd2f8c080431a1f2399a"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/data/workflow_templates.json",
+    "bytes": 18440,
+    "sha256": "c7a15b5faed993393470892e9f84065be28c13856119c5a57ba10a80011e4f8e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/evidence/CURRENT_REPOSITORY_BASELINE.md",
+    "bytes": 3069,
+    "sha256": "eb08f738a9c8bed30e6563bee3035b9d26200a1fb17c19a16407d57329e9d6b2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/evidence/REPO_TO_FEATURE_MAP.md",
+    "bytes": 3179,
+    "sha256": "5217243bb3c66a133e7f004a7f9326975278a1918c5a2c571e3505465a60238f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/evidence/SOURCES.json",
+    "bytes": 840,
+    "sha256": "3961f2a9d2124b13ec9b988d199ffb4fa871efd61dcd7e691f9aa8e855176b10"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/examples/Contracts_ILLUSTRATIVE.cs",
+    "bytes": 2133,
+    "sha256": "c11b55fd4c3e6abd8b01614194ee90a6e5a90f37c7fc28bdfdb7d549935316f5"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/examples/IMPLEMENTATION_WALKTHROUGH.md",
+    "bytes": 1757,
+    "sha256": "e81bf85b9175a92d22d5ee9b14d7fb706887a47a32e92d6fc72436993051b0b4"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/examples/operation_event_example.json",
+    "bytes": 443,
+    "sha256": "c2ddcc7c6282ec7700a6b50ce5203a9c244699f7a9ee33f700ae524722c45f05"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/CATALOG_STATUS_AND_PROVENANCE.md",
+    "bytes": 1616,
+    "sha256": "86a50cbf651596dacdf3e20442196104e112b988dd6e702dd9f4287cdd254aa5"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/SKILL_MARKETPLACE_FULL_SPEC.md",
+    "bytes": 4879,
+    "sha256": "4a84d995e0214ec6394d89f493f7e3a2aab8ef5658a94d1e526ce0cbd1746d72"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/catalog_250_candidates.json",
+    "bytes": 123378,
+    "sha256": "0729b4dde24e718109beb6600c73e128338c1702b081e9c692aa5c3f4d3e5b6f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/foundations_50_sources.json",
+    "bytes": 11540,
+    "sha256": "8245248aa4900551e2bf1808236dc12b3283a966202d4a16040125af8aba0511"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/historical_samples/README.md",
+    "bytes": 360,
+    "sha256": "e762ed9d4eaca9c1fdcb9b611bef1bf0ef15d4eb95984dfdc0b738f7fcdd6f75"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/historical_samples/github-skill-scout/SKILL.md",
+    "bytes": 1697,
+    "sha256": "85003e1d3e9d62dcdfa327abf72454a31bdeaacda084d77b265cc1c36f0ccd2f"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/historical_samples/skill-creator-validator/SKILL.md",
+    "bytes": 1660,
+    "sha256": "6d52d33241325a8c04d7e8f278432a7b6a145759f676cc1d6c5451c03322dcce"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/historical_samples/skill-selector/SKILL.md",
+    "bytes": 1616,
+    "sha256": "dadbdb38c54b6c1c5b2e084646192d55adf3c05cd1660392bd7281d3a4f4ffaf"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/marketplace/historical_samples/universal-problem-solver/SKILL.md",
+    "bytes": 1774,
+    "sha256": "2b589e78f4d7c5ed8ea53ea439566b4704348d32445ac0b4ef305f0bafc6dbfc"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/platform/CROSS_PLATFORM_RELEASE.md",
+    "bytes": 4018,
+    "sha256": "bf1091c9566bf22d633eb77d6fcdd01ff2143a54ddeca38f6b5dbce825eabe08"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/platform/PERFORMANCE_AND_DIAGNOSTICS.md",
+    "bytes": 1183,
+    "sha256": "ed6afa664fad00906ccd86d909c42428581bed34d222534a869b3af836bb5adc"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/product/FEATURE_COVERAGE_MATRIX.md",
+    "bytes": 2169,
+    "sha256": "68472af80005638177ce9df0e79edb28fac10e1ad0b399370d367fee71172cd5"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/product/PRODUCT_PRINCIPLES.md",
+    "bytes": 3082,
+    "sha256": "151f9b2cb96518eb3c94412c8a111bac2210805f49584380053ed676074668ad"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/quality/PR_AND_ADR_TEMPLATES.md",
+    "bytes": 981,
+    "sha256": "c6c468a304fa77abc1c6d3cbf1d72dec7eaba4a160fb136d2660c8e0b46f4378"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/quality/QUALITY_GATES.md",
+    "bytes": 2029,
+    "sha256": "f0cbbef164ab0346db2f6166c4116a91780e474a6427fbc918dd6150c4e4927d"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/quality/SCENARIO_ACCEPTANCE.md",
+    "bytes": 3203,
+    "sha256": "2407922633afb8f0631baeef2db672c9ea55c21f277025e4c86ab13f49d4fe68"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/schemas/operation-event.schema.json",
+    "bytes": 1275,
+    "sha256": "99f5f88ffdb9f782e40a52772acec6b91e7eebd21985c62dff48569d80b99609"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/schemas/skill-manifest.schema.json",
+    "bytes": 2738,
+    "sha256": "367ce4a70c1d0abfec8e91fd10c12d03eaf0a7584e4e49abc90fe4ae06e45062"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/schemas/workflow-definition.schema.json",
+    "bytes": 1540,
+    "sha256": "195204f126afbe709270be576112ce4f12c102afdb7e51034235fdbf07a078f2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/CONVERSATION_AND_ARTIFACTS.md",
+    "bytes": 2093,
+    "sha256": "295278222864a94c65935d13357ca692645ac736a103d169a6e66bb2401cd1bf"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/DESIGN_SYSTEM_V2.md",
+    "bytes": 4617,
+    "sha256": "9a8f17fc6c03e45ba89e84b5eecd12adce1d353ebced8bf4b5a046eb68bd60fe"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/EMPTY_ERROR_LOADING_COPY.md",
+    "bytes": 2099,
+    "sha256": "223405e7bd2fc824666ffac1352b2c972bc1195fefde170287dc25ab02608ac0"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/INTERACTION_STATE_MATRIX.md",
+    "bytes": 4234,
+    "sha256": "cdd6f9983c20d18678fe1d310b15d9e2c0717c0e198926002621b4f24213f7a2"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/KEYBOARD_AND_ACCESSIBILITY.md",
+    "bytes": 2061,
+    "sha256": "c0c9299a2c87c4590305715e797afcb5017f03936702419df5f372aa4ba2dcef"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/NAVIGATION_SYSTEM.md",
+    "bytes": 5018,
+    "sha256": "7b8a586b1bccb3d39955c6509fd400e15b6e35102c9d245d0951444f60c47c2e"
+  },
+  {
+    "source_pack": "premium",
+    "path": "source_material/premium/upgrade/ux/SCREEN_BLUEPRINTS.md",
+    "bytes": 10190,
+    "sha256": "36306d2861af3a8e08357c0c95d060d135fbf36bae2e89d26cb53a14ae626d10"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/00-START-HERE/CODEX_MASTER_PROMPT.md",
+    "bytes": 3662,
+    "sha256": "5d6ff3f64d37b42abac2b42bc6e5bae568b8e6efc3f7efdff5be060dd45d3f18"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/00-START-HERE/EXECUTION_ORDER.md",
+    "bytes": 3663,
+    "sha256": "9a4ac788f4ccbf7ccedc0d2e779fdf6fbe5e70df3b7c89d24bdf593f320f666e"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/00-START-HERE/STRICT_INDEPENDENT_BUILD_CONTRACT.md",
+    "bytes": 1407,
+    "sha256": "eea3b4219bdb234e4658199289d0484e8a099014aa074896f52ec96e4d590a4e"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/MANIFEST.json",
+    "bytes": 601,
+    "sha256": "fd17070f7053e2ca57f44032ae63f23241251682eef6620237833889862cbf0e"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/README.md",
+    "bytes": 3728,
+    "sha256": "201fa2f85e45d3fa97c9241d9f0a64e6a60677ff9bf6dfa4c764263b4611574b"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/architecture/AGENT_RUNTIME.md",
+    "bytes": 5762,
+    "sha256": "f47baefba164ed23f02be11fbfa90df37ba21c33c74222ccb1eca3963774f898"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/architecture/MODELS_AND_MARKETPLACE.md",
+    "bytes": 4845,
+    "sha256": "c5bdb235eae1ca9c9769900180d6e1f8bbaa8e1e598117f95b755a25d5131620"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/architecture/SECURITY_AND_RELEASE.md",
+    "bytes": 4794,
+    "sha256": "4634021981bff77c238d5be5adbeff4bc1a2bd22fb48ae1cfb2703e71640a43b"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/backlog/README.md",
+    "bytes": 520,
+    "sha256": "fd637dce75f940b3e0575c55311f810e0da6101b7e87220c08783c7b8b7706c1"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/backlog/issues.csv",
+    "bytes": 19566,
+    "sha256": "8f94171abb7d0635c963f40b36c7db7cd2caeb3986445bb77909e67638614f56"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/backlog/issues.json",
+    "bytes": 26630,
+    "sha256": "67d71242dbf421ea1481f460ad9d9474159f974dc2931a7b187817d48f9ba7e3"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/inspiration/26_IDEAS_NOT_IMPLEMENTATIONS.md",
+    "bytes": 6640,
+    "sha256": "88e556a70868a59a1bccc7e7c29a16e054b10fec7af051c3c3aff9fc4df2249b"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/inspiration/READ_THIS_FIRST.md",
+    "bytes": 2342,
+    "sha256": "464ecdba651deb3d06add14d8b4b4d0c4bfda359c6591c615f4e9dcf96e3c3ca"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/inspiration/SCOPE_AND_PROVENANCE.md",
+    "bytes": 665,
+    "sha256": "6dc56d9aa6c43ab7f10336293137e359e3da62768c5f3094b0a7efaa31b7d3ad"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/tools/repo_preflight.ps1",
+    "bytes": 543,
+    "sha256": "046d7ddcafbabeb409d5826b6059120a80dd739fc2d07b0a7bba0f756d35051a"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/tools/repo_preflight.py",
+    "bytes": 1664,
+    "sha256": "eadb9c2441e70bf80b00b4db98ac921eb483be2b3486bf43a8e055939f3cc579"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/tools/validate_handoff.py",
+    "bytes": 1285,
+    "sha256": "27ce0bc4639a186687da11bd888e39f7ab3d10ff3d57230c7b9a8422a84084d2"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/01-DESIGN_SYSTEM.md",
+    "bytes": 5223,
+    "sha256": "e8832c051920dc25f6c42cfc8186e9be9846867d566d5702e552b616482e80af"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/02-NAVIGATION_AND_PAGES.md",
+    "bytes": 5971,
+    "sha256": "42783a5291034d1be579084a706ed75dd5508bf26e638ff9be303c1498044e44"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/03-OVERLAY_FOCUS_AND_NO_HIDDEN_UI.md",
+    "bytes": 7162,
+    "sha256": "46138f220c721a4fbddf08ddf6f81e08e1862e90fb5805447233b88ed1642344"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/04-INTERACTION_MATRIX.md",
+    "bytes": 4407,
+    "sha256": "78905155a461133265c2deae5da863136518ee7e9ebba585b7c165a25f30bdc0"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/05-UX_VALIDATION.md",
+    "bytes": 2535,
+    "sha256": "635128172c8de2682b6b6f6f6c13be5ff6e4bae1a2c65d103fea3d6107afd5c8"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/06-UI_SHELL_PSEUDOCODE.xaml",
+    "bytes": 1105,
+    "sha256": "02557c015d350930a412d2f191b5fb308a18b1f5857d887deb0858856035e9fe"
+  },
+  {
+    "source_pack": "independent",
+    "path": "source_material/independent/ui/07-PAGE_HIERARCHY_AND_LAYER_REGRESSIONS.md",
+    "bytes": 7665,
+    "sha256": "6fe146fc82798a927c453ccc1c8b5c6442fd666e39070ed222ee012a8af05d3b"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/00-START-HERE/CODEX_MASTER_PROMPT.md",
+    "bytes": 3433,
+    "sha256": "b13b08dc319b54337a8a5f564a21d6302e899f69d0457705305916c5b56a0dae"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/00-START-HERE/EXECUTION_ORDER.md",
+    "bytes": 3511,
+    "sha256": "f6f62867a427aa6fbc97e1a64f8523ace3eee13f49fbb0651c59c74c0c8f3bfc"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/MANIFEST.json",
+    "bytes": 468,
+    "sha256": "4b9a72e876e0d286b5fcdf1052c46d5dc564729d5632954e1aed20ab8da84b0d"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/README.md",
+    "bytes": 3433,
+    "sha256": "b52e102af7f3633da0a465bfdf03d7e3539f05ba9edf94ca89966491770cd7c8"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/architecture/AGENT_RUNTIME.md",
+    "bytes": 5761,
+    "sha256": "077aa2b90262f328f5d0af7570de299ca887e8468861e93f6abf6e609ed7700d"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/architecture/MODELS_AND_MARKETPLACE.md",
+    "bytes": 5287,
+    "sha256": "2ada9ec036c2c968dd56f8b428ed9cded7c5045b5718521bb8212796b86e58e7"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/architecture/SECURITY_AND_RELEASE.md",
+    "bytes": 4794,
+    "sha256": "4634021981bff77c238d5be5adbeff4bc1a2bd22fb48ae1cfb2703e71640a43b"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/backlog/README.md",
+    "bytes": 520,
+    "sha256": "fd637dce75f940b3e0575c55311f810e0da6101b7e87220c08783c7b8b7706c1"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/backlog/issues.csv",
+    "bytes": 19754,
+    "sha256": "a43c70f3e0ec6bf81abd1158be8416b1175a771b4b170670555d7de194deaae8"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/backlog/issues.json",
+    "bytes": 27603,
+    "sha256": "eb2430ac38a10fb09f00ad8585a5a3a2c97f0290c02d2a7288277f0e2ffbef1d"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/references/ODYSSEUS_MAPPING.md",
+    "bytes": 5175,
+    "sha256": "993476ab8abdc018132e5c77891db8e487bfa89915d68489a02ee3788da6e9bf"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/references/SOURCE_LINKS.md",
+    "bytes": 1524,
+    "sha256": "269f945abd2ab193f7355a588deefeeeb6bf595fd887b42e7c890a9e56e15a1b"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/tools/repo_preflight.ps1",
+    "bytes": 543,
+    "sha256": "046d7ddcafbabeb409d5826b6059120a80dd739fc2d07b0a7bba0f756d35051a"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/tools/repo_preflight.py",
+    "bytes": 1664,
+    "sha256": "eadb9c2441e70bf80b00b4db98ac921eb483be2b3486bf43a8e055939f3cc579"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/tools/validate_handoff.py",
+    "bytes": 957,
+    "sha256": "1c77eb99b678b1f0b656a8f2d06a7aa29b3ce2bbe7cbb846bb01df40f8e19eed"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/01-DESIGN_SYSTEM.md",
+    "bytes": 5223,
+    "sha256": "e8832c051920dc25f6c42cfc8186e9be9846867d566d5702e552b616482e80af"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/02-NAVIGATION_AND_PAGES.md",
+    "bytes": 5971,
+    "sha256": "42783a5291034d1be579084a706ed75dd5508bf26e638ff9be303c1498044e44"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/03-OVERLAY_FOCUS_AND_NO_HIDDEN_UI.md",
+    "bytes": 7190,
+    "sha256": "c7d7d0d589bd4645a85e9cf17359dd4b06009dc777b05b8140881fe2b525c364"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/04-INTERACTION_MATRIX.md",
+    "bytes": 4407,
+    "sha256": "78905155a461133265c2deae5da863136518ee7e9ebba585b7c165a25f30bdc0"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/05-UX_VALIDATION.md",
+    "bytes": 2535,
+    "sha256": "635128172c8de2682b6b6f6f6c13be5ff6e4bae1a2c65d103fea3d6107afd5c8"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "path": "source_material/odysseus_ideas_only/ui/06-UI_SHELL_PSEUDOCODE.xaml",
+    "bytes": 1105,
+    "sha256": "02557c015d350930a412d2f191b5fb308a18b1f5857d887deb0858856035e9fe"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/CATALOG_250.md",
+    "bytes": 60698,
+    "sha256": "3253ae88ae824db38a0940d81ca638c4f0dcdf0dc4b02e85b834d8ac39253faf"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/README.md",
+    "bytes": 3655,
+    "sha256": "581edc421926cc2d3e97b8784c78b1ca62ae43455dab4ccde94a4b7c82856b1b"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/catalog_250.json",
+    "bytes": 123378,
+    "sha256": "0729b4dde24e718109beb6600c73e128338c1702b081e9c692aa5c3f4d3e5b6f"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/IMPLEMENTATION_HANDOFF.md",
+    "bytes": 5316,
+    "sha256": "6e2e6a5e00a3a3f2b7b96c0f58a7956d1acbff6a4c517d637c543ae5c9265601"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/INTEGRATION_PLAN.md",
+    "bytes": 7188,
+    "sha256": "71522e37fd3061f5f8d44adac9fadc08a1f50fb7496c3cf8cd2186135e4332a1"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/MARKETPLACE_DESIGN.md",
+    "bytes": 7527,
+    "sha256": "3ed3687a0e771a92cec5d3e79ae51f8ef5715cddd6a470bbf188133ed77b4814"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/MODEL_SKILL_ROUTING.md",
+    "bytes": 6031,
+    "sha256": "292ead81d70594342405c3fb5e5f4e58fc6e7ecd3635fb52a7106e229b7fceda"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/RESEARCH_FINDINGS.md",
+    "bytes": 4054,
+    "sha256": "8b496902bcaef27e481d772a5341f0a957ee06491091c0d9514317e064821d69"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/SERVER_ROCK_RELEASE_READINESS.md",
+    "bytes": 20767,
+    "sha256": "90dac7f900f278c45bea59e901fe4ff33a49da7ed58bc8675d5c322e39cde042"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/TEST_MATRIX.md",
+    "bytes": 2519,
+    "sha256": "832fbd60164d52041d73b97ffe1da2e35245c643d847fd39c010d4da13039341"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/docs/WINDOWS_LINUX_SETUP.md",
+    "bytes": 3683,
+    "sha256": "88ceb6329987a2cc9d90d16e3cfb6007aa6ed67be760e78f71d2ea765d86d016"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/foundations_50.json",
+    "bytes": 11540,
+    "sha256": "8245248aa4900551e2bf1808236dc12b3283a966202d4a16040125af8aba0511"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/marketplace.py",
+    "bytes": 10775,
+    "sha256": "07b18abbbff2c8b418a60b4e7788884c1bf1276ce3fa340a7f794cf6989d5244"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/original_skills/github-skill-scout/SKILL.md",
+    "bytes": 1698,
+    "sha256": "5ef5a2382bf5f6542fc789556845b3f2cbf4c0f7a017b325d24cc7a70433fa8f"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/original_skills/skill-creator-validator/SKILL.md",
+    "bytes": 1661,
+    "sha256": "abec50e4737c4b30854e1dfe55457d27eab7d541e2ed21f77639c0578643c1a1"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/original_skills/skill-selector/SKILL.md",
+    "bytes": 1617,
+    "sha256": "5e2244466c4fedd3684065ba9a4296a5440cbf0ba5440063cccf7c3cb49bd975"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/original_skills/universal-problem-solver/SKILL.md",
+    "bytes": 1775,
+    "sha256": "8d4c368dbfd6949c00b97010bd67d43f5025c7aafc9e9956e28dcb6954865b51"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "path": "source_material/skill_marketplace_250/tests/test_marketplace.py",
+    "bytes": 1531,
+    "sha256": "256f8178b357cea8703e05c8f91ce7e69a414ffd377d9cbb019c5b4b8511bbf6"
+  }
+]

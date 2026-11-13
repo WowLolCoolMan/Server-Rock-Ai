@@ -1,0 +1,71 @@
+caseId,group,setup,expected,level,status
+UX-01,Navigation,Rapid route changes with open model picker,Palette closes; no focus loss or underlying clicks,native-ui,not_executed
+UX-02,Navigation,Two dialogs requested simultaneously,Second queued; only one active approval surface,native-ui,not_executed
+UX-03,Navigation,Resize modal to 760x560 at 200% text,All actions reachable by keyboard and scroll,native-ui,not_executed
+UX-04,Navigation,Press Escape in native file chooser,No project added; focus returns to opener,native-ui,not_executed
+UX-05,Navigation,Back from nested settings,Previous project and scroll restored,native-ui,not_executed
+UX-06,Navigation,Open command palette during streaming,Stream persists; navigation not blocked,native-ui,not_executed
+UX-07,Navigation,Right click archived conversation,Working restore/rename/delete only,native-ui,not_executed
+UX-08,Accessibility,Screen reader cycles all app regions,Meaningful labels/order and statuses,manual,not_executed
+UX-09,Accessibility,Reduced motion enabled,No essential information in animation,native-ui,not_executed
+UX-10,Accessibility,Keyboard-only workflow canvas editing,Nodes and edges editable without dragging,native-ui,not_executed
+CHAT-01,Chat,Cancel stream mid-response,No false completion or duplicate turn,integration,not_executed
+CHAT-02,Chat,Cloud provider auth expires,"Draft preserved, auth error and reauth",integration,not_executed
+CHAT-03,Chat,Temporary chat then quit,No persisted conversation/messages,integration,not_executed
+CHAT-04,Chat,Import same archive twice,"Idempotent, edited imports preserved",integration,not_executed
+CHAT-05,Chat,Huge message with code blocks,Virtual list and horizontal code scrolling,native-ui,not_executed
+CHAT-06,Chat,Untrusted markdown HTML/script,Not executed and links policy enforced,unit,not_executed
+CHAT-07,Chat,Send attachment under Local profile,No outbound cloud transfer,integration,not_executed
+CHAT-08,Chat,Switch model after queued tool call,Status and capability reconsideration,integration,not_executed
+CHAT-09,Chat,Restart while streaming,Interrupted state and partial content retained,integration,not_executed
+CHAT-10,Chat,Search with archived and temporary histories,Privacy filter and stable results,integration,not_executed
+CODE-01,Coding,Reject diff proposal,Working tree unchanged,integration,not_executed
+CODE-02,Coding,External file modified after preview,Stale hash blocks write,integration,not_executed
+CODE-03,Coding,Symlink points outside root,Unauthorized write blocked,security,not_executed
+CODE-04,Coding,Windows junction/reparse escape,Unauthorized write blocked,security,not_executed
+CODE-05,Coding,Cancel agent terminal with grandchild,Whole process tree stops,integration,not_executed
+CODE-06,Coding,Two write agents same root,Isolated worktrees or safe explicit failure,integration,not_executed
+CODE-07,Coding,Git push to wrong remote,Requires precise reviewed remote/ref,integration,not_executed
+CODE-08,Coding,Git nonfastforward,"No force push, explain recoverable conflict",integration,not_executed
+CODE-09,Coding,Undo after unrelated user edit,Never overwrite later change silently,integration,not_executed
+CODE-10,Coding,Large binary proposed as text edit,Clear blocked/unsupported state,unit,not_executed
+AGENT-01,Agent Runtime,Replay duplicated event ID,No duplicate applied side effect,unit,not_executed
+AGENT-02,Agent Runtime,Cancel vs completion race,One consistent terminal state,unit,not_executed
+AGENT-03,Agent Runtime,Kill app after write before confirmation,Journal reconciles actual files,integration,not_executed
+AGENT-04,Agent Runtime,Provider timeout before/after tool effect,Safe retry classification and idempotency,integration,not_executed
+AGENT-05,Agent Runtime,Wrong approval ID reused,Operation denied,security,not_executed
+AGENT-06,Agent Runtime,Agent attempts privilege increase,Backend policy rejects,security,not_executed
+AGENT-07,Agent Runtime,Local GPU memory exhausted,Bounded queue or actionable failure,integration,not_executed
+AGENT-08,Agent Runtime,Run survives renderer redraw,No duplicated task or missing events,integration,not_executed
+AGENT-09,Agent Runtime,Restart with unreaped prior process,No fake resume or orphan claim,integration,not_executed
+AGENT-10,Agent Runtime,Out-of-order stream event,Ordered projection/reconciliation,unit,not_executed
+MODEL-01,Models,Local-only with remote endpoint labeled local,Cloud egress prevented,security,not_executed
+MODEL-02,Models,Auto fallback with new provider,Consent and route reason visible,integration,not_executed
+MODEL-03,Models,Auth failure considered fallback,No silent bypass,security,not_executed
+MODEL-04,Models,Same model ID across 2 local hosts,Separate discovered entries,unit,not_executed
+MODEL-05,Models,Unsupported vision model with image,Preflight explains incompatibility,integration,not_executed
+MODEL-06,Models,Canceled 5GB model download,No corrupt activated model,integration,not_executed
+MODEL-07,Models,Model host crashed,Health degraded and recovery,integration,not_executed
+MODEL-08,Models,Model resource estimation absent,"Display unknown, not fabricated value",native-ui,not_executed
+SKILL-01,Marketplace,Catalog row has stale GitHub URL,Unverified; no install,security,not_executed
+SKILL-02,Marketplace,Zip-slip/path traversal payload,Extraction rejected,security,not_executed
+SKILL-03,Marketplace,Skill asks new network host during update,Permission diff + fresh consent,security,not_executed
+SKILL-04,Marketplace,Uninstall with shared dependency,Preserve shared files and inform,integration,not_executed
+SKILL-05,Marketplace,Disabled skill relevance high,Never invoked,unit,not_executed
+SKILL-06,Marketplace,Model lacks required tool capability,"Not eligible, reason surfaced",unit,not_executed
+SKILL-07,Marketplace,Catalog offline,Cached metadata clearly stale,native-ui,not_executed
+SKILL-08,Marketplace,Source has unknown license,No verified install badge,security,not_executed
+MCP-01,MCP,Tool server hangs indefinitely,Timeout and process cleanup,integration,not_executed
+MCP-02,MCP,MCP response spoofing trusted instruction,Tool output treated untrusted,security,not_executed
+MCP-03,MCP,Connection revoked mid-run,"New calls denied, state visible",integration,not_executed
+MCP-04,MCP,Tool schema changes silently,Reinspect/consent as required,security,not_executed
+PLAT-01,Release,Windows signed installer clean machine,"Pass with artifact ID, identity and data paths",packaged-ui,not_executed
+PLAT-02,Release,Linux Ubuntu actual desktop installation,Runtime deps/Skia/keyring/PTy checked,packaged-ui,not_executed
+PLAT-03,Release,Linux Debian/Fedora/Arch installation,"Per-distro reports, no broad claim without results",packaged-ui,not_executed
+PLAT-04,Release,Installer upgrade with active saved chats,History/undo/project/settings preserved,packaged-ui,not_executed
+PLAT-05,Release,Invalid signed update manifest,Update rejected; current app safe,security,not_executed
+PLAT-06,Release,Restore corrupted backup,No partial destructive overwrite,integration,not_executed
+PLAT-07,Release,Linux Secret Service absent,No plaintext credential persistence,integration,not_executed
+PLAT-08,Release,Disk full during migration,Prior profile recoverable,integration,not_executed
+PLAT-09,Release,Uninstall default mode,User data retained,packaged-ui,not_executed
+PLAT-10,Release,Diagnostics export with canary secrets,No secrets in output,security,not_executed

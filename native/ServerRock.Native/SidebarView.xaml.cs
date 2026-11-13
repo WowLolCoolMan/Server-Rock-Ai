@@ -4,7 +4,7 @@
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Models;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;

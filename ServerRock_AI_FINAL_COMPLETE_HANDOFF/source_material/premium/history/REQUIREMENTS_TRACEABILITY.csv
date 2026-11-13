@@ -1,0 +1,26 @@
+ID,Requirement or finding,Provenance,Subsystem,Evidence status
+H001,Uno/.NET native only,User constraint,Architecture,SPEC_ONLY
+H002,Windows and Linux parity,User constraint,Platform,SPEC_ONLY
+H003,Windows Codex and Linux Claude collaboration,User fact,Collaboration,SPEC_ONLY
+H004,250–500 curated skill discovery entries,User constraint,Marketplace,SPEC_ONLY
+H005,User-select install and enable independently,User constraint,Marketplace,SPEC_ONLY
+H006,Skill router uses installed+enabled+task-relevant,User constraint,Marketplace,SPEC_ONLY
+H007,Model compatibility tags incl Claude-only,User constraint,Marketplace,SPEC_ONLY
+H008,GitHub update checks and update indicators,User constraint,Marketplace,SPEC_ONLY
+H009,Per-component clean uninstall and ownership ledger,User constraint,Installer,SPEC_ONLY
+H010,Readable Chat History folder,User constraint,Storage,SPEC_ONLY
+H011,One discoverable app-owned root,User constraint,Storage,SPEC_ONLY
+H012,External OS dependencies allowed and disclosed,User clarification,Storage,SPEC_ONLY
+H013,Protected discoverable API credential manager,User constraint + security,Security,SPEC_ONLY
+H014,"Odysseus ideas only, no source transfer",User constraint,Donors,SPEC_ONLY
+H015,Agent Machines deferred,User constraint,Backlog,SPEC_ONLY
+H016,Local/cloud model router and safe fallback,User goal,Providers,SPEC_ONLY
+H017,Agent tool loop with verify and recovery,User goal,Agents,SPEC_ONLY
+H018,No hidden UI overlays or dead controls,User goal,UX,SPEC_ONLY
+H019,Skill creation and research recommendations,User goal,Marketplace,SPEC_ONLY
+H020,ComfyUI and Hugging Face support,User goal,Integrations,SPEC_ONLY
+H021,Hybrid Router plugin exists separately,Prior assistant report,Separate artifact,SEPARATE_ARTIFACT
+H022,Chat streaming and persistence observed historically,Prior source review,Chat,VERIFIED_HISTORICAL
+H023,Three static built-in skills observed historically,Prior source review,Marketplace,VERIFIED_HISTORICAL
+H024,Packaged OS smoke not confirmed,Prior source review,Release,UNKNOWN
+H025,No schedule estimates in package,User constraint,Documentation,SPEC_ONLY

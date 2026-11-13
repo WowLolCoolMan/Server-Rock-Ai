@@ -1,0 +1,910 @@
+[
+  {
+    "id": "code-audit",
+    "title": "Code Audit & Repair",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Workspace Preflight",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "agent_prompt",
+        "label": "Bounded Analysis",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Findings Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Edit Proposal",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "approval",
+        "label": "Approval",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Apply Changes",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "tool_call",
+        "label": "Run Tests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_08",
+        "type": "approval",
+        "label": "Final Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      },
+      {
+        "from": "node_07",
+        "to": "node_08"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "feature-delivery",
+    "title": "Implement Feature",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Workspace Preflight",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Requirements",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Plan",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "approval",
+        "label": "Approval",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Worktree Create",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "agent_prompt",
+        "label": "Implementation",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "tool_call",
+        "label": "Tests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_08",
+        "type": "tool_call",
+        "label": "Diff Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      },
+      {
+        "from": "node_07",
+        "to": "node_08"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "ui-polish",
+    "title": "Native UI Polish",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Design Baseline",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Screenshot",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Focus Audit",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Overlay Audit",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Implement",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Native Build",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "tool_call",
+        "label": "Cross Platform Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_08",
+        "type": "tool_call",
+        "label": "Done",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      },
+      {
+        "from": "node_07",
+        "to": "node_08"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "dependency-doctor",
+    "title": "Dependency Doctor",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Detect Manifests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Dependency Map",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Vulnerability Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Propose Safe Changes",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "approval",
+        "label": "Approval",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Update",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "tool_call",
+        "label": "Tests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "parallel-agents",
+    "title": "Parallel Agent Task",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Split Scope",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Validate Disjoint Worktrees",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Parallel A",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Parallel B",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Collect Results",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Merge Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "tool_call",
+        "label": "Verify",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "skill-vet",
+    "title": "Vet Marketplace Skill",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Fetch Metadata",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "License Check",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Hash Pin",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Permissions Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Os Tests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Promote Registry",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "git-release",
+    "title": "Git Review & Release",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Repo Status",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Diff Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Test Suite",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Signing Check",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Package",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Artifact Smoke",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_07",
+        "type": "approval",
+        "label": "Human Release Approval",
+        "config": {
+          "safeRetry": "manual_after_review"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      },
+      {
+        "from": "node_06",
+        "to": "node_07"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "model-onboard",
+    "title": "Connect Local Model",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Detect Runtime",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Probe Loopback",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "List Models",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Capability Check",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Send Test Prompt",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Save Profile",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "knowledge-research",
+    "title": "Research With Citations",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Scope Question",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Choose Sources",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Gather",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Citation Quality",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "agent_prompt",
+        "label": "Synthesize",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Review",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      }
+    ],
+    "approvalRequired": true
+  },
+  {
+    "id": "project-bootstrap",
+    "title": "Open Existing Project",
+    "version": 1,
+    "templateOnly": true,
+    "status": "proposal_not_executable",
+    "nodes": [
+      {
+        "id": "node_01",
+        "type": "tool_call",
+        "label": "Trust Root",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_02",
+        "type": "tool_call",
+        "label": "Read Manifests",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_03",
+        "type": "tool_call",
+        "label": "Project Health",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_04",
+        "type": "tool_call",
+        "label": "Choose Profile",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_05",
+        "type": "tool_call",
+        "label": "Set Permissions",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      },
+      {
+        "id": "node_06",
+        "type": "tool_call",
+        "label": "Open Workspace",
+        "config": {
+          "safeRetry": "idempotent_only"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node_01",
+        "to": "node_02"
+      },
+      {
+        "from": "node_02",
+        "to": "node_03"
+      },
+      {
+        "from": "node_03",
+        "to": "node_04"
+      },
+      {
+        "from": "node_04",
+        "to": "node_05"
+      },
+      {
+        "from": "node_05",
+        "to": "node_06"
+      }
+    ],
+    "approvalRequired": true
+  }
+]

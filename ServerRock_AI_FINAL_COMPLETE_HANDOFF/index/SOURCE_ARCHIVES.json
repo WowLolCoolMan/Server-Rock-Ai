@@ -1,0 +1,34 @@
+[
+  {
+    "source_pack": "premium",
+    "original_name": "ServerRock_AI_Premium_Bulletproof_Engineering_Handoff_2026-11-10.zip",
+    "sha256": "21adfbd917ba28e8e044eef9d45d2429b0d3967c93e53452ffbed76413a6d4c2",
+    "bytes": 307686,
+    "file_count": 181,
+    "extraction_prefix": "source_material/premium/"
+  },
+  {
+    "source_pack": "independent",
+    "original_name": "Server_Rock_AI_Independent_Fixes_UI_and_Ideas_Only(1).zip",
+    "sha256": "af7093a4a2239473c4a901b0026671fe821ac0fdc77c9f17b77c1ae0088114fd",
+    "bytes": 58940,
+    "file_count": 24,
+    "extraction_prefix": "source_material/independent/"
+  },
+  {
+    "source_pack": "odysseus_ideas_only",
+    "original_name": "Server_Rock_AI_Complete_Remediation_UI_Odysseus_Handoff(1).zip",
+    "sha256": "3e83ec5ee2a9a989dac82bed617518da7d83472f9ee2bd89548e871f74c84ca6",
+    "bytes": 51574,
+    "file_count": 21,
+    "extraction_prefix": "source_material/odysseus_ideas_only/"
+  },
+  {
+    "source_pack": "skill_marketplace_250",
+    "original_name": "Server_Rock_AI_Elite_Skill_Marketplace_250(1).zip",
+    "sha256": "2d616aa84aba5110b379cf8f6f3881789e79a1d06d830e8826d7a0b425eac8cf",
+    "bytes": 60214,
+    "file_count": 18,
+    "extraction_prefix": "source_material/skill_marketplace_250/"
+  }
+]

@@ -1,0 +1,87 @@
+id,area,feature,acceptance,priority,status,uiEvidenceRequired,unitOrIntegrationTestRequired,windowsLinuxEvidenceRequired,source
+SHELL-001,Shell & UX,Global command palette,"Open by keyboard, fuzzy-search routes/actions and close with restored focus",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-002,Shell & UX,Navigation back/forward,Previous workspace/route restored with scroll and selected tab,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-003,Shell & UX,Sidebar collapse,Narrow widths collapse context tree without clipping composer,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-004,Shell & UX,Resizable panes,Resize limits and remembered layout per project,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-005,Shell & UX,Inspector contextual state,Only relevant artifacts/actions displayed for current selection,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-006,Shell & UX,Persistent tabs,Closing/restarting restores safe open tabs and dirty indicators,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-007,Shell & UX,Overlay focus coordination,Topmost modal owns focus; dismiss click does not activate background,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-008,Shell & UX,Native context menus,Chat/project/file actions are fully wired and keyboard reachable,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-009,Shell & UX,Keyboard shortcuts,"Discoverable, configurable, non-conflicting across OS",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-010,Shell & UX,Theme variants,Dark/light/high contrast tokens and native render verified,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-011,Shell & UX,Accessible controls,"Automation peers, labels, focus, contrast, reduced-motion",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-012,Shell & UX,Actionable status/toasts,"No fake success, persistent errors route to recovery",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-013,Shell & UX,Deep links,"Known route survives reopen, missing target fails gracefully",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-014,Shell & UX,Global search,Search projects/chats/files/settings respecting privacy/permissions,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+SHELL-015,Shell & UX,Window/tray behavior,Minimize/restore/multi-window lifecycle does not orphan runs,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-001,Conversations,Model-aware composer,"Identity, profile and modality capabilities shown near send",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-002,Conversations,Streaming delta protocol,"Partial tokens, stop and retry do not duplicate content",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-003,Conversations,Conversation folders,Create/rename/move/search/pin/archive round-trips,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-004,Conversations,Branch and fork,Fork retains origin without editing prior messages,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-005,Conversations,Edit and resend,Creates new branch or revision with provenance,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-006,Conversations,Markdown/code formatting,"Selectable, accessible code with copy and safe links",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-007,Conversations,Attachment preflight,"Limits, content preview, local/cloud egress consent",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-008,Conversations,Temporary sessions,Never persisted; discard prompt before losing content,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-009,Conversations,Conversation import,Preview/cancel/idempotent/metadata-safe across restart,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-010,Conversations,Conversation export,Readable versioned output without secrets,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-011,Conversations,Search-in-conversation,Find/jump with preserved scroll and selection,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-012,Conversations,Tool trace,"Visible actual tool calls, scopes, outputs and status",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-013,Conversations,Provider error recovery,Timeout/quota/auth have distinct actions and no fake tokens,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+CHAT-014,Conversations,Chat history storage,"User discoverable path, restore, backup and deletion contract",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-001,Projects & coding,Workspace trust,Explicit selected roots and read/write scopes,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-002,Projects & coding,Project explorer,"Virtualized file tree, ignore/secret disclosure",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-003,Projects & coding,Quick file open,Search files without navigating out of workbench,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-004,Projects & coding,Integrated editor,"Tabs, dirty state, find, undo and safe save",P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-005,Projects & coding,Diff preview,Proposed/applied/committed statuses with baseline hashes,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-006,Projects & coding,Approval before file write,Deny leaves repository byte-for-byte unchanged,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-007,Projects & coding,Stale file protection,Concurrent changes trigger compare and reapproval,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-008,Projects & coding,Guarded undo,Restore only previously applied recorded changes,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-009,Projects & coding,Real PTY,Windows and Linux shells with resize/scroll/cancellation,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-010,Projects & coding,Process tree cancellation,Stop prevents child processes continuing,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-011,Projects & coding,Git status and diff,Correct branch/worktree and tracked/untracked state,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-012,Projects & coding,Scoped Git commit/push,"Review destination, conflicts, auth and secrets",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-013,Projects & coding,Isolated worktrees,Concurrent write agents never share unguarded targets,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PROJECT-014,Projects & coding,Project context sizing,Bounded relevant snippets with provenance and opt-in remote egress,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-001,Agent runtime,Durable task state machine,Valid transitions and restart replay,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-002,Agent runtime,Operation event journal,Ordered append-only events with idempotent projection,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-003,Agent runtime,Approval inbox,Queue concurrent approval prompts without nested modals,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-004,Agent runtime,Tool permission enforcement,Backend rechecks scope before every effect,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-005,Agent runtime,Concurrent scheduler,Resource budget and fairness control active agents,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-006,Agent runtime,Agent adapter identity,Separate Codex/ACP/natively hosted model identities,P0,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-007,Agent runtime,Task continuation,Resume safe state without replaying side effects,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-008,Agent runtime,Subagent dependency graph,Parent/child and merge gate visible,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-009,Agent runtime,Run cancellation,Ack actual process cleanup and terminal result,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-010,Agent runtime,Run timeline,"Tool outputs, errors, tests linked to source steps",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-011,Agent runtime,Model context routing,Per-task local/cloud/auto profile respected,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-012,Agent runtime,Fallback with consent,"Classified errors, capability reassessment and disclosure",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-013,Agent runtime,Local resource budgeting,GPU pressure queues or explains conflicts,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+AGENT-014,Agent runtime,Run artifacts,Traceable file/diff/test/log outputs and persistence,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-001,"Models, skills & tools",Local runtime detection,Bounded loopback probe with separate host IDs,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-002,"Models, skills & tools",Model capabilities,Verified/estimated/unknown clearly distinguished,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-003,"Models, skills & tools",Local model downloads,Source/license/disk/progress/cancel/retry,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-004,"Models, skills & tools",Provider health and auth,Distinguish healthy/degraded/unconfigured/revoked,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-005,"Models, skills & tools",Keyring-only secrets,"No plaintext secrets, Linux missing keyring safe fail",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-006,"Models, skills & tools",Skill marketplace search,Catalog filters and source provenance,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-007,"Models, skills & tools",Skill staged install,"Pinned ref/hash, safe extraction and atomic activation",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-008,"Models, skills & tools",Skill update compare,Permission diff and opt-in upgrade with rollback,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-009,"Models, skills & tools",Skill enable scopes,Installed != enabled != invoked,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-010,"Models, skills & tools",Skill selection router,Trusted eligibility and explainable relevance,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-011,"Models, skills & tools",Skill uninstall,Only owned files and grants removed,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-012,"Models, skills & tools",MCP connector lifecycle,"Configure, health, invoke, cancel, revoke",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-013,"Models, skills & tools",MCP tools permission gate,Untrusted manifest cannot self-authorize,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-014,"Models, skills & tools",Workflow template library,"Versioned search, clone, import/export",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-015,"Models, skills & tools",Workflow DAG builder,"Typed validation, keyboard accessibility, simulation",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+LIB-016,"Models, skills & tools",Workflow execution,"Durable step states, safe retry and approvals",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-001,"Storage, platform & release",Single app data root,Inspectable root and folder map with external roots clearly tagged,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-002,"Storage, platform & release",SQLite/JSON migration policy,"Backup, transactional import, reversible migration",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-003,"Storage, platform & release",Crash recovery,Incomplete runs and stores reconstructed with true labels,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-004,"Storage, platform & release",Secure diagnostic export,Preview and redact credentials/private prompts,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-005,"Storage, platform & release",Windows packaged acceptance,"Actual installer, runtime, scaling, controls and rollback",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-006,"Storage, platform & release",Linux packaged acceptance,"Actual distro dependencies, PTY/keyring/Skia interactions",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-007,"Storage, platform & release",Signed updates,"Authentic release manifest/hash, safe failure and rollback",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-008,"Storage, platform & release",Uninstall retention,App data retained unless explicit removal consent,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-009,"Storage, platform & release",Release CI artifact provenance,"Commit, artifact digest, signature and smoke evidence",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-010,"Storage, platform & release",Low-resource performance,"Measurements for startup, RAM, stream and large lists",P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-011,"Storage, platform & release",Privacy controls,Cloud egress/telemetry/search user-controlled,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-012,"Storage, platform & release",No-code rewrite gate,Existing Uno foundation kept pending explicit ADR approval,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan
+PLAT-013,"Storage, platform & release",Supply chain license checks,Each external source reviewed before reuse,P1,unverified_requires_repo_audit,True,True,True,new premium integration + prior masterplan

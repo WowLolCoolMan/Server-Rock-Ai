@@ -9,7 +9,7 @@
 - Commands:
 
 ```bash
-dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore
+dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore
 dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore
 npm run audit:native-ui
 npm run check:hygiene
@@ -17,7 +17,7 @@ npm run check:hygiene
 
 ### 2) Test Layout
 
-- Tests live in `native/ServerRock.Core.Tests/`, one focused `*Tests.cs` area per domain.
+- Tests live in `native/SkaiDesktop.Core.Tests/`, one focused `*Tests.cs` area per domain.
 - `Program.cs` registers the suite in explicit order and prints pass evidence.
 - Native visible-control contracts are checked by `scripts/audit-native-ui.cjs`; live Windows evidence is recorded separately in `docs/GOAL_EXECUTION.md`.
 
@@ -43,8 +43,8 @@ npm run check:hygiene
 
 ### 6) Evidence
 
-- `native/ServerRock.Core.Tests/Program.cs`
-- `native/ServerRock.Core.Tests/TestSupport.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/TestSupport.cs`
 - `scripts/audit-native-ui.cjs`
 - `.github/workflows/native-ci.yml`
 - `docs/NATIVE_RELEASE_ACCEPTANCE.md`

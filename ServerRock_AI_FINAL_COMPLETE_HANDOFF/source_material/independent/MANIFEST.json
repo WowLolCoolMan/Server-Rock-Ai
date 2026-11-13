@@ -1,0 +1,11 @@
+{
+  "package": "Server Rock AI complete fix and independent UI blueprint (ideas-only inspiration)",
+  "created_utc": "2026-11-09T03:54:00Z",
+  "server_rock_commit": "4ad39cfb89ddf97cd1ddd4533c4b879d8124ac95",
+  "issue_count": 40,
+  "scope": "documentation, implementation plan, static source review, illustrative pseudocode, read-only tools",
+  "contains_patched_application": false,
+  "third_party_source_included": false,
+  "inspiration_policy": "strictly product-level feature ideas; no third-party code, architecture, assets, dependencies, or visual duplication",
+  "inspiration_idea_count": 26
+}

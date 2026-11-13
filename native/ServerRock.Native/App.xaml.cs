@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.Logging;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Infrastructure;
 using Uno.Resizetizer;
 
 namespace ServerRock.Native;

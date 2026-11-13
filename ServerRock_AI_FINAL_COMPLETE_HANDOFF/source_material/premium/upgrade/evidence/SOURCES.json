@@ -1,0 +1,23 @@
+[
+  {
+    "type": "repository",
+    "url": "https://github.com/WowLolCoolMan/Server-Rock-Ai",
+    "commit": "4ad39cfb89ddf97cd1ddd4533c4b879d8124ac95",
+    "verifiedOn": "2026-11-10",
+    "scope": "source tree, root docs, architecture, UX guide, release gaps"
+  },
+  {
+    "type": "user_library_artifact",
+    "name": "Server_Rock_AI_Bulletproof_Consolidated_Engineering_Pack.zip",
+    "scope": "119 legacy documents retained"
+  },
+  {
+    "type": "user_library_artifact",
+    "name": "Server_Rock_AI_Elite_Skill_Marketplace_250.zip",
+    "scope": "250 skill candidate rows, 50 sources and four historical sample skills"
+  },
+  {
+    "type": "user_conversation",
+    "scope": "premium UX Codex/Discord/Steam/Claude, Windows+Linux, native preservation, feature-rich responsive interactions, no duration estimates, Odysseus ideas only"
+  }
+]

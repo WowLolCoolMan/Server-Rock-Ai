@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -79,6 +79,7 @@ public sealed partial class MainPage
         "documentation" => ShowInAppDocumentationAsync,
         "snippets" => OpenSnippetsAsync,
         "personas" => OpenPersonasAsync,
+        "presets" => OpenPresetsAsync,
         "translate" => OpenTranslatorAsync,
         "quicklinks" => OpenQuicklinksAsync,
         "developer-diagnostics" => OpenDeveloperDiagnosticsAsync,

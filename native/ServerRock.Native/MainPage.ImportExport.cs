@@ -2,15 +2,15 @@
 // Export writes every saved conversation through the canonical archive validation path. Import reads a
 // native or legacy Electron archive (25 MB limit), shows a summary of what will be added, skipped
 // as duplicates, or given new IDs, and only then merges and saves.
-// Depends on: ConversationArchive and ConversationStore (ServerRock.Core), the system file pickers
+// Depends on: ConversationArchive and ConversationStore (SkaiDesktop.Core), the system file pickers
 // (Windows needs the window handle, hence the #if WINDOWS blocks), _sessions in MainPage.xaml.cs.
 // Called by: the Export/Import sidebar buttons in MainPage.xaml and the Settings > Chats & history
 // section.
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 

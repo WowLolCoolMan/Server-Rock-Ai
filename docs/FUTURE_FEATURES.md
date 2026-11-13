@@ -115,7 +115,7 @@ and acceptance evidence.
 
 ## Models, runtime, and extensibility
 
-- [ ] Presets bundling prompts, tools, and knowledge.
+- [x] Presets bundling prompts, tools, and knowledge. (Bounded local AI presets can bundle user-authored instructions, explicitly marked reference knowledge, and descriptive tool guidance; activation is explicit and tool guidance never grants permissions.)
 - [x] Dynamic variables such as `{{USER_NAME}}` and `{{DATE}}`.
 - [ ] Lazy-loaded Markdown instruction-pack skills with `$` mentions.
 - [ ] Local model runner support for Ollama and LM Studio.

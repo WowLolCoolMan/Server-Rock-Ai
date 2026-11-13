@@ -9,7 +9,7 @@ working Uno application.
 Electron main process
   ├─ sandboxed React renderer (context-isolated preload bridge)
   └─ local .NET Agent Host (versioned JSON-lines stdio protocol)
-       └─ ServerRock.Core reference (existing domain boundary)
+       └─ SkaiDesktop.Core reference (existing domain boundary)
 ```
 
 The renderer can request `runtime.health` through the preload bridge. The main

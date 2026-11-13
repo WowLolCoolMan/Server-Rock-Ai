@@ -1,0 +1,21 @@
+ID,Subsystem,Requirement,Source,Status,Acceptance
+MASTER-001,Architecture,Framework decision gate with preserved .NET core,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-002,Architecture,Typed IPC and capability gateway,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-003,Runtime,Durable operation journal and process supervision,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-004,Marketplace,GitHub-backed opt-in install/enable/update/rollback/remove,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-005,Marketplace,Model-aware compatibility and deterministic eligibility,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-006,MCP,MCP registry and managed server lifecycle,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-007,Agents,ACP interoperability and provider adapters,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-008,Agents,Git-isolated parallel agent workspaces,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-009,Models,Explicit local/cloud routing and consent,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-010,Storage,Single discoverable app-owned root,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-011,Storage,Chat History folder and readable exports,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-012,Security,Protected credential manager and redacted logs,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-013,UX,Premium navigable IDE-grade UI with no hidden overlays,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-014,Testing,Windows/Linux packaged smoke and fault injection,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-015,Quality,Domain-specific idiomatic code and real tests,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-016,Donors,Odysseus ideas only and license-reviewed dependencies,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-017,Backlog,Agent Machines deferred,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-018,Release,Reversible upgrades and uninstall ownership,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-019,Research,50 skills and 50 MCP candidates individually verified,User conversation + masterplan,Proposed,Current code and cross-platform test evidence
+MASTER-020,Research,250+ curated marketplace catalog goal,User conversation + masterplan,Proposed,Current code and cross-platform test evidence

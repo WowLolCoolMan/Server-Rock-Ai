@@ -3,7 +3,7 @@
 // under the reply for each proposal; nothing runs or is written until the user approves it in
 // the review dialog (diff preview for changes; exact command, folder, and timeout for commands).
 // Depends on: WorkspaceTextDiff, WorkspaceFileEditor, WorkspaceCommandProposalParser,
-// WorkspaceCommandRunner (ServerRock.Core), RecordWorkspaceUndo/UndoWorkspaceEdit
+// WorkspaceCommandRunner (SkaiDesktop.Core), RecordWorkspaceUndo/UndoWorkspaceEdit
 // (MainPage.CodingAgent.cs).
 // Called by: SendClick (MainPage.Chat.cs) after a Coding Agent reply finishes.
 
@@ -12,8 +12,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

@@ -6,8 +6,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -17,6 +17,7 @@ public sealed partial class MainPage
     {
         InitializeComponent();
         _provider = _services.Provider;
+        _airLlmProvider = _services.AirLlmProvider;
         _modelLibrary = _services.ModelLibrary;
         _comfyImageProvider = _services.ComfyImageProvider;
         _webSearchProvider = _services.WebSearchProvider;
@@ -40,6 +41,7 @@ public sealed partial class MainPage
         _gitWorktreeCoordinator = _services.GitWorktreeCoordinator;
         _skillPackageInstaller = _services.SkillPackageInstaller;
         _memoryStore = _services.MemoryStore;
+        _nativeTts = _services.NativeTts;
         AutomationProperties.SetName(BackButton, "Navigate back");
         AutomationProperties.SetHelpText(BackButton, "Return to the previous workspace route.");
         AutomationProperties.SetName(ForwardButton, "Navigate forward");

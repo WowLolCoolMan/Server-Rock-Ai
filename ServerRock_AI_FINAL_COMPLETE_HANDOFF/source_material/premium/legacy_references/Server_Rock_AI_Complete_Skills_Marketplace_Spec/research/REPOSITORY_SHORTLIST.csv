@@ -1,0 +1,31 @@
+category,repository,github,why
+Agent skills,anthropics/skills,https://github.com/anthropics/skills,Skill packaging and examples
+Agent workflows,obra/superpowers,https://github.com/obra/superpowers,"Debugging, TDD, planning, agent coordination"
+Agent skills discovery,agentskills/agentskills,https://github.com/agentskills/agentskills,Open agent skills format and ecosystem
+MCP servers,modelcontextprotocol/servers,https://github.com/modelcontextprotocol/servers,Reference MCP servers
+MCP SDK,modelcontextprotocol/typescript-sdk,https://github.com/modelcontextprotocol/typescript-sdk,Implement MCP clients and servers
+MCP gateway,docker/mcp-gateway,https://github.com/docker/mcp-gateway,Manage MCP tools in containers
+Browser testing,microsoft/playwright-mcp,https://github.com/microsoft/playwright-mcp,Browser automation via MCP
+GitHub integration,github/github-mcp-server,https://github.com/github/github-mcp-server,GitHub repository and issue tools
+Docs retrieval,upstash/context7,https://github.com/upstash/context7,Version-specific documentation lookup
+Local models,ollama/ollama,https://github.com/ollama/ollama,Local model server and model lifecycle
+Local inference,ggml-org/llama.cpp,https://github.com/ggml-org/llama.cpp,Local inference engine and GGUF support
+Desktop runtime,lmstudio-ai,https://github.com/lmstudio-ai,Local model ecosystem reference
+LLM UI,open-webui/open-webui,https://github.com/open-webui/open-webui,UI patterns for local/cloud model management
+LLM UI,lobehub/lobe-chat,https://github.com/lobehub/lobe-chat,"Conversation, plugin and provider UI reference"
+Agent runtime,langchain-ai/langgraph,https://github.com/langchain-ai/langgraph,Durable agent graphs and checkpoints
+Agent orchestration,microsoft/autogen,https://github.com/microsoft/autogen,Multi-agent architecture reference
+Agent orchestration,crewAIInc/crewAI,https://github.com/crewAIInc/crewAI,Role-based agent workflows
+RAG,run-llama/llama_index,https://github.com/run-llama/llama_index,Document indexing and retrieval
+Vector search,qdrant/qdrant,https://github.com/qdrant/qdrant,Vector database for knowledge retrieval
+Observability,langfuse/langfuse,https://github.com/langfuse/langfuse,"LLM traces, evaluation, usage monitoring"
+Prompt evaluation,promptfoo/promptfoo,https://github.com/promptfoo/promptfoo,Prompt and model regression testing
+ComfyUI,comfyanonymous/ComfyUI,https://github.com/comfyanonymous/ComfyUI,Node-based image workflows
+Model downloads,huggingface/huggingface_hub,https://github.com/huggingface/huggingface_hub,Model discovery and downloads
+Desktop framework,tauri-apps/tauri,https://github.com/tauri-apps/tauri,Cross-platform desktop app framework
+Desktop framework,electron/electron,https://github.com/electron/electron,Desktop packaging and runtime
+UI components,shadcn-ui/ui,https://github.com/shadcn-ui/ui,Accessible component design reference
+UI primitives,radix-ui/primitives,https://github.com/radix-ui/primitives,Accessible UI interactions
+State management,pmndrs/zustand,https://github.com/pmndrs/zustand,Lightweight frontend state
+App telemetry,getsentry/sentry,https://github.com/getsentry/sentry,Crash reporting and debugging
+Unity integration,CoplayDev/unity-mcp,https://github.com/CoplayDev/unity-mcp,Unity Editor automation

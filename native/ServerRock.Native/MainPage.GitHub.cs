@@ -5,16 +5,16 @@
 // Related files: MainPage.GitHub.SignIn.cs (polling + credential storage) and
 // MainPage.GitHub.Changes.cs (commit/push review).
 // Depends on: GitHubDeviceFlow, GitHubApiClient, GitHubCredentialStore,
-// GitHubWorkspaceService (ServerRock.Core).
+// GitHubWorkspaceService (SkaiDesktop.Core).
 // Called by: the sidebar GitHub button, Settings, and GitHubActionsClickAsync when not signed in.
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

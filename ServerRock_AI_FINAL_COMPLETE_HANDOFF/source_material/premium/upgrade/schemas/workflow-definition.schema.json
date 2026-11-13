@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://server-rock.example/spec/workflow-definition-v1",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "version",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "templateOnly": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "agent_prompt",
+              "tool_call",
+              "condition",
+              "approval",
+              "test",
+              "parallel_group",
+              "join",
+              "artifact",
+              "notification"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

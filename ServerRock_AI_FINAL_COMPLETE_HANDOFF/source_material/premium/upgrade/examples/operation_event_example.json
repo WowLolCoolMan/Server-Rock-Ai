@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "eventId": "118dd8c7-2ff9-475a-8886-d905da1dd9e5",
+  "runId": "e6f2be42-7068-4fdd-8c38-f400a5088982",
+  "sequence": 18,
+  "timestampUtc": "2026-11-10T08:00:00Z",
+  "type": "approval.requested",
+  "actor": "system",
+  "correlationId": "demo-correlation-only",
+  "payload": {
+    "approvalId": "example-approval",
+    "operationHash": "sha256:demo",
+    "scope": "workspace-file-edit"
+  },
+  "sensitivity": "private"
+}

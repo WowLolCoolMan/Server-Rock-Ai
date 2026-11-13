@@ -1,0 +1,1444 @@
+[
+  {
+    "id": "ApplicationShell",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "NavigationRail",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "TreeSidebar",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "CommandBar",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "CommandPalette",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "BreadcrumbBar",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "focus",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "GlobalSearch",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ContextInspector",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SplitPane",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "StatusBar",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "focus",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DockTabBar",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "OverlayCoordinator",
+    "group": "shell",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ConversationTree",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "MessageBubble",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "MessageComposer",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ModelIdentityChip",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ModelPicker",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "StreamingResponse",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ToolTrace",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "AttachmentChip",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SourceCard",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "CodeBlock",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ContextInspectorPanel",
+    "group": "conversation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "FileExplorer",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "EditorTab",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DiffViewer",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DiffHunk",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ApprovalCard",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "TerminalView",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "TestResultPanel",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "GitStatusCard",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "WorktreeSelector",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "AgentTaskCard",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "RunTimeline",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "TaskQueue",
+    "group": "coding",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ModelCard",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DownloadRow",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SkillCard",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SkillDetail",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "PermissionManifest",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "VersionCompare",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "McpConnectionCard",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "WorkflowCanvas",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "WorkflowNode",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "WorkflowInspector",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "NotificationCard",
+    "group": "ecosystem",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SettingsSection",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "NativeDialog",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ContextMenu",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "Toast",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "EmptyState",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ErrorState",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SkeletonLoader",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "ProgressBar",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "SearchFilter",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DataGrid",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "KeybindingRecorder",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  },
+  {
+    "id": "DiagnosticPreview",
+    "group": "foundation",
+    "platform": "Uno/XAML native",
+    "mandatoryStates": [
+      "idle",
+      "hover",
+      "focus",
+      "selected",
+      "disabled",
+      "busy",
+      "error"
+    ],
+    "rules": [
+      "theme tokens only",
+      "keyboard and accessibility identity",
+      "no hidden click targets",
+      "cancel/error/retry semantics where applicable"
+    ],
+    "evidence": [
+      "native render",
+      "keyboard focus",
+      "narrow layout"
+    ]
+  }
+]

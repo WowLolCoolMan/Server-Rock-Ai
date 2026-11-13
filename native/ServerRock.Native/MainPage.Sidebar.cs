@@ -11,9 +11,9 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Services;
 using Ellipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace ServerRock.Native;
@@ -784,6 +784,7 @@ public sealed partial class MainPage
         AddAction("In-app documentation", "documentation", "Review local-first usage, privacy, safety, and workflow guidance.");
         AddAction("Prompt snippets", "snippets", "Save reusable prompt text, insert it into the composer, or preview a model expansion.");
         AddAction("Personas", "personas", "Save reusable role instructions and explicitly activate one for chat context.");
+        AddAction("AI presets", "presets", "Bundle reusable instructions, local reference knowledge, and tool guidance.");
         AddAction("Translate text", "translator language", "Translate text with the selected model and review it before inserting it into the composer.");
         AddAction("Quicklinks", "bookmarks", "Save and explicitly open frequent-access web addresses.");
         AddAction("Developer diagnostics", "developer", "Inspect bounded local runtime facts when developer mode is enabled.");
@@ -800,6 +801,7 @@ public sealed partial class MainPage
             case "documentation": await ShowInAppDocumentationAsync(); break;
             case "snippets": await OpenSnippetsAsync(); break;
             case "personas": await OpenPersonasAsync(); break;
+            case "presets": await OpenPresetsAsync(); break;
             case "translator": await OpenTranslatorAsync(); break;
             case "bookmarks": await OpenQuicklinksAsync(); break;
             case "developer": await OpenDeveloperDiagnosticsAsync(); break;

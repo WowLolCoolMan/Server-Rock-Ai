@@ -1,7 +1,7 @@
 // Rendering the conversation: message bubbles (user text, assistant Markdown via
 // MarkdownUiRenderer, attachment labels, web source cards) and the per-message actions
 // (copy, edit, retry). RebuildConversationView redraws everything from _messages.
-// Depends on: MarkdownUiRenderer, ChatMessage/ChatSource (ServerRock.Core), ConversationScroll /
+// Depends on: MarkdownUiRenderer, ChatMessage/ChatSource (SkaiDesktop.Core), ConversationScroll /
 // ConversationMessages in MainPage.xaml.
 // Called by: SendClick and streaming (MainPage.Chat.cs), opening a saved chat, branch changes,
 // and editing/retrying a message.
@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 

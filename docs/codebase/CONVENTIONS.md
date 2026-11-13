@@ -8,8 +8,8 @@
 |------|------|---------|----------|
 | Files | C# types use PascalCase; feature partials use `MainPage.<Feature>.cs` | `MainPage.ModelLibrary.cs` | `native/ServerRock.Native/` |
 | Functions/methods | PascalCase for C# methods; private fields use `_camelCase` | `BuildProviderMessages`, `_settings` | `native/ServerRock.Native/MainPage.Chat.cs` |
-| Types/interfaces | PascalCase; records are used for bounded immutable contracts | `ModelComparisonPlan` | `native/ServerRock.Core/Services/ModelComparisonPolicy.cs` |
-| Constants/env vars | C# constants use PascalCase; environment names are uppercase | `MaxPromptCharacters`, `RELEASE_SIGNING_READY` | `native/ServerRock.Core/`, `scripts/validate-release-config.cjs` |
+| Types/interfaces | PascalCase; records are used for bounded immutable contracts | `ModelComparisonPlan` | `native/SkaiDesktop.Core/Services/ModelComparisonPolicy.cs` |
+| Constants/env vars | C# constants use PascalCase; environment names are uppercase | `MaxPromptCharacters`, `RELEASE_SIGNING_READY` | `native/SkaiDesktop.Core/`, `scripts/validate-release-config.cjs` |
 
 ### 2) Formatting and Linting
 
@@ -32,13 +32,13 @@
 
 ### 5) Testing Conventions
 
-- Tests are named `*Tests.cs` under `native/ServerRock.Core.Tests/` and are registered explicitly in `Program.cs`.
+- Tests are named `*Tests.cs` under `native/SkaiDesktop.Core.Tests/` and are registered explicitly in `Program.cs`.
 - Tests use deterministic temp paths, stub HTTP handlers and local fixtures; no coverage threshold was found.
 - New behavior should add a focused Core check and a native audit contract when a visible control or route changes.
 
 ### 6) Evidence
 
 - `native/Directory.Build.props`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `scripts/audit-native-ui.cjs`
 - `scripts/check-repo-hygiene.cjs`

@@ -71,7 +71,7 @@ external dependency that prevents a meaningful next action.
 | --- | ---: | --- | --- |
 | Shell & UX | 15 | partial | `docs/CAPABILITY_MATRIX.md`; focus, persistent tabs and inspector remain |
 | Conversations | 14 | partial | `native/ServerRock.Native/MainPage.Chat.cs`; cross-platform and multi-pane acceptance remain |
-| Agent runtime | 14 | partial | `native/ServerRock.Core/Services/Operation*`; parallel isolation/background execution remain |
+| Agent runtime | 14 | partial | `native/SkaiDesktop.Core/Services/Operation*`; parallel isolation/background execution remain |
 | Models, skills & tools | 16 | partial | Core model/skill/MCP services and tests; broader adapters/marketplace evidence remain |
 | Projects & coding | 14 | partial | `native/ServerRock.Native/MainPage.CodingAgent*`; bounded Ctrl+P quick-open now exists, while full workbench/conflict/worktree journey remains; live first-project acceptance is picker-host blocked |
 | Storage, platform & release | 13 | partial | stores, packaging and release validator; signed clean-machine lifecycle remains |

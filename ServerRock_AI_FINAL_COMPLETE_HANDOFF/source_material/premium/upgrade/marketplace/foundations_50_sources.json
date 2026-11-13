@@ -1,0 +1,352 @@
+[
+  {
+    "repo": "anthropics/skills",
+    "note": "Reference skills and skill-creator",
+    "url": "https://github.com/anthropics/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "openai/skills",
+    "note": "Codex skills and workflow patterns",
+    "url": "https://github.com/openai/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "github/awesome-copilot",
+    "note": "Prompts agents and instruction catalog",
+    "url": "https://github.com/github/awesome-copilot",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "google/skills",
+    "note": "Google developer skills",
+    "url": "https://github.com/google/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "microsoft/skills",
+    "note": "Microsoft developer skillbase",
+    "url": "https://github.com/microsoft/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "huggingface/skills",
+    "note": "Hugging Face model skills",
+    "url": "https://github.com/huggingface/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "vercel-labs/agent-skills",
+    "note": "Web and frontend development",
+    "url": "https://github.com/vercel-labs/agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "obra/superpowers",
+    "note": "Test-driven workflows and review",
+    "url": "https://github.com/obra/superpowers",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "mattpocock/skills",
+    "note": "Developer workflows",
+    "url": "https://github.com/mattpocock/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "addyosmani/agent-skills",
+    "note": "Software engineering and shipping",
+    "url": "https://github.com/addyosmani/agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "wshobson/agents",
+    "note": "Specialist agent packs",
+    "url": "https://github.com/wshobson/agents",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "alirezarezvani/claude-skills",
+    "note": "Broad skill library",
+    "url": "https://github.com/alirezarezvani/claude-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "Jeffallan/claude-skills",
+    "note": "Engineering agents",
+    "url": "https://github.com/Jeffallan/claude-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "sickn33/agentic-awesome-skills",
+    "note": "Large discovery catalog",
+    "url": "https://github.com/sickn33/agentic-awesome-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "muratcankoylan/Agent-Skills-for-Context-Engineering",
+    "note": "Context engineering",
+    "url": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "Orchestra-Research/AI-Research-SKILLs",
+    "note": "AI research",
+    "url": "https://github.com/Orchestra-Research/AI-Research-SKILLs",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "tech-leads-club/agent-skills",
+    "note": "Skill registry",
+    "url": "https://github.com/tech-leads-club/agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "ComposioHQ/awesome-claude-skills",
+    "note": "Skill index",
+    "url": "https://github.com/ComposioHQ/awesome-claude-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "VoltAgent/awesome-agent-skills",
+    "note": "Skill index",
+    "url": "https://github.com/VoltAgent/awesome-agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "d-padmanabhan/agent-engineering-handbook",
+    "note": "Agent practices",
+    "url": "https://github.com/d-padmanabhan/agent-engineering-handbook",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "multica-ai/andrej-karpathy-skills",
+    "note": "Coding discipline",
+    "url": "https://github.com/multica-ai/andrej-karpathy-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "OthmanAdi/planning-with-files",
+    "note": "Persistent planning",
+    "url": "https://github.com/OthmanAdi/planning-with-files",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "Fission-AI/OpenSpec",
+    "note": "Spec-driven engineering",
+    "url": "https://github.com/Fission-AI/OpenSpec",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "microsoft/playwright-cli",
+    "note": "Browser tool rather than SKILL.md pack",
+    "url": "https://github.com/microsoft/playwright-cli",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "vercel-labs/agent-browser",
+    "note": "Browser tool rather than SKILL.md pack",
+    "url": "https://github.com/vercel-labs/agent-browser",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "pbakaus/impeccable",
+    "note": "Frontend aesthetics",
+    "url": "https://github.com/pbakaus/impeccable",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "cloudflare/security-audit-skill",
+    "note": "Security audit skill",
+    "url": "https://github.com/cloudflare/security-audit-skill",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "trailofbits/skills",
+    "note": "Security expertise",
+    "url": "https://github.com/trailofbits/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "dotnet/skills",
+    "note": ".NET and MSBuild skills",
+    "url": "https://github.com/dotnet/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "supabase/agent-skills",
+    "note": "Database engineering",
+    "url": "https://github.com/supabase/agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+    "note": "UI UX skills",
+    "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "Leonxlnx/taste-skill",
+    "note": "Visual design",
+    "url": "https://github.com/Leonxlnx/taste-skill",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "cathrynlavery/diagram-design",
+    "note": "Diagram generation",
+    "url": "https://github.com/cathrynlavery/diagram-design",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "tt-a1i/archify",
+    "note": "Architecture visualization",
+    "url": "https://github.com/tt-a1i/archify",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "coreyhaines31/marketingskills",
+    "note": "Marketing skill collection",
+    "url": "https://github.com/coreyhaines31/marketingskills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "phuryn/pm-skills",
+    "note": "Product management",
+    "url": "https://github.com/phuryn/pm-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "deanpeters/Product-Manager-Skills",
+    "note": "Product management",
+    "url": "https://github.com/deanpeters/Product-Manager-Skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "kepano/obsidian-skills",
+    "note": "Knowledge base",
+    "url": "https://github.com/kepano/obsidian-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "mvanhorn/last30days-skill",
+    "note": "Research skill",
+    "url": "https://github.com/mvanhorn/last30days-skill",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "yusufkaraaslan/Skill_Seekers",
+    "note": "Generate skills from documents",
+    "url": "https://github.com/yusufkaraaslan/Skill_Seekers",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "K-Dense-AI/scientific-agent-skills",
+    "note": "Scientific workflows",
+    "url": "https://github.com/K-Dense-AI/scientific-agent-skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "AgriciDaniel/claude-seo",
+    "note": "SEO",
+    "url": "https://github.com/AgriciDaniel/claude-seo",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "Bhanunamikaze/Agentic-SEO-Skill",
+    "note": "SEO",
+    "url": "https://github.com/Bhanunamikaze/Agentic-SEO-Skill",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "blader/humanizer",
+    "note": "Writing revision",
+    "url": "https://github.com/blader/humanizer",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "overextended/skills",
+    "note": "FiveM and Lua",
+    "url": "https://github.com/overextended/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "KaelLim/bepinex-modding",
+    "note": "Unity Mono and IL2CPP",
+    "url": "https://github.com/KaelLim/bepinex-modding",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "rkuhn153/bepinex-mcp",
+    "note": "Unity runtime tool with skills",
+    "url": "https://github.com/rkuhn153/bepinex-mcp",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "googleworkspace/cli",
+    "note": "Google workspace tool and skills",
+    "url": "https://github.com/googleworkspace/cli",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "0xNyk/council-of-high-intelligence",
+    "note": "Multi-perspective analysis",
+    "url": "https://github.com/0xNyk/council-of-high-intelligence",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  },
+  {
+    "repo": "browser-act/skills",
+    "note": "Browser workflows",
+    "url": "https://github.com/browser-act/skills",
+    "kind": "source_or_tool",
+    "verified": "GitHub repository metadata 2026-11-08"
+  }
+]

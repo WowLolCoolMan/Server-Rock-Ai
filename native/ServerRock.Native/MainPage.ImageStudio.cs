@@ -1,6 +1,6 @@
 // Image Studio: runs the user's ComfyUI API workflow against a loopback-only ComfyUI server,
 // with cancellation, and shows the resulting images as preview cards.
-// Depends on: ComfyImageProvider (ServerRock.Core), SaveSettings (endpoint and workflow are
+// Depends on: ComfyImageProvider (SkaiDesktop.Core), SaveSettings (endpoint and workflow are
 // saved as non-secret settings).
 // Called by: the Image Studio button in MainPage.xaml.
 
@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

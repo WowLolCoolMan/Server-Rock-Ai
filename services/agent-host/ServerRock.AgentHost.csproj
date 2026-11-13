@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\native\ServerRock.Core\ServerRock.Core.csproj" />
+    <ProjectReference Include="..\..\native\SkaiDesktop.Core\SkaiDesktop.Core.csproj" />
   </ItemGroup>
 </Project>

@@ -49,7 +49,7 @@ dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-deskto
 dotnet run --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 
 # Tests
-dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
 
 # Replacement desktop shell
 npm run desktop:install
@@ -85,7 +85,7 @@ for support details. The Uno surface is retained only until parity gates pass.
 ```text
 apps/desktop/             Electron + React desktop surface
 services/agent-host/      Persistent .NET host and protocol boundary
-native/ServerRock.Core    Provider, persistence, workflow, and safety logic
+native/SkaiDesktop.Core    Provider, persistence, workflow, and safety logic
 native/ServerRock.Native  Legacy Uno/XAML compatibility application during cutover
 docs/                     Architecture, capability, release, and feature docs
 assets/                   Product visuals and Percy mascot assets

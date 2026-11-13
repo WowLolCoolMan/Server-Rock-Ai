@@ -1,7 +1,7 @@
 // GitHub sign-in plumbing for the GitHub workspace UI (a MainPage partial):
 // polls the device-flow authorization until the user approves it, and loads, refreshes,
 // and saves the GitHub credential.
-// Depends on: GitHubDeviceFlow, GitHubApiClient, GitHubCredentialStore (ServerRock.Core) and
+// Depends on: GitHubDeviceFlow, GitHubApiClient, GitHubCredentialStore (SkaiDesktop.Core) and
 // the fields declared in MainPage.GitHub.cs.
 // Called by: GitHubWorkspaceDialogAsync (MainPage.GitHub.cs) and GitHubActionsClickAsync
 // (MainPage.GitHub.Changes.cs).
@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 

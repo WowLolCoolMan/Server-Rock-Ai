@@ -11,9 +11,9 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -37,6 +37,20 @@ public sealed partial class MainPage
         HeaderConnectionLabel.Text = "Checking…";
         try
         {
+            if (AirLlmProvider.IsAirLlmProvider(_settings.ModelProvider))
+            {
+                if (!_airLlmProvider.CanHandle(_settings) || !_airLlmProvider.IsInstalled) throw new InvalidOperationException("Enter a Hugging Face model ID and install the built-in AirLLM runtime.");
+                _advertisedModels = [_settings.Model];
+                _providerConnected = true;
+                ConnectionLabel.Text = "AirLLM ready";
+                HeaderConnectionLabel.Text = "AirLLM ready";
+                ConnectionDot.Fill = UiTheme.Brush("SuccessBrush");
+                HeaderConnectionDot.Fill = ConnectionDot.Fill;
+                ProcessingLabel.Text = "● AirLLM · local layer-wise inference";
+                RuntimeStatus.Text = $"AirLLM ready · {_settings.Model} · local-only";
+                UpdateModeControls();
+                return;
+            }
             var profiles = await _provider.DiscoverModelProfilesAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
             var models = profiles.Select(profile => profile.Model).ToArray();
             _advertisedModels = models;

@@ -1,15 +1,15 @@
 // GitHub commit/push review for the active project (a MainPage partial).
 // GitHubActionsClick opens a dialog that lists changed files, previews the diff, and lets
 // the user commit selected files and push. Secret-looking files can't be selected.
-// Depends on: GitHubWorkspaceService (git status/diff/commit/push in ServerRock.Core),
+// Depends on: GitHubWorkspaceService (git status/diff/commit/push in SkaiDesktop.Core),
 // GetGitHubCredentialAsync (MainPage.GitHub.SignIn.cs).
 // Called by: the GitHub button in the Coding Agent workspace bar (MainPage.xaml).
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 

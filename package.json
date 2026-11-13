@@ -33,7 +33,7 @@
     "smoke:chat-queue": "node scripts/smoke-chat-queue.cjs",
     "smoke:memory": "node scripts/smoke-memory.cjs",
     "smoke:pdf-attachment": "node scripts/smoke-pdf-attachment.cjs",
-    "test": "dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj",
+    "test": "dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj",
     "agent-host:build": "dotnet build services/agent-host/ServerRock.AgentHost.csproj",
     "desktop:install": "npm --prefix apps/desktop install",
     "desktop:dev": "npm --prefix apps/desktop run dev",

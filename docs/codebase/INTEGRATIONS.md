@@ -6,20 +6,20 @@
 
 | System | Type (API/DB/Queue/etc) | Purpose | Auth model | Criticality | Evidence |
 |--------|---------------------------|---------|------------|-------------|----------|
-| OpenAI-compatible endpoints | HTTP API | Chat/model discovery and streaming | Optional session/provider key; explicit remote consent | high | `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
-| Ollama/LM Studio and local runtimes | Local HTTP APIs | Local model discovery, pull/load and chat | Loopback/local route validation | high | `native/ServerRock.Core/Services/ModelLibraryService.cs` |
-| DuckDuckGo | HTTP search | Opt-in bounded web snippets/citations | Public endpoint; no account credential | medium | `native/ServerRock.Core/Services/WebSearchProvider.cs` |
-| GitHub | Git + REST/device flow | Repository browse, clone, review, commit/push | OS-protected credential/device flow | high | `native/ServerRock.Core/Services/GitHubApiClient.cs`, `GitHubWorkspaceService.cs` |
-| ComfyUI | Local HTTP API | Image workflow queue/poll | Local endpoint validation | medium | `native/ServerRock.Core/Services/ComfyImageProvider.cs` |
-| MCP stdio/Streamable HTTP | Tool protocol | Explicitly granted tool calls | Scoped connection/permission records | high | `native/ServerRock.Core/Services/Mcp*`, `native/ServerRock.Core/Infrastructure/` |
+| OpenAI-compatible endpoints | HTTP API | Chat/model discovery and streaming | Optional session/provider key; explicit remote consent | high | `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs` |
+| Ollama/LM Studio and local runtimes | Local HTTP APIs | Local model discovery, pull/load and chat | Loopback/local route validation | high | `native/SkaiDesktop.Core/Services/ModelLibraryService.cs` |
+| DuckDuckGo | HTTP search | Opt-in bounded web snippets/citations | Public endpoint; no account credential | medium | `native/SkaiDesktop.Core/Services/WebSearchProvider.cs` |
+| GitHub | Git + REST/device flow | Repository browse, clone, review, commit/push | OS-protected credential/device flow | high | `native/SkaiDesktop.Core/Services/GitHubApiClient.cs`, `GitHubWorkspaceService.cs` |
+| ComfyUI | Local HTTP API | Image workflow queue/poll | Local endpoint validation | medium | `native/SkaiDesktop.Core/Services/ComfyImageProvider.cs` |
+| MCP stdio/Streamable HTTP | Tool protocol | Explicitly granted tool calls | Scoped connection/permission records | high | `native/SkaiDesktop.Core/Services/Mcp*`, `native/SkaiDesktop.Core/Infrastructure/` |
 
 ### 2) Data Stores
 
 | Store | Role | Access layer | Key risk | Evidence |
 |-------|------|--------------|----------|----------|
-| Application-data JSON files | Settings, chats, projects, queue, memory, operations | Core stores and atomic writer | Corruption/migration; bounded readers mitigate | `native/ServerRock.Core/Infrastructure/` |
-| User-selected project filesystem | Context, reviewed edits, terminal workdir | Workspace path/editor/runner services | Path traversal, secrets, symlinks; guards exist | `native/ServerRock.Core/Infrastructure/Workspace*` |
-| OS credential store | GitHub/provider credentials where supported | GitHub credential service | Platform parity `[TODO]` | `native/ServerRock.Core/Services/GitHubCredentialStore.cs` |
+| Application-data JSON files | Settings, chats, projects, queue, memory, operations | Core stores and atomic writer | Corruption/migration; bounded readers mitigate | `native/SkaiDesktop.Core/Infrastructure/` |
+| User-selected project filesystem | Context, reviewed edits, terminal workdir | Workspace path/editor/runner services | Path traversal, secrets, symlinks; guards exist | `native/SkaiDesktop.Core/Infrastructure/Workspace*` |
+| OS credential store | GitHub/provider credentials where supported | GitHub credential service | Platform parity `[TODO]` | `native/SkaiDesktop.Core/Services/GitHubCredentialStore.cs` |
 
 ### 3) Secrets and Credentials Handling
 
@@ -40,8 +40,8 @@
 
 ### 6) Evidence
 
-- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
-- `native/ServerRock.Core/Services/GitHubApiClient.cs`
-- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
-- `native/ServerRock.Core/Infrastructure/AtomicFileWriter.cs`
+- `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/SkaiDesktop.Core/Services/GitHubApiClient.cs`
+- `native/SkaiDesktop.Core/Services/McpStreamableHttpClient.cs`
+- `native/SkaiDesktop.Core/Infrastructure/AtomicFileWriter.cs`
 - `docs/CAPABILITY_MATRIX.md`

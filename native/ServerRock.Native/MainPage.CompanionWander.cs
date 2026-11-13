@@ -1,7 +1,7 @@
 // Pet wandering: while idle, the pet walks around the window on a 10 × 10 grid, one
 // neighboring cell at a time, resting 2–6 s at each destination.
 // Why: requested "wander" behavior. The grid, blocked cells, paths and the glide live in
-// ServerRock.Core (PetWanderPlanner.cs, tested); this file measures the window, moves the
+// SkaiDesktop.Core (PetWanderPlanner.cs, tested); this file measures the window, moves the
 // card, and adds the walking motion (bob, tilt, squash, facing the direction of travel).
 // Rules: never stands over the composer or Send; stops smoothly when the state leaves idle and
 // resumes ~5 s after it returns; pauses 30 s after the person moves the pet; nothing runs
@@ -13,7 +13,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 

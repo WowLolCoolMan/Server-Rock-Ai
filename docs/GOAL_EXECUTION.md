@@ -672,15 +672,15 @@ state.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
 - `docs/GOAL_EXECUTION.md`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/HANDOFF_BACKLOG.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including restart, explicit retry, and no-dispatch assertions.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including restart, explicit retry, and no-dispatch assertions.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: retry changes only bounded local task metadata;
@@ -756,7 +756,7 @@ Evidence:
 - `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run desktop:typecheck` — passed.
 - `npm run desktop:build` — passed.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed.
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 - Disposable live stdio smoke returned an empty history, saved one conversation, and returned that same conversation from a second list request.
@@ -833,9 +833,9 @@ access remain unchanged.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.CodingAgent.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/HANDOFF_BACKLOG.md`
@@ -843,7 +843,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including settings round-trip coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including settings round-trip coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 322 contracts.
 - `npm run check:syntax` — passed.
@@ -874,9 +874,9 @@ idempotent.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core/Services/StartupRecoveryService.cs`
-- `native/ServerRock.Core.Tests/StartupRecoveryTests.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core/Services/StartupRecoveryService.cs`
+- `native/SkaiDesktop.Core.Tests/StartupRecoveryTests.cs`
 - `native/ServerRock.Native/MainPageServices.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/HANDOFF_BACKLOG.md`
@@ -884,7 +884,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including interrupted-task and idempotence checks.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including interrupted-task and idempotence checks.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 322 contracts.
 - `npm run check:syntax` — passed.
@@ -915,8 +915,8 @@ separate 16-file/48k-character path.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.CodingAgent.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
@@ -925,7 +925,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed after updating its source-contract check.
 - `npm run check:syntax` — passed.
@@ -982,16 +982,16 @@ Skai Desktop design-token palette without changing provider or workspace data.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/UiTheme.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `README.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed (`Native core checks passed.`).
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed (`Native core checks passed.`).
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `git diff --check` — passed.
 
@@ -1091,7 +1091,7 @@ acceptance of the tag editor and tag rendering.
 
 Status: `implemented_unverified`
 
-`ServerRock.Core` now has a small UI-independent operation contract with stable
+`SkaiDesktop.Core` now has a small UI-independent operation contract with stable
 run IDs, bounded instructions, explicit state transitions, monotonic per-run
 event sequences, atomic JSON persistence, and restart reconciliation. In-flight
 runs are changed to `needs_reconciliation` after restart; the journal never
@@ -1100,10 +1100,10 @@ This is the foundation for a later workflow/task UI and parallel agent host.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/OperationRun.cs`
-- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
-- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/OperationRun.cs`
+- `native/SkaiDesktop.Core/Infrastructure/OperationJournal.cs`
+- `native/SkaiDesktop.Core.Tests/OperationJournalTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence, privacy, and rollback will be appended after the focused suite and
 native build complete. No external code, network call, credential, or
@@ -1111,7 +1111,7 @@ destructive data migration was introduced.
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including operation creation, monotonic transitions, invalid-transition rejection, restart reconciliation, idempotence, and explicit cancellation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including operation creation, monotonic transitions, invalid-transition rejection, restart reconciliation, idempotence, and explicit cancellation.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1139,15 +1139,15 @@ service; it does not write journal events or choose transition rules directly.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/OperationService.cs`
-- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core.Tests/OperationServiceTests.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including service start, completion, cancellation, and the existing Core suite.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including service start, completion, cancellation, and the existing Core suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1177,7 +1177,7 @@ by the label.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `native/ServerRock.Native/SidebarView.xaml`
@@ -1185,7 +1185,7 @@ Changed files:
 Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including journal restart-reconciliation coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including journal restart-reconciliation coverage.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed before commit.
 
@@ -1214,13 +1214,13 @@ for any other status, keeping the recovery path state-safe.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/OperationService.cs`
-- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core.Tests/OperationServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including restart reconciliation and reviewed decision coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including restart reconciliation and reviewed decision coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after fixing the automation metadata import.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1250,14 +1250,14 @@ validation boundary only; no workflow is executed or scheduled yet.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowDefinition.cs`
-- `native/ServerRock.Core/Services/WorkflowService.cs`
-- `native/ServerRock.Core.Tests/WorkflowServiceTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowDefinition.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowServiceTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid DAG persistence, cycle rejection, and inline-secret rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including valid DAG persistence, cycle rejection, and inline-secret rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1289,14 +1289,14 @@ commands, Git, or model providers yet.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowRun.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowRun.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable approval pause/resume, safe retry attempt increment, cancellation, and restart reconciliation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including durable approval pause/resume, safe retry attempt increment, cancellation, and restart reconciliation.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1332,7 +1332,7 @@ Changed files:
 Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed in the preceding workflow-run slice, including durable approval transitions and restart reconciliation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed in the preceding workflow-run slice, including durable approval transitions and restart reconciliation.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
 
@@ -1363,17 +1363,17 @@ validation, and no bounded retry node is implied.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowDefinition.cs`
-- `native/ServerRock.Core/Models/WorkflowRun.cs`
-- `native/ServerRock.Core/Services/WorkflowService.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowServiceTests.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowDefinition.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowRun.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowService.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowServiceTests.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including dependency-order plan and durable plan-order assertions.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including dependency-order plan and durable plan-order assertions.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1435,14 +1435,14 @@ execution surface.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowRun.cs`
-- `native/ServerRock.Core/Services/ReadOnlyConditionExecutor.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowRun.cs`
+- `native/SkaiDesktop.Core/Services/ReadOnlyConditionExecutor.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local condition evaluation, durable result completion, and unsupported-node rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including local condition evaluation, durable result completion, and unsupported-node rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1472,14 +1472,14 @@ This makes capability refusal visible without widening permissions.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowRun.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowRun.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including persisted true condition result and unsupported-node refusal.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including persisted true condition result and unsupported-node refusal.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1509,14 +1509,14 @@ does not execute anything.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowCapability.cs`
-- `native/ServerRock.Core/Services/WorkflowCapabilityGate.cs`
-- `native/ServerRock.Core.Tests/WorkflowCapabilityGateTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowCapability.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowCapabilityGate.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowCapabilityGateTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including exact-scope acceptance, cross-run refusal, and condition external-capability refusal.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including exact-scope acceptance, cross-run refusal, and condition external-capability refusal.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1546,14 +1546,14 @@ a `WorkspaceReadEffect` with relative path, character count, and
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkspaceReadEffect.cs`
-- `native/ServerRock.Core/Services/ReadOnlyWorkspaceAdapter.cs`
-- `native/ServerRock.Core.Tests/ReadOnlyWorkspaceAdapterTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/WorkspaceReadEffect.cs`
+- `native/SkaiDesktop.Core/Services/ReadOnlyWorkspaceAdapter.cs`
+- `native/SkaiDesktop.Core.Tests/ReadOnlyWorkspaceAdapterTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including approved read/effect reporting, cross-run grant refusal, and protected-file refusal.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including approved read/effect reporting, cross-run grant refusal, and protected-file refusal.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1584,12 +1584,12 @@ advances through verifying to completed.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including workflow adapter invocation and durable non-mutating effect event coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including workflow adapter invocation and durable non-mutating effect event coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1653,14 +1653,14 @@ nested modal dialogs.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowApprovalRequest.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowApprovalRequest.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including two concurrent approvals surfaced through one inbox.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including two concurrent approvals surfaced through one inbox.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1690,14 +1690,14 @@ requests.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowRun.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowRun.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable denial and 30-minute expiry event coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including durable denial and 30-minute expiry event coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1726,14 +1726,14 @@ not actionable.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowApprovalRequest.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowApprovalRequest.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including expiry timestamp assertions, denial, and expiration events.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including expiry timestamp assertions, denial, and expiration events.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1762,15 +1762,15 @@ without losing the current draft or response.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
-- `native/ServerRock.Core.Tests/ChatMessageQueueTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/ChatMessageQueue.cs`
+- `native/SkaiDesktop.Core.Tests/ChatMessageQueueTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including FIFO ordering, attachment preservation, capacity refusal, and drain behavior.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including FIFO ordering, attachment preservation, capacity refusal, and drain behavior.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1800,13 +1800,13 @@ queue does not stop or alter the active response.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/SkaiDesktop.Core/Services/ChatMessageQueue.cs`
 - `native/ServerRock.Native/MainPage.xaml`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including queue FIFO/capacity/drain coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including queue FIFO/capacity/drain coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1837,16 +1837,16 @@ surface for user review before sending.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ChatMessageQueueStore.cs`
-- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ChatMessageQueueStore.cs`
+- `native/SkaiDesktop.Core/Services/ChatMessageQueue.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
-- `native/ServerRock.Core.Tests/ChatMessageQueueStoreTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/ChatMessageQueueStoreTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including FIFO/attachment round-trip and persisted empty-queue behavior.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including FIFO/attachment round-trip and persisted empty-queue behavior.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1956,13 +1956,13 @@ active response is unaffected; only messages waiting for dispatch change order.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ChatMessageQueue.cs`
+- `native/SkaiDesktop.Core/Services/ChatMessageQueue.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
-- `native/ServerRock.Core.Tests/ChatMessageQueueTests.cs`
+- `native/SkaiDesktop.Core.Tests/ChatMessageQueueTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid move ordering, invalid/no-op rejection, attachment preservation, persistence, and drain behavior.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including valid move ordering, invalid/no-op rejection, attachment preservation, persistence, and drain behavior.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -1991,14 +1991,14 @@ and oversized or control-character queries are rejected safely.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConversationSearchService.cs`
+- `native/SkaiDesktop.Core/Services/ConversationSearchService.cs`
 - `native/ServerRock.Native/MainPage.Composer.cs`
-- `native/ServerRock.Core.Tests/ConversationSearchTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationSearchTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including tag, attachment, source metadata, recent ordering, and query-bound coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including tag, attachment, source metadata, recent ordering, and query-bound coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2027,16 +2027,16 @@ legacy fields normalize to `unknown` in memory.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/OperationRun.cs`
-- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
-- `native/ServerRock.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core/Models/OperationRun.cs`
+- `native/SkaiDesktop.Core/Infrastructure/OperationJournal.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
-- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/SkaiDesktop.Core.Tests/OperationServiceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including provider/model/local provenance persistence.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including provider/model/local provenance persistence.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2067,14 +2067,14 @@ ASR, or TTS are rejected before an image-bearing request reaches the network.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ModelCapabilityProfile.cs`
-- `native/ServerRock.Core/Infrastructure/ModelCapabilityResolver.cs`
-- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Models/ModelCapabilityProfile.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ModelCapabilityResolver.cs`
+- `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local/remote profile facts, unknown-model tolerance, definitive non-vision detection, and pre-network image rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including local/remote profile facts, unknown-model tolerance, definitive non-vision detection, and pre-network image rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2106,16 +2106,16 @@ metadata to a server.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core/Infrastructure/ModelCapabilityResolver.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ModelCapabilityResolver.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including settings round-trip and explicit capability override behavior.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including settings round-trip and explicit capability override behavior.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2146,13 +2146,13 @@ string list, while capability-aware callers can opt into descriptors.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ProviderModelDescriptor.cs`
-- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Models/ProviderModelDescriptor.cs`
+- `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit capability metadata, boolean vision flags, unknown metadata, and existing model-ID discovery.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including explicit capability metadata, boolean vision flags, unknown metadata, and existing model-ID discovery.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2188,7 +2188,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including provider discovery and all existing connection/provider coverage.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including provider discovery and all existing connection/provider coverage.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2223,7 +2223,7 @@ Evidence:
 - Live Windows accessibility inspection — passed: `Search your workspace`,
   `Search chats in both workspaces`, the matching result, and `Open chat` were
   exposed; the opened conversation displayed both saved user messages.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
@@ -2251,15 +2251,15 @@ expiry arithmetic.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/WorkflowApprovalTiming.cs`
-- `native/ServerRock.Core.Tests/WorkflowApprovalTimingTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowApprovalTiming.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowApprovalTimingTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including sub-minute, minute, hour, and expired countdown cases.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including sub-minute, minute, hour, and expired countdown cases.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (85 contracts).`
 - `git diff --check` — passed.
@@ -2376,7 +2376,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (91 contracts).`
 - `git diff --check` — passed.
@@ -2417,7 +2417,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (94 contracts).`
 - `git diff --check` — passed.
@@ -2451,14 +2451,14 @@ switch.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ProviderErrorText.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ProviderErrorText.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including model, endpoint, image, and timeout classification cases.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including model, endpoint, image, and timeout classification cases.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (96 contracts).`
 - `git diff --check` — passed.
@@ -2763,7 +2763,7 @@ Evidence:
 - `npm run check:syntax` — passed.
 - `npm run audit:native-ui` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: the extraction adds no storage, provider, network,
@@ -2790,12 +2790,12 @@ user cancellation into a successful result.
 
 Changed files:
 
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `docs/CAPABILITY_MATRIX.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `project command cancellation kills the process tree and propagates cancellation`.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including `project command cancellation kills the process tree and propagates cancellation`.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: this slice adds no provider request, credential,
@@ -2862,7 +2862,7 @@ Evidence:
 
 - `npm run audit:native-ui` — passed: `Native UI audit passed (148 contracts).`
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -2897,7 +2897,7 @@ Evidence:
 
 - `npm run audit:native-ui` — passed: `Native UI audit passed (153 contracts).`
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -2928,15 +2928,15 @@ server, sub-agent, or background process.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AgentTaskArtifact.cs`
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/AgentTaskArtifact.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `docs/CAPABILITY_MATRIX.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including dependency gating, persistence/reload, search, and unknown-dependency rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including dependency gating, persistence/reload, search, and unknown-dependency rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (153 contracts).`
 - `npm run check:syntax` — passed.
@@ -2978,7 +2978,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (154 contracts).`
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -3016,7 +3016,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (157 contracts).`
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -3051,7 +3051,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (159 contracts).`
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -3127,7 +3127,7 @@ Evidence:
   contract.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
@@ -3165,7 +3165,7 @@ Evidence:
 - `npm run audit:native-ui` — passed with the dependency-label contract.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
@@ -3195,8 +3195,8 @@ call a provider.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
@@ -3207,7 +3207,7 @@ Evidence:
 - `npm run audit:native-ui` — passed with the readiness-preview contracts.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including non-mutating readiness and dependency gating assertions.
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
@@ -3236,8 +3236,8 @@ path; this control does not stop processes or dispatch any work.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
@@ -3248,7 +3248,7 @@ Evidence:
 - `npm run audit:native-ui` — passed with the cancellation contracts.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including pre-execution cancellation and readiness exclusion.
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
@@ -3288,7 +3288,7 @@ Evidence:
   contracts.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including bounded local task search coverage.
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
@@ -3409,18 +3409,18 @@ fork.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConversationForkService.cs`
-- `native/ServerRock.Core.Tests/ConversationForkTests.cs`
+- `native/SkaiDesktop.Core/Services/ConversationForkService.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationForkTests.cs`
 - `native/ServerRock.Native/MainPage.Branches.cs`
 - `native/ServerRock.Native/MainPage.Messages.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
 - `npm run audit:native-ui` — passed: `Native UI audit passed (172 contracts)`.
 - `npm run check:syntax` — passed.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including selected-prefix bounds, full-fork behavior, attachment/source list isolation, and invalid-index rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including selected-prefix bounds, full-fork behavior, attachment/source list isolation, and invalid-index rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after stopping the exact validation executable that held the output assembly.
 - `git diff --check` — passed.
 
@@ -3447,11 +3447,11 @@ scrolls the selected message into view; no provider or web request is made.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConversationMessageSearchService.cs`
-- `native/ServerRock.Core.Tests/ConversationMessageSearchTests.cs`
+- `native/SkaiDesktop.Core/Services/ConversationMessageSearchService.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationMessageSearchTests.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
 - `native/ServerRock.Native/MainPage.Composer.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/FUTURE_FEATURES.md`
 
@@ -3459,7 +3459,7 @@ Evidence:
 
 - `npm run audit:native-ui` — passed: `Native UI audit passed (177 contracts)`.
 - `npm run check:syntax` — passed.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including role/index matching, blank-query handling, query-length rejection, and bounded previews.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including role/index matching, blank-query handling, query-length rejection, and bounded previews.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `git diff --check` — passed.
 
@@ -3564,7 +3564,7 @@ Evidence:
 
 - `npm run audit:native-ui` — passed: `Native UI audit passed (150 contracts).`
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
@@ -3606,7 +3606,7 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
 - `npm run check:syntax` — passed.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 
 Privacy/security/licensing: this is a local visual decomposition only. It
 changes no persistence, provider route, credential handling, prompt content,
@@ -3786,7 +3786,7 @@ Status: `verified_windows_repository_gates`
 
 The current synchronized repository passed the release/security hygiene gates.
 The runtime display identity search also confirmed that the product name is
-centralized in `native/ServerRock.Core/Models/ProductIdentity.cs` rather than
+centralized in `native/SkaiDesktop.Core/Models/ProductIdentity.cs` rather than
 duplicated through feature UI code, preserving the ability to rebrand the app
 without editing every surface. Release packaging metadata remains an explicit
 manifest/configuration input, not a hidden runtime fallback.
@@ -4004,15 +4004,15 @@ environment variables, files, or network state.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/PromptVariableExpander.cs`
-- `native/ServerRock.Core.Tests/PromptVariableTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/PromptVariableExpander.cs`
+- `native/SkaiDesktop.Core.Tests/PromptVariableTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deterministic expansion, case-insensitive names, unknown-variable preservation, and control-character rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including deterministic expansion, case-insensitive names, unknown-variable preservation, and control-character rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (131 contracts).`
 - `git diff --check` — passed.
@@ -4043,17 +4043,17 @@ prompt the user can inspect and edit before sending.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core/Services/PromptVariableExpander.cs`
-- `native/ServerRock.Core.Tests/PromptVariableTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core/Services/PromptVariableExpander.cs`
+- `native/SkaiDesktop.Core.Tests/PromptVariableTests.cs`
 - `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit-name substitution, unset-token preservation, and unsafe-value rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including explicit-name substitution, unset-token preservation, and unsafe-value rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (133 contracts).`
 - `git diff --check` — passed.
@@ -4084,15 +4084,15 @@ without changing provider routing or adding automatic fallback behavior.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
-- `native/ServerRock.Core/Services/OperationService.cs`
-- `native/ServerRock.Core.Tests/OperationServiceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/OperationJournal.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core.Tests/OperationServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including durable started/failed provider-attempt events and bounded provenance fields.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including durable started/failed provider-attempt events and bounded provenance fields.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (134 contracts).`
 - `git diff --check` — passed.
@@ -4123,14 +4123,14 @@ values, create credentials, execute an operation, or grant permissions.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/OpenApiDiscoveredOperation.cs`
-- `native/ServerRock.Core/Services/OpenApiToolDiscovery.cs`
-- `native/ServerRock.Core.Tests/OpenApiToolDiscoveryTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/OpenApiDiscoveredOperation.cs`
+- `native/SkaiDesktop.Core/Services/OpenApiToolDiscovery.cs`
+- `native/SkaiDesktop.Core.Tests/OpenApiToolDiscoveryTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including read/write classification, bounded schema preservation, unsupported-version rejection, and credential-bearing source-identity rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including read/write classification, bounded schema preservation, unsupported-version rejection, and credential-bearing source-identity rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (134 contracts).`
 - `git diff --check` — passed.
@@ -4198,12 +4198,12 @@ operation.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/OpenApiToolDiscovery.cs`
-- `native/ServerRock.Core.Tests/OpenApiToolDiscoveryTests.cs`
+- `native/SkaiDesktop.Core/Services/OpenApiToolDiscovery.cs`
+- `native/SkaiDesktop.Core.Tests/OpenApiToolDiscoveryTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed: `Native core checks passed.`
 - `git diff --check` — passed.
 
 Privacy/security/licensing: resolution is limited to the in-document
@@ -4274,16 +4274,16 @@ are coalesced.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/StatusMessageHistory.cs`
-- `native/ServerRock.Core.Tests/StatusMessageHistoryTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/StatusMessageHistory.cs`
+- `native/SkaiDesktop.Core.Tests/StatusMessageHistoryTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.xaml`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including bounded ordering, duplicate suppression, blank-message handling, and oversized-message truncation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including bounded ordering, duplicate suppression, blank-message handling, and oversized-message truncation.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (140 contracts).`
 - `git diff --check` — passed.
@@ -4320,17 +4320,17 @@ context while the prompt continues without it and exposes a status message.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Services/MemoryPromptContext.cs`
-- `native/ServerRock.Core.Tests/MemoryPromptContextTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Services/MemoryPromptContext.cs`
+- `native/SkaiDesktop.Core.Tests/MemoryPromptContextTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit opt-in, scope filtering, disabled-entry filtering, reference labeling, and the 6,000-character bound.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including explicit opt-in, scope filtering, disabled-entry filtering, reference labeling, and the 6,000-character bound.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (141 contracts).`
 - `git diff --check` — passed.
@@ -4361,15 +4361,15 @@ already-running tasks remain ineligible for this action.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
-- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/SkaiDesktop.Core/Services/ScheduledTaskStore.cs`
+- `native/SkaiDesktop.Core.Tests/ScheduledTaskTests.cs`
 - `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the durable run-now and claim path.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the durable run-now and claim path.
 - native build — passed with 0 warnings/errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (142 contracts)`, including the accessible run-now control.
 - `git diff --check` — passed after the final patch.
@@ -4401,9 +4401,9 @@ state only, so it does not alter conversations or user files.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/NavigationHistory.cs`
-- `native/ServerRock.Core.Tests/NavigationHistoryTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/NavigationHistory.cs`
+- `native/SkaiDesktop.Core.Tests/NavigationHistoryTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.Navigation.cs`
 - `native/ServerRock.Native/MainPage.xaml`
 - `native/ServerRock.Native/MainPage.xaml.cs`
@@ -4411,7 +4411,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including bounded history, back/forward movement, and forward-branch truncation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including bounded history, back/forward movement, and forward-branch truncation.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings/errors.
 - `npm run audit:native-ui` — passed after adding the Back/Forward contracts.
 - `git diff --check` — passed.
@@ -4441,16 +4441,16 @@ credential, endpoint, or model data is stored in this route history.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/NavigationHistory.cs`
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core.Tests/NavigationHistoryTests.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Services/NavigationHistory.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core.Tests/NavigationHistoryTests.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Navigation.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including route restoration, invalid-route recovery, settings round-trip, and bounded history.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including route restoration, invalid-route recovery, settings round-trip, and bounded history.
 - native build — passed with 0 warnings/errors.
 - UI audit — passed with the existing 144 native contracts.
 - `git diff --check` — passed.
@@ -4481,16 +4481,16 @@ failure does not erase partial results. API keys remain session-only.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ModelComparisonPolicy.cs`
-- `native/ServerRock.Core.Tests/ModelComparisonPolicyTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/ModelComparisonPolicy.cs`
+- `native/SkaiDesktop.Core.Tests/ModelComparisonPolicyTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPage.ModelLibrary.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deduplication, minimum selection, local-only routing, and prompt bounds.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including deduplication, minimum selection, local-only routing, and prompt bounds.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings/errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts)`.
 - `git diff --check` — passed.
@@ -4651,11 +4651,11 @@ duplicate expiry events.
 Changed files:
 
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the regression that resolves an unrelated pending fixture approval, expires the target approval, invokes expiry again, and verifies one durable `approval.expired` event.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the regression that resolves an unrelated pending fixture approval, expires the target approval, invokes expiry again, and verifies one durable `approval.expired` event.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
 - `git diff --check` — passed.
@@ -4684,12 +4684,12 @@ gates.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including refusal to begin the approval step before its `test` dependency and the complete existing workflow, queue, MCP, memory, skill, and release checks.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including refusal to begin the approval step before its `test` dependency and the complete existing workflow, queue, MCP, memory, skill, and release checks.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
 - `git diff --check` — passed.
@@ -4718,15 +4718,15 @@ list labels and the search remains non-mutating.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/WorkflowEventSearchHit.cs`
-- `native/ServerRock.Core/Services/WorkflowRunService.cs`
-- `native/ServerRock.Core.Tests/WorkflowRunServiceTests.cs`
+- `native/SkaiDesktop.Core/Models/WorkflowEventSearchHit.cs`
+- `native/SkaiDesktop.Core/Services/WorkflowRunService.cs`
+- `native/SkaiDesktop.Core.Tests/WorkflowRunServiceTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local approval-event search and the full existing Core suite.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including local approval-event search and the full existing Core suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (129 contracts).`
 - `git diff --check` — passed.
@@ -4761,12 +4761,12 @@ fallback or cloud route is introduced.
 Changed files:
 
 - `native/ServerRock.Native/MainPage.ModelLibrary.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local-only route validation and the full existing Core suite.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including local-only route validation and the full existing Core suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (130 contracts).`
 - `git diff --check` — passed.
@@ -4803,12 +4803,12 @@ and verifies exactly one succeeds while the other is rejected as stale.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceFileEditor.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceFileEditor.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `workspace edits serialize reviewed writes and reject the losing concurrent hash`.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including `workspace edits serialize reviewed writes and reject the losing concurrent hash`.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).`
 - `git diff --check` — passed.
@@ -4840,14 +4840,14 @@ Activity & tasks UI.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ScheduledTask.cs`
-- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
-- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/ScheduledTask.cs`
+- `native/SkaiDesktop.Core/Services/ScheduledTaskStore.cs`
+- `native/SkaiDesktop.Core.Tests/ScheduledTaskTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `scheduled task persistence, claim, no-replay, outcome, pause, and resume`.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including `scheduled task persistence, claim, no-replay, outcome, pause, and resume`.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).` No UI files changed.
 - `git diff --check` — passed.
@@ -4886,7 +4886,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including scheduler persistence/no-replay tests.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including scheduler persistence/no-replay tests.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (111 contracts).`
 - `git diff --check` — passed.
@@ -4926,14 +4926,14 @@ instructions only and is never executed by this installer.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/InstalledSkill.cs`
-- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
-- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/InstalledSkill.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
+- `native/SkaiDesktop.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including pinned provenance, digest, atomic replacement, rollback, and executable-content rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including pinned provenance, digest, atomic replacement, rollback, and executable-content rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after stopping the validation app that held the output DLL.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (111 contracts).`
 - `git diff --check` — passed.
@@ -4965,14 +4965,14 @@ boundary; no package script or binary can be executed through this journey.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
 - `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including package digest, activation, rollback, and executable rejection tests.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including package digest, activation, rollback, and executable rejection tests.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (114 contracts).`
 - `git diff --check` — passed.
@@ -5009,7 +5009,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
 - `git diff --check` — passed.
@@ -5041,14 +5041,14 @@ UI integration.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/McpTool.cs`
-- `native/ServerRock.Core/Services/McpToolPermissionGate.cs`
-- `native/ServerRock.Core.Tests/McpToolPermissionGateTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/McpTool.cs`
+- `native/SkaiDesktop.Core/Services/McpToolPermissionGate.cs`
+- `native/SkaiDesktop.Core.Tests/McpToolPermissionGateTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit read-only authorization, denial of an unapproved mutating tool, and invalid-schema rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including explicit read-only authorization, denial of an unapproved mutating tool, and invalid-schema rejection.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: manifest metadata never creates authority; the
@@ -5079,14 +5079,14 @@ does not launch processes, store credentials, or expose a UI connection yet.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/McpTool.cs`
-- `native/ServerRock.Core/Services/McpStdioClient.cs`
-- `native/ServerRock.Core.Tests/McpStdioClientTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/McpTool.cs`
+- `native/SkaiDesktop.Core/Services/McpStdioClient.cs`
+- `native/SkaiDesktop.Core.Tests/McpStdioClientTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including a scripted MCP exchange covering initialization, conservative tool classification, approved read-only invocation, denied mutating invocation, and emitted JSON-RPC messages.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including a scripted MCP exchange covering initialization, conservative tool classification, approved read-only invocation, denied mutating invocation, and emitted JSON-RPC messages.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
 - `git diff --check` — passed.
@@ -5121,14 +5121,14 @@ slice.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ReleaseManifest.cs`
-- `native/ServerRock.Core/Services/ReleaseManifestVerifier.cs`
-- `native/ServerRock.Core.Tests/ReleaseManifestVerifierTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/ReleaseManifest.cs`
+- `native/SkaiDesktop.Core/Services/ReleaseManifestVerifier.cs`
+- `native/SkaiDesktop.Core.Tests/ReleaseManifestVerifierTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid RSA authentication and artifact hashing plus tampered-manifest, tampered-artifact, and channel-mismatch rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including valid RSA authentication and artifact hashing plus tampered-manifest, tampered-artifact, and channel-mismatch rejection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (116 contracts).`
 - `git diff --check` — passed.
@@ -5160,16 +5160,16 @@ deliberately not a durable connection store or a UI lifecycle journey yet.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/McpTool.cs`
-- `native/ServerRock.Core/Services/McpConnectionRegistry.cs`
-- `native/ServerRock.Core/Services/McpStdioClient.cs`
-- `native/ServerRock.Core.Tests/McpConnectionRegistryTests.cs`
-- `native/ServerRock.Core.Tests/McpStdioClientTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/McpTool.cs`
+- `native/SkaiDesktop.Core/Services/McpConnectionRegistry.cs`
+- `native/SkaiDesktop.Core/Services/McpStdioClient.cs`
+- `native/SkaiDesktop.Core.Tests/McpConnectionRegistryTests.cs`
+- `native/SkaiDesktop.Core.Tests/McpStdioClientTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including configured-to-healthy authorization, revocation denial, terminal reactivation refusal, and client-level revocation before wire output.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including configured-to-healthy authorization, revocation denial, terminal reactivation refusal, and client-level revocation before wire output.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: connection state and revocation remain process-local
@@ -5201,13 +5201,13 @@ claim a UI connector journey.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/McpConnectionStore.cs`
-- `native/ServerRock.Core/Services/McpConnectionRegistry.cs`
-- `native/ServerRock.Core.Tests/McpConnectionRegistryTests.cs`
+- `native/SkaiDesktop.Core/Services/McpConnectionStore.cs`
+- `native/SkaiDesktop.Core/Services/McpConnectionRegistry.cs`
+- `native/SkaiDesktop.Core.Tests/McpConnectionRegistryTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including atomic store reload and persisted revocation.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including atomic store reload and persisted revocation.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: only reviewed connection identity, transport,
@@ -5240,13 +5240,13 @@ deliberately not claimed yet.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
-- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/McpStreamableHttpClient.cs`
+- `native/SkaiDesktop.Core.Tests/McpStreamableHttpClientTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed with a scripted HTTP endpoint covering initialize, tool discovery, approved read-only invocation, revocation denial before request, and redirect refusal.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed with a scripted HTTP endpoint covering initialize, tool discovery, approved read-only invocation, revocation denial before request, and redirect refusal.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: no credentials are accepted or persisted, public
@@ -5276,12 +5276,12 @@ MCP session negotiation or long-lived event subscriptions.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
-- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
+- `native/SkaiDesktop.Core/Services/McpStreamableHttpClient.cs`
+- `native/SkaiDesktop.Core.Tests/McpStreamableHttpClientTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed with a scripted endpoint returning an SSE `tools/call` result, plus revocation and redirect negative cases.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed with a scripted endpoint returning an SSE `tools/call` result, plus revocation and redirect negative cases.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: SSE data is treated as untrusted bounded text;
@@ -5310,12 +5310,12 @@ subscriptions remain outside this slice.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
-- `native/ServerRock.Core.Tests/McpStreamableHttpClientTests.cs`
+- `native/SkaiDesktop.Core/Services/McpStreamableHttpClient.cs`
+- `native/SkaiDesktop.Core.Tests/McpStreamableHttpClientTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including scripted initialize/session response, subsequent session/protocol headers, SSE tool invocation, revocation denial, and redirect refusal.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including scripted initialize/session response, subsequent session/protocol headers, SSE tool invocation, revocation denial, and redirect refusal.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: session identifiers remain process-local, bounded,
@@ -5347,15 +5347,15 @@ limit.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConversationContextPlanner.cs`
-- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
-- `native/ServerRock.Core.Tests/ConversationContextPlannerTests.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/ConversationContextPlanner.cs`
+- `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationContextPlannerTests.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including newest-turn/system preservation, omitted-history marking, source immutability, empty-history handling, oversized multi-turn provider compaction before network access, and preservation of single-message oversize rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including newest-turn/system preservation, omitted-history marking, source immutability, empty-history handling, oversized multi-turn provider compaction before network access, and preservation of single-message oversize rejection.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: planning is local and deterministic; omitted text
@@ -5386,14 +5386,14 @@ credentials.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/MemoryEntry.cs`
-- `native/ServerRock.Core/Services/MemoryStore.cs`
-- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/MemoryEntry.cs`
+- `native/SkaiDesktop.Core/Services/MemoryStore.cs`
+- `native/SkaiDesktop.Core.Tests/MemoryStoreTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including approved project search, enable/disable retrieval, edit/reload, explicit durable deletion, and invalid-content rejection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including approved project search, enable/disable retrieval, edit/reload, explicit durable deletion, and invalid-content rejection.
 - `git diff --check` — passed.
 
 Privacy/security/licensing: memory is local-only, explicitly approved, bounded,
@@ -5430,7 +5430,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the memory store persistence and mutation suite.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the memory store persistence and mutation suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (120 contracts).`
 - `git diff --check` — passed.
@@ -5467,14 +5467,14 @@ no automatic import, provider upload, or model injection.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/MemoryStore.cs`
-- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
+- `native/SkaiDesktop.Core/Services/MemoryStore.cs`
+- `native/SkaiDesktop.Core.Tests/MemoryStoreTests.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the versioned backup marker and disabled-entry preservation assertion.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the versioned backup marker and disabled-entry preservation assertion.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors after closing the development app process that held its output DLL.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (121 contracts).`
 - `git diff --check` — passed.
@@ -5504,14 +5504,14 @@ approval, provenance, tags, timestamps, and enabled state.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/MemoryStore.cs`
-- `native/ServerRock.Core.Tests/MemoryStoreTests.cs`
+- `native/SkaiDesktop.Core/Services/MemoryStore.cs`
+- `native/SkaiDesktop.Core.Tests/MemoryStoreTests.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including import planning, merge, and duplicate-identity protection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including import planning, merge, and duplicate-identity protection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (124 contracts).`
 - `git diff --check` — passed.
@@ -5546,12 +5546,12 @@ attachment queries.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConversationSearchService.cs`
-- `native/ServerRock.Core.Tests/ConversationSearchTests.cs`
+- `native/SkaiDesktop.Core/Services/ConversationSearchService.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationSearchTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the culture-independent uppercase attachment query.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the culture-independent uppercase attachment query.
 - `git diff --check` — passed in commit `f10f09c`.
 
 Privacy/security/licensing: matching remains local-only, adds no data flow or
@@ -5575,16 +5575,16 @@ pause/resume and no-replay behavior remain explicit and durable.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ScheduledTask.cs`
-- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
-- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/SkaiDesktop.Core/Models/ScheduledTask.cs`
+- `native/SkaiDesktop.Core/Services/ScheduledTaskStore.cs`
+- `native/SkaiDesktop.Core.Tests/ScheduledTaskTests.cs`
 - `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including recurring claim, durable rescheduling, run-count, and early-replay protection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including recurring claim, durable rescheduling, run-count, and early-replay protection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (125 contracts).`
 - `git diff --check` — passed.
@@ -5615,15 +5615,15 @@ restores the prior package and its prior enablement state.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/InstalledSkill.cs`
-- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
-- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/SkaiDesktop.Core/Models/InstalledSkill.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
+- `native/SkaiDesktop.Core.Tests/SkillPackageInstallerTests.cs`
 - `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including disabled-by-default, durable enablement, update, rollback, and executable-rejection checks.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including disabled-by-default, durable enablement, update, rollback, and executable-rejection checks.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (126 contracts).`
 - `git diff --check` — passed.
@@ -5657,15 +5657,15 @@ the package remains disabled until explicitly enabled.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/InstalledSkill.cs`
-- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
-- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/SkaiDesktop.Core/Models/InstalledSkill.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
+- `native/SkaiDesktop.Core.Tests/SkillPackageInstallerTests.cs`
 - `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including pre-install digest/permission preview and update detection.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including pre-install digest/permission preview and update detection.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
 - `git diff --check` — passed.
@@ -5698,13 +5698,13 @@ remain separate future work.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/SkillSourceReference.cs`
-- `native/ServerRock.Core/Services/SkillPackageInstaller.cs`
-- `native/ServerRock.Core.Tests/SkillPackageInstallerTests.cs`
+- `native/SkaiDesktop.Core/Models/SkillSourceReference.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
+- `native/SkaiDesktop.Core.Tests/SkillPackageInstallerTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including rejection of a floating `@main` reference and preservation of pinned test references.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including rejection of a floating `@main` reference and preservation of pinned test references.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (127 contracts).`
 - `git diff --check` — passed.
@@ -5732,15 +5732,15 @@ effect.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
-- `native/ServerRock.Core/Services/OperationService.cs`
-- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/OperationJournal.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core.Tests/OperationJournalTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the versioned export and reconciliation-event assertion.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the versioned export and reconciliation-event assertion.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (122 contracts).`
 - `git diff --check` — passed.
@@ -5771,15 +5771,15 @@ operation.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/OperationJournal.cs`
-- `native/ServerRock.Core/Services/OperationService.cs`
-- `native/ServerRock.Core.Tests/OperationJournalTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/OperationJournal.cs`
+- `native/SkaiDesktop.Core/Services/OperationService.cs`
+- `native/SkaiDesktop.Core.Tests/OperationJournalTests.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including local provenance matching and no-result behavior.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including local provenance matching and no-result behavior.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (123 contracts).`
 - `git diff --check` — passed.
@@ -5809,7 +5809,7 @@ so a future rebrand does not migrate or invalidate user data.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/SkaiDesktop.Core/Models/ProductIdentity.cs`
 - `native/Directory.Build.props`
 - `native/ServerRock.Native/ServerRock.Native.csproj`
 - `native/ServerRock.Native/SidebarView.xaml`
@@ -5821,13 +5821,13 @@ Changed files:
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `native/ServerRock.Native/MainPage.ImportExport.cs`
 - `native/ServerRock.Native/MainPage.GitHub.cs`
-- `native/ServerRock.Core/Infrastructure/WorkspaceTerminalSession.cs`
-- `native/ServerRock.Core/Services/McpStdioClient.cs`
-- `native/ServerRock.Core/Services/McpStreamableHttpClient.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceTerminalSession.cs`
+- `native/SkaiDesktop.Core/Services/McpStdioClient.cs`
+- `native/SkaiDesktop.Core/Services/McpStreamableHttpClient.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (123 contracts).`
 - `git diff --check` — passed.
@@ -5862,7 +5862,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (108 contracts).`
 - `git diff --check` — passed.
@@ -5901,7 +5901,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (106 contracts).`
 - `git diff --check` — passed.
@@ -5937,12 +5937,12 @@ push path remains explicit and never uses force.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
-- `native/ServerRock.Core.Tests/GitHubTests.cs`
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `native/SkaiDesktop.Core.Tests/GitHubTests.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the ahead/behind parser regression used by push preflight.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the ahead/behind parser regression used by push preflight.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (106 contracts).`
 - `git diff --check` — passed.
@@ -5973,13 +5973,13 @@ success or failure; the user's working tree and real index are never reset.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
-- `native/ServerRock.Core.Tests/TestSupport.cs`
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core.Tests/TestSupport.cs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the regression that pre-stages `pre-staged-user-work.md`, commits only the selected safe review changes, and verifies the unrelated file remains staged and absent from `HEAD`.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the regression that pre-stages `pre-staged-user-work.md`, commits only the selected safe review changes, and verifies the unrelated file remains staged and absent from `HEAD`.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (104 contracts).`
 - `git diff --check` — passed.
@@ -6011,14 +6011,14 @@ last working connection.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ConnectionSettingsValidation.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Services/ConnectionSettingsValidation.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including valid local, malformed endpoint, missing model, and local-only remote rejection cases.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including valid local, malformed endpoint, missing model, and local-only remote rejection cases.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (101 contracts).`
 - `git diff --check` — passed.
@@ -6054,8 +6054,8 @@ settings.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/WorkspaceDraftStore.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Services/WorkspaceDraftStore.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Navigation.cs`
 - `native/ServerRock.Native/MainPage.Recents.cs`
@@ -6064,7 +6064,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including isolated Chat/Coding Agent draft state.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including isolated Chat/Coding Agent draft state.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (104 contracts).`
 - `git diff --check` — passed.
@@ -6101,14 +6101,14 @@ selection path.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/ModelSelectionPolicy.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Services/ModelSelectionPolicy.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Native/MainPage.Connection.cs`
 - `scripts/audit-native-ui.cjs`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (98 contracts).`
 - `git diff --check` — passed.
@@ -6148,7 +6148,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — the existing bounded branch-aware navigation and corrupt-route recovery tests remain the Core contract.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — the existing bounded branch-aware navigation and corrupt-route recovery tests remain the Core contract.
 - Live Windows accessibility inspection — passed: Chat and Coding Agent were
   exposed as named workspace controls; Back was enabled after moving to Coding
   Agent; Back returned to Chat and enabled Forward; Forward returned to
@@ -6270,8 +6270,8 @@ disposable acceptance without reading or writing the real user queue.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ChatMessageQueueStore.cs`
-- `native/ServerRock.Core.Tests/ChatMessageQueueStoreTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ChatMessageQueueStore.cs`
+- `native/SkaiDesktop.Core.Tests/ChatMessageQueueStoreTests.cs`
 - `native/ServerRock.Native/MainPage.Lifecycle.cs`
 - `native/ServerRock.Native/ComposerInputView.xaml.cs`
 - `scripts/audit-native-ui.cjs`
@@ -6281,7 +6281,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the explicit disposable `SRAI_QUEUE_PATH` store override.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including the explicit disposable `SRAI_QUEUE_PATH` store override.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: 183 contracts, including queue event
   wiring and the management control’s accessible label.
@@ -6322,15 +6322,15 @@ sent automatically.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/SkillCatalogService.cs`
-- `native/ServerRock.Core.Tests/CatalogTests.cs`
+- `native/SkaiDesktop.Core/Services/SkillCatalogService.cs`
+- `native/SkaiDesktop.Core.Tests/CatalogTests.cs`
 - `docs/FUTURE_FEATURES.md`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deterministic expansion of the Release readiness skill prompt with an explicit name and fixed date.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj` — passed, including deterministic expansion of the Release readiness skill prompt with an explicit name and fixed date.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - Live Windows disposable profile — passed: the Skills dialog exposed the
   built-in skill; selecting and activating it populated the focused composer
@@ -6419,7 +6419,7 @@ Evidence:
   were observed end to end.
 - The app persisted source metadata with the assistant message and exposed
   source links independently from the model-generated prose.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   already passed the parser, URL-safety, and source-metadata coverage used by
   this path.
 - `npm run audit:future-features` and `git diff --check` — passed after this
@@ -6467,7 +6467,7 @@ Evidence:
 - Live Windows disposable profile — passed: two pinned local models were
   visible, the comparison prompt was reviewed, both models ran, and the
   results dialog rendered one response column per model.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including minimum-model, local-only, prompt-bound, and bounded
   comparison-policy coverage.
 - `npm run audit:future-features` and `git diff --check` — passed after the
@@ -6547,8 +6547,8 @@ export path.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ConversationMarkdownExporter.cs`
-- `native/ServerRock.Core.Tests/ConversationArchiveTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ConversationMarkdownExporter.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationArchiveTests.cs`
 - `native/ServerRock.Native/MainPage.ImportExport.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/ARCHITECTURE.md`
@@ -6557,7 +6557,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including Markdown metadata/message/attachment-name coverage and
   the existing archive validation suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
@@ -6685,7 +6685,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed with `Native core checks passed.`
 - `npm run audit:native-ui` — passed with 192 contracts covering the split
   surface, picker, toggle wiring, and accessibility names.
@@ -6722,9 +6722,9 @@ allowing an unreadable zero-width pane.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/SplitConversationView.xaml`
 - `native/ServerRock.Native/SplitConversationView.xaml.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
@@ -6738,7 +6738,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including settings round-trip coverage for the split ratio.
 - `npm run audit:native-ui` — passed with 195 contracts, including the ratio
   control, accessibility help text, event wiring, and bounded persistence.
@@ -6783,7 +6783,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed; existing settings round-trip coverage remains green.
 - `npm run audit:native-ui` — passed with the draggable divider contract and
   pointer-handler wiring.
@@ -6812,8 +6812,8 @@ file JSON and Markdown export choices remain unchanged.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ConversationMarkdownExporter.cs`
-- `native/ServerRock.Core.Tests/ConversationArchiveTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ConversationMarkdownExporter.cs`
+- `native/SkaiDesktop.Core.Tests/ConversationArchiveTests.cs`
 - `native/ServerRock.Native/ConversationNavigationView.xaml`
 - `native/ServerRock.Native/ConversationNavigationView.xaml.cs`
 - `native/ServerRock.Native/SidebarView.xaml`
@@ -6828,7 +6828,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including safe filename coverage for invalid title characters and
   deterministic one-file-per-conversation directory write/readback coverage.
 - `npm run audit:native-ui` — passed with 202 contracts, including the folder
@@ -6861,10 +6861,10 @@ active workspace draft without triggering a second persistence cycle.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core/Services/WorkspaceDraftStore.cs`
-- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core/Services/WorkspaceDraftStore.cs`
+- `native/SkaiDesktop.Core.Tests/ChatProviderTests.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Lifecycle.cs`
 - `native/ServerRock.Native/MainPage.Infrastructure.cs`
@@ -6878,7 +6878,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including isolated workspace and snapshot-restore coverage.
 - `npm run audit:native-ui` — passed with 203 contracts, including the
   composer text-change persistence event.
@@ -6912,8 +6912,8 @@ attachment model as the existing send path.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceAttachmentDraftStore.cs`
-- `native/ServerRock.Core.Tests/AttachmentTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceAttachmentDraftStore.cs`
+- `native/SkaiDesktop.Core.Tests/AttachmentTests.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Lifecycle.cs`
 - `native/ServerRock.Native/MainPage.Navigation.cs`
@@ -6924,7 +6924,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including local round-trip and clear/remove coverage.
 - `npm run audit:native-ui`, `npm run audit:future-features`, and
   `git diff --check` — passed.
@@ -6964,7 +6964,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed.
 - `npm run audit:native-ui` — passed with 205 contracts, including both
   dispatcher-backed search focus paths.
@@ -7006,7 +7006,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed.
 - `npm run audit:native-ui` — passed with 206 contracts.
 - `npm run audit:future-features` and `git diff --check` — passed.
@@ -7126,7 +7126,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed.
 - `npm run audit:native-ui` — passed with 212 contracts.
 - `npm run audit:future-features` — passed with 160 items, 11 sections, and 11
@@ -7279,9 +7279,9 @@ before execution and does not send a prompt automatically.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ScheduledTask.cs`
-- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
-- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/SkaiDesktop.Core/Models/ScheduledTask.cs`
+- `native/SkaiDesktop.Core/Services/ScheduledTaskStore.cs`
+- `native/SkaiDesktop.Core.Tests/ScheduledTaskTests.cs`
 - `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
@@ -7292,7 +7292,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including durable cancellation and non-claimability assertions.
 - `npm run audit:native-ui` — passed with 218 contracts.
 - `git diff --check` — passed.
@@ -7328,11 +7328,11 @@ visible while pausing animation.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
 - `native/ServerRock.Native/AppearanceBackdropView.cs`
 - `native/ServerRock.Native/MainPage.xaml`
 - `native/ServerRock.Native/MainPage.Settings.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `docs/FUTURE_FEATURES.md`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
@@ -7341,7 +7341,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including persisted backdrop and reduced-motion
   settings.
 - `git diff --check` — passed.
@@ -7374,10 +7374,10 @@ until the user inserts them or requests expansion.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/PromptSnippet.cs`
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/PromptSnippet.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.Snippets.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
@@ -7390,7 +7390,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including settings round-trip coverage for snippets.
 - `npm run audit:native-ui` — passed with 221 contracts.
 - `git diff --check` — passed.
@@ -7438,7 +7438,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed.
 - `npm run audit:native-ui` — passed with 224 contracts.
 - `git diff --check` — passed.
@@ -7472,10 +7472,10 @@ The manager does not fetch links or send them to a model while saving or listing
 
 Changed files:
 
-- `native/ServerRock.Core/Models/Quicklink.cs`
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/Quicklink.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.Quicklinks.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
@@ -7488,7 +7488,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including Quicklink settings persistence.
 - `npm run audit:native-ui` — passed with 227 contracts.
 - `git diff --check` — passed.
@@ -7521,8 +7521,8 @@ or approval gates, run commands, expose credentials, or send telemetry.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.Settings.cs`
 - `native/ServerRock.Native/MainPage.DeveloperMode.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
@@ -7536,7 +7536,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including DeveloperMode settings persistence.
 - `npm run audit:native-ui` — passed with 230 contracts.
 - `git diff --check` — passed.
@@ -7571,8 +7571,8 @@ untrusted context and no new provider route is introduced.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs`
-- `native/ServerRock.Core.Tests/AttachmentTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ChatAttachmentPrompt.cs`
+- `native/SkaiDesktop.Core.Tests/AttachmentTests.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
@@ -7581,7 +7581,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including oversized attachment query-relevance and
   output-bound assertions.
 - `npm run audit:native-ui` — passed with 230 contracts.
@@ -7661,7 +7661,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed.
 - `npm run audit:native-ui` — passed with 232 contracts.
 - `git diff --check` — passed.
@@ -7752,7 +7752,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed.
 - `npm run audit:native-ui` — passed with 232 contracts.
 - `git diff --check` — passed.
@@ -7797,7 +7797,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed.
 - `npm run audit:native-ui` — passed with 232 contracts.
 - `git diff --check` — passed.
@@ -7838,7 +7838,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed.
 - `npm run audit:native-ui` — passed with 232 contracts.
 - `git diff --check` — passed.
@@ -7877,7 +7877,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including agent-task lifecycle, dependency, result,
   and search coverage.
 - `npm run audit:native-ui` — passed with 232 contracts.
@@ -7916,7 +7916,7 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 232 contracts.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including bounded workspace-context and protected-file
   coverage.
 - `git diff --check` — passed.
@@ -7957,7 +7957,7 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 232 contracts.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — the full Core suite previously passed; this UI-only slice
   does not change Core code or persistence schemas.
 - `git diff --check` — passed.
@@ -7986,15 +7986,15 @@ points, oversized files, and unsupported types.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.Projects.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including bounded image/PDF enumeration and protected
   path assertions.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
@@ -8104,8 +8104,8 @@ Changed files:
 - `native/ServerRock.Native/MainPage.Composer.cs`
 - `native/ServerRock.Native/MainPage.Chat.cs`
 - `native/ServerRock.Native/MainPage.SlashCommands.cs`
-- `native/ServerRock.Core/Infrastructure/ModelInstructions.cs`
-- `native/ServerRock.Core.Tests/ChatMessageTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/ModelInstructions.cs`
+- `native/SkaiDesktop.Core.Tests/ChatMessageTests.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/FUTURE_FEATURES.md`
@@ -8113,7 +8113,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including the documents-only grounding instruction
   contract and the full existing suite.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
@@ -8174,15 +8174,15 @@ through a future display rebrand.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ProductIdentity.cs`
-- `native/ServerRock.Core/Infrastructure/GitHubCredentialStore.cs`
-- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `native/SkaiDesktop.Core/Models/ProductIdentity.cs`
+- `native/SkaiDesktop.Core/Infrastructure/GitHubCredentialStore.cs`
+- `native/SkaiDesktop.Core.Tests/ProductIdentityTests.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
   --no-restore` — passed, including the centralized stable-identifier contract
   and the existing credential tests.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
@@ -8438,15 +8438,15 @@ existing approval/command boundaries.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/GitWorktreeCoordinator.cs`
-- `native/ServerRock.Core.Tests/GitHubTests.cs`
+- `native/SkaiDesktop.Core/Services/GitWorktreeCoordinator.cs`
+- `native/SkaiDesktop.Core.Tests/GitHubTests.cs`
 - `docs/GOAL_EXECUTION.md`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/HANDOFF_BACKLOG.md`
 
 Evidence:
 
-- Full `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including real temporary-repository worktree lifecycle checks.
+- Full `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including real temporary-repository worktree lifecycle checks.
 - Worktree tests prove sibling isolation, requested branch checkout, dirty-target refusal, clean registered release, and nested-target rejection.
 - No production force-delete or unbounded process output path was added.
 
@@ -8480,17 +8480,17 @@ so a caller can review or recover it instead of losing changes silently.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AgentTaskArtifact.cs`
-- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
-- `native/ServerRock.Core/Services/AgentTaskExecutor.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core/Models/AgentTaskArtifact.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskExecutor.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
 - `docs/GOAL_EXECUTION.md`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/HANDOFF_BACKLOG.md`
 
 Evidence:
 
-- Full `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including handler lease injection, branch persistence, retained lease state, and explicit clean release.
+- Full `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including handler lease injection, branch persistence, retained lease state, and explicit clean release.
 - Task artifact validation accepts legacy no-lease records and rejects incomplete lease metadata.
 - Cancellation/failure paths retain the lease for review rather than force-removing it.
 
@@ -8632,8 +8632,8 @@ provider context behavior is unchanged.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.CodingAgent.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/GOAL_EXECUTION.md`
@@ -8644,7 +8644,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
   — passed with 0 warnings and 0 errors for desktop and Windows targets.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including the browser-boundary description assertion.
 - `node scripts/audit-native-ui.cjs` — passed with 322 contracts.
 - `npm run check:syntax` — passed.
@@ -8676,8 +8676,8 @@ surface; chat/provider context retains its original stricter content sample.
 
 Changed files:
 
-- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.CodingAgent.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/GOAL_EXECUTION.md`
@@ -8688,7 +8688,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
   — passed with 0 warnings and 0 errors for desktop and Windows targets.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including bounded browser enumeration and protected-path checks.
 - `node scripts/audit-native-ui.cjs` — passed with 321 contracts.
 - `npm run check:syntax` — passed.
@@ -8757,9 +8757,9 @@ service.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/StartupRecoveryService.cs`
-- `native/ServerRock.Core.Tests/StartupRecoveryTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/StartupRecoveryService.cs`
+- `native/SkaiDesktop.Core.Tests/StartupRecoveryTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `native/ServerRock.Native/MainPageServices.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `native/ServerRock.Native/MainPage.Lifecycle.cs`
@@ -8773,7 +8773,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
   — passed with 0 warnings and 0 errors for desktop and Windows targets.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including empty-profile and malformed-history recovery checks.
 - `node scripts/audit-native-ui.cjs` — passed with 320 contracts.
 - `npm run check:syntax` — passed.
@@ -8798,15 +8798,15 @@ Status: `implemented_core_catalog_native_execution_boundary_verified`
 Requirement alignment: command-palette action metadata and filtering were
 embedded in `MainPage`, mixing UI-independent search data with dialog and page
 execution callbacks. `CommandPaletteCatalog` now owns stable action IDs, titles,
-keywords, and deterministic search in `ServerRock.Core`; the native shell owns
+keywords, and deterministic search in `SkaiDesktop.Core`; the native shell owns
 only the ID-to-callback mapping and focus/dialog lifecycle. Core tests cover
 unique IDs, keyword matching, and empty-result behavior. Existing command
 labels, actions, keyboard behavior, and privacy boundaries are preserved.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/CommandPaletteCatalog.cs`
-- `native/ServerRock.Core.Tests/CatalogTests.cs`
+- `native/SkaiDesktop.Core/Services/CommandPaletteCatalog.cs`
+- `native/SkaiDesktop.Core.Tests/CatalogTests.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/ARCHITECTURE.md`
@@ -8818,7 +8818,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
   — passed with 0 warnings and 0 errors for desktop and Windows targets.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed, including command-palette catalog checks.
 - `node scripts/audit-native-ui.cjs` — passed with 319 contracts.
 - `npm run check:syntax` — passed.
@@ -8863,7 +8863,7 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
   — passed with 0 warnings and 0 errors for desktop and Windows targets.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj`
   — passed the Core checks.
 - `node scripts/audit-native-ui.cjs` — passed with 317 contracts, including
   the composition-root and lifecycle assignment contracts.
@@ -9135,9 +9135,9 @@ caller responsibilities with their own permission and approval surfaces.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/AgentTaskExecutor.cs`
-- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
-- `native/ServerRock.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskExecutor.cs`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
 
@@ -9178,8 +9178,8 @@ destructive conflict resolution is performed.
 
 Changed files:
 
-- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
-- `native/ServerRock.Core.Tests/GitHubTests.cs`
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `native/SkaiDesktop.Core.Tests/GitHubTests.cs`
 - `native/ServerRock.Native/MainPage.GitHub.Changes.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
@@ -9222,9 +9222,9 @@ not claimed.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/CodingWorkspaceBar.xaml`
 - `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
@@ -9272,9 +9272,9 @@ automatic file opening; those remain separate requirements.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/CodingWorkspaceBar.xaml`
 - `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
 - `native/ServerRock.Native/MainPage.xaml.cs`
@@ -9496,7 +9496,7 @@ Evidence:
   no-hard-coded-view-color guard.
 - `npm run check:syntax` — passed.
 - `npm run check:hygiene` — passed for 747 tracked files.
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
 - Visual smoke: the native shell rendered at the desktop viewport without an
   observed clipping or overlap failure.
@@ -9531,7 +9531,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed (`Native core checks passed.`).
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 263 contracts after updating the
   focus-restoration contract for the shared editor helper.
@@ -9565,10 +9565,10 @@ are not rewritten and documents-only mode excludes the persona by design.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/SavedPersona.cs`
-- `native/ServerRock.Core/Models/AppSettings.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
-- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/SkaiDesktop.Core/Models/SavedPersona.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core.Tests/LocalStorageAndWorkspaceTests.cs`
 - `native/ServerRock.Native/MainPage.Personas.cs`
 - `native/ServerRock.Native/MainPage.CommandPalette.cs`
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
@@ -9736,8 +9736,8 @@ contracts rather than display branding.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ProductIdentity.cs`
-- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `native/SkaiDesktop.Core/Models/ProductIdentity.cs`
+- `native/SkaiDesktop.Core.Tests/ProductIdentityTests.cs`
 - `native/Directory.Build.props`
 - `packaging/native/release-manifest.json`
 - `apps/desktop/shared/productIdentity.ts`
@@ -9750,7 +9750,7 @@ Changed files:
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including the Skai Desktop identity and stable-identifier contracts.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including the Skai Desktop identity and stable-identifier contracts.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run check:syntax` — passed.
 - `npm run check:release-config` — passed, including manifest/MSBuild display-name consistency.
@@ -9836,17 +9836,17 @@ manual service-by-service edits.
 
 Changed files:
 
-- `native/ServerRock.Core/Models/ProductIdentity.cs`
-- `native/ServerRock.Core/Services/ModelLibraryService.cs`
-- `native/ServerRock.Core/Services/WebSearchProvider.cs`
-- `native/ServerRock.Core/Services/GitHubApiClient.cs`
-- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `native/SkaiDesktop.Core/Models/ProductIdentity.cs`
+- `native/SkaiDesktop.Core/Services/ModelLibraryService.cs`
+- `native/SkaiDesktop.Core/Services/WebSearchProvider.cs`
+- `native/SkaiDesktop.Core/Services/GitHubApiClient.cs`
+- `native/SkaiDesktop.Core.Tests/ProductIdentityTests.cs`
 - `docs/CAPABILITY_MATRIX.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
 
-- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including the stable protocol-identity contract.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including the stable protocol-identity contract.
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 236 contracts.
 - `git diff --check` — passed.

@@ -12,9 +12,9 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -23,6 +23,7 @@ public sealed partial class MainPage : Page
     private readonly MainPageServices _services = MainPageServices.Create();
     private readonly List<ChatMessage> _messages = [];
     private readonly OpenAiCompatibleProvider _provider;
+    private readonly AirLlmProvider _airLlmProvider;
     // OpenRouter keys are session-only; they are never written to settings.json.
     private string _providerApiKey = string.Empty;
     private readonly ModelLibraryService _modelLibrary;
@@ -58,6 +59,7 @@ public sealed partial class MainPage : Page
     // Keep the normal profile as the default; an explicit path supports
     // disposable live acceptance without reading or writing real memory.
     private readonly MemoryStore _memoryStore;
+    private readonly NativeTtsService _nativeTts;
     private bool _restoringWorkspaceDraft;
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;

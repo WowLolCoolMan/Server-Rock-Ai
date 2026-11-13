@@ -1,0 +1,18 @@
+<!-- Conceptual Uno/XAML layout skeleton. NOT production code. Adapt xmlns, bindings, commands and control templates to chosen Uno version. -->
+<Grid x:Name="AppShell" RowDefinitions="Auto,*" Background="{ThemeResource AppCanvasBrush}">
+  <local:GlobalHeader Grid.Row="0" Height="52" />
+  <Grid Grid.Row="1" ColumnDefinitions="64,Auto,*,Auto">
+    <local:NavigationRail Grid.Column="0" />
+    <local:NavigationSidebar Grid.Column="1" Width="244" />
+    <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto" MinWidth="420">
+      <local:PageHeader Grid.Row="0" />
+      <Frame x:Name="RoutedContent" Grid.Row="1" />
+      <!-- Only chat/agent routes provide their own composer in this reserved slot. -->
+      <ContentPresenter Grid.Row="2" Content="{Binding ActiveBottomPanel}" />
+    </Grid>
+    <local:InspectorHost Grid.Column="3" Width="340" />
+  </Grid>
+  <!-- Add one overlay host at ROOT, managed centrally, with explicit layer ordering. -->
+  <!-- Floating companion: hit-test only on its card and never above modal authority. -->
+  <local:OverlayHost Grid.RowSpan="2" Canvas.ZIndex="100" />
+</Grid>

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://server-rock.example/spec/operation-event-v1",
+  "title": "Agent operation event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "runId",
+    "sequence",
+    "timestampUtc",
+    "type",
+    "actor",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timestampUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string",
+      "minLength": 3
+    },
+    "actor": {
+      "enum": [
+        "user",
+        "agent",
+        "system",
+        "tool",
+        "provider"
+      ]
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object"
+    },
+    "sensitivity": {
+      "enum": [
+        "public",
+        "private",
+        "redacted"
+      ]
+    },
+    "causedBy": {
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "type": "string"
+    }
+  }
+}

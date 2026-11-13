@@ -1,7 +1,7 @@
 // Offline project health scan and architecture map (added on main): runs
 // LocalProjectHealthAnalyzer over the active project's folders without any model or network call,
 // shows the compact Markdown report, and can add it to the composer.
-// Depends on: LocalProjectHealthAnalyzer (ServerRock.Core), ChooseProjectAsync (MainPage.Projects.cs).
+// Depends on: LocalProjectHealthAnalyzer (SkaiDesktop.Core), ChooseProjectAsync (MainPage.Projects.cs).
 // Called by: /health, /audit, /map (MainPage.SlashCommands.cs) and the sidebar More menu.
 
 using Microsoft.UI.Xaml;

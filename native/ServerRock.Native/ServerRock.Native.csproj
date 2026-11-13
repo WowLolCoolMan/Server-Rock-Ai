@@ -45,10 +45,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ServerRock.Core\ServerRock.Core.csproj" />
+    <ProjectReference Include="..\SkaiDesktop.Core\SkaiDesktop.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\services\airllm\skai_airllm.py" Link="airllm\skai_airllm.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\services\airllm\requirements.txt" Link="airllm\requirements.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\assets\pets\*.svg" Link="Assets\Svg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\assets\pets\*.png" Link="Assets\Svg\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

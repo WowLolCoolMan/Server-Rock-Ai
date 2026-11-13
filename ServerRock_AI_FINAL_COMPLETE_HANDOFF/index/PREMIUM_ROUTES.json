@@ -1,0 +1,804 @@
+[
+  {
+    "id": "home",
+    "title": "Home",
+    "scope": "App",
+    "primaryActions": [
+      "resume projects",
+      "create chat/task",
+      "pending approvals"
+    ],
+    "minimumVisibleData": [
+      "recent projects/chats",
+      "current model",
+      "actionable tasks"
+    ],
+    "mustHandle": [
+      "none"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "chats",
+    "title": "Chats",
+    "scope": "App",
+    "primaryActions": [
+      "new",
+      "search",
+      "pin",
+      "archive",
+      "folders"
+    ],
+    "minimumVisibleData": [
+      "conversation list",
+      "folders",
+      "model profile"
+    ],
+    "mustHandle": [
+      "no model",
+      "no history"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "conversation",
+    "title": "Conversation",
+    "scope": "Thread",
+    "primaryActions": [
+      "send",
+      "stop",
+      "retry",
+      "edit",
+      "branch",
+      "export"
+    ],
+    "minimumVisibleData": [
+      "messages",
+      "local/cloud model",
+      "artifacts",
+      "inspector"
+    ],
+    "mustHandle": [
+      "missing thread",
+      "provider down"
+    ],
+    "persistScope": "conversation",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "projects",
+    "title": "Projects",
+    "scope": "App",
+    "primaryActions": [
+      "open folder",
+      "clone",
+      "create project",
+      "search"
+    ],
+    "minimumVisibleData": [
+      "authorized project paths",
+      "Git status"
+    ],
+    "mustHandle": [
+      "no projects",
+      "invalid path"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "project-overview",
+    "title": "Project Overview",
+    "scope": "Project",
+    "primaryActions": [
+      "task",
+      "browse",
+      "Git",
+      "context",
+      "health"
+    ],
+    "minimumVisibleData": [
+      "project root",
+      "branch",
+      "tasks",
+      "recent activity"
+    ],
+    "mustHandle": [
+      "path missing",
+      "permissions revoked"
+    ],
+    "persistScope": "project",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "coding-workbench",
+    "title": "Coding Workbench",
+    "scope": "Project",
+    "primaryActions": [
+      "agent",
+      "editor",
+      "terminal",
+      "review",
+      "commit"
+    ],
+    "minimumVisibleData": [
+      "task",
+      "context",
+      "tabs",
+      "diff",
+      "run state"
+    ],
+    "mustHandle": [
+      "missing agent",
+      "conflict",
+      "unsupported tool"
+    ],
+    "persistScope": "project",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "file-browser",
+    "title": "File Browser",
+    "scope": "Project",
+    "primaryActions": [
+      "open",
+      "search",
+      "rename with approval"
+    ],
+    "minimumVisibleData": [
+      "file tree",
+      "ignored/secret status"
+    ],
+    "mustHandle": [
+      "unsupported/binary",
+      "outside root"
+    ],
+    "persistScope": "project",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "code-review",
+    "title": "Diff Review",
+    "scope": "Run",
+    "primaryActions": [
+      "inspect",
+      "approve",
+      "deny",
+      "partial selection"
+    ],
+    "minimumVisibleData": [
+      "baseline hash",
+      "touched files",
+      "actual status"
+    ],
+    "mustHandle": [
+      "stale file",
+      "concurrent edit"
+    ],
+    "persistScope": "run",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "terminal",
+    "title": "Terminal",
+    "scope": "Project",
+    "primaryActions": [
+      "type",
+      "cancel",
+      "resize",
+      "search output"
+    ],
+    "minimumVisibleData": [
+      "PTY cwd",
+      "process",
+      "output history"
+    ],
+    "mustHandle": [
+      "PTY missing",
+      "shell absent"
+    ],
+    "persistScope": "project",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "agent-center",
+    "title": "Agent Center",
+    "scope": "App",
+    "primaryActions": [
+      "create",
+      "queue",
+      "cancel",
+      "approve",
+      "retry"
+    ],
+    "minimumVisibleData": [
+      "active/queued/blocked runs",
+      "lanes"
+    ],
+    "mustHandle": [
+      "no agents",
+      "quota exhaustion"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "agent-run",
+    "title": "Agent Run",
+    "scope": "Run",
+    "primaryActions": [
+      "inspect tool timeline",
+      "cancel",
+      "approve",
+      "review"
+    ],
+    "minimumVisibleData": [
+      "events",
+      "plan",
+      "approvals",
+      "artifact list"
+    ],
+    "mustHandle": [
+      "interrupted",
+      "orphan process"
+    ],
+    "persistScope": "run",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "workflows",
+    "title": "Workflows",
+    "scope": "App",
+    "primaryActions": [
+      "new",
+      "import",
+      "clone",
+      "search"
+    ],
+    "minimumVisibleData": [
+      "templates",
+      "versions",
+      "run history"
+    ],
+    "mustHandle": [
+      "empty catalog"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "workflow-editor",
+    "title": "Workflow Editor",
+    "scope": "Workflow",
+    "primaryActions": [
+      "add nodes",
+      "connect",
+      "validate",
+      "preview",
+      "run"
+    ],
+    "minimumVisibleData": [
+      "typed graph",
+      "local draft",
+      "version"
+    ],
+    "mustHandle": [
+      "invalid graph",
+      "unsaved changes"
+    ],
+    "persistScope": "workflow",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "models",
+    "title": "Model Library",
+    "scope": "Library",
+    "primaryActions": [
+      "discover",
+      "pin",
+      "download",
+      "select",
+      "remove"
+    ],
+    "minimumVisibleData": [
+      "installed/downloads/providers/profiles"
+    ],
+    "mustHandle": [
+      "no host",
+      "insufficient disk",
+      "offline"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "skills",
+    "title": "Skill Marketplace",
+    "scope": "Library",
+    "primaryActions": [
+      "inspect",
+      "install",
+      "update",
+      "enable",
+      "rollback"
+    ],
+    "minimumVisibleData": [
+      "catalog",
+      "installed",
+      "updates",
+      "provenance"
+    ],
+    "mustHandle": [
+      "unverified source",
+      "permission denied"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "connections",
+    "title": "Connections",
+    "scope": "Library",
+    "primaryActions": [
+      "add MCP/provider",
+      "connect",
+      "revoke",
+      "health"
+    ],
+    "minimumVisibleData": [
+      "configured connection health",
+      "tool inventory"
+    ],
+    "mustHandle": [
+      "auth expired",
+      "server crashed"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "git",
+    "title": "Git / Worktrees",
+    "scope": "Project",
+    "primaryActions": [
+      "stage",
+      "commit",
+      "compare",
+      "push",
+      "worktree"
+    ],
+    "minimumVisibleData": [
+      "branch",
+      "changes",
+      "remotes",
+      "conflicts"
+    ],
+    "mustHandle": [
+      "not repository",
+      "auth required"
+    ],
+    "persistScope": "project",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "activity",
+    "title": "Activity",
+    "scope": "App",
+    "primaryActions": [
+      "filter",
+      "inspect",
+      "dismiss",
+      "retry where safe"
+    ],
+    "minimumVisibleData": [
+      "notifications",
+      "runs",
+      "downloads",
+      "approvals"
+    ],
+    "mustHandle": [
+      "history empty",
+      "log limited"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "settings",
+    "title": "Settings",
+    "scope": "App",
+    "primaryActions": [
+      "search",
+      "theme",
+      "permissions",
+      "storage",
+      "updates"
+    ],
+    "minimumVisibleData": [
+      "effective preferences",
+      "profiles",
+      "shortcuts"
+    ],
+    "mustHandle": [
+      "invalid path",
+      "keyring missing"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "diagnostics",
+    "title": "Diagnostics",
+    "scope": "App",
+    "primaryActions": [
+      "health",
+      "export redacted logs",
+      "repair guides"
+    ],
+    "minimumVisibleData": [
+      "system/build/runtime status"
+    ],
+    "mustHandle": [
+      "read permission denied"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  },
+  {
+    "id": "onboarding",
+    "title": "First-run Setup",
+    "scope": "App",
+    "primaryActions": [
+      "discover model",
+      "choose privacy",
+      "open project"
+    ],
+    "minimumVisibleData": [
+      "initial config and readiness"
+    ],
+    "mustHandle": [
+      "offline",
+      "no model"
+    ],
+    "persistScope": "global",
+    "universalStates": [
+      "loading",
+      "empty",
+      "content",
+      "error",
+      "offline",
+      "busy",
+      "cancelled",
+      "restored"
+    ],
+    "doneRequires": [
+      "workingBackend",
+      "realState",
+      "accessibleFocus",
+      "keyboard",
+      "crossPlatformEvidence"
+    ]
+  }
+]

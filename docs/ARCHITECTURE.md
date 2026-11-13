@@ -19,13 +19,13 @@ replacement surface:
 | Project | Type | What it is |
 | --- | --- | --- |
 | `ServerRock.Native` | Legacy Uno single-project app (`Uno.Sdk`) | Compatibility UI retained until cutover gates pass. |
-| `ServerRock.Core` | Plain `net10.0` class library | Everything that does not need UI controls: models, provider HTTP clients, local stores, workspace tools, GitHub, archive import. |
-| `ServerRock.Core.Tests` | `net10.0` console app | A self-contained test runner for Core. No test framework: each check prints `PASS …` or throws. |
+| `SkaiDesktop.Core` | Plain `net10.0` class library | Everything that does not need UI controls: models, provider HTTP clients, local stores, workspace tools, GitHub, archive import. |
+| `SkaiDesktop.Core.Tests` | `net10.0` console app | A self-contained test runner for Core. No test framework: each check prints `PASS …` or throws. |
 | `services/agent-host` | .NET 10 local process | Versioned JSON-lines application boundary used by the replacement shell. |
 | `apps/desktop` | Electron + React + TypeScript | Replacement desktop UI with a sandboxed renderer and typed preload bridge. |
 
 Dependency direction is one way at each boundary: both `ServerRock.Native` and
-`services/agent-host` consume `ServerRock.Core`; `ServerRock.Core.Tests` also
+`services/agent-host` consume `SkaiDesktop.Core`; `SkaiDesktop.Core.Tests` also
 consumes Core; Electron talks only to the agent host through the preload bridge.
 Core never references Uno, XAML, Electron, or React.
 
@@ -57,7 +57,7 @@ Build and test:
 ```sh
 dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run   --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
-dotnet run   --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+dotnet run   --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
 node scripts/audit-native-ui.cjs   # accessibility/focus "contracts" grepped from all MainPage.* files
 ```
 
@@ -137,7 +137,7 @@ paths. `MainPage` receives that typed bundle once during construction and still
 coordinates the current UI flows directly:
 
 ```text
-MainPage (fields)                         ServerRock.Core
+MainPage (fields)                         SkaiDesktop.Core
   MainPageServices     ─────────────────▶ typed service composition root
        │
        └── _provider    ─────────────────▶ OpenAiCompatibleProvider   (chat streaming, /models)
@@ -171,10 +171,10 @@ Core methods take `CancellationToken`s; the page keeps one
 `_requestCancellation` for the active chat request so the Stop button can
 cancel it.
 
-## ServerRock.Core (no UI)
+## SkaiDesktop.Core (no UI)
 
-Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
-`ServerRock.Core.Infrastructure`, one folder each (`Models/`, `Services/`,
+Namespaces: `SkaiDesktop.Core.Models`, `SkaiDesktop.Core.Services`,
+`SkaiDesktop.Core.Infrastructure`, one folder each (`Models/`, `Services/`,
 `Infrastructure/`).
 
 ### `Models/` – plain data
@@ -263,7 +263,7 @@ untouched (reporting an error) instead of replacing it.
 
 ## Tests
 
-`ServerRock.Core.Tests` is a plain console app. `Program.cs` is only the runner:
+`SkaiDesktop.Core.Tests` is a plain console app. `Program.cs` is only the runner:
 it calls each test area in order and the run stops at the first failure
 (`Check(condition, description)` throws).
 
@@ -297,47 +297,47 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | App startup, single-instance check | `ServerRock.Native/Platforms/Desktop/Program.cs`, `App.xaml.cs` |
 | The page layout | `ServerRock.Native/MainPage.xaml` |
 | The sidebar | `ServerRock.Native/SidebarView.xaml` (shell layout), `ProjectNavigationView.xaml` (project context/files), `ConversationNavigationView.xaml` (folders/import/export/recents), `MainPage.Sidebar.cs` (wiring, More menu) |
-| Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `ServerRock.Core/Services/LocalProjectHealthAnalyzer.cs` |
+| Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `SkaiDesktop.Core/Services/LocalProjectHealthAnalyzer.cs` |
 | Code Review Agent | `ServerRock.Native/MainPage.CodeReview.cs` |
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
 | Page fields and shared visual-control accessors | `ServerRock.Native/MainPage.xaml.cs` |
 | Header visual tree and header events | `ServerRock.Native/MainPageHeader.xaml` / `.xaml.cs` |
 | Constructor, lifecycle recovery, and event wiring | `ServerRock.Native/MainPage.Lifecycle.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
-| The system prompt / what's sent to the model | `ServerRock.Core/Infrastructure/ModelInstructions.cs` (text), `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs` |
-| Chat streaming HTTP | `ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
+| The system prompt / what's sent to the model | `SkaiDesktop.Core/Infrastructure/ModelInstructions.cs` (text), `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `SkaiDesktop.Core/Infrastructure/ChatAttachmentPrompt.cs` |
+| Chat streaming HTTP | `SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs` |
 | How messages are drawn, copy/edit/retry | `ServerRock.Native/MainPage.Messages.cs` |
-| Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `ServerRock.Core/Infrastructure/ExternalLinkPolicy.cs` |
+| Markdown rendering of replies, link safety | `ServerRock.Native/MarkdownUiRenderer.cs`, `SkaiDesktop.Core/Infrastructure/ExternalLinkPolicy.cs` |
 | Branches ‹ › and forks | `ServerRock.Native/MainPage.Branches.cs` |
 | The model picker / hotswap menu | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelClick`, `ModelHotswapClick`) |
-| The Model Library dialog | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelLibraryClickAsync`), `ServerRock.Core/Services/ModelLibraryService.cs` |
+| The Model Library dialog | `ServerRock.Native/MainPage.ModelLibrary.cs` (`ModelLibraryClickAsync`), `SkaiDesktop.Core/Services/ModelLibraryService.cs` |
 | "Local ready / Not connected" status | `ServerRock.Native/MainPage.Connection.cs` |
 | Settings dialog | `ServerRock.Native/MainPage.Settings.cs` (`SettingsDialogAsync`) |
 | Temperature (Advanced) | `ServerRock.Native/MainPage.Settings.cs` (`AdvancedClickAsync`) |
 | Tools row, web search / temporary chat / smart rewrite toggles | `ServerRock.Native/MainPage.Composer.cs` |
-| "Is this endpoint local?" | `ServerRock.Core/Infrastructure/LocalEndpoint.cs` |
-| Error text shown when a model request fails | `ServerRock.Core/Infrastructure/ProviderErrorText.cs` |
-| The mode IDs ("ChatBot" / "Coding Agent") | `ServerRock.Core/Models/WorkspaceModes.cs` |
-| Attachments (+ button, chips, limits) | `ServerRock.Native/MainPage.Attachments.cs`, `ServerRock.Core/Infrastructure/ChatAttachmentPolicy.cs` |
-| Slash commands (`/help`, `/mode`, …) | `ServerRock.Core/Services/SlashCommandCatalog.cs` (list), `ServerRock.Native/MainPage.SlashCommands.cs` (what each does) |
+| "Is this endpoint local?" | `SkaiDesktop.Core/Infrastructure/LocalEndpoint.cs` |
+| Error text shown when a model request fails | `SkaiDesktop.Core/Infrastructure/ProviderErrorText.cs` |
+| The mode IDs ("ChatBot" / "Coding Agent") | `SkaiDesktop.Core/Models/WorkspaceModes.cs` |
+| Attachments (+ button, chips, limits) | `ServerRock.Native/MainPage.Attachments.cs`, `SkaiDesktop.Core/Infrastructure/ChatAttachmentPolicy.cs` |
+| Slash commands (`/help`, `/mode`, …) | `SkaiDesktop.Core/Services/SlashCommandCatalog.cs` (list), `ServerRock.Native/MainPage.SlashCommands.cs` (what each does) |
 | Voice input and spoken replies | `ServerRock.Native/MainPage.Voice.cs` |
 | Chat / Coding Agent switch, keyboard shortcuts | `ServerRock.Native/MainPage.Navigation.cs` |
 | Narrow-window drawer, toolbar wrapping | `ServerRock.Native/MainPage.Layout.cs` |
 | Recents list, rename/archive/delete a chat | `ServerRock.Native/MainPage.Recents.cs` |
 | Chat folders | `ServerRock.Native/MainPage.ChatFolders.cs` |
-| Import / export chats | `ServerRock.Native/MainPage.ImportExport.cs`, `ServerRock.Core/Infrastructure/ConversationArchive.cs` |
+| Import / export chats | `ServerRock.Native/MainPage.ImportExport.cs`, `SkaiDesktop.Core/Infrastructure/ConversationArchive.cs` |
 | Projects and their folders | `ServerRock.Native/MainPage.Projects.cs` |
 | Coding Agent file list, file editor, undo history | `ServerRock.Native/MainPage.CodingAgent.cs` |
 | Reviewing a proposed file change or command | `ServerRock.Native/MainPage.CodingAgent.Proposals.cs` |
-| Project terminal | `ServerRock.Native/MainPage.Terminal.cs`, `ServerRock.Core/Infrastructure/WorkspaceTerminalSession.cs` |
-| Image Studio | `ServerRock.Native/MainPage.ImageStudio.cs`, `ServerRock.Core/Services/ComfyImageProvider.cs` |
+| Project terminal | `ServerRock.Native/MainPage.Terminal.cs`, `SkaiDesktop.Core/Infrastructure/WorkspaceTerminalSession.cs` |
+| Image Studio | `ServerRock.Native/MainPage.ImageStudio.cs`, `SkaiDesktop.Core/Services/ComfyImageProvider.cs` |
 | Plugins and Skills dialogs | `ServerRock.Native/MainPage.PluginsAndSkills.cs` |
 | The pet companion | `ServerRock.Native/MainPage.Companion.cs`, `CompanionStateStore.cs` |
-| GitHub dialog, clone | `ServerRock.Native/MainPage.GitHub.cs`, `ServerRock.Core/Services/GitHub*.cs` |
-| GitHub sign-in polling, saved token | `ServerRock.Native/MainPage.GitHub.SignIn.cs`, `ServerRock.Core/Infrastructure/GitHubCredentialStore.cs` |
-| GitHub commit/push review | `ServerRock.Native/MainPage.GitHub.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
-| Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
-| Core tests | `ServerRock.Core.Tests/*Tests.cs` (see Tests above) |
+| GitHub dialog, clone | `ServerRock.Native/MainPage.GitHub.cs`, `SkaiDesktop.Core/Services/GitHub*.cs` |
+| GitHub sign-in polling, saved token | `ServerRock.Native/MainPage.GitHub.SignIn.cs`, `SkaiDesktop.Core/Infrastructure/GitHubCredentialStore.cs` |
+| GitHub commit/push review | `ServerRock.Native/MainPage.GitHub.Changes.cs`, `SkaiDesktop.Core/Services/GitHubWorkspaceService.cs` |
+| Saving settings / chats / projects | `SkaiDesktop.Core/Infrastructure/*Store.cs` |
+| Core tests | `SkaiDesktop.Core.Tests/*Tests.cs` (see Tests above) |
 
 ## Visual decomposition notes
 

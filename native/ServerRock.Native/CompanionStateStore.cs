@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

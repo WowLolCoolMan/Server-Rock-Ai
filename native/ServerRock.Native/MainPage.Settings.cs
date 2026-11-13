@@ -14,8 +14,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -336,6 +337,21 @@ public sealed partial class MainPage
     {
         var endpoint = new TextBox { Header = "OpenAI-compatible endpoint", Text = _settings.Endpoint, PlaceholderText = "http://localhost:11434/v1" };
         var model = new TextBox { Header = "Model ID", Text = _settings.Model, PlaceholderText = "Model ID reported by the server" };
+        var connectionMode = new ComboBox { Header = "How should Skai run AI?", MinWidth = 340 };
+        connectionMode.Items.Add("Models already on this computer");
+        connectionMode.Items.Add("Very large models on this computer");
+        connectionMode.Items.Add("A hosted model service");
+        connectionMode.SelectedIndex = AirLlmProvider.IsAirLlmProvider(_settings.ModelProvider) ? 1 : LocalEndpoint.IsLocal(_settings.Endpoint) ? 0 : 2;
+        AutomationProperties.SetName(connectionMode, "How should Skai run AI");
+        AutomationProperties.SetHelpText(connectionMode, "Choose the outcome you want. Skai handles the technical provider details for you.");
+        var connectionModeHelp = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
+        var airLlmAutoFallback = new CheckBox { Content = "Automatically fall back to AirLLM when a local model exceeds capacity", IsChecked = _settings.AirLlmAutoFallbackEnabled };
+        AutomationProperties.SetName(airLlmAutoFallback, "Enable automatic AirLLM fallback");
+        var airLlmPython = new TextBox { Header = "AirLLM Python executable", Text = _settings.AirLlmPythonPath, PlaceholderText = "python" };
+        var airLlmCache = new TextBox { Header = "AirLLM shard/cache directory (optional)", Text = _settings.AirLlmCachePath ?? string.Empty, PlaceholderText = "Uses the Hugging Face cache by default" };
+        var airLlmCompression = new ComboBox { Header = "AirLLM weight compression", MinWidth = 220 };
+        airLlmCompression.Items.Add("None"); airLlmCompression.Items.Add("4-bit"); airLlmCompression.Items.Add("8-bit");
+        airLlmCompression.SelectedIndex = _settings.AirLlmCompression.ToLowerInvariant() switch { "4bit" => 1, "8bit" => 2, _ => 0 };
         var providerKey = new PasswordBox { Header = "Provider API key (session only)", PlaceholderText = "Optional bearer token", Password = _providerApiKey };
         AutomationProperties.SetName(providerKey, "Provider API key");
         AutomationProperties.SetHelpText(providerKey, "Optional bearer token for OpenAI-compatible hosted endpoints. The key is used only in memory for this app session and is never saved to settings.");
@@ -379,7 +395,7 @@ public sealed partial class MainPage
         var petCompletion = new CheckBox { Content = "Let the pet announce completed responses", IsChecked = _companionState.NotifyOnCompletion };
         var petErrors = new CheckBox { Content = "Let the pet announce errors and blocked actions", IsChecked = _companionState.NotifyOnErrors };
         var petQuestions = new CheckBox { Content = "Let the pet ask for approval before risky actions", IsChecked = _companionState.AskBeforeActions };
-        var note = new TextBlock { Text = "OpenRouter provides an OpenAI-compatible endpoint. Its openrouter/free router selects an available free model, but OpenRouter still requires your own API key and applies free-tier rate limits. Smart rewriting sends the draft and conversation context to the selected endpoint for a reviewable rewrite; it never changes your original text automatically.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var note = new TextBlock { Text = "AirLLM is built into Skai as a local fallback for models that exceed the normal runtime's memory. It uses a Hugging Face model ID, keeps model layers on local disk, and never sends prompts to a cloud service. OpenRouter remains available separately through the compatible endpoint fields.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
         visionFormat.Items.Add("OpenAI-compatible image_url object");
@@ -471,6 +487,22 @@ public sealed partial class MainPage
         Func<Task>? actionAfterClose = null;
         var chatRestoreButtons = new List<Button>();
 
+        void UpdateConnectionModeHelp()
+        {
+            connectionModeHelp.Text = connectionMode.SelectedIndex switch
+            {
+                1 => "For models whose full size is too large for ordinary local runtimes. Skai downloads and streams model layers locally through AirLLM; use a Hugging Face model ID such as Qwen/Qwen3-32B.",
+                2 => "For a model service running outside this computer. Your prompt may leave this device, so Skai will show the service and keep the session key in memory only.",
+                _ => "For Ollama, LM Studio, or another model server running on this computer. Skai will discover the models it makes available."
+            };
+            airLlmAutoFallback.Visibility = connectionMode.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
+            airLlmPython.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+            airLlmCache.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+            airLlmCompression.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        connectionMode.SelectionChanged += (_, _) => UpdateConnectionModeHelp();
+        UpdateConnectionModeHelp();
+
         Border MakeSettingsCard(string title, string description, FrameworkElement action)
         {
             var copy = new StackPanel { Spacing = 3, Children =
@@ -528,10 +560,16 @@ public sealed partial class MainPage
         void BuildGeneralPage()
         {
             pageBody.Children.Add(new TextBlock { Text = "MODEL CONNECTION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
+            pageBody.Children.Add(connectionMode);
+            pageBody.Children.Add(connectionModeHelp);
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
             pageBody.Children.Add(openRouter);
             pageBody.Children.Add(providerKey);
+            pageBody.Children.Add(airLlmAutoFallback);
+            pageBody.Children.Add(airLlmPython);
+            pageBody.Children.Add(airLlmCache);
+            pageBody.Children.Add(airLlmCompression);
             pageBody.Children.Add(smartRewrite);
             pageBody.Children.Add(note);
             pageBody.Children.Add(checkConnection);
@@ -791,6 +829,13 @@ public sealed partial class MainPage
         };
         checkConnection.Click += async (_, _) =>
         {
+            if (connectionMode.SelectedIndex == 1)
+            {
+                checkStatus.Text = _airLlmProvider.IsInstalled
+                    ? "AirLLM worker found. Save this model ID to use local layer-wise inference."
+                    : "AirLLM worker not found. Run services\\airllm\\install.ps1, then check again.";
+                return;
+            }
             var candidateEndpoint = endpoint.Text.Trim().TrimEnd('/');
             if (string.IsNullOrWhiteSpace(candidateEndpoint))
             {
@@ -841,7 +886,19 @@ public sealed partial class MainPage
             MigrateLegacyPinnedModels();
             _settings.Endpoint = endpoint.Text.Trim().TrimEnd('/');
             _settings.Model = model.Text.Trim();
-            _settings.ModelProvider = _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) ? "OpenRouter" : "Custom endpoint";
+            _settings.ModelProvider = connectionMode.SelectedIndex switch
+            {
+                1 => "AirLLM",
+                2 when _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) => "OpenRouter",
+                2 => "Hosted model",
+                _ when _settings.Endpoint.Contains("11434", StringComparison.OrdinalIgnoreCase) => "Ollama",
+                _ when _settings.Endpoint.Contains("1234", StringComparison.OrdinalIgnoreCase) => "LM Studio",
+                _ => "Local model"
+            };
+            _settings.AirLlmAutoFallbackEnabled = connectionMode.SelectedIndex != 2 && airLlmAutoFallback.IsChecked == true;
+            _settings.AirLlmPythonPath = string.IsNullOrWhiteSpace(airLlmPython.Text) ? "python" : airLlmPython.Text.Trim();
+            _settings.AirLlmCachePath = string.IsNullOrWhiteSpace(airLlmCache.Text) ? null : airLlmCache.Text.Trim();
+            _settings.AirLlmCompression = airLlmCompression.SelectedIndex switch { 1 => "4bit", 2 => "8bit", _ => "none" };
             _providerApiKey = providerKey.Password.Trim();
             _settings.SmartPromptRewritingEnabled = smartRewrite.IsChecked == true;
             _settings.VisionApiFormat = visionFormat.SelectedIndex switch { 1 => "openai", 2 => "ollama", _ => "auto" };

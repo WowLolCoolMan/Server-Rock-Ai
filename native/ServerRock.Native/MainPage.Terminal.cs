@@ -1,7 +1,7 @@
 // Project terminal dialog: an interactive shell that starts in a folder of the active
 // project. Output comes from a VT screen buffer and is shown read-only; input is only what the
 // user types into the input box (model output is never sent to the shell).
-// Depends on: WorkspaceTerminalSession (pseudo-terminal + screen buffer in ServerRock.Core) and
+// Depends on: WorkspaceTerminalSession (pseudo-terminal + screen buffer in SkaiDesktop.Core) and
 // the active project's FolderPaths.
 // Called by: the Terminal button in the Coding Agent workspace bar (MainPage.xaml).
 
@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

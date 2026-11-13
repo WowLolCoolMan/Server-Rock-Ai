@@ -1,0 +1,890 @@
+[
+  {
+    "type": "run.created",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "workspaceId",
+      "taskId",
+      "agentId",
+      "profileId"
+    ],
+    "description": "Task registered",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.preflight.started",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "preflightId"
+    ],
+    "description": "Resolve permissions and capabilities",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.preflight.failed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "reason",
+      "recoverable"
+    ],
+    "description": "Preflight failed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.queued",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "queueReason",
+      "priority"
+    ],
+    "description": "Queued with reason",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.started",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "executorId"
+    ],
+    "description": "Run executing",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.paused",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "reason"
+    ],
+    "description": "Pause acknowledged",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.cancel.requested",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "reason"
+    ],
+    "description": "Cancel issued",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.cancelled",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "executorAcknowledged"
+    ],
+    "description": "Cleanup complete",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.interrupted",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "lastDurableSequence"
+    ],
+    "description": "Previously running operation not proved active",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.failed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "errorCategory",
+      "safeMessage",
+      "retryable"
+    ],
+    "description": "Terminal failure",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "run.completed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "resultKind",
+      "evidenceIds"
+    ],
+    "description": "Terminal success with proof",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "step.created",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "stepId",
+      "stepType"
+    ],
+    "description": "Plan step created",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "step.started",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "stepId"
+    ],
+    "description": "Step executing",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "step.completed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "stepId",
+      "result"
+    ],
+    "description": "Step done",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "step.failed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "stepId",
+      "reason"
+    ],
+    "description": "Step failure",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.message.delta",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "messageId",
+      "delta"
+    ],
+    "description": "Streaming text",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.message.completed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "messageId",
+      "contentHash"
+    ],
+    "description": "Streaming done",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.tool.proposed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "toolCallId",
+      "toolId",
+      "argumentSummary",
+      "sideEffects"
+    ],
+    "description": "Side effect proposal",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.tool.started",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "toolCallId",
+      "approvalId"
+    ],
+    "description": "Tool started",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.tool.output",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "toolCallId",
+      "outputRef",
+      "redacted"
+    ],
+    "description": "Tool output recorded",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "agent.tool.finished",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "toolCallId",
+      "exitCode"
+    ],
+    "description": "Tool ended",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "approval.requested",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "approvalId",
+      "scope",
+      "operationHash"
+    ],
+    "description": "Approval required",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "approval.granted",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "approvalId",
+      "grantScope",
+      "expiryUtc"
+    ],
+    "description": "Approval granted",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "approval.denied",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "approvalId"
+    ],
+    "description": "Approval denied",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "approval.expired",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "approvalId"
+    ],
+    "description": "Approval no longer valid",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "file.diff.proposed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "proposalId",
+      "baselineHashes",
+      "fileCount"
+    ],
+    "description": "Diff available",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "file.diff.conflict",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "proposalId",
+      "path",
+      "actualHash"
+    ],
+    "description": "Stale baseline",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "file.write.applied",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "proposalId",
+      "fileHashes"
+    ],
+    "description": "Write confirmed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "file.write.undone",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "proposalId",
+      "restoreHashes"
+    ],
+    "description": "Undo confirmed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "test.started",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "commandId"
+    ],
+    "description": "Actual tests executing",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "test.finished",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "commandId",
+      "exitCode",
+      "evidenceRef"
+    ],
+    "description": "Actual test result",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "git.review.requested",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "branch",
+      "remote",
+      "files"
+    ],
+    "description": "Commit/push review",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "git.commit.created",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "commitSha"
+    ],
+    "description": "Commit created",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "git.push.completed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "remote",
+      "ref",
+      "commitSha"
+    ],
+    "description": "Push confirmed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "model.route.selected",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "modelKey",
+      "profile",
+      "reason"
+    ],
+    "description": "Actual route selected",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "model.route.fallback",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "from",
+      "to",
+      "reason",
+      "consentId"
+    ],
+    "description": "Fallback route",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "model.health.changed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "modelKey",
+      "health"
+    ],
+    "description": "Health changed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "skill.installed",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "skillId",
+      "version",
+      "commitSha"
+    ],
+    "description": "Install verified",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "skill.enabled",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "skillId",
+      "workspaceId"
+    ],
+    "description": "Enable confirmed",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "skill.invoked",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "skillId",
+      "version",
+      "runId"
+    ],
+    "description": "Skill used",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "mcp.connected",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "connectionId",
+      "toolCount"
+    ],
+    "description": "Connection validated",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "mcp.disconnected",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "connectionId",
+      "reason"
+    ],
+    "description": "Connection lost",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "update.available",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "version",
+      "channel",
+      "signatureStatus"
+    ],
+    "description": "Release offered",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  },
+  {
+    "type": "update.verified",
+    "schemaVersion": 1,
+    "payloadFields": [
+      "version",
+      "sha256"
+    ],
+    "description": "Artifact verified",
+    "requiredEnvelope": [
+      "schemaVersion",
+      "eventId",
+      "runId",
+      "sequence",
+      "timestampUtc",
+      "type",
+      "actor",
+      "correlationId",
+      "payload"
+    ]
+  }
+]

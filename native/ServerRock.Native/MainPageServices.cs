@@ -3,14 +3,15 @@
 // later view-model/application-service extraction does not duplicate stores or
 // accidentally change profile paths.
 
-using ServerRock.Core.Services;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
 internal sealed class MainPageServices
 {
     public OpenAiCompatibleProvider Provider { get; }
+    public AirLlmProvider AirLlmProvider { get; }
     public ModelLibraryService ModelLibrary { get; }
     public ComfyImageProvider ComfyImageProvider { get; }
     public WebSearchProvider WebSearchProvider { get; }
@@ -34,9 +35,11 @@ internal sealed class MainPageServices
     public GitWorktreeCoordinator GitWorktreeCoordinator { get; }
     public SkillPackageInstaller SkillPackageInstaller { get; }
     public MemoryStore MemoryStore { get; }
+    public NativeTtsService NativeTts { get; }
 
     private MainPageServices(
         OpenAiCompatibleProvider provider,
+        AirLlmProvider airLlmProvider,
         ModelLibraryService modelLibrary,
         ComfyImageProvider comfyImageProvider,
         WebSearchProvider webSearchProvider,
@@ -59,9 +62,11 @@ internal sealed class MainPageServices
         StartupRecoveryService startupRecovery,
         GitWorktreeCoordinator gitWorktreeCoordinator,
         SkillPackageInstaller skillPackageInstaller,
-        MemoryStore memoryStore)
+        MemoryStore memoryStore,
+        NativeTtsService nativeTts)
     {
         Provider = provider;
+        AirLlmProvider = airLlmProvider;
         ModelLibrary = modelLibrary;
         ComfyImageProvider = comfyImageProvider;
         WebSearchProvider = webSearchProvider;
@@ -85,11 +90,13 @@ internal sealed class MainPageServices
         GitWorktreeCoordinator = gitWorktreeCoordinator;
         SkillPackageInstaller = skillPackageInstaller;
         MemoryStore = memoryStore;
+        NativeTts = nativeTts;
     }
 
     public static MainPageServices Create()
     {
         var provider = new OpenAiCompatibleProvider();
+        var airLlmProvider = new AirLlmProvider();
         var modelLibrary = new ModelLibraryService();
         var comfyImageProvider = new ComfyImageProvider();
         var webSearchProvider = new WebSearchProvider();
@@ -107,6 +114,7 @@ internal sealed class MainPageServices
 
         return new MainPageServices(
             provider,
+            airLlmProvider,
             modelLibrary,
             comfyImageProvider,
             webSearchProvider,
@@ -129,6 +137,7 @@ internal sealed class MainPageServices
             new StartupRecoveryService(messageQueueStore, operationService, conversationStore, projectStore, workspaceUndoStore, agentTaskStore),
             new GitWorktreeCoordinator(),
             new SkillPackageInstaller(),
-            new MemoryStore(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH")));
+            new MemoryStore(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH")),
+            new NativeTtsService());
     }
 }

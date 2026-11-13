@@ -1,0 +1,558 @@
+[
+  {
+    "id": "SR-001",
+    "priority": "P0",
+    "area": "CI",
+    "title": "Windows UI audit failed / overly brittle exact multiline comparisons",
+    "files": [
+      "scripts/audit-native-ui.cjs",
+      ".github/workflows/native-ci.yml"
+    ],
+    "symptom": "Windows job 128496997014 fails 11 string comparisons; Ubuntu passed. Line endings are a likely explanation, not proven sole cause.",
+    "fix": "Normalize CRLF to LF before exact matching; then replace string tests with compilable view model and keyboard/focus integration tests; rerun on both platforms.",
+    "acceptance": "Windows and Ubuntu checks green; each focus contract validated behaviorally.",
+    "confidence": "confirmed-CI/likely-cause"
+  },
+  {
+    "id": "SR-002",
+    "priority": "P0",
+    "area": "Packaging",
+    "title": "Versioned Windows app launcher copies only EXE",
+    "files": [
+      "packaging/native/install.ps1",
+      "packaging/native/rollback.ps1",
+      "packaging/native/setup.ps1"
+    ],
+    "symptom": "Start Menu target is a top-level EXE copied away from adjacent published DLLs/runtime dependencies.",
+    "fix": "Point shortcut directly to current\\ServerRock.Native.exe in full versioned folder; remove stale shim carefully; update rollback/install and test from pristine profile.",
+    "acceptance": "Install/launch/upgrade/rollback/uninstall on clean Win11 works without dotnet preinstalled.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-003",
+    "priority": "P0",
+    "area": "Git",
+    "title": "Selected change commit may include unrelated staged changes",
+    "files": [
+      "native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs"
+    ],
+    "symptom": "CommitSelectedCoreAsync stages selected paths then git commit -m, which commits entire pre-existing index.",
+    "fix": "Prefer temporary GIT_INDEX_FILE copied from HEAD tree and stage only reviewed content, or reject nonempty unrelated index; ensure selected paths and hunks are exact; guard against concurrent workspace modifications.",
+    "acceptance": "Given pre-staged unselected file, generated commit contains only selected files/hunks; existing index untouched.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-004",
+    "priority": "P0",
+    "area": "Security",
+    "title": "No execution sandbox for approved workspace commands",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/WorkspaceCommandRunner.cs",
+      "native/ServerRock.Native/MainPage.CodingAgent.Proposals.cs"
+    ],
+    "symptom": "Approved shell runs at user account privilege, outside workspace scope and with network access.",
+    "fix": "Implement capability gate and managed isolated runner (separate process, restricted identity/container where available), explicit filesystem mounts and egress policy, strict timeout/output limits; preserve manual approval and explain residual controls.",
+    "acceptance": "Test traversal, symlinks, network, secret access, child process tree, cancellation, permission prompts.",
+    "confidence": "confirmed-design"
+  },
+  {
+    "id": "SR-005",
+    "priority": "P0",
+    "area": "Security",
+    "title": "Prevent unsafe execution of imported skill scripts",
+    "files": [
+      "native/SkaiDesktop.Core/Services/SkillCatalogService.cs",
+      "native/SkaiDesktop.Core/Services/PluginCatalogService.cs"
+    ],
+    "symptom": "Future GitHub skill downloads would introduce untrusted instructions/scripts without executable permission architecture.",
+    "fix": "Add repo/commit pinning, manifest validation, checksums, path/symlink confinement, provenance, publisher warning, scoped caps, dry-run, explicit update diffs and rollback.",
+    "acceptance": "Malicious manifest traversal/scripts/links cannot execute without scoped approval.",
+    "confidence": "planned-feature"
+  },
+  {
+    "id": "SR-006",
+    "priority": "P1",
+    "area": "Agent",
+    "title": "Coding Agent is one-shot XML-text proposal flow",
+    "files": [
+      "native/ServerRock.Native/MainPage.Chat.cs",
+      "native/ServerRock.Native/MainPage.CodingAgent.Proposals.cs",
+      "native/SkaiDesktop.Core/Infrastructure/ModelInstructions.cs"
+    ],
+    "symptom": "No typed tool-call result loop or persisted goal execution.",
+    "fix": "Build AgentRuntime: plan, typed tool registry, executor, observation, verifier, retries, checkpoint, cancellation, audit event stream; keep human approvals for privileged operations.",
+    "acceptance": "Agent implements a fixture feature, compiles/tests it, reports diff and evidence across restart.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-007",
+    "priority": "P1",
+    "area": "Context",
+    "title": "Project excerpts are bounded static sampling",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/WorkspaceFileContext.cs",
+      "native/ServerRock.Native/MainPage.Chat.cs"
+    ],
+    "symptom": "Agent receives a small bounded file set and cannot selectively navigate large repos.",
+    "fix": "Implement inventory, text search, symbol/AST indexing, chunk retrieval, on-demand bounded read; keep permissioned folders.",
+    "acceptance": "Large 2k-file repo task finds correct files without full prompt upload; cites paths.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-008",
+    "priority": "P1",
+    "area": "State",
+    "title": "MainPage partial class holds most mutable UI/controller state",
+    "files": [
+      "native/ServerRock.Native/MainPage.xaml.cs",
+      "native/ServerRock.Native/MainPage.*.cs"
+    ],
+    "symptom": "Cross-feature mutable fields complicate navigation state, dialogs and concurrency.",
+    "fix": "Extract ChatSessionVM, WorkspaceVM, ModelLibraryVM, NavigationCoordinator, DialogService, TaskVM, provider interfaces; use DI and async commands.",
+    "acceptance": "New VM tests independent of Uno; no state leakage after mode switching.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-009",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Overlay layering and hit-testing are not centrally owned",
+    "files": [
+      "native/ServerRock.Native/MainPage.xaml",
+      "native/ServerRock.Native/MainPage.Layout.cs",
+      "native/ServerRock.Native/MainPage.Companion.cs"
+    ],
+    "symptom": "Sidebar drawer scrim/companion overlay share root and use ad-hoc z-index; potential covered controls, click-through or focus conflicts.",
+    "fix": "Single OverlayHost with explicit ordered layers, scrim hit-test, dismiss policies, focus trap/return, lifecycle cancellation, safe areas; make companion noninteractive outside sprite area.",
+    "acceptance": "Screenshots and hit tests at 560/768/1024/1280/1920 widths; no click-through/covered controls.",
+    "confidence": "confirmed-architecture/risk-to-test"
+  },
+  {
+    "id": "SR-010",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Large tools such as model library are ContentDialog rather than page",
+    "files": [
+      "native/ServerRock.Native/MainPage.ModelLibrary.cs",
+      "native/ServerRock.Native/MainPage.Settings.cs"
+    ],
+    "symptom": "Long tools confined to modal height and oversized content; dialogs can hide workspace and cause nested-dialog conflicts.",
+    "fix": "Create routed full-page Settings/Models/Skills/Tasks/Images; reserve dialogs for confirmations, short selectors, critical approvals.",
+    "acceptance": "Every screen reachable without nested modal; search/list/detail panels resizable and keyboard accessible.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-011",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Dynamic status banner may obscure composer or vanish unexpectedly",
+    "files": [
+      "native/ServerRock.Native/MainPage.xaml.cs",
+      "native/ServerRock.Native/MainPage.xaml"
+    ],
+    "symptom": "RuntimeStatus 7-second timer dismisses messages using substring classification; some important failures may disappear.",
+    "fix": "Replace with durable NotificationCenter storing severity, actions, persistent error IDs; separate ephemeral toasts.",
+    "acceptance": "Failures remain discoverable; toasts do not cover composer; accessible announcements.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-012",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Companion positioning may obscure active page",
+    "files": [
+      "native/ServerRock.Native/MainPage.Companion.cs",
+      "native/ServerRock.Native/MainPage.xaml"
+    ],
+    "symptom": "Companion uses root overlay and manual offsets, and is moved near header in compact navigation.",
+    "fix": "Default docked companion in designated side/status zone, optional drag floating with avoidance zones; overlay hit-test confined to sprite and dismiss on modal.",
+    "acceptance": "No overlay intercepts conversation scroll, buttons, dialogs or composer at any breakpoint.",
+    "confidence": "confirmed-architecture/risk-to-test"
+  },
+  {
+    "id": "SR-013",
+    "priority": "P1",
+    "area": "Skill Marketplace",
+    "title": "SkillCatalogService contains only prompt templates",
+    "files": [
+      "native/SkaiDesktop.Core/Services/SkillCatalogService.cs",
+      "native/ServerRock.Native/MainPage.PluginsAndSkills.cs"
+    ],
+    "symptom": "Three hardcoded read-only skills; pressing Use skill only copies text into composer.",
+    "fix": "Add SKILL.md registry, install/update/remove, tool requirements, model selection and invocation; searchable Marketplace UI with developer origin.",
+    "acceptance": "Install one GitHub skill on Windows/Linux, use via agent, show update and rollback.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-014",
+    "priority": "P1",
+    "area": "Plugins",
+    "title": "Plugin catalog shows unavailable integrations",
+    "files": [
+      "native/SkaiDesktop.Core/Services/PluginCatalogService.cs",
+      "native/ServerRock.Native/MainPage.PluginsAndSkills.cs"
+    ],
+    "symptom": "Static directory displays unavailable integrations without runtime adapters.",
+    "fix": "Build signed connector manifest, scoped auth, runtime health, auth lifecycle, uninstall; hide/nonfunctional actions clearly.",
+    "acceptance": "Built-in works end-to-end; unavailable labelled clearly; revocation removes capability.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-015",
+    "priority": "P1",
+    "area": "Scheduler",
+    "title": "Scheduled tasks placeholder only",
+    "files": [
+      "native/ServerRock.Native/MainPage.Sidebar.cs"
+    ],
+    "symptom": "Button opens informational dialog, no persistent scheduler.",
+    "fix": "Persistent job store, OS session process host, trigger and timezone, backoff, run history, pause/resume, permission review.",
+    "acceptance": "Task scheduled, restarts app, runs once, logs outcome and avoids duplicates.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-016",
+    "priority": "P1",
+    "area": "Model routing",
+    "title": "Only a selected model; no tested smart router",
+    "files": [
+      "native/SkaiDesktop.Core/Models/AppSettings.cs",
+      "native/ServerRock.Native/MainPage.Chat.cs"
+    ],
+    "symptom": "Requests use a configured endpoint/model; no task-dependent routing or concurrent agent model isolation.",
+    "fix": "Provider adapters, capability inventory, tool-call compatibility, privacy tiers, fallback strategy, budgets; isolate model choice by session.",
+    "acceptance": "Simulated provider outage triggers eligible fallback, not silent data transfer; concurrent local/cloud sessions.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-017",
+    "priority": "P1",
+    "area": "Credentials",
+    "title": "Cloud credential lifecycle limited",
+    "files": [
+      "native/ServerRock.Native/MainPage.xaml.cs",
+      "native/ServerRock.Native/MainPage.Settings.cs"
+    ],
+    "symptom": "OpenRouter key held session-only; not a unified provider credential system.",
+    "fix": "Cross-platform OS vault or encrypted store with explicit provider scopes, rotation, revocation, no secrets in logs.",
+    "acceptance": "Credential reconnect, expiry and removal on both platforms; no leakage.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-018",
+    "priority": "P1",
+    "area": "Updates",
+    "title": "Native update indicator not backed by secure update client",
+    "files": [
+      "native/ServerRock.Native/MainPage.Sidebar.cs",
+      "native/ServerRock.Native/MainPage.xaml.cs",
+      ".github/workflows/native-release.yml"
+    ],
+    "symptom": "Update banner gated by environment variable; no evidenced native signed manifest consumer and update transaction.",
+    "fix": "Implement version/channel manifest fetch, cryptographic verify, monotonic version, staged package, safe apply, restart+rollback, audit UI.",
+    "acceptance": "Tampered manifest/package rejected; valid signed upgrade and rollback on Windows/Linux.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-019",
+    "priority": "P1",
+    "area": "Releases",
+    "title": "No published releases / main branch unprotected",
+    "files": [
+      " .github/workflows/native-release.yml",
+      ".github/workflows/native-ci.yml"
+    ],
+    "symptom": "Current API: zero Releases and protected=false for main.",
+    "fix": "Configure required reviews/checks, pinned actions, least privilege, dependency scan, signing secrets; publish when green.",
+    "acceptance": "Can no longer merge failed checks; signed artifacts verified by clean machine.",
+    "confidence": "confirmed-GitHub"
+  },
+  {
+    "id": "SR-020",
+    "priority": "P1",
+    "area": "Files",
+    "title": "Workspace edit check/write is not one atomic transaction",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/WorkspaceFileEditor.cs"
+    ],
+    "symptom": "Hash comparison and replacement not guaranteed exclusive against concurrent editors.",
+    "fix": "Transaction lock per workspace path; temp write with flush; recheck identity under lock; atomic replace; journal and conflict display.",
+    "acceptance": "Race harness never silently overwrites unrelated concurrent writes.",
+    "confidence": "risk-to-test"
+  },
+  {
+    "id": "SR-021",
+    "priority": "P1",
+    "area": "Git",
+    "title": "Git push preflight does not fetch current remote state",
+    "files": [
+      "native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs"
+    ],
+    "symptom": "ahead/behind status describes local tracking data, which may be stale.",
+    "fix": "Fetch remote with permission and timeout, verify fast-forward and protected target; maintain review and explicit push.",
+    "acceptance": "Remote update between local status and push is handled without forced overwrite.",
+    "confidence": "risk-to-test"
+  },
+  {
+    "id": "SR-022",
+    "priority": "P1",
+    "area": "Model downloads",
+    "title": "Model download preflight/resume/integrity varied by runtime",
+    "files": [
+      "native/SkaiDesktop.Core/Services/ModelLibraryService.cs"
+    ],
+    "symptom": "ModelScope SHA256 exists, other paths defer to runtime; disk/memory budget not consistently surfaced.",
+    "fix": "Preflight sizes/space/VRAM/backend/license, progress journal, resume capability and checksum verification where source provides it.",
+    "acceptance": "Failed/canceled download recovers cleanly; no disk exhaustion surprise.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-023",
+    "priority": "P1",
+    "area": "Models",
+    "title": "Backend selection can silently alter model",
+    "files": [
+      "native/ServerRock.Native/MainPage.Connection.cs"
+    ],
+    "symptom": "When selected model absent, app chooses models[0] and saves settings.",
+    "fix": "Show reconnection warning and ask to choose new default; preserve requested model in pending state.",
+    "acceptance": "Missing pinned model does not silently switch local to cloud.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-024",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Settings changes can be lost due to dialog save/validation lifecycle",
+    "files": [
+      "native/ServerRock.Native/MainPage.Settings.cs"
+    ],
+    "symptom": "Settings validates only after dialog closes; model errors can leave users with no correction flow.",
+    "fix": "Validate inline with settings draft VM before Save enabled; commit complete immutable settings snapshot only on valid submit; cancel discards draft.",
+    "acceptance": "Invalid endpoint never closes screen; cancel never changes saved setting.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-025",
+    "priority": "P1",
+    "area": "UI",
+    "title": "Navigation may disrupt editor or active context",
+    "files": [
+      "native/ServerRock.Native/MainPage.Navigation.cs",
+      "native/ServerRock.Native/MainPage.Composer.cs"
+    ],
+    "symptom": "Mode switch resets conversation and clears attachments after save; separate state exists for temporary chat and editing.",
+    "fix": "Routed navigation with unsaved-work guards and per-workspace drafts, task-preserving mode transitions, back/forward and restore focus.",
+    "acceptance": "Typing draft, switching page and returning retains draft and selected model/skill.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-026",
+    "priority": "P1",
+    "area": "Context",
+    "title": "Runtime policy conflates tool eligibility with user intent",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/ModelInstructions.cs",
+      "native/ServerRock.Native/MainPage.Chat.cs"
+    ],
+    "symptom": "No immutable turn capability contract for tools, side effects and prompt context.",
+    "fix": "Introduce typed CapabilityIntent, OfferedTools, AuthorizedTools, exact-action approval; planner may only narrow tool access.",
+    "acceptance": "Tool prompt injection cannot expand filesystem/network grant.",
+    "confidence": "planned"
+  },
+  {
+    "id": "SR-027",
+    "priority": "P1",
+    "area": "Agent",
+    "title": "Approval and operation history not durable enough for goal resume",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/WorkspaceUndoStore.cs",
+      "native/ServerRock.Native/MainPage.CodingAgent.Proposals.cs"
+    ],
+    "symptom": "Undo records exist but multi-file transactional goals and cross-restart step ledger do not.",
+    "fix": "SQLite/WAL state store with execution ids, tool event log, approval grants, idempotency keys, checkpoints and resume coordinator.",
+    "acceptance": "Crash between write and verification recovers with accurate status.",
+    "confidence": "confirmed-design"
+  },
+  {
+    "id": "SR-028",
+    "priority": "P2",
+    "area": "Chat",
+    "title": "Streaming response updates render every chunk",
+    "files": [
+      "native/ServerRock.Native/MainPage.Chat.cs"
+    ],
+    "symptom": "Each callback sets whole TextBlock and scrolls; can stutter/auto-scroll away from user reading position.",
+    "fix": "Batch UI updates 30-60Hz, virtualized messages, avoid autoscroll if user scrolled up, preserve copy/select.",
+    "acceptance": "Long 50k-token stream stays responsive and does not move user scroll unexpectedly.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-029",
+    "priority": "P2",
+    "area": "Performance",
+    "title": "Model speed estimate uses character count / 4",
+    "files": [
+      "native/SkaiDesktop.Core/Models/AppSettings.cs"
+    ],
+    "symptom": "Estimated tok/s is approximate and can misrank models.",
+    "fix": "Prefer usage token counters; label estimates distinctly; account for warmup, TTFT, percentiles, failure rate.",
+    "acceptance": "Model ranking based on reproducible benchmarks and confidence intervals.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-030",
+    "priority": "P2",
+    "area": "Privacy",
+    "title": "Conversations and workspace undo are plaintext local files",
+    "files": [
+      "native/SkaiDesktop.Core/Infrastructure/ConversationStore.cs",
+      "native/SkaiDesktop.Core/Infrastructure/WorkspaceUndoStore.cs"
+    ],
+    "symptom": "Local data includes user conversation and previous content; no optional at-rest encryption.",
+    "fix": "Offer encryption option, migration backup, secure backup/restore, selective retention and data inspection.",
+    "acceptance": "Optional encrypted store recoverable with documented key strategy; export explicit.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-031",
+    "priority": "P2",
+    "area": "Cross-platform",
+    "title": "Voice input on Windows only",
+    "files": [
+      "native/ServerRock.Native/MainPage.Voice.cs"
+    ],
+    "symptom": "Linux reports unavailable; speech uses OS API.",
+    "fix": "Add optional cross-platform STT/TTS adapter with permissioned device access and supported local runtime; keep OS APIs where reliable.",
+    "acceptance": "Windows/Linux input/output feature probes and graceful fallback.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-032",
+    "priority": "P2",
+    "area": "ComfyUI",
+    "title": "Image Studio is narrow workflow dialog",
+    "files": [
+      "native/ServerRock.Native/MainPage.ImageStudio.cs",
+      "native/SkaiDesktop.Core/Services/ComfyImageProvider.cs"
+    ],
+    "symptom": "User supplies workflow JSON and waits polling; no comprehensive workflow/model dependency manager.",
+    "fix": "Full Images workspace, workflow gallery, node compatibility scan, queue, cancel/retry, result history; per-prompt correlation.",
+    "acceptance": "Images render, manage queue and restore after navigation.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-033",
+    "priority": "P2",
+    "area": "Accessibility",
+    "title": "Existing UI contract audit checks source spelling, not behavior",
+    "files": [
+      "scripts/audit-native-ui.cjs",
+      "native/ServerRock.Native/MainPage.xaml"
+    ],
+    "symptom": "Exact snippets can fail on innocuous refactors while a real focus bug passes.",
+    "fix": "Use accessibility tree, keyboard traversals, visible focus, screen reader live regions, contrast checks, overflow screenshots.",
+    "acceptance": "Test actual focus movement after modal close, drawer dismissal and errors.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-034",
+    "priority": "P2",
+    "area": "Reliability",
+    "title": "Unhandled UI exception marked handled",
+    "files": [
+      "native/ServerRock.Native/App.xaml.cs"
+    ],
+    "symptom": "App-wide UnhandledException sets Handled=true without guaranteed healthy state.",
+    "fix": "Categorize recoverable exceptions; critical UI fault boundary with crash recovery, safe restart and diagnostics; never continue corrupted state.",
+    "acceptance": "Injected unrecoverable fault gives safe recovery, not hidden broken UI.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-035",
+    "priority": "P2",
+    "area": "Architecture",
+    "title": "Health scan provides heuristics, not full code audit",
+    "files": [
+      "native/SkaiDesktop.Core/Services/LocalProjectHealthAnalyzer.cs",
+      "native/ServerRock.Native/MainPage.CodeReview.cs"
+    ],
+    "symptom": "Local scan samples up to 2k files; Code Review Agent merely pre-fills prompt, cannot fetch GitHub itself.",
+    "fix": "Add source acquisition, indexed analysis, dependency/vulnerability scan, test ingestion and evidence-backed report generation.",
+    "acceptance": "Reviewer accepts folder/zip/repo, shows analyzed coverage, findings and source lines.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-036",
+    "priority": "P2",
+    "area": "UI",
+    "title": "Too many primary actions represented as dialogs",
+    "files": [
+      "native/ServerRock.Native/MainPage.PluginsAndSkills.cs",
+      "native/ServerRock.Native/MainPage.ModelLibrary.cs",
+      "native/ServerRock.Native/MainPage.Sidebar.cs"
+    ],
+    "symptom": "Skills, models, status, scheduled tasks and plugins are dialog-first, minimizing search and state persistence.",
+    "fix": "Design routed full pages with stable sidebar, deep links, details panels and progress sections; modal only for decisions.",
+    "acceptance": "Search/list/detail remains operable at 1366x768 and 1920x1080.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-037",
+    "priority": "P2",
+    "area": "UI",
+    "title": "Theme uses mixed hardcoded colors and tokens",
+    "files": [
+      "native/ServerRock.Native/MainPage.xaml",
+      "native/ServerRock.Native/App.xaml",
+      "native/ServerRock.Native/MainPage.Settings.cs"
+    ],
+    "symptom": "Numerous literal hex colors produce inconsistent theme support.",
+    "fix": "Central tokens for semantic colors, typography, spacing, radii, elevation, density, focus; dark/light and high contrast.",
+    "acceptance": "Snapshot tests for themes; no text contrast or clipped dialogs.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-038",
+    "priority": "P2",
+    "area": "Tooling",
+    "title": "No MCP agent integration found in native source",
+    "files": [
+      "native/SkaiDesktop.Core/Services/PluginCatalogService.cs",
+      "native/ServerRock.Native/MainPage.PluginsAndSkills.cs"
+    ],
+    "symptom": "Native catalog declares future connectors; no native protocol-based tool registry established.",
+    "fix": "MCP client adapters with schema validation, transport isolation, client/server auth and capability policy.",
+    "acceptance": "Connect a test MCP server and invoke read-only tool; denied write cannot execute.",
+    "confidence": "feature-gap"
+  },
+  {
+    "id": "SR-039",
+    "priority": "P2",
+    "area": "Testing",
+    "title": "Core tests run sequential standalone harness",
+    "files": [
+      "native/SkaiDesktop.Core.Tests/Program.cs",
+      "native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj"
+    ],
+    "symptom": "Tests stop on first failed check and UI behavior coverage limited.",
+    "fix": "Adopt test framework with discovery, isolation, parallel-safe fixture, JUnit/TRX, coverage, native UI automation and benchmark CI.",
+    "acceptance": "CI surfaces all failures with reports per OS, no hidden skips.",
+    "confidence": "confirmed-code"
+  },
+  {
+    "id": "SR-040",
+    "priority": "P2",
+    "area": "Consistency",
+    "title": "README may promise features beyond native implementation",
+    "files": [
+      "README.md",
+      "docs/PRODUCTION_READINESS_GAPS.md",
+      "docs/NATIVE_RELEASE_ACCEPTANCE.md"
+    ],
+    "symptom": "Legacy/aspirational architecture and actual native feature set differ.",
+    "fix": "Publish IMPLEMENTED/PARTIAL/PLANNED feature matrix updated in CI; eliminate misleading feature labels.",
+    "acceptance": "Fresh install claims correspond to reproducible acceptance tests.",
+    "confidence": "confirmed-doc-vs-code"
+  }
+]

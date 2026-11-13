@@ -13,7 +13,7 @@ Electron main process
   ├─ sandboxed React renderer
   ├─ context-isolated preload bridge
   └─ persistent .NET 10 agent host
-       └─ ServerRock.Core services, stores, policies, and providers
+       └─ SkaiDesktop.Core services, stores, policies, and providers
 ```
 
 The renderer has no Node.js or direct filesystem access. The main process owns

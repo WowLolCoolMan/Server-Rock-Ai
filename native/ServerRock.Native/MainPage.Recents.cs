@@ -3,7 +3,7 @@
 // (rename, pin, archive/restore, move to folder, fork, delete), and saving the current conversation.
 // SaveCurrentSession is the single place a live chat is written into _sessions/conversations.json;
 // temporary chats are never saved.
-// Depends on: ConversationStore (ServerRock.Core), page state in MainPage.xaml.cs (_sessions,
+// Depends on: ConversationStore (SkaiDesktop.Core), page state in MainPage.xaml.cs (_sessions,
 // _messages, _activeSessionId, …), chat-folder helpers in MainPage.ChatFolders.cs, and the
 // branch helpers.
 // Called by: New chat button and Recents rows in MainPage.xaml, slash commands (/new, /rename,
@@ -15,7 +15,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 

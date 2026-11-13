@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
-using ServerRock.Core.Models;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 

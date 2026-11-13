@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -9,7 +9,7 @@ public sealed partial class MainPage
 {
     private async Task ReviewMemoryContextAsync()
     {
-        IReadOnlyList<ServerRock.Core.Models.MemoryEntry> entries;
+        IReadOnlyList<SkaiDesktop.Core.Models.MemoryEntry> entries;
         try { entries = _memoryStore.Load(); }
         catch (Exception exception)
         {

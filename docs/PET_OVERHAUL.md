@@ -110,7 +110,7 @@ applies: on, unless the app's "Reduce decorative motion" or the system's animati
 (Windows "Show animations", via `UISettings.AnimationsEnabled`) asks for less motion. The same
 check also stops the state animations.
 
-- Grid and planning: `ServerRock.Core/Services/PetWanderPlanner.cs` (`PetWanderGrid`,
+- Grid and planning: `SkaiDesktop.Core/Services/PetWanderPlanner.cs` (`PetWanderGrid`,
   `PetWanderPlanner`, `PetWalk`), tested in `PetWanderPlannerTests.cs` with seeded randoms.
 - UI: `MainPage.CompanionWander.cs`, riding on the pet animation timer (60 fps while walking).
 - Blocked cells: every cell where the pet card (bubble included) would overlap the composer

@@ -1,0 +1,402 @@
+[
+  {
+    "rank": 1,
+    "name": "Skill Router & Discovery",
+    "description": "Route requests to relevant installed skills",
+    "github_url": "https://github.com/agentskills/agentskills",
+    "relationship": "Reference standard; custom implementation",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 2,
+    "name": "Autonomous Goal Execution",
+    "description": "Plan, execute, verify and iterate on multi-step goals",
+    "github_url": "https://github.com/obra/superpowers",
+    "relationship": "Workflow reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 3,
+    "name": "Multi-Agent Orchestrator",
+    "description": "Delegate parallel specialist tasks",
+    "github_url": "https://github.com/microsoft/autogen",
+    "relationship": "Framework reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 4,
+    "name": "Skill Creator",
+    "description": "Author and validate SKILL.md packages",
+    "github_url": "https://github.com/anthropics/skills",
+    "relationship": "Skill examples",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 5,
+    "name": "Deep Research Agent",
+    "description": "Research sources and synthesize cited findings",
+    "github_url": "https://github.com/langchain-ai/langgraph",
+    "relationship": "Framework reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 6,
+    "name": "Memory & Knowledge Manager",
+    "description": "Store and retrieve persistent project knowledge",
+    "github_url": "https://github.com/mem0ai/mem0",
+    "relationship": "Implementation reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 7,
+    "name": "Planning & Task Decomposition",
+    "description": "Build dependency-aware plans",
+    "github_url": "https://github.com/obra/superpowers",
+    "relationship": "Workflow reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 8,
+    "name": "Model Router & Fallback",
+    "description": "Choose local/cloud models with retry and fallback",
+    "github_url": "https://github.com/BerriAI/litellm",
+    "relationship": "Gateway reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 9,
+    "name": "Self-Evaluation & Verification",
+    "description": "Test outputs against acceptance criteria",
+    "github_url": "https://github.com/promptfoo/promptfoo",
+    "relationship": "Evaluation tooling",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 10,
+    "name": "Tool & MCP Discovery",
+    "description": "Discover and expose tool capabilities",
+    "github_url": "https://github.com/modelcontextprotocol/servers",
+    "relationship": "MCP reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 11,
+    "name": "Repository Architect",
+    "description": "Analyze codebase structure and dependencies",
+    "github_url": "https://github.com/Aider-AI/aider",
+    "relationship": "Coding agent reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 12,
+    "name": "Systematic Debugging",
+    "description": "Reproduce, diagnose and verify fixes",
+    "github_url": "https://github.com/obra/superpowers",
+    "relationship": "Workflow reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 13,
+    "name": "Test-Driven Development",
+    "description": "Write tests first and validate changes",
+    "github_url": "https://github.com/obra/superpowers",
+    "relationship": "Workflow reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 14,
+    "name": "Code Review Agent",
+    "description": "Inspect correctness, security and maintainability",
+    "github_url": "https://github.com/reviewdog/reviewdog",
+    "relationship": "Review tooling",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 15,
+    "name": "Dependency Doctor",
+    "description": "Diagnose broken packages and environment versions",
+    "github_url": "https://github.com/renovatebot/renovate",
+    "relationship": "Dependency automation reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 16,
+    "name": "Git & GitHub Automation",
+    "description": "Manage repository workflows and pull requests",
+    "github_url": "https://github.com/cli/cli",
+    "relationship": "CLI tool",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 17,
+    "name": "Security Audit & Threat Modeling",
+    "description": "Scan weaknesses and model attack surfaces",
+    "github_url": "https://github.com/aquasecurity/trivy",
+    "relationship": "Security scanner reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 18,
+    "name": "CI/CD & Deployment Engineer",
+    "description": "Automate builds and release checks",
+    "github_url": "https://github.com/actions/runner",
+    "relationship": "CI infrastructure reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 19,
+    "name": "Performance Profiler",
+    "description": "Profile CPU and application bottlenecks",
+    "github_url": "https://github.com/google/perftools",
+    "relationship": "Profiling reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 20,
+    "name": "Cross-Platform Build Engineer",
+    "description": "Package Windows Linux and macOS apps",
+    "github_url": "https://github.com/electron/electron-builder",
+    "relationship": "Packaging tool",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 21,
+    "name": "Desktop Computer Operator",
+    "description": "Interact with desktop UI using accessibility and controls",
+    "github_url": "https://github.com/microsoft/PowerToys",
+    "relationship": "Desktop tooling reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 22,
+    "name": "Browser Automation",
+    "description": "Control and test web browsers",
+    "github_url": "https://github.com/microsoft/playwright-mcp",
+    "relationship": "MCP tool",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 23,
+    "name": "Terminal & Shell Operator",
+    "description": "Execute and diagnose shell commands",
+    "github_url": "https://github.com/PowerShell/PowerShell",
+    "relationship": "Shell runtime",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 24,
+    "name": "Filesystem Manager",
+    "description": "Search organize and transform files",
+    "github_url": "https://github.com/sharkdp/fd",
+    "relationship": "File search tool",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 25,
+    "name": "API Integration Builder",
+    "description": "Build and validate HTTP integrations",
+    "github_url": "https://github.com/OpenAPITools/openapi-generator",
+    "relationship": "API tooling",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 26,
+    "name": "MCP Server Builder",
+    "description": "Expose services as MCP tools",
+    "github_url": "https://github.com/modelcontextprotocol/typescript-sdk",
+    "relationship": "MCP SDK",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 27,
+    "name": "Database Engineer",
+    "description": "Inspect schemas queries and migrations",
+    "github_url": "https://github.com/prisma/prisma",
+    "relationship": "Database toolkit",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 28,
+    "name": "Container & Infrastructure Operator",
+    "description": "Manage containers and services",
+    "github_url": "https://github.com/docker/compose",
+    "relationship": "Container tooling",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 29,
+    "name": "Workflow Automation Builder",
+    "description": "Create triggered multi-step workflows",
+    "github_url": "https://github.com/n8n-io/n8n",
+    "relationship": "Automation platform",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 30,
+    "name": "Application Troubleshooter",
+    "description": "Inspect crashes logs and traces",
+    "github_url": "https://github.com/getsentry/sentry",
+    "relationship": "Observability platform",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 31,
+    "name": "UI/UX Design Engineer",
+    "description": "Audit usability accessibility and interface states",
+    "github_url": "https://github.com/storybookjs/storybook",
+    "relationship": "UI development tooling",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 32,
+    "name": "Frontend Implementation",
+    "description": "Build responsive frontend components",
+    "github_url": "https://github.com/vercel/next.js",
+    "relationship": "Frontend framework reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 33,
+    "name": "Document Production",
+    "description": "Generate and edit document formats",
+    "github_url": "https://github.com/python-openxml/python-docx",
+    "relationship": "Document library",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 34,
+    "name": "Spreadsheet & Financial Modeling",
+    "description": "Build workbooks formulas and models",
+    "github_url": "https://github.com/openpyxl/openpyxl",
+    "relationship": "Spreadsheet library",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 35,
+    "name": "Data Science & Visualization",
+    "description": "Analyze data and create charts",
+    "github_url": "https://github.com/pandas-dev/pandas",
+    "relationship": "Data toolkit",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 36,
+    "name": "Image Generation Workflow",
+    "description": "Build image generation and editing pipelines",
+    "github_url": "https://github.com/comfyanonymous/ComfyUI",
+    "relationship": "Image workflow engine",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 37,
+    "name": "Video Production Workflow",
+    "description": "Automate video processing and rendering",
+    "github_url": "https://github.com/FFmpeg/FFmpeg",
+    "relationship": "Video toolkit",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 38,
+    "name": "Audio & Speech Pipeline",
+    "description": "Transcribe synthesize and process speech",
+    "github_url": "https://github.com/ggml-org/whisper.cpp",
+    "relationship": "Speech engine reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 39,
+    "name": "Technical Writing & Documentation",
+    "description": "Create and maintain technical documentation",
+    "github_url": "https://github.com/squidfunk/mkdocs-material",
+    "relationship": "Documentation framework",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 40,
+    "name": "Game Development Assistant",
+    "description": "Support game engines and gameplay coding",
+    "github_url": "https://github.com/godotengine/godot",
+    "relationship": "Game engine reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 41,
+    "name": "Local LLM Runtime Engineer",
+    "description": "Run quantized models on local hardware",
+    "github_url": "https://github.com/ggml-org/llama.cpp",
+    "relationship": "Local inference runtime",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 42,
+    "name": "RAG & Semantic Search Builder",
+    "description": "Index documents and retrieve cited context",
+    "github_url": "https://github.com/run-llama/llama_index",
+    "relationship": "RAG framework",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 43,
+    "name": "Prompt & Context Optimizer",
+    "description": "Evaluate prompts and reduce wasted context",
+    "github_url": "https://github.com/promptfoo/promptfoo",
+    "relationship": "Prompt evaluation reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 44,
+    "name": "Hugging Face Model Integrator",
+    "description": "Find download and integrate models",
+    "github_url": "https://github.com/huggingface/huggingface_hub",
+    "relationship": "Model hub SDK",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 45,
+    "name": "ComfyUI Workflow Engineer",
+    "description": "Build validate and execute node graphs",
+    "github_url": "https://github.com/comfyanonymous/ComfyUI",
+    "relationship": "Workflow engine",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 46,
+    "name": "Agent Evaluation & Benchmarking",
+    "description": "Benchmark agents with repeatable tests",
+    "github_url": "https://github.com/promptfoo/promptfoo",
+    "relationship": "Evaluation toolkit",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 47,
+    "name": "Skill Marketplace Manager",
+    "description": "Install update and version skill packages",
+    "github_url": "https://github.com/agentskills/agentskills",
+    "relationship": "Standard; custom marketplace needed",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 48,
+    "name": "Permission & Sandbox Manager",
+    "description": "Constrain tool execution and enforce approvals",
+    "github_url": "https://github.com/containers/bubblewrap",
+    "relationship": "Linux sandbox reference",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 49,
+    "name": "Agent Observability & Recovery",
+    "description": "Trace agent executions and recover from failures",
+    "github_url": "https://github.com/langfuse/langfuse",
+    "relationship": "Tracing platform",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  },
+  {
+    "rank": 50,
+    "name": "Skill Research & Recommendation Agent",
+    "description": "Discover assess and recommend new skills",
+    "github_url": "https://github.com/anthropics/skills",
+    "relationship": "Catalog reference; custom implementation",
+    "note": "GitHub repository is a relevant implementation or reference, not necessarily a drop-in Agent Skill. Verify licensing, maintenance and compatibility before installing."
+  }
+]

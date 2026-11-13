@@ -2,7 +2,7 @@
 // PNG/JPEG images, enforcing size and type limits, and showing removable chips.
 // ChatAttachmentPolicy.ConsentKey (Core) identifies a set of attachments for one endpoint so the remote-upload
 // consent prompt is asked once per set.
-// Depends on: ChatAttachmentPolicy, PdfAttachmentTextExtractor (ServerRock.Core), the file picker,
+// Depends on: ChatAttachmentPolicy, PdfAttachmentTextExtractor (SkaiDesktop.Core), the file picker,
 // and _pendingAttachments in MainPage.xaml.cs.
 // Called by: the attach (+) button in MainPage.xaml, SendClick (consent + clearing), and mode
 // switching (ClearPendingAttachments).
@@ -13,8 +13,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ServerRock.Core.Models;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
 using Windows.Storage.Streams;
 
 namespace ServerRock.Native;

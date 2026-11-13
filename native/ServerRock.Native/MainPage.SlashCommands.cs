@@ -12,8 +12,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 
@@ -110,6 +110,7 @@ public sealed partial class MainPage
             case "/map": await ShowLocalHealthAsync(includeMap: true); break;
             case "/plugins": await PluginStoreClickAsync(); break;
             case "/skills": await SkillsDialogAsync(); break;
+            case "/presets": await OpenPresetsAsync(); break;
             case "/research": EnableResearchMode(); break;
             case "/tools": ComposerToolsClick(this, new RoutedEventArgs()); break;
             case "/status": ShowWorkspaceStatus(); break;

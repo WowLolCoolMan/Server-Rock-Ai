@@ -5,7 +5,7 @@
 ### 1) Architectural Style
 
 - Primary style: layered, feature-split native UI with UI-independent Core services and adapter boundaries.
-- Why: `ServerRock.Core` owns models/services/infrastructure, while `ServerRock.Native` composes them through partial UI feature files; the migration adds a typed host seam rather than replacing the native app.
+- Why: `SkaiDesktop.Core` owns models/services/infrastructure, while `ServerRock.Native` composes them through partial UI feature files; the migration adds a typed host seam rather than replacing the native app.
 - Primary constraints: preserve local-first routing, keep approvals around side effects, and bound filesystem/network/persistence input.
 
 ### 2) System Flow
@@ -24,9 +24,9 @@ MainPage/Composer -> BuildProviderMessages -> Core policies + local stores -> Op
 
 | Layer or module | Owns | Must not own | Evidence |
 |-----------------|------|--------------|----------|
-| Core models | Durable contracts and bounded data shapes | UI lifecycle | `native/ServerRock.Core/Models/` |
-| Core infrastructure | File bounds, archives, stores, context assembly | XAML controls | `native/ServerRock.Core/Infrastructure/` |
-| Core services | Provider, Git, workflow, skill, MCP and policy behavior | Direct visual rendering | `native/ServerRock.Core/Services/` |
+| Core models | Durable contracts and bounded data shapes | UI lifecycle | `native/SkaiDesktop.Core/Models/` |
+| Core infrastructure | File bounds, archives, stores, context assembly | XAML controls | `native/SkaiDesktop.Core/Infrastructure/` |
+| Core services | Provider, Git, workflow, skill, MCP and policy behavior | Direct visual rendering | `native/SkaiDesktop.Core/Services/` |
 | Native partials/views | User interaction, dialogs, focus and accessibility | Duplicated trust-boundary validation | `native/ServerRock.Native/MainPage.*.cs`, `*.xaml` |
 | Agent host | Versioned JSON-lines seam for migration/runtime hosting | Silent privilege escalation | `services/agent-host/` |
 
@@ -49,6 +49,6 @@ MainPage/Composer -> BuildProviderMessages -> Core policies + local stores -> Op
 
 - `docs/ARCHITECTURE.md`
 - `native/ServerRock.Native/MainPage.Chat.cs`
-- `native/ServerRock.Core/Services/OpenAiCompatibleProvider.cs`
-- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/SkaiDesktop.Core/Services/OpenAiCompatibleProvider.cs`
+- `native/SkaiDesktop.Core/Infrastructure/JsonSettingsStore.cs`
 - `services/agent-host/README.md`

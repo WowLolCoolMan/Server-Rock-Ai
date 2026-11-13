@@ -1,15 +1,15 @@
 // The Plugins dialog (catalog of integrations, built in vs not available yet) and the Skills
 // dialog (built-in read-only workflows such as reverse-engineer).
-// Depends on: PluginCatalogService, SkillCatalogService (ServerRock.Core).
+// Depends on: PluginCatalogService, SkillCatalogService (SkaiDesktop.Core).
 // Called by: the sidebar Plugins button in MainPage.xaml and the /plugins and /skills slash commands.
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.Native;
 

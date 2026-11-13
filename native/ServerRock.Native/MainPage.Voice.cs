@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using SkaiDesktop.Core.Models;
 
 namespace ServerRock.Native;
 
@@ -41,13 +42,26 @@ public sealed partial class MainPage
     private async Task SpeakResponseAsync(string response)
     {
         if (!_settings.VoiceOutputEnabled || string.IsNullOrWhiteSpace(response)) return;
+        var profile = VoiceProfileCatalog.Resolve(_settings.VoiceProfiles, _settings.VoiceProfileId);
+        var selectedModel = VoiceModelCatalog.Resolve(_settings.VoiceLowResourceModeEnabled
+            ? _settings.VoiceLowResourceModelId
+            : _settings.VoicePrimaryModelId);
+        if (!selectedModel.Id.Equals("os-native", StringComparison.OrdinalIgnoreCase))
+        {
+            RuntimeStatus.Text = $"{selectedModel.Name} is selected but not installed; using OS-native speech.";
+        }
+        var text = System.Text.RegularExpressions.Regex.Replace(response, "[`*_>#]", string.Empty);
+        text = System.Text.RegularExpressions.Regex.Replace(text, "\\s+", " ").Trim();
+        if (text.Length > 4000) text = text[..4000];
 #if WINDOWS
         try
         {
-            var text = System.Text.RegularExpressions.Regex.Replace(response, "[`*_>#]", string.Empty);
-            text = System.Text.RegularExpressions.Regex.Replace(text, "\\s+", " ").Trim();
-            if (text.Length > 4000) text = text[..4000];
             var synthesizer = new Windows.Media.SpeechSynthesis.SpeechSynthesizer();
+            if (!string.IsNullOrWhiteSpace(profile.VoiceName))
+            {
+                var voice = Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices.FirstOrDefault(item => item.DisplayName.Equals(profile.VoiceName, StringComparison.OrdinalIgnoreCase));
+                if (voice is not null) synthesizer.Voice = voice;
+            }
             var stream = await synthesizer.SynthesizeTextToStreamAsync(text);
             _voicePlayer?.Dispose();
             _voicePlayer = new Windows.Media.Playback.MediaPlayer
@@ -57,6 +71,13 @@ public sealed partial class MainPage
             _voicePlayer.Play();
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Spoken response unavailable: {ex.Message}"; }
+#elif SRAI_DESKTOP
+        try
+        {
+            if (!await _nativeTts.SpeakLinuxAsync(text, profile, CancellationToken.None))
+                RuntimeStatus.Text = "Linux OS speech is unavailable; install espeak-ng or speech-dispatcher.";
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Linux spoken response unavailable: {ex.Message}"; }
 #endif
     }
 }

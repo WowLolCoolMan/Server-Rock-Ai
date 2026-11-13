@@ -40,10 +40,10 @@ function request(method, params) {
 async function run() {
   const saved = await request("conversation.save", { title: "Organized chat", messages: [{ role: "user", content: "metadata fixture" }] });
   if (!saved.ok || typeof saved.result?.id !== "string") throw new Error("conversation.save did not create the disposable metadata fixture.");
-  const updated = await request("conversation.metadata.save", { id: saved.result.id, pinned: true, folderName: "Research", tags: ["local", "review"] });
-  if (!updated.ok || updated.result?.pinned !== true || updated.result?.folderName !== "Research" || updated.result?.tags?.length !== 2) throw new Error("conversation.metadata.save did not persist bounded organization metadata.");
+  const updated = await request("conversation.metadata.save", { id: saved.result.id, title: "Renamed local chat", pinned: true, folderName: "Research", tags: ["local", "review"] });
+  if (!updated.ok || updated.result?.title !== "Renamed local chat" || updated.result?.pinned !== true || updated.result?.folderName !== "Research" || updated.result?.tags?.length !== 2) throw new Error("conversation.metadata.save did not persist bounded organization metadata and title.");
   const listed = await request("conversations.list");
-  if (!listed.ok || listed.result.length !== 1 || listed.result[0].pinned !== true || listed.result[0].tags[0] !== "local") throw new Error("conversation metadata did not round-trip through conversations.list.");
+  if (!listed.ok || listed.result.length !== 1 || listed.result[0].title !== "Renamed local chat" || listed.result[0].pinned !== true || listed.result[0].tags[0] !== "local") throw new Error("conversation metadata did not round-trip through conversations.list.");
   const archived = await request("conversation.metadata.save", { id: saved.result.id, archived: true });
   if (!archived.ok || archived.result?.archived !== true) throw new Error("conversation archive state did not persist.");
   const hidden = await request("conversations.list");
@@ -51,7 +51,7 @@ async function run() {
   const restoredView = await request("conversations.list", { includeArchived: true });
   if (!restoredView.ok || restoredView.result.length !== 1 || restoredView.result[0].archived !== true) throw new Error("archived conversation view did not return the archived item.");
   const exportResult = await request("conversations.export", { includeArchived: true });
-  if (!exportResult.ok || exportResult.result?.conversationCount !== 1 || !String(exportResult.result?.markdown).includes("Organized chat")) throw new Error("conversation Markdown export did not include the archived fixture.");
+  if (!exportResult.ok || exportResult.result?.conversationCount !== 1 || !String(exportResult.result?.markdown).includes("Renamed local chat")) throw new Error("conversation Markdown export did not include the renamed archived fixture.");
   const forked = await request("conversation.fork", { id: saved.result.id, throughIndex: 0 });
   if (!forked.ok || forked.result?.forkedFrom !== saved.result.id || forked.result?.messageCount !== 1) throw new Error("conversation fork did not create the expected message prefix.");
   const forkList = await request("conversations.list", { includeArchived: true });

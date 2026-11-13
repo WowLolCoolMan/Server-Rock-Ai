@@ -5,7 +5,7 @@ small, local-only .NET process that speaks versioned JSON lines over stdin/stdou
 
 The host exposes `runtime.health`, `models.list`, `projects.list`,
 `tasks.list`, `scheduled.list`, `conversations.list`, `conversation.save`, and
-`chat.complete`, using the existing `ServerRock.Core` provider and persistence
+`chat.complete`, using the existing `SkaiDesktop.Core` provider and persistence
 contracts. The Electron renderer receives only the narrow context-isolated
 bridge; it never receives Node.js or direct filesystem access.
 

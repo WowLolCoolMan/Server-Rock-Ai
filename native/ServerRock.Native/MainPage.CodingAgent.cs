@@ -2,7 +2,7 @@
 // for a project file, and the persistent undo history of approved file edits.
 // Every approved edit (from a reviewed proposal or the editor) goes through RecordWorkspaceUndo,
 // which saves an undo entry; undo only runs if the file still matches what was applied.
-// Depends on: WorkspaceFileEditor, WorkspaceUndoStore, WorkspaceFileContext (ServerRock.Core) and
+// Depends on: WorkspaceFileEditor, WorkspaceUndoStore, WorkspaceFileContext (SkaiDesktop.Core) and
 // _workspaceUndoEntries / _undoHistoryAvailable in MainPage.xaml.cs.
 // Called by: the Undo history button and the file rows built in RenderProjectFiles, the change
 // review dialog (MainPage.CodingAgent.Proposals.cs), and project/mode changes that call
@@ -12,8 +12,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
-using ServerRock.Core.Models;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 

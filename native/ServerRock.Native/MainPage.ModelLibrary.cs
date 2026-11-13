@@ -5,7 +5,7 @@
 //   download/pull, delete, and a speed benchmark for installed models.
 // - SelectModelAsync switches the active model/endpoint; UpdateModelLabel and DescribeDataRoute
 //   keep the composer labels honest about local vs remote.
-// Depends on: ModelLibraryService, OpenAiCompatibleProvider (ServerRock.Core), SaveSettings,
+// Depends on: ModelLibraryService, OpenAiCompatibleProvider (SkaiDesktop.Core), SaveSettings,
 // RefreshModelConnectionAsync (MainPage.Connection.cs).
 // Called by: the model button in MainPage.xaml, Settings > Models & downloads, the /model
 // command, and many places that refresh the composer labels.
@@ -16,9 +16,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
-using ServerRock.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
 
 namespace ServerRock.Native;
 
@@ -26,8 +26,18 @@ public sealed partial class MainPage
 {
     private sealed record InstalledModelChoice(string Provider, string Model, string Endpoint, string Display);
     private sealed record CatalogModelChoice(HubModel Model, string Display);
+    private sealed record VoiceModelChoice(VoiceModelDefinition Model, string Display);
     private sealed record ModelScopeGgufPackageChoice(ModelScopeGgufPackage Package, string Display);
     private sealed record ModelComparisonResult(PinnedModelConnection Model, string? Response, string? Error);
+
+    private static string FriendlyRuntimeLabel(string provider, string endpoint = "")
+        => provider.Equals("AirLLM", StringComparison.OrdinalIgnoreCase)
+            ? "Very large model · local"
+            : LocalEndpoint.IsLocal(endpoint)
+                ? "Model on this computer"
+                : provider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase) || provider.Equals("Hosted model", StringComparison.OrdinalIgnoreCase)
+                    ? "Hosted model service"
+                    : "Connected model service";
 
     private async void ModelClick(object sender, RoutedEventArgs e)
     {
@@ -60,7 +70,7 @@ public sealed partial class MainPage
             var isCurrent = model.Model.Equals(_settings.Model, StringComparison.OrdinalIgnoreCase) && model.Endpoint.Equals(_settings.Endpoint, StringComparison.OrdinalIgnoreCase);
             var performance = (_settings.LocalModelPerformance ?? []).GetValueOrDefault(LocalModelPerformance.Key(model.Endpoint, model.Model));
             var rate = performance is null ? "Not benchmarked" : $"≈{performance.EstimatedTokensPerSecond:0.#} tok/s";
-            var item = new MenuFlyoutItem { Text = $"{(isCurrent ? "✓  " : "")}{model.Provider} · {model.Model} · {rate}" };
+            var item = new MenuFlyoutItem { Text = $"{(isCurrent ? "✓  " : "")}{FriendlyRuntimeLabel(model.Provider, model.Endpoint)} · {model.Model} · {rate}" };
             ToolTipService.SetToolTip(item, performance is null
                 ? $"{model.Provider} · {model.Model}\nNo performance sample recorded on this device yet. Use Models → Benchmark selected to compare it."
                 : $"{model.Provider} · {model.Model}\nEstimated {performance.EstimatedTokensPerSecond:0.#} tokens/second · {performance.TimeToFirstTokenMilliseconds} ms to first token · {performance.Samples} sample(s) on this device. Throughput is estimated from response text length.");
@@ -88,7 +98,7 @@ public sealed partial class MainPage
         var checks = new List<(PinnedModelConnection Model, CheckBox Check)>();
         foreach (var model in pinnedModels.Take(ModelComparisonPolicy.MaxModels))
         {
-            var check = new CheckBox { Content = $"{model.Provider} · {model.Model}\n{model.Endpoint}", IsChecked = checks.Count < ModelComparisonPolicy.MaxModels, Tag = model };
+            var check = new CheckBox { Content = $"{FriendlyRuntimeLabel(model.Provider, model.Endpoint)} · {model.Model}\n{model.Endpoint}", IsChecked = checks.Count < ModelComparisonPolicy.MaxModels, Tag = model };
             AutomationProperties.SetName(check, $"Compare model {model.Model}");
             selections.Children.Add(check);
             checks.Add((model, check));
@@ -155,7 +165,7 @@ public sealed partial class MainPage
         {
             var result = results[index];
             var panel = new StackPanel { Spacing = 6 };
-            panel.Children.Add(new TextBlock { Text = $"{result.Model.Provider} · {result.Model.Model}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(new TextBlock { Text = $"{FriendlyRuntimeLabel(result.Model.Provider, result.Model.Endpoint)} · {result.Model.Model}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
             panel.Children.Add(new TextBlock { Text = result.Error is null ? result.Response : $"Comparison failed: {result.Error}", TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true });
             var border = new Border { Background = ResourceBrush("SurfaceAltBrush"), BorderBrush = ResourceBrush("LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = new ScrollViewer { Content = panel, MaxHeight = 520, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
             Grid.SetColumn(border, index);
@@ -264,6 +274,7 @@ public sealed partial class MainPage
         source.Items.Add("Installed models");
         source.Items.Add("Ollama Library");
         source.Items.Add("ModelScope · GGUF");
+        source.Items.Add("Voice models");
         // Owner decision (2026-11-07): open on Installed models so nothing is sent to Hugging
         // Face until the user picks the catalog source (matches the README privacy promise).
         source.SelectedIndex = 1;
@@ -273,6 +284,15 @@ public sealed partial class MainPage
         catalogMode.Items.Add("Regular models");
         catalogMode.Items.Add("Uncensored / abliterated");
         catalogMode.SelectedIndex = 0;
+        var voiceAssignment = new ComboBox { Header = "Assign selected voice model as", MinWidth = 260, Visibility = Visibility.Collapsed };
+        voiceAssignment.Items.Add("Primary conversational voice");
+        voiceAssignment.Items.Add("Low-resource voice");
+        voiceAssignment.SelectedIndex = 0;
+        var voiceProfile = new ComboBox { Header = "Voice profile", MinWidth = 260, Visibility = Visibility.Collapsed, ItemsSource = VoiceProfileCatalog.Defaults, DisplayMemberPath = nameof(VoiceProfile.Name) };
+        voiceProfile.SelectedIndex = Math.Max(0, VoiceProfileCatalog.Defaults.ToList().FindIndex(profile => profile.Id.Equals(_settings.VoiceProfileId, StringComparison.OrdinalIgnoreCase)));
+        var lowResourceMode = new CheckBox { Content = "Use low-resource voice mode now", IsChecked = _settings.VoiceLowResourceModeEnabled, Visibility = Visibility.Collapsed };
+        AutomationProperties.SetName(lowResourceMode, "Use low-resource voice mode");
+        AutomationProperties.SetHelpText(lowResourceMode, "Use the separately assigned low-resource voice model for spoken replies.");
         var query = new TextBox { PlaceholderText = "Search models by name or capability", MinWidth = 280 };
         AutomationProperties.SetName(query, "Search models");
         AutomationProperties.SetHelpText(query, "Search model repositories by name or capability, then activate Search or refresh.");
@@ -323,6 +343,9 @@ public sealed partial class MainPage
                     new TextBlock { Text = "Choose, pin, and benchmark the models installed on this PC. Switch the source to browse the Hugging Face, Ollama, or ModelScope catalogs and download compatible GGUF models through a local runtime.", TextWrapping = TextWrapping.Wrap },
                     source,
                     catalogMode,
+                    voiceAssignment,
+                    voiceProfile,
+                    lowResourceMode,
                     actionRow,
                     new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { sort, previousPage, pageStatus, nextPage } },
                     list,
@@ -339,15 +362,19 @@ public sealed partial class MainPage
             catalogSearchCancellation = searchCancellation;
             previousSearch?.Cancel();
             var cancellationToken = searchCancellation.Token;
-            dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
+            dialog.IsPrimaryButtonEnabled = source.SelectedIndex is 1 or 4;
             pin.IsEnabled = source.SelectedIndex == 1;
             catalogMode.Visibility = source.SelectedIndex is 0 or 3 ? Visibility.Visible : Visibility.Collapsed;
+            voiceAssignment.Visibility = source.SelectedIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
+            voiceProfile.Visibility = source.SelectedIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
+            lowResourceMode.Visibility = source.SelectedIndex == 4 ? Visibility.Visible : Visibility.Collapsed;
             status.Text = source.SelectedIndex switch
             {
                 0 => "Loading popular Hugging Face GGUF models for local runtimes…",
                 1 => "Checking installed models on local runtimes…",
                 2 => "Enter an Ollama model ID, then choose Download selected.",
                 3 => "Searching ModelScope GGUF models…",
+                4 => "Showing voice runtimes and installed voice selections…",
                 _ => ""
             };
             list.ItemsSource = null;
@@ -416,6 +443,20 @@ public sealed partial class MainPage
                         ? $"Found {packages.Count} ModelScope GGUF package(s) with explicit uncensored/abliterated labels. Files are SHA-256 checked and imported into the local Ollama runtime."
                         : $"Found {packages.Count} regular ModelScope GGUF package(s); explicitly labeled uncensored/abliterated repositories are excluded. Downloads are SHA-256 checked and imported into the local Ollama runtime.";
                 }
+                else if (choice == 4)
+                {
+                    var searchText = query.Text.Trim();
+                    var models = VoiceModelCatalog.All
+                        .Where(model => string.IsNullOrWhiteSpace(searchText) || $"{model.Id} {model.Name} {model.Description} {model.Runtime}".Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                        .Select(model => new VoiceModelChoice(model,
+                            $"{model.Name}   ·   {model.Runtime}   ·   {model.Size}   ·   {(model.IsInstalled ? "Available" : "Optional pack")}"))
+                        .ToArray();
+                    var choices = ApplyModelPage(models, sort.SelectedIndex, ref pageCount, ref page, out var shownCount);
+                    list.DisplayMemberPath = nameof(VoiceModelChoice.Display);
+                    list.ItemsSource = choices;
+                    pageStatus.Text = $"Page {page + 1} of {pageCount} · {shownCount:N0} shown";
+                    status.Text = "OS-native speech is the shipped default. Optional neural voice packs can be assigned independently to normal and low-resource modes.";
+                }
                 else
                 {
                     list.DisplayMemberPath = null;
@@ -442,6 +483,17 @@ public sealed partial class MainPage
         nextPage.Click += async (_, _) => { if (page + 1 < pageCount) { page++; await RefreshOrSearchAsync(); } };
         source.SelectionChanged += async (_, _) => { page = 0; await RefreshOrSearchAsync(); };
         catalogMode.SelectionChanged += async (_, _) => { if (source.SelectedIndex is 0 or 3) { page = 0; await RefreshOrSearchAsync(); } };
+        voiceProfile.SelectionChanged += (_, _) =>
+        {
+            if (voiceProfile.SelectedItem is VoiceProfile profile)
+            {
+                _settings.VoiceProfileId = profile.Id;
+                SaveSettings();
+                status.Text = $"Voice profile set to {profile.Name}.";
+            }
+        };
+        lowResourceMode.Checked += (_, _) => { _settings.VoiceLowResourceModeEnabled = true; SaveSettings(); };
+        lowResourceMode.Unchecked += (_, _) => { _settings.VoiceLowResourceModeEnabled = false; SaveSettings(); };
         pin.Click += (_, _) =>
         {
             if (list.SelectedItem is not InstalledModelChoice selected) { status.Text = "Select an installed model first."; return; }
@@ -542,7 +594,7 @@ public sealed partial class MainPage
                 source.IsEnabled = true;
                 search.IsEnabled = true;
                 pin.IsEnabled = source.SelectedIndex == 1;
-                dialog.IsPrimaryButtonEnabled = source.SelectedIndex == 1;
+                dialog.IsPrimaryButtonEnabled = source.SelectedIndex is 1 or 4;
             }
         };
         dialog.Closed += (_, _) =>
@@ -559,7 +611,14 @@ public sealed partial class MainPage
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-                if (list.SelectedItem is InstalledModelChoice selected)
+                if (list.SelectedItem is VoiceModelChoice voice)
+                {
+                    if (voiceAssignment.SelectedIndex == 1) _settings.VoiceLowResourceModelId = voice.Model.Id;
+                    else _settings.VoicePrimaryModelId = voice.Model.Id;
+                    SaveSettings();
+                    status.Text = $"Assigned {voice.Model.Name} as {(voiceAssignment.SelectedIndex == 1 ? "the low-resource" : "the primary")} voice model. {(voice.Model.IsInstalled ? "It is available on this device." : "Its runtime is not bundled yet, so OS-native speech remains active until installed.")}";
+                }
+                else if (list.SelectedItem is InstalledModelChoice selected)
                 {
                     if (confirmModelSwitch)
                     {
@@ -604,6 +663,11 @@ public sealed partial class MainPage
                     var imported = await _modelLibrary.DownloadAndImportModelScopeGgufAsync(endpoint, selectedPackage.Package, progress => RuntimeStatus.Text = progress);
                     status.Text = $"Imported {imported} into Ollama. Refresh Installed models to benchmark and pin it.";
                 }
+                else if (source.SelectedIndex == 4)
+                {
+                    status.Text = "Voice model downloads are not enabled in this build. The selection is saved, and OS-native speech remains the installed fallback.";
+                    continue;
+                }
                 else { status.Text = "Select a supported model source and a downloadable model."; continue; }
                 if (source.SelectedIndex != 3) status.Text = $"Downloaded {selectedId}. Refresh Installed models to select and pin it.";
                 source.SelectedIndex = 1;
@@ -622,6 +686,7 @@ public sealed partial class MainPage
                 InstalledModelChoice installed => installed.Model,
                 CatalogModelChoice catalog => catalog.Model.Id,
                 ModelScopeGgufPackageChoice package => package.Package.Repository + "/" + package.Package.Name,
+                VoiceModelChoice voice => voice.Model.Name,
                 _ => item.ToString()
             }, StringComparer.OrdinalIgnoreCase),
             2 => objects.OrderByDescending(item => item switch
@@ -665,6 +730,7 @@ public sealed partial class MainPage
         HubModel model => model.Id,
         CatalogModelChoice model => model.Model.Id,
         ModelScopeGgufPackageChoice model => model.Package.Repository + "/" + model.Package.Name,
+        VoiceModelChoice model => model.Model.Id,
         InstalledModelChoice model => model.Model,
         _ => null
     };

@@ -1,0 +1,10 @@
+{
+  "package": "Server Rock AI remediation and Odysseus reference handoff",
+  "created_utc": "2026-11-09T03:54:00Z",
+  "server_rock_commit": "4ad39cfb89ddf97cd1ddd4533c4b879d8124ac95",
+  "odysseus_tree_sha": "34e4666f357d458eb31de21b6badf52ce2ef7a96",
+  "issue_count": 40,
+  "scope": "documentation, implementation plan, static source review, illustrative pseudocode, read-only tools",
+  "contains_patched_application": false,
+  "third_party_source_included": false
+}

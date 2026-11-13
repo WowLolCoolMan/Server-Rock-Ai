@@ -15,3 +15,5 @@ services/**/obj/
 test-results/
 playwright-report/
 .ui-shots/
+.tmp-live-slice*/
+output/

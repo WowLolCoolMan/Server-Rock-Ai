@@ -1,0 +1,6 @@
+# Installed by Skai's AirLLM runtime setup.
+airllm>=2.8.0
+torch>=2.1
+transformers>=4.40
+safetensors>=0.4
+accelerate>=0.27
