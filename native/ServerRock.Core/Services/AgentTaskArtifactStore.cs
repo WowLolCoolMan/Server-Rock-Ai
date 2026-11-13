@@ -63,6 +63,20 @@ public sealed class AgentTaskArtifactStore
 
     public AgentTaskArtifact Queue(string id) => Transition(id, AgentTaskStatuses.Proposed, AgentTaskStatuses.Queued);
 
+    /// <summary>Cancels a proposed or queued plan before any future executor can claim it.</summary>
+    public AgentTaskArtifact CancelPlanned(string id, string reason = "Cancelled before execution.")
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued))
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be cancelled before execution.");
+        task.Status = AgentTaskStatuses.Cancelled;
+        task.ResultSummary = Normalize(reason, MaxResultCharacters, "task cancellation reason");
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     /// <summary>Returns the oldest dependency-ready queued task without changing local state or dispatching work.</summary>
     public AgentTaskArtifact? GetNextReady()
     {

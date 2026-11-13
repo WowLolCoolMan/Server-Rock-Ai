@@ -209,6 +209,23 @@ public sealed partial class MainPage
                     };
                     taskPanel.Children.Add(queueAgentTask);
                 }
+                if (task.Status is AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued)
+                {
+                    var cancelAgentTask = new Button { Content = "Cancel plan", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    AutomationProperties.SetName(cancelAgentTask, "Cancel agent task plan");
+                    AutomationProperties.SetHelpText(cancelAgentTask, "Cancel this proposed or queued plan before execution. Nothing has started.");
+                    cancelAgentTask.Click += (_, _) =>
+                    {
+                        try
+                        {
+                            _agentTaskStore.CancelPlanned(task.Id, "User cancelled the plan before execution.");
+                            RuntimeStatus.Text = "Agent task plan cancelled locally before execution. No agent or provider was started.";
+                            dialog?.Hide();
+                        }
+                        catch (Exception ex) { RuntimeStatus.Text = $"Agent task plan could not be cancelled: {ex.Message}"; }
+                    };
+                    taskPanel.Children.Add(cancelAgentTask);
+                }
                 content.Children.Add(new Border
                 {
                     Background = ResourceBrush("SurfaceAltBrush"),

@@ -1984,6 +1984,47 @@ the unavailable Uno App MCP harness, actual sub-agent delegation,
 parallel execution limits, process/container/worktree isolation, background
 execution, cross-platform acceptance, and packaged release acceptance.
 
+## Slice 121 — cancel proposed or queued agent-task plans
+
+Status: `implemented_verified_build`
+
+Activity now exposes `Cancel plan` for proposed and queued local task plans.
+Cancellation is allowed only before execution, records a bounded local reason,
+and prevents the task from appearing in the dependency-ready preview. Running
+tasks still require the existing executor-owned completion/failure/cancel
+path; this control does not stop processes or dispatch any work.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with the cancellation contracts.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including pre-execution cancellation and readiness exclusion.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: cancellation writes only a bounded local status
+and reason. It does not access credentials, files, providers, network routes,
+or process controls.
+
+Rollback: remove `CancelPlanned` and the Activity cancel button; proposed and
+queued plans remain viewable and queueable.
+
+Not yet verified: deterministic live activation through the unavailable Uno
+App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
+parallel execution limits, process/container/worktree isolation, background
+execution, cross-platform acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

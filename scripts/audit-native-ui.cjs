@@ -135,6 +135,8 @@ const requiredCode = [
   ['Agent task dependency labels', 'task.DependsOn.Take(8).Select(id => taskTitles.TryGetValue(id, out var title)'],
   ['Agent task queue action', 'AutomationProperties.SetName(queueAgentTask, "Queue agent task for future executor")'],
   ['Agent task queue safety disclosure', 'Mark this plan queued for a future executor. Nothing starts automatically.'],
+  ['Agent task cancellation action', 'AutomationProperties.SetName(cancelAgentTask, "Cancel agent task plan")'],
+  ['Agent task cancellation safety disclosure', 'Cancel this proposed or queued plan before execution. Nothing has started.'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],

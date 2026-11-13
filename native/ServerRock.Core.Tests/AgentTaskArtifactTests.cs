@@ -26,6 +26,10 @@ internal static class AgentTaskArtifactTests
             var claimedSecond = store.TryClaimReady();
             Check(claimedSecond?.Id == second.Id, "dependent agent task becomes claimable only after its prerequisite completes");
             store.Fail(second.Id, "Verifier found an unresolved compatibility gap.");
+            var cancelled = store.Create("Cancel before execution", "Review whether a queued plan can be withdrawn.");
+            store.Queue(cancelled.Id);
+            var cancelledPlan = store.CancelPlanned(cancelled.Id, "User withdrew the plan before execution.");
+            Check(cancelledPlan.Status == AgentTaskStatuses.Cancelled && store.GetNextReady() is null, "proposed agent task plans can be cancelled before execution");
             var reloaded = new AgentTaskArtifactStore(Path.Combine(root, "agent-tasks.json")).Load();
             Check(reloaded.Any(task => task.Id == first.Id && task.Status == AgentTaskStatuses.Completed && task.ArtifactLabels.Contains("local-review")), "completed agent task artifacts persist bounded result labels");
             Check(reloaded.Any(task => task.Id == second.Id && task.Status == AgentTaskStatuses.Failed), "failed agent task artifacts persist their terminal status");
