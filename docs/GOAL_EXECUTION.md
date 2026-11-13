@@ -5275,3 +5275,46 @@ Not yet verified: durable semantic conversation-context continuity and profile
 migration beyond approved-memory injection, semantic compaction under broad
 real-world histories, 1M+ token context, Linux parity, and packaged-release
 acceptance.
+
+## Slice 140 — live follow-up queue dispatch during streaming
+
+Status: `verified_windows_disposable_queue_dispatch`
+
+The bounded follow-up queue now has live native evidence for its primary user
+journey. Against a disposable local profile and healthy Ollama model, a long
+first request was sent; a second prompt was entered while the first response
+was still streaming; the UI announced `Queued message 1 of 8` and exposed the
+accessible `Manage queued messages` control. After the first response
+finished, the queued prompt dispatched automatically and the fresh local
+response returned exactly `QUEUE_FOLLOWUP_OK`.
+
+Changed files:
+
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- Live Windows accessibility inspection — passed: the in-flight composer
+  accepted the second prompt without replacing the active response, exposed
+  the queued-count status, and retained the stop control for the active
+  response.
+- Live Windows response inspection — passed: the queued prompt appeared after
+  the first turn and its assistant response was exactly `QUEUE_FOLLOWUP_OK`;
+  the queue status and stop control cleared afterward.
+- Disposable `conversations.json` inspection — passed: both prompts and the
+  completed queued response were persisted; the disposable settings and
+  conversation files were removed afterward.
+- Existing `QueueService` Core tests, `npm run audit:native-ui`, and
+  `git diff --check` remain passing.
+
+Privacy/security/licensing: the journey used synthetic prompts, a local-only
+Ollama endpoint, and a disposable profile. Queueing did not add a provider,
+credential, remote route, dependency, or pet-state mutation.
+
+Rollback: revert this documentation entry and capability-matrix wording; the
+existing bounded queue implementation and persistence contract remain intact.
+
+Not yet verified: live queue removal/reorder/clear accessibility, richer
+cross-device queue synchronization, durable semantic conversation-context
+continuity, 1M+ token context, Linux parity, and packaged-release acceptance.
