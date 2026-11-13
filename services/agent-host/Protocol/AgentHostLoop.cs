@@ -117,6 +117,7 @@ public static class AgentHostLoop
         var name = RequiredBoundedString(request, "name", 200);
         var instructions = OptionalString(request, "instructions") ?? string.Empty;
         if (instructions.Length > 500_000 || instructions.Any(char.IsControl)) throw new InvalidOperationException("Project instructions exceed the safety limit.");
+        var folderPaths = OptionalStringList(request, "folderPaths", 128, 32_768);
         var store = CreateProjectStore();
         var projects = store.Load();
         var id = OptionalString(request, "id");
@@ -124,6 +125,7 @@ public static class AgentHostLoop
             ?? throw new KeyNotFoundException("The project does not exist.");
         project.Name = name;
         project.Instructions = instructions;
+        project.FolderPaths = folderPaths;
         project.UpdatedAt = DateTimeOffset.UtcNow;
         if (projects.All(item => item.Id != project.Id)) projects.Add(project);
         store.Save(projects);
@@ -296,6 +298,16 @@ public static class AgentHostLoop
 
     private static string? OptionalString(AgentRequest request, string name) =>
         request.Params is { } parameters && parameters.TryGetProperty(name, out var value) ? value.GetString() : null;
+
+    private static List<string> OptionalStringList(AgentRequest request, string name, int maxItems, int maxLength)
+    {
+        if (request.Params is not { } parameters || !parameters.TryGetProperty(name, out var value)) return [];
+        if (value.ValueKind != JsonValueKind.Array) throw new InvalidOperationException($"{name} must be an array.");
+        var values = value.EnumerateArray().Select(item => item.GetString() ?? string.Empty).ToList();
+        if (values.Count > maxItems || values.Any(item => string.IsNullOrWhiteSpace(item) || item.Length > maxLength || item.Any(char.IsControl)))
+            throw new InvalidOperationException($"{name} exceeds the safety limit.");
+        return values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
 
     private static double? OptionalDouble(AgentRequest request, string name) =>
         request.Params is { } parameters && parameters.TryGetProperty(name, out var value) && value.TryGetDouble(out var result) ? result : null;

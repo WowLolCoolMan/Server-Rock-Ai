@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const readline = require("node:readline");
@@ -13,6 +13,7 @@ const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "tasks.list",
   "scheduled.list", "conversations.list", "conversation.save", "settings.get",
   "settings.save", "image.generate", "chat.complete",
+  "workspace.pickFolder",
 ]);
 
 function startAgentHost() {
@@ -84,7 +85,14 @@ function createWindow() {
 
 app.whenReady().then(() => {
   startAgentHost();
-  ipcMain.handle("agent:request", (_event, method, params) => requestAgent(method, params));
+  ipcMain.handle("agent:request", async (event, method, params) => {
+    if (method === "workspace.pickFolder") {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      const result = await dialog.showOpenDialog(window, { properties: ["openDirectory"] });
+      return { v: 1, ok: true, result: { path: result.canceled ? null : result.filePaths[0] ?? null } };
+    }
+    return requestAgent(method, params);
+  });
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
