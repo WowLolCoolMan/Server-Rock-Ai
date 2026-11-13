@@ -130,6 +130,7 @@ const requiredCode = [
   ['Agent task dependency picker', 'AutomationProperties.SetName(dependencyPicker, "Agent task prerequisites")'],
   ['Agent task dependency selection', 'prerequisite.Click += (_, _)'],
   ['Agent task dependency capture', 'dialog.PrimaryButtonClick += (_, _) => dependencies = selectedDependencyIds.ToArray();'],
+  ['Agent task dependency labels', 'task.DependsOn.Take(8).Select(id => taskTitles.TryGetValue(id, out var title)'],
   ['Agent task queue action', 'AutomationProperties.SetName(queueAgentTask, "Queue agent task for future executor")'],
   ['Agent task queue safety disclosure', 'Mark this plan queued for a future executor. Nothing starts automatically.'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],

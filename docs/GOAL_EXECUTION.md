@@ -1904,6 +1904,44 @@ packaged-artifact acceptance, actual sub-agent delegation, parallel execution li
 process/container/worktree isolation, background execution, cross-platform
 acceptance, and packaged release acceptance.
 
+## Slice 119 — render agent-task prerequisite titles
+
+Status: `implemented_verified_build`
+
+Activity now resolves each persisted prerequisite ID against the bounded local
+task artifact set and renders the prerequisite title, falling back to a short
+task ID when the referenced artifact is unavailable. The display is capped at
+eight dependency labels and remains read-only; it does not claim, execute, or
+dispatch tasks.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with the dependency-label contract.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded local task titles and IDs already
+stored on this device are rendered. No provider, network, credential, file,
+or background execution path is involved.
+
+Rollback: restore the previous count-only dependency label; task persistence
+and executor gating are unchanged.
+
+Not yet verified: deterministic live selection/persistence through the missing
+Uno App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
+parallel execution limits, process/container/worktree isolation, background
+execution, cross-platform acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

@@ -155,9 +155,14 @@ public sealed partial class MainPage
         }
         else
         {
+            var taskTitles = agentTasks.ToDictionary(item => item.Id, item => item.Title, StringComparer.Ordinal);
             foreach (var task in agentTasks.Take(50))
             {
-                var dependencyText = task.DependsOn.Count == 0 ? "no dependencies" : $"after {task.DependsOn.Count} task{(task.DependsOn.Count == 1 ? "" : "s")}";
+                var dependencyText = task.DependsOn.Count == 0
+                    ? "no dependencies"
+                    : "after " + string.Join(", ", task.DependsOn.Take(8).Select(id => taskTitles.TryGetValue(id, out var title)
+                        ? title
+                        : $"task {id[..Math.Min(8, id.Length)]}"));
                 var taskPanel = new StackPanel
                 {
                     Spacing = 3,
