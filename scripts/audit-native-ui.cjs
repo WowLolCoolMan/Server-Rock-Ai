@@ -6,6 +6,7 @@ const nativeDir = path.join(root, "native", "ServerRock.Native");
 const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
 const xaml = readText(xamlPath);
+const appXaml = readText(path.join(nativeDir, "App.xaml"));
 const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
 const codingWorkspaceXaml = readText(path.join(nativeDir, "CodingWorkspaceBar.xaml"));
 const splitCode = readText(path.join(nativeDir, "SplitConversationView.xaml.cs"));
@@ -54,6 +55,15 @@ const requiredXaml = [
   ['Composer responsive hook', 'SizeChanged="ComposerToolbarSizeChanged"'],
   ['Coding workspace responsive hook', 'SizeChanged="CodingWorkspaceToolbarSizeChanged"'],
   ['Split conversation surface', '<local:SplitConversationView'],
+];
+const requiredAppTokens = [
+  ['Accent button foreground token', 'x:Key="AccentButtonForegroundColor"'],
+  ['Accent button pressed foreground token', 'x:Key="AccentButtonForegroundPressedColor"'],
+  ['Section label type token', 'x:Key="SectionLabelFontSize"'],
+  ['Context button type token', 'x:Key="ContextButtonFontSize"'],
+  ['Navigation icon type token', 'x:Key="NavigationIconFontSize"'],
+  ['Accent button foreground uses token', 'Color="{StaticResource AccentButtonForegroundColor}"'],
+  ['Accent button pressed foreground uses token', 'Color="{StaticResource AccentButtonForegroundPressedColor}"'],
 ];
 const requiredSplitXaml = [
   ['Split chat accessibility name', 'AutomationProperties.Name="Split chat view"'],
@@ -344,6 +354,7 @@ const requiredAnimationFiles = animationPets.flatMap((pet) => [
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
+  ...requiredAppTokens.filter(([, text]) => !appXaml.includes(text)),
   ...[['Resume last project file action', 'AutomationProperties.Name="Resume last project file"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...[['Open project file tabs', 'x:Name="OpenFileTabs"'], ['Open project file tabs scroll region', 'AutomationProperties.Name="Open project file tabs"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
@@ -365,4 +376,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 3} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredAppTokens.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 3} contracts).`);

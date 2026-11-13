@@ -7332,6 +7332,43 @@ unchanged.
 Remaining: an actual tagged CI run with owner-provided signing material,
 clean-machine lifecycle evidence, and distro acceptance are still required.
 
+## Slice 211 — Close the shared native UI token gap
+
+Status: `implemented_ui_audit_build_verified`
+
+Requirement alignment: the native UI already used semantic brushes and type
+scale resources across its XAML shell, but the shared `App.xaml` token layer
+still embedded raw accent-button colors and repeated typography values. This
+slice moves those values behind named resources so theme/accent changes have a
+single, reviewable source of truth. The audit now asserts those resource
+contracts instead of allowing the gap to regress.
+
+Changed files:
+
+- `native/ServerRock.Native/App.xaml`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 285 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: visual resource definitions and local static audit
+only; no network, credential, storage, provider, or execution behavior changed.
+
+Risk and rollback: restore the prior literal values and remove the seven audit
+contracts. No persisted data or package identifiers are affected.
+
+Remaining: dynamic code-built views still contain a larger set of legacy
+literal typography/color values; migrating those safely is the next UI
+refinement slice, with decorative backdrop colors intentionally remaining
+local to the backdrop renderer.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

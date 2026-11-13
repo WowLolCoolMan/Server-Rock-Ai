@@ -240,7 +240,13 @@ silhouettes). Reduced decorative motion pauses the animation while retaining the
 selected visual. Core settings persistence and desktop build verification passed;
 live Windows visual acceptance remains required before this is release-complete.
 
-## Handoff refresh — current through Slice 210
+## Handoff refresh — current through Slice 211
+
+The shared native UI token layer now owns accent-button foreground colors and
+the section/context/navigation type sizes, and the native UI audit enforces
+those contracts. This closes one theme-regression path without changing the
+existing light/dark or ambient-backdrop behavior. A broader migration of
+legacy literals in code-built dialogs remains open.
 
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
