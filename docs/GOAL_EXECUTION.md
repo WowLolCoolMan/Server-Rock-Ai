@@ -1763,6 +1763,40 @@ Not yet verified: signed release publication, clean-machine install/upgrade/
 rollback/uninstall, OS isolation, keyring parity, full negative security suite,
 and Linux parity.
 
+## Slice 106 — future-features backlog baseline verified
+
+Status: `verified_repository_backlog`
+
+The requested future-features list is present and tracked at
+`docs/FUTURE_FEATURES.md`. It currently contains 159 unchecked feature items
+across Core chat, Agents and tools, Retrieval and knowledge, Workspace and
+desktop experience, Models/runtime/extensibility, Administration and teams,
+Files/environments/delivery, Content/meetings, and Ecosystem/platform. The
+document explicitly requires each item to be implemented as a bounded vertical
+slice with privacy, platform, licensing, failure-state, and acceptance
+evidence; it also preserves the AirLLM link as a research reference rather
+than an automatic dependency or implementation instruction.
+
+Evidence:
+
+- Repository inspection: `docs/FUTURE_FEATURES.md` exists on synchronized
+  `main` and contains 159 unchecked `- [ ]` feature entries.
+- The backlog includes the requested future areas such as multi-model
+  selection/comparison, RAG, computer use, MCP, workflows, persistent tabs,
+  memory, integrations, meetings, release/runtime options, and platform
+  differentiators.
+
+Privacy/security/licensing: this is a local documentation baseline. No feature
+was silently enabled, no external project was copied, and no dependency,
+credential, provider route, or user data was changed.
+
+Rollback: documentation-only; remove this evidence entry if the backlog source
+is replaced by a newer approved product register.
+
+Not yet verified: each future item remains independently tracked as incomplete
+until its implementation and acceptance evidence are recorded in a later
+slice.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
