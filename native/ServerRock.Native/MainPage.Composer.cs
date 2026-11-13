@@ -207,6 +207,54 @@ public sealed partial class MainPage
             RecentClick(new Button { Tag = hit.Session.Id }, new RoutedEventArgs());
     }
 
+    private async Task SearchCurrentConversationAsync()
+    {
+        if (_messages.Count == 0)
+        {
+            RuntimeStatus.Text = "There are no messages in the current chat to search.";
+            return;
+        }
+        var query = new TextBox { Header = "Find in this chat", PlaceholderText = "Search message text", MinWidth = 420 };
+        var results = new ListView { MinHeight = 220, MaxHeight = 420, SelectionMode = ListViewSelectionMode.Single, DisplayMemberPath = nameof(ConversationMessageSearchHit.Preview) };
+        AutomationProperties.SetName(query, "Search current conversation messages");
+        AutomationProperties.SetHelpText(query, "Search only the messages already loaded in this chat. Nothing is sent to a provider.");
+        AutomationProperties.SetName(results, "Current conversation search results");
+        void RefreshResults()
+        {
+            try { results.ItemsSource = ConversationMessageSearchService.Search(_messages, query.Text); }
+            catch (ArgumentException) { results.ItemsSource = Array.Empty<ConversationMessageSearchHit>(); }
+        }
+        query.TextChanged += (_, _) => RefreshResults();
+        RefreshResults();
+        var dialog = new ContentDialog
+        {
+            Title = "Find in current chat",
+            Content = new StackPanel { Spacing = 10, Children = { query, results } },
+            PrimaryButtonText = "Jump to match",
+            CloseButtonText = "Close",
+            XamlRoot = XamlRoot
+        };
+        dialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && results.SelectedItem is ConversationMessageSearchHit hit)
+        {
+            JumpToConversationMessage(hit.MessageIndex);
+            RuntimeStatus.Text = $"Jumped to message {hit.MessageIndex + 1} of {_messages.Count}.";
+        }
+    }
+
+    private void JumpToConversationMessage(int messageIndex)
+    {
+        if (messageIndex < 0 || messageIndex >= ConversationMessages.Children.Count) return;
+        if (ConversationMessages.Children[messageIndex] is not FrameworkElement message) return;
+        try
+        {
+            var point = message.TransformToVisual(ConversationScroll).TransformPoint(new Windows.Foundation.Point(0, 0));
+            ConversationScroll.ChangeView(null, Math.Max(0, ConversationScroll.VerticalOffset + point.Y - 36), null);
+            AutomationProperties.SetName(message, $"Conversation message {messageIndex + 1}");
+        }
+        catch { RuntimeStatus.Text = "The selected message is no longer visible."; }
+    }
+
     private void UpdateWebSearchButton()
     {
         WebSearchButton.Content = _compactComposerToolbar

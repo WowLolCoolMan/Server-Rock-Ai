@@ -12,6 +12,7 @@ await AttachmentTests.RunAsync();
 await BoundedReadTests.RunAsync();
 await ConversationArchiveTests.RunAsync();
 ConversationForkTests.Run();
+ConversationMessageSearchTests.Run();
 await WebSearchTests.RunAsync();
 await GitHubTests.RunAsync();
 ChatMessageTests.Run();

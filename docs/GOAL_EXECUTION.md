@@ -2197,6 +2197,43 @@ acceptance in a disposable chat, plus packaged/Linux accessibility parity. The
 future-features item `Fork a chat from any message` remains unchecked until
 those journeys are exercised.
 
+## Slice 127 — bounded search within the current conversation
+
+The command palette now exposes `Find in current chat`. The dialog searches
+only the messages already loaded in the active conversation, bounds the query
+to 256 characters and results to 64 matches, renders bounded previews, and
+offers `Jump to match`. The jump preserves the existing conversation state and
+scrolls the selected message into view; no provider or web request is made.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ConversationMessageSearchService.cs`
+- `native/ServerRock.Core.Tests/ConversationMessageSearchTests.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Composer.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (177 contracts)`.
+- `npm run check:syntax` — passed.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including role/index matching, blank-query handling, query-length rejection, and bounded previews.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search runs over the current in-memory message
+list only. It adds no network, provider, credential, file, shell, Git, or
+third-party behavior and does not persist a search query.
+
+Rollback: remove the command-palette entry, search service, dialog, and audit
+contracts; existing workspace-wide conversation search remains available.
+
+Not yet verified: live Windows activation of the command-palette item, result
+selection, and scroll jump; packaged/Linux accessibility parity. The new
+backlog item remains unchecked until that native journey is exercised.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

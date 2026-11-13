@@ -162,6 +162,11 @@ const requiredCode = [
   ['Pre-send model availability guard', 'ModelSelectionPolicy.Evaluate(_settings.Model, _advertisedModels)'],
   ['Pre-send unavailable model status', 'choose a model in Model Library before sending'],
   ['Fork from message action', 'AutomationProperties.SetName(fork, "Fork conversation from this message")'],
+  ['Current conversation search action', 'Find in current chat'],
+  ['Current conversation search query', 'AutomationProperties.SetName(query, "Search current conversation messages")'],
+  ['Current conversation search results', 'AutomationProperties.SetName(results, "Current conversation search results")'],
+  ['Current conversation search focus', 'dialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);'],
+  ['Current conversation jump', 'JumpToConversationMessage(hit.MessageIndex)'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
