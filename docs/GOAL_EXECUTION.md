@@ -7221,3 +7221,43 @@ provider route, credentials, user data, or pet state changed.
 
 Rollback: revert the explanatory parentheticals and this slice record; prior
 unchecked backlog labels remain unchanged.
+
+## Slice 185 — Centralize stable GitHub credential identifiers
+
+Status: `implemented_build_tests_audit_verified`
+
+GitHub credential encryption and keyring-label literals now live in
+`ProductIdentity` as explicitly stable storage identifiers. The credential
+store no longer couples its entropy or Secret Service label directly to the
+current display-name source, while the exact existing values remain unchanged
+so saved credentials continue to decrypt and keyring entries remain addressable
+through a future display rebrand.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/ServerRock.Core/Infrastructure/GitHubCredentialStore.cs`
+- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including the centralized stable-identifier contract
+  and the existing credential tests.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this changes only constant ownership; credential
+bytes remain protected by the existing DPAPI/keyring paths and no credentials
+are read, migrated, or transmitted by the slice.
+
+Rollback: restore the two existing literals in `GitHubCredentialStore`; the
+stable values and credential storage behavior are otherwise unchanged.
+
+Remaining: complete rebrand verification across packaging metadata, installers,
+localization, and all release artifacts; full keyring parity and OS isolation
+remain open.

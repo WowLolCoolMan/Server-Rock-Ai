@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Infrastructure;
 
@@ -16,7 +17,7 @@ public sealed class GitHubCredentialStore(string? windowsCredentialPath = null, 
     private const int MaxStoredCredentialBytes = 64 * 1024;
     private const string ServiceAttribute = "serverrock-ai";
     private const string AccountAttribute = "github-user-token";
-    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Server Rock AI GitHub credential v1");
+    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes(ProductIdentity.GitHubCredentialEntropy);
     private readonly string _windowsCredentialPath = windowsCredentialPath ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ServerRock", "AI", "github-user-token.bin");
     private readonly string? _secretToolPath = secretToolPath ?? FindExecutable("secret-tool");
@@ -99,7 +100,7 @@ public sealed class GitHubCredentialStore(string? windowsCredentialPath = null, 
             return;
         }
 
-        var stored = await RunSecretToolAsync(["store", "--label=Server Rock AI GitHub", "application", ServiceAttribute, "account", AccountAttribute], value, cancellationToken).ConfigureAwait(false);
+        var stored = await RunSecretToolAsync(["store", $"--label={ProductIdentity.GitHubCredentialLabel}", "application", ServiceAttribute, "account", AccountAttribute], value, cancellationToken).ConfigureAwait(false);
         if (stored.ExitCode != 0) throw new InvalidOperationException(DescribeSecretToolFailure(stored, "GitHub credential could not be saved to the desktop keyring."));
     }
 
