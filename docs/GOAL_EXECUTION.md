@@ -1702,6 +1702,35 @@ Not yet verified: signed installers, clean-machine install/upgrade/rollback/
 uninstall, Linux artifact/build/run evidence from this commit, packaged UI
 interaction, and release-feed publication.
 
+## Slice 104 — current Linux validation boundary recorded
+
+Status: `blocked_by_host_toolchain`
+
+The current checkout was checked against the installed Ubuntu 24.04 WSL
+environment. WSL launched the distro, but the validation command stopped before
+the repository build because `dotnet` is not installed in that distro:
+
+```text
+wsl.exe -d Ubuntu-24.04 -- bash -lc "cd '/mnt/e/Server Rock Ai' && dotnet --version ..."
+bash: line 1: dotnet: command not found
+```
+
+This is a host-toolchain blocker for fresh Linux evidence, not a code failure.
+The Windows desktop and Windows App SDK builds remain independently verified.
+The matrix continues to mark Linux parity `unverified` until a supported .NET
+10 SDK is available in WSL or a Linux CI runner can execute the build, Core
+checks, display smoke, and packaging checks.
+
+Privacy/security/licensing: the attempt only read the repository and queried
+the local WSL toolchain. No application data, provider, credentials, network
+route, or dependency was changed.
+
+Rollback: documentation-only; remove this boundary entry if a later Linux
+environment produces current-checkout evidence.
+
+Not yet verified: Linux build/run, accessibility, packaging, model-server
+connectivity, writable profile paths, and exact supported distro scope.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
