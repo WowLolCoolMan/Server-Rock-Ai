@@ -68,7 +68,7 @@ public sealed partial class MainPage
                 var picker = new Windows.Storage.Pickers.FileSavePicker
                 {
                     SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-                    SuggestedFileName = $"server-rock-activity-{DateTime.Now:yyyy-MM-dd}"
+                    SuggestedFileName = $"{ProductIdentity.FileNameStem}-activity-{DateTime.Now:yyyy-MM-dd}"
                 };
                 picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} activity evidence", new List<string> { ".json" });
 #if WINDOWS

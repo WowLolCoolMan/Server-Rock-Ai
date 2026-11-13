@@ -119,7 +119,7 @@ public sealed partial class MainPage
                 var picker = new Windows.Storage.Pickers.FileSavePicker
                 {
                     SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
-                    SuggestedFileName = $"server-rock-memory-{DateTime.Now:yyyy-MM-dd}"
+                    SuggestedFileName = $"{ProductIdentity.FileNameStem}-memory-{DateTime.Now:yyyy-MM-dd}"
                 };
                 picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} memory backup", new List<string> { ".json" });
 #if WINDOWS

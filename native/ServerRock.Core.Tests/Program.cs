@@ -2,6 +2,7 @@
 // and the run stops at the first failed Check (see TestSupport.cs).
 
 await DiagnosticsTests.RunAsync();
+ProductIdentityTests.Run();
 CatalogTests.Run();
 await ProjectHealthTests.RunAsync();
 await ModelLibraryTests.RunAsync();

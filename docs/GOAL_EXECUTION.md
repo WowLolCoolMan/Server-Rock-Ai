@@ -2064,6 +2064,31 @@ App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
 parallel execution limits, process/container/worktree isolation, background
 execution, cross-platform acceptance, and packaged release acceptance.
 
+## Slice 123 — derive export filenames from product identity
+
+The native chat, Activity evidence, and memory backup save dialogs now derive
+their suggested filename stem from `ProductIdentity.ShortName`. This removes
+the remaining hardcoded legacy product slug from those export workflows while
+keeping the user-facing display identity centralized for the planned rebrand.
+
+Evidence:
+
+- `ProductIdentity.FileNameStem` strips punctuation and spaces and lowercases
+  the current short name in one shared implementation.
+- Chat archive, Activity evidence, and memory backup pickers all use that stem.
+- The native core runner checks the current stem contract.
+- No credentials, chat contents, or files are changed by this slice.
+
+Privacy/security/licensing: this only changes local suggested filenames. It
+does not alter archive contents, network behavior, or provider routing.
+
+Rollback: remove `FileNameStem` and restore the three picker interpolations;
+the export payloads and storage paths remain otherwise unchanged.
+
+Not yet verified: live file-picker acceptance in a packaged Windows run and
+Linux picker parity. The repository has no Uno App MCP surface available for
+that UI automation path.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
