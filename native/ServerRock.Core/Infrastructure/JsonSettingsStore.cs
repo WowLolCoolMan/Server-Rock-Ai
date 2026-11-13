@@ -51,6 +51,8 @@ public sealed class JsonSettingsStore
         settings.ImageWorkflow ??= defaults.ImageWorkflow;
         settings.GitHubAppClientId ??= defaults.GitHubAppClientId;
         settings.PromptUserName ??= defaults.PromptUserName;
+        settings.LastProjectFileProjectId = NormalizeOptional(settings.LastProjectFileProjectId, 128);
+        settings.LastProjectFilePath = NormalizeOptional(settings.LastProjectFilePath, 512);
         settings.ThemeMode = settings.ThemeMode?.ToLowerInvariant() switch
         {
             "dark" => "dark",
@@ -78,6 +80,12 @@ public sealed class JsonSettingsStore
         settings.WorkspaceDrafts ??= new(StringComparer.Ordinal);
         settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);
         return settings;
+    }
+
+    private static string? NormalizeOptional(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)) return null;
+        return value.Trim();
     }
 
     public void Save(AppSettings settings)

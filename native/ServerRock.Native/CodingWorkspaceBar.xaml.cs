@@ -9,6 +9,7 @@ public sealed partial class CodingWorkspaceBar : UserControl
     public event RoutedEventHandler? ProjectFoldersRequested;
     public event RoutedEventHandler? GitHubActionsRequested;
     public event RoutedEventHandler? TerminalRequested;
+    public event RoutedEventHandler? ResumeFileRequested;
     public event RoutedEventHandler? UndoHistoryRequested;
 
     public CodingWorkspaceBar()
@@ -30,11 +31,13 @@ public sealed partial class CodingWorkspaceBar : UserControl
     public Button ProjectFoldersButtonControl => ProjectFoldersButton;
     public Button GitHubActionsButtonControl => GitHubActionsButton;
     public Button TerminalButtonControl => TerminalButton;
+    public Button ResumeFileButtonControl => ResumeFileButton;
     public Button UndoHistoryButtonControl => UndoHistoryButton;
 
     private void ToolbarSizeChanged(object sender, SizeChangedEventArgs e) => ToolbarResized?.Invoke(sender, e);
     private void ProjectFoldersClick(object sender, RoutedEventArgs e) => ProjectFoldersRequested?.Invoke(sender, e);
     private void GitHubActionsClick(object sender, RoutedEventArgs e) => GitHubActionsRequested?.Invoke(sender, e);
     private void OpenTerminalClick(object sender, RoutedEventArgs e) => TerminalRequested?.Invoke(sender, e);
+    private void ResumeFileClick(object sender, RoutedEventArgs e) => ResumeFileRequested?.Invoke(sender, e);
     private void UndoHistoryClick(object sender, RoutedEventArgs e) => UndoHistoryRequested?.Invoke(sender, e);
 }

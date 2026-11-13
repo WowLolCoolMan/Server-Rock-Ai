@@ -56,6 +56,9 @@ public sealed class AppSettings
     public List<string> InstalledPlugins { get; set; } = [];
     public string? ProjectPath { get; set; }
     public string? ProjectInstructions { get; set; }
+    /// <summary>Last reviewed project file that can be resumed without reopening the file browser.</summary>
+    public string? LastProjectFileProjectId { get; set; }
+    public string? LastProjectFilePath { get; set; }
 }
 
 /// <summary>Running average of measured local response speed for one endpoint + model.</summary>

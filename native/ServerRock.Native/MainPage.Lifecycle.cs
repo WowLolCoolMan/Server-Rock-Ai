@@ -36,6 +36,7 @@ public sealed partial class MainPage
         CodingWorkspaceBarControl.ProjectFoldersRequested += ProjectFoldersClick;
         CodingWorkspaceBarControl.GitHubActionsRequested += GitHubActionsClick;
         CodingWorkspaceBarControl.TerminalRequested += OpenTerminalClick;
+        CodingWorkspaceBarControl.ResumeFileRequested += ResumeFileClick;
         CodingWorkspaceBarControl.UndoHistoryRequested += UndoHistoryClick;
         ConversationSurfaceControl.SettingsRequested += SettingsClick;
         ConversationSurfaceControl.SuggestionRequested += SuggestionClick;

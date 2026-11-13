@@ -221,6 +221,7 @@ public sealed partial class MainPage
         ProjectFoldersButton.Visibility = Visibility.Visible;
         GitHubActionsButton.Visibility = !string.IsNullOrWhiteSpace(project?.GitHubRepository) ? Visibility.Visible : Visibility.Collapsed;
         TerminalButton.Visibility = project?.FolderPaths.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResumeFileButton.Visibility = CanResumeLastProjectFile(project) ? Visibility.Visible : Visibility.Collapsed;
         UndoHistoryButton.Content = !_undoHistoryAvailable ? "Undo history unavailable"
             : _workspaceUndoEntries.Count == 0 ? "Undo history" : $"Undo history · {_workspaceUndoEntries.Count}";
         ProjectFoldersButton.Content = project is null ? "Choose project" : "Manage folders";
@@ -248,5 +249,12 @@ public sealed partial class MainPage
         }
         catch { /* The session bar remains useful without task-artifact storage. */ }
         WorkspaceSessionState.Text = $"{modeLabel} · {contextLabel} · {attachmentLabel} · {reviewLabel} · {queuedLabel}";
+    }
+
+    private bool CanResumeLastProjectFile(LocalProject? project)
+    {
+        if (project is null || !string.Equals(_settings.LastProjectFileProjectId, project.Id, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(_settings.LastProjectFilePath)) return false;
+        try { return project.FolderPaths.Any(root => _workspaceEditor.GetCurrentHash(root, _settings.LastProjectFilePath!) is not null); }
+        catch { return false; }
     }
 }

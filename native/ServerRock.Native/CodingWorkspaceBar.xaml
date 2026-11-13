@@ -17,9 +17,10 @@
           <Button x:Name="ProjectFoldersButton" Content="Choose project" Click="ProjectFoldersClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Choose or manage project folders" AutomationProperties.HelpText="Select a Coding Agent project or choose its local source folders." />
           <Button x:Name="GitHubActionsButton" Grid.Column="1" Content="Commit / push" Visibility="Collapsed" Click="GitHubActionsClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Review GitHub changes and commit or push" AutomationProperties.HelpText="Review changed project files, create a commit, or push the current branch." />
         </Grid>
-        <Grid x:Name="CodingWorkspaceTools" Grid.Column="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+        <Grid x:Name="CodingWorkspaceTools" Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
           <Button x:Name="TerminalButton" Content="Terminal" Visibility="Collapsed" Click="OpenTerminalClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Open project terminal" AutomationProperties.HelpText="Open a terminal at the active local project folder." />
-          <Button x:Name="UndoHistoryButton" Grid.Column="1" Content="Undo history" Click="UndoHistoryClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Review approved project file changes and undo" AutomationProperties.HelpText="Review changes the Coding Agent applied and restore an earlier file version." />
+          <Button x:Name="ResumeFileButton" Grid.Column="1" Content="Resume file" Visibility="Collapsed" Click="ResumeFileClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Resume last project file" AutomationProperties.HelpText="Reopen the last reviewed project file in this project." />
+          <Button x:Name="UndoHistoryButton" Grid.Column="2" Content="Undo history" Click="UndoHistoryClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Review approved project file changes and undo" AutomationProperties.HelpText="Review changes the Coding Agent applied and restore an earlier file version." />
         </Grid>
       </Grid>
     </Grid>

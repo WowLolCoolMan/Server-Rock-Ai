@@ -19,6 +19,20 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
+    private async void ResumeFileClick(object sender, RoutedEventArgs e)
+    {
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        if (!CanResumeLastProjectFile(project))
+        {
+            RuntimeStatus.Text = "The last project file is no longer available in this project.";
+            UpdateWorkspaceBar();
+            return;
+        }
+        var relativePath = _settings.LastProjectFilePath!;
+        var root = project!.FolderPaths.First(folder => _workspaceEditor.GetCurrentHash(folder, relativePath) is not null);
+        await RunUiActionAsync(() => OpenProjectFileAsync(root, relativePath));
+    }
+
     private WorkspaceUndoEntry RecordWorkspaceUndo(string projectName, string root, string relativePath, WorkspaceEditReceipt receipt)
     {
         var entry = new WorkspaceUndoEntry(Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow, projectName,
@@ -199,6 +213,9 @@ public sealed partial class MainPage
             var originalHash = _workspaceEditor.GetCurrentHash(root, relativePath)
                 ?? throw new FileNotFoundException("This file no longer exists in the selected project.");
             var originalText = _workspaceEditor.ReadText(root, relativePath);
+            _settings.LastProjectFileProjectId = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, root)))?.Id;
+            _settings.LastProjectFilePath = relativePath;
+            SaveSettings();
             var editor = new TextBox
             {
                 Text = originalText,

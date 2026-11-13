@@ -7292,6 +7292,57 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 206 — Persist and resume the last reviewed project file
+
+Status: `implemented_build_and_audit_verified`
+
+Requirement alignment: the project workbench needs continuity across app
+restarts. This bounded slice persists the last reviewed project file's project
+ID and relative path in the existing local settings store, validates that the
+file still belongs to the selected project, and exposes a named `Resume file`
+action in the Coding Agent workspace bar. It does not claim multi-file tabs or
+automatic file opening; those remain separate requirements.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+The persisted path is bounded and normalized; the resume action only appears
+for the matching active project and a file that passes the existing guarded
+workspace hash/path checks. Missing or moved files simply hide the action and
+leave saved settings intact.
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 273 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- Full native Core suite — passed, including `last project file context survives settings save and reload`.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only a bounded project ID and relative path are
+stored in the existing local settings file; file contents, credentials, and
+network data are not added to settings.
+
+Risk and rollback: remove the resume button, event wiring, two settings fields,
+normalization, and focused test to roll back. Existing file editing and undo
+behavior remains independent.
+
+Remaining: true persistent multi-file tabs, tab close/reorder state, conflict
+recovery, worktree isolation, and packaged live workbench acceptance remain
+open.
+
 ## Slice 205 — Tokenize project workbench code-built surfaces
 
 Status: `implemented_build_and_audit_verified`

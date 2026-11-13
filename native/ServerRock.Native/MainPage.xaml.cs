@@ -141,6 +141,7 @@ public sealed partial class MainPage : Page
     private Button ProjectFoldersButton => CodingWorkspaceBarControl.ProjectFoldersButtonControl;
     private Button GitHubActionsButton => CodingWorkspaceBarControl.GitHubActionsButtonControl;
     private Button TerminalButton => CodingWorkspaceBarControl.TerminalButtonControl;
+    private Button ResumeFileButton => CodingWorkspaceBarControl.ResumeFileButtonControl;
     private Button UndoHistoryButton => CodingWorkspaceBarControl.UndoHistoryButtonControl;
     private StackPanel WelcomePanel => ConversationSurfaceControl.WelcomePanelControl;
     private TextBlock WelcomeTitle => ConversationSurfaceControl.WelcomeTitleControl;

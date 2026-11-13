@@ -7,6 +7,7 @@ const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
 const xaml = readText(xamlPath);
 const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
+const codingWorkspaceXaml = readText(path.join(nativeDir, "CodingWorkspaceBar.xaml"));
 const splitCode = readText(path.join(nativeDir, "SplitConversationView.xaml.cs"));
 const conversationXaml = readText(path.join(nativeDir, "ConversationNavigationView.xaml"));
 const conversationCode = readText(path.join(nativeDir, "ConversationNavigationView.xaml.cs"));
@@ -104,6 +105,9 @@ const requiredCode = [
   ['Project folder dialog focus return', 'if (managesExistingProject)\n                RestoreNavigationDialogFocus(false, sender as Control);'],
   ['Project file editor opening focus', 'dialog.Opened += (_, _) => editor.Focus(FocusState.Programmatic);'],
   ['Project file selection focus restoration', 'finally { RestoreProjectFileFocus(root, relativePath); }'],
+  ['Resume project file event wiring', 'CodingWorkspaceBarControl.ResumeFileRequested += ResumeFileClick;'],
+  ['Resume project file availability guard', 'ResumeFileButton.Visibility = CanResumeLastProjectFile(project)'],
+  ['Last project file persistence', '_settings.LastProjectFilePath = relativePath;'],
   ['Terminal input opening focus', 'dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);'],
   ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
   ['Terminal focused input accessible name', 'AutomationProperties.SetName(input, "Project terminal input")'],
@@ -335,6 +339,7 @@ const requiredAnimationFiles = animationPets.flatMap((pet) => [
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
+  ...[['Resume last project file action', 'AutomationProperties.Name="Resume last project file"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
   ...requiredExportXaml.filter(([, text]) => !(conversationXaml + sidebarXaml).includes(text)),
   ...requiredCode.filter(([, text]) => !(code + composerCode + splitCode).includes(text)),
