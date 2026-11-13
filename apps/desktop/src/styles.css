@@ -79,6 +79,11 @@ textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(
 .form-row { display: flex; gap: 10px; margin: 28px 0; }
 .form-row input { flex: 1; }
 .page-card label { display: grid; gap: 8px; margin: 18px 0; color: #b4c3d8; font-size: 12px; font-weight: 700; }
+.page-card code { color: #c3d9ff; font-family: ui-monospace, monospace; }
+.image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 24px; }
+.image-grid figure { margin: 0; overflow: hidden; border: 1px solid #30425d; border-radius: 10px; background: #172337; }
+.image-grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.image-grid figcaption { overflow: hidden; padding: 9px; color: #91a3bc; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .model-list { display: grid; gap: 8px; }
 .model-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; border: 1px solid #30425d; border-radius: 10px; padding: 13px; color: #dbe5f4; background: #172337; text-align: left; cursor: pointer; }
 .model-row:hover, .model-row.selected { border-color: #78a9ff; background: #203554; }

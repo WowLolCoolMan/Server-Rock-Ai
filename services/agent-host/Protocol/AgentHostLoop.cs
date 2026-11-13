@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -62,6 +62,7 @@ public static class AgentHostLoop
             "conversation.save" => SaveConversation(request),
             "settings.get" => GetSettings(request),
             "settings.save" => SaveSettings(request),
+            "image.generate" => GenerateImageAsync(request).GetAwaiter().GetResult(),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -237,6 +238,21 @@ public static class AgentHostLoop
         }
         store.Save(settings);
         return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model });
+    }
+
+    private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)
+    {
+        var endpoint = RequiredBoundedString(request, "endpoint", 512);
+        var workflow = RequiredBoundedString(request, "workflow", 1_000_000);
+        var prompt = RequiredBoundedString(request, "prompt", 8_000);
+        var progress = string.Empty;
+        var images = await new ComfyImageProvider().GenerateAsync(endpoint, workflow, prompt, message => progress = message, CancellationToken.None);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            prompt,
+            progress,
+            images = images.Select(image => new { url = image.Url.ToString(), fileName = image.FileName }).ToArray(),
+        });
     }
 
     private static JsonSettingsStore CreateSettingsStore() =>
