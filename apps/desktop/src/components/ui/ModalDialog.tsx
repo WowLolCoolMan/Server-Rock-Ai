@@ -53,5 +53,5 @@ export function ModalDialog({ open, titleId, onClose, children, initialFocusRef,
   }, [initialFocusRef, open]);
 
   if (!open) return null;
-  return <dialog ref={dialogRef} className={`${className} ui-dialog`.trim()} open aria-modal="true" aria-labelledby={titleId}>{children}</dialog>;
+  return <dialog ref={dialogRef} className={className || "ui-dialog"} open aria-modal="true" aria-labelledby={titleId}>{children}</dialog>;
 }
