@@ -1803,7 +1803,7 @@ release acceptance.
 
 ## Slice 88 — bounded actionable status history
 
-Status: `implemented_verified_core_and_static_ui`
+Status: `implemented_verified_core_static_ui_and_windows_surface`
 
 The runtime status banner now keeps a bounded in-memory history of actionable
 messages. Dismissing a banner no longer loses the failure context: the banner
@@ -1827,6 +1827,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (140 contracts).`
 - `git diff --check` — passed.
+- Live Windows accessibility/screenshot inspection — passed at the surface
+  boundary: after an actionable `Unknown command. Type / to see available
+  commands.` status, the app exposed `View status history` with its help text
+  and retained the status banner. Dialog activation was not claimed because
+  this run's native geometry bridge did not provide a reliable click target.
 
 Privacy/security/licensing: history is process-local and bounded to 50
 messages of at most 2,000 characters each. It is not persisted, sent to a

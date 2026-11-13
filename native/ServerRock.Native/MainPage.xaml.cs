@@ -251,7 +251,7 @@ public sealed partial class MainPage : Page
     }
 
     private static bool IsActionableRuntimeStatus(string message) =>
-        new[] { "could not", "cannot", "failed", "error", "unavailable", "wait for", "timed out", "timeout", "expired", "no readable", "no results", "not available", "not saved", "refused", "rejected", "requires", "enter ", "choose ", "add a project", "not connected", "check settings", "not enabled", "stopped", "preserve newer", "protected" }
+        new[] { "could not", "cannot", "failed", "error", "unknown", "unavailable", "wait for", "timed out", "timeout", "expired", "no readable", "no results", "not available", "not saved", "refused", "rejected", "requires", "enter ", "choose ", "add a project", "not connected", "check settings", "not enabled", "stopped", "preserve newer", "protected" }
             .Any(marker => message.Contains(marker, StringComparison.OrdinalIgnoreCase));
 
     private async Task RunUiActionAsync(Func<Task> action)
