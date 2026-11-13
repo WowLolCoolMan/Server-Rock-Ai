@@ -290,6 +290,12 @@ public sealed class GitHubWorkspaceService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+    public static bool IsConflictStatus(string? status) => status is not null &&
+        (status.Contains('U', StringComparison.OrdinalIgnoreCase) || status is "AA" or "DD");
+
+    public static bool HasConflicts(IEnumerable<GitWorkspaceFileChange> changes) =>
+        changes.Any(change => IsConflictStatus(change.Status));
+
     private static bool IsUnsafeChangePath(string path)
     {
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);

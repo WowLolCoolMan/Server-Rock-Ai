@@ -7292,6 +7292,50 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 208 — Surface Git conflicts with safe recovery guidance
+
+Status: `implemented_build_and_audit_verified`
+
+Requirement alignment: Git workspaces need conflict recovery that preserves
+local and remote work. The existing push preflight already refuses to push
+when the remote branch is ahead; this slice adds explicit handling for
+unmerged porcelain statuses (`UU`, `AA`, `DD`, and related `U` states). The
+GitHub review dialog labels those files as conflicts, prevents selecting them
+for staging, disables commit/push while conflicts remain, and directs the user
+to resolve locally and reopen review. No automatic merge, reset, checkout, or
+destructive conflict resolution is performed.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/GitHubWorkspaceService.cs`
+- `native/ServerRock.Core.Tests/GitHubTests.cs`
+- `native/ServerRock.Native/MainPage.GitHub.Changes.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 278 contracts, including conflict
+  notice and non-staging guidance.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- Full native Core suite — passed, including `GitHub workspace identifies
+  unmerged conflict paths for recovery`.
+- `npm run check:hygiene` and `npm run check:release-config` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: local Git status classification and UI guidance
+only; no network operation, credential handling, file mutation, or dependency
+was added.
+
+Risk and rollback: remove `IsConflictStatus`/`HasConflicts`, the focused test,
+and the dialog notice/guards. Existing conservative push preflight remains.
+
+Remaining: an interactive conflict editor/three-way merge review, worktree
+isolation, and packaged live Git acceptance remain open. Those require a
+separate explicit design and stronger runtime evidence.
+
 ## Slice 207 — Add bounded persistent project-file tabs
 
 Status: `implemented_build_and_visual_smoke_verified`

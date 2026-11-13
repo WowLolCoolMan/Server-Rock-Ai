@@ -98,6 +98,8 @@ internal static class GitHubTests
         Check(parsedGitStatus.Branch == "main" && parsedGitStatus.CommitsAhead == 2 && parsedGitStatus.CommitsBehind == 1, "GitHub workspace parses branch status and ahead/behind counts");
         Check(parsedGitStatus.CommitsBehind > 0, "GitHub push preflight blocks a branch that is behind after remote refresh");
         Check(parsedGitStatus.Changes.Count == 2 && parsedGitStatus.Changes[0].Path == "path with spaces.txt" && parsedGitStatus.Changes[1].Status == "??", "GitHub workspace preserves modified and untracked paths for review");
+        Check(GitHubWorkspaceService.IsConflictStatus("UU") && GitHubWorkspaceService.IsConflictStatus("AA") && !GitHubWorkspaceService.IsConflictStatus(".M") &&
+              GitHubWorkspaceService.HasConflicts([new GitWorkspaceFileChange("UU", "src/conflict.cs")]), "GitHub workspace identifies unmerged conflict paths for recovery");
         var parsedRenameStatus = GitHubWorkspaceService.ParseStatus("# branch.head main\n2 R. N... 100644 100644 100644 00000000 11111111 R100 safe.txt\t.env.production\n", "owner/project");
         Check(parsedRenameStatus.Changes.Count == 1 && parsedRenameStatus.Changes[0].Path == "safe.txt" && parsedRenameStatus.Changes[0].OriginalPath == ".env.production", "GitHub workspace preserves both sides of a rename for review");
         var unsafeRenamePaths = GitHubWorkspaceService.FindUnsafeChangePaths(parsedRenameStatus.Changes);

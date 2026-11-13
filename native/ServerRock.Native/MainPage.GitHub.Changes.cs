@@ -42,6 +42,7 @@ public sealed partial class MainPage
     {
         var statusLine = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = UiTheme.Brush("MutedInkBrush") };
         var protectedNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("WarningInkBrush"), Visibility = Visibility.Collapsed };
+        var conflictNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("DangerBrush"), Visibility = Visibility.Collapsed };
         var changedFiles = new StackPanel { Spacing = 4, MaxHeight = 250, HorizontalAlignment = HorizontalAlignment.Stretch };
         var previewDiff = new TextBox
         {
@@ -68,11 +69,13 @@ public sealed partial class MainPage
         var operationCancellation = new CancellationTokenSource();
         var dialogClosed = false;
         var latestStatus = initialStatus;
-        var content = new StackPanel { Spacing = 10, Children = { statusLine, protectedNotice, changedFiles, preview, previewDiff, commitMessage, actionStatus, cancelOperation, action } };
+        var content = new StackPanel { Spacing = 10, Children = { statusLine, protectedNotice, conflictNotice, changedFiles, preview, previewDiff, commitMessage, actionStatus, cancelOperation, action } };
         var dialog = new ContentDialog { Title = $"GitHub · {project.GitHubRepository}", Content = content, CloseButtonText = "Close", XamlRoot = XamlRoot };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(dialog, "GitHub changes review");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(protectedNotice, "Protected file notice");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(protectedNotice, "Protected paths are hidden from diff previews and excluded from staging.");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(conflictNotice, "Git conflict recovery notice");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(conflictNotice, "Resolve unmerged files in the local project, then reopen this review. The app will not merge or reset files automatically.");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(preview, "Preview selected Git diff");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(preview, "Shows a bounded unified diff for the selected safe files.");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(cancelOperation, "Cancel current Git operation");
@@ -110,38 +113,47 @@ public sealed partial class MainPage
         void RestoreIdleState()
         {
             var hasSelectedSafeChanges = SelectedChanges().Count > 0;
-            preview.IsEnabled = hasSelectedSafeChanges;
-            action.IsEnabled = latestStatus.CommitsBehind == 0 && (hasSelectedSafeChanges || latestStatus.CommitsAhead > 0);
+            var hasConflicts = GitHubWorkspaceService.HasConflicts(latestStatus.Changes);
+            preview.IsEnabled = hasSelectedSafeChanges && !hasConflicts;
+            action.IsEnabled = !hasConflicts && latestStatus.CommitsBehind == 0 && (hasSelectedSafeChanges || latestStatus.CommitsAhead > 0);
             cancelOperation.IsEnabled = false;
         }
 
         void Render(GitWorkspaceStatus status)
         {
             latestStatus = status;
+            var conflictCount = status.Changes.Count(change => GitHubWorkspaceService.IsConflictStatus(change.Status));
             statusLine.Text = $"Branch {status.Branch} · {status.Changes.Count} changed file(s) · {status.CommitsAhead} commit(s) to push";
             changedFiles.Children.Clear();
             changeChecks.Clear();
+            conflictNotice.Visibility = conflictCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+            conflictNotice.Text = conflictCount > 0
+                ? $"{conflictCount} unmerged file(s) require local resolution before commit or push. Resolve them in the project, then reopen this review. Nothing was merged or reset automatically."
+                : string.Empty;
             if (status.Changes.Count == 0)
                 changedFiles.Children.Add(new TextBlock { Text = "No uncommitted file changes.", Foreground = UiTheme.Brush("MutedInkBrush") });
             foreach (var change in status.Changes)
             {
                 var protectedPath = GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count > 0;
+                var conflict = GitHubWorkspaceService.IsConflictStatus(change.Status);
                 var label = protectedPath
                     ? $"{change.Status,-3} [protected path redacted; not selectable]"
+                    : conflict
+                        ? $"{change.Status,-3} [conflict requires local resolution] {change.Path}"
                     : $"{change.Status,-3} {change.Path}{(change.OriginalPath is null ? string.Empty : $" (from {change.OriginalPath})")}";
                 var changeText = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap };
                 var check = new CheckBox
                 {
                     Content = changeText,
-                    IsChecked = !protectedPath,
-                    IsEnabled = !protectedPath,
+                    IsChecked = !protectedPath && !conflict,
+                    IsEnabled = !protectedPath && !conflict,
                     Tag = change,
                     FontFamily = UiTheme.CodeFont,
                     HorizontalContentAlignment = HorizontalAlignment.Stretch
                 };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(check, label);
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(check,
-                    protectedPath ? "Protected path hidden and excluded from staging." : "Safe path selected for review; uncheck to leave it uncommitted.");
+                    protectedPath ? "Protected path hidden and excluded from staging." : conflict ? "Resolve this conflict in the local project before reopening Git review." : "Safe path selected for review; uncheck to leave it uncommitted.");
                 changeChecks.Add(check);
                 changedFiles.Children.Add(check);
             }
@@ -152,10 +164,11 @@ public sealed partial class MainPage
                 : string.Empty;
             commitMessage.Visibility = status.Changes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             var safeChanges = status.Changes.Count(change => GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count == 0);
-            action.Content = safeChanges > 0 ? "Commit selected files and push" : $"Push {status.CommitsAhead} local commit(s)";
-            action.IsEnabled = safeChanges > 0 || status.CommitsAhead > 0;
-            preview.IsEnabled = safeChanges > 0;
+            action.Content = conflictCount > 0 ? "Resolve conflicts locally" : safeChanges > 0 ? "Commit selected files and push" : $"Push {status.CommitsAhead} local commit(s)";
+            action.IsEnabled = conflictCount == 0 && (safeChanges > 0 || status.CommitsAhead > 0);
+            preview.IsEnabled = conflictCount == 0 && safeChanges > 0;
             if (status.CommitsBehind > 0) actionStatus.Text = $"GitHub has {status.CommitsBehind} newer commit(s). Fetch and review remote changes before pushing.";
+            if (conflictCount > 0) actionStatus.Text = "Resolve unmerged files in the local project, then reopen GitHub review. No automatic merge or reset is available.";
             else actionStatus.Text = safeChanges > 0
                 ? "Selected safe files are staged intentionally, then committed locally and pushed. Protected paths remain uncommitted and their contents are redacted."
                 : "Only protected paths remain uncommitted, or there are no changes. Review them locally before staging.";
@@ -230,6 +243,8 @@ public sealed partial class MainPage
             {
                 var currentCredential = await GetGitHubCredentialAsync(operationToken) ?? throw new InvalidOperationException("Connect GitHub again to continue.");
                 var currentStatus = await _githubWorkspaceService.GetStatusAsync(repositoryPath, operationToken);
+                if (GitHubWorkspaceService.HasConflicts(currentStatus.Changes))
+                    throw new InvalidOperationException("Resolve unmerged files locally before committing or pushing.");
                 if (currentStatus.Changes.Count > 0)
                 {
                     var selected = SelectedChanges();

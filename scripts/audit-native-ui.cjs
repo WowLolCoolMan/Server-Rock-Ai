@@ -283,6 +283,8 @@ const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
   ['GitHub review status polite announcements', 'AutomationProperties.SetLiveSetting(actionStatus, AutomationLiveSetting.Polite)'],
   ['GitHub review initial focus registration', 'dialog.Opened += (_, _) => FocusInitialReviewTarget();'],
+  ['GitHub conflict recovery notice', 'AutomationProperties.SetName(conflictNotice, "Git conflict recovery notice")'],
+  ['GitHub conflict rows are not staged', 'conflict ? "Resolve this conflict in the local project before reopening Git review."'],
   ['GitHub review first selectable file focus', 'var firstSelectableChange = changeChecks.FirstOrDefault(check => check.IsEnabled);'],
   ['GitHub operation error survives status refresh', 'try { Render(await _githubWorkspaceService.GetStatusAsync(repositoryPath)); }\n                catch { RestoreIdleState(); }\n                actionStatus.Text = exception.Message;\n                FocusRetryTarget(preferAction: true);'],
   ['GitHub commit/push launcher focus return', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],

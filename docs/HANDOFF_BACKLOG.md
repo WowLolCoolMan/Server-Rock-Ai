@@ -1,8 +1,8 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 207, including the
+Snapshot: `main` at the current checkout through Slice 208, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
-durable project-file tabs/resume action.
+durable project-file tabs/resume action and Git conflict recovery guidance.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 
