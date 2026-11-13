@@ -6877,3 +6877,44 @@ avoidance guard to restore the previous companion behavior.
 
 Remaining: packaged cross-platform behavior, full breakpoint/scale collision
 matrix, modal focus restoration, and live custom-sprite picker acceptance.
+
+## Slice 176 — Local path fallback for custom pet sprites
+
+Status: `implemented_build_tests_audit_live_verified_windows`
+
+The custom pet-state sprite dialog now supports an explicit `Use local path`
+action when the native picker is unavailable. The path is read only after the
+user chooses the action and must be fully qualified, existing, local, bounded
+to 1,024 characters and 8 MB, and use SVG, PNG, JPEG, or WEBP. Only the
+validated path is stored in the existing companion preferences; Clear custom
+sprite remains available for rollback to the built-in asset.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Choose pet → Use your own pictures, selected
+  the `success` state, entered `assets/pets/byte-success.png`, observed the
+  `success: byte-success.png · saved locally` status, confirmed the custom
+  sprite rendered, then cleared the temporary sprite and restored the pet to
+  hidden.
+
+Privacy/security/licensing: the fallback is local-only and path-only; it makes
+no network or provider request and does not copy or upload the image. Extension,
+existence, path-length, and file-size checks are bounded before persistence.
+
+Rollback: use Clear custom sprite for existing state, or remove the local-path
+controls and `TryValidateCustomAsset` to restore picker-only customization.
+
+Remaining: native picker hosting, packaged cross-platform behavior, full
+breakpoint/scale collision matrix, and modal focus restoration.

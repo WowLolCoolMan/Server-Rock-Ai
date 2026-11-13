@@ -288,3 +288,11 @@ the composer when its calculated bounds overlap. Live Windows acceptance
 selected Byte, confirmed the companion rendered after drawer dismissal, and
 verified the selected name in the accessibility tree. Cross-platform and full
 breakpoint/scale/modal acceptance remain open.
+
+Recent slice note — Slice 176: the custom pet-state sprite dialog now has an
+explicit local-path fallback alongside the native picker. It validates a fully
+qualified existing local SVG/PNG/JPEG/WEBP path, caps the file at 8 MB, stores
+only the path, and keeps Clear custom sprite available. Live Windows acceptance
+saved `assets/pets/byte-success.png` for the success state, rendered it on the
+Byte companion, then cleared the temporary customization and restored the pet
+to hidden. Picker, cross-platform, and full breakpoint acceptance remain open.

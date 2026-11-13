@@ -287,11 +287,32 @@ public sealed partial class MainPage
     {
         var statePicker = new ComboBox { Header = "Pet state", MinWidth = 260, ItemsSource = CompanionStates, SelectedIndex = Math.Max(0, Array.IndexOf(CompanionStates, _companionState.CurrentState)) };
         var choose = new Button { Content = "Choose local sprite…", HorizontalAlignment = HorizontalAlignment.Left };
+        var localPath = new TextBox { PlaceholderText = "C:\\path\\to\\sprite.png", TextWrapping = TextWrapping.NoWrap };
+        AutomationProperties.SetName(localPath, "Custom companion sprite path");
+        var usePath = new Button { Content = "Use local path", HorizontalAlignment = HorizontalAlignment.Left };
+        AutomationProperties.SetName(usePath, "Use custom companion sprite path");
         var clear = new Button { Content = "Clear custom sprite", HorizontalAlignment = HorizontalAlignment.Left };
         var status = new TextBlock { Text = "Choose an SVG or image for the selected state. Changes are stored locally on this device.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var panel = new StackPanel { Spacing = 10 };
-        panel.Children.Add(statePicker); panel.Children.Add(choose); panel.Children.Add(clear); panel.Children.Add(status);
+        panel.Children.Add(statePicker); panel.Children.Add(choose); panel.Children.Add(localPath); panel.Children.Add(usePath); panel.Children.Add(clear); panel.Children.Add(status);
         var dialog = new ContentDialog { Title = "Custom pet state sprites", Content = panel, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        void SaveCustomAsset(string path)
+        {
+            var state = statePicker.SelectedItem?.ToString() ?? "idle";
+            if (!TryValidateCustomAsset(path, out var normalized, out var error))
+            {
+                status.Text = error;
+                return;
+            }
+            var assets = _companionState.StateAssets is null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(_companionState.StateAssets, StringComparer.OrdinalIgnoreCase);
+            assets[state] = normalized;
+            _companionState = _companionState with { StateAssets = assets };
+            SaveCompanionState();
+            UpdateCompanionDisplay();
+            status.Text = $"{state}: {Path.GetFileName(normalized)} · saved locally";
+        }
         choose.Click += async (_, _) =>
         {
             try
@@ -305,17 +326,18 @@ public sealed partial class MainPage
 #endif
                 var file = await picker.PickSingleFileAsync();
                 if (file is null) return;
-                var state = statePicker.SelectedItem?.ToString() ?? "idle";
-                var assets = _companionState.StateAssets is null
-                    ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                    : new Dictionary<string, string>(_companionState.StateAssets, StringComparer.OrdinalIgnoreCase);
-                assets[state] = file.Path;
-                _companionState = _companionState with { StateAssets = assets };
-                SaveCompanionState();
-                UpdateCompanionDisplay();
-                status.Text = $"{state}: {file.Name} · saved locally";
+                SaveCustomAsset(file.Path);
             }
             catch (Exception ex) { status.Text = $"Could not choose a sprite: {ex.Message}"; }
+        };
+        usePath.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(localPath.Text))
+            {
+                status.Text = "Enter a full local path before choosing Use local path.";
+                return;
+            }
+            SaveCustomAsset(localPath.Text.Trim());
         };
         clear.Click += (_, _) =>
         {
@@ -328,6 +350,43 @@ public sealed partial class MainPage
             SaveCompanionState(); UpdateCompanionDisplay(); status.Text = $"{state}: using the built-in fallback sprite.";
         };
         await dialog.ShowAsync();
+    }
+
+    private static bool TryValidateCustomAsset(string path, out string normalized, out string error)
+    {
+        normalized = string.Empty;
+        error = string.Empty;
+        try
+        {
+            if (!Path.IsPathFullyQualified(path) || path.Length > 1024)
+            {
+                error = "Custom sprites must use a fully qualified local path under 1,024 characters.";
+                return false;
+            }
+            normalized = Path.GetFullPath(path);
+            var extension = Path.GetExtension(normalized);
+            if (!new[] { ".svg", ".png", ".jpg", ".jpeg", ".webp" }.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            {
+                error = "Custom sprites must be SVG, PNG, JPEG, or WEBP files.";
+                return false;
+            }
+            if (!File.Exists(normalized))
+            {
+                error = "That local sprite path does not exist.";
+                return false;
+            }
+            if (new FileInfo(normalized).Length > 8 * 1024 * 1024)
+            {
+                error = "Custom sprites must be 8 MB or smaller.";
+                return false;
+            }
+            return true;
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            error = $"That sprite path could not be used: {ex.Message}";
+            return false;
+        }
     }
 
     private void CompanionPointerPressed(object sender, PointerRoutedEventArgs e)
