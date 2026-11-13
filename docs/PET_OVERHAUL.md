@@ -189,3 +189,4 @@ KOverlay (a LayerShellQt overlay) is a second example of the helper approach.
 | 00:19 | 881c19d | Wander in the UI behind "Let the pet wander" (off by default); wander smoke results. |
 | 00:27 | 30a5248 | Pet drawn above the sidebar; round-3 smoke results. |
 | 00:29 | 251ccce | Wander default ON (OFF with app or system reduce motion). |
+| 00:31 | 5b79128 cafc825 | coding_malicious during command approval; full-desktop wander research. |
