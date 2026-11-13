@@ -7643,6 +7643,50 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 229 — Separate project browsing from model-context sampling
+
+Status: `implemented_core_bounded_browser_tree_build_test_verified`
+
+Requirement alignment: the Coding Agent project explorer previously reused
+`ReadSelectedFiles`, so navigation was limited to the 16-file/48k-character
+model-context sample. `WorkspaceFileContext.EnumerateTextFiles` now exposes a
+separate content-free, bounded navigation enumeration (128 text files) with
+the same protected-file, dependency-directory, reparse-point, and access
+failure boundaries. The virtualized folder disclosure UI uses this browser
+surface; chat/provider context retains its original stricter content sample.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including bounded browser enumeration and protected-path checks.
+- `node scripts/audit-native-ui.cjs` — passed with 321 contracts.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: enumeration reads metadata only and does not send
+file contents to providers. Existing explicit project-folder selection,
+secret/dependency exclusions, symlink refusal, and bounded context behavior
+remain unchanged. No dependency or network path was added.
+
+Risk and rollback: restore the explorer's `ReadSelectedFiles` call and remove
+the new Core enumeration/tests. The model-context path remains unchanged.
+
+Remaining: full repository-tree loading, ignore-state presentation, richer
+folder actions, binary/PDF/image preview integration, and live cross-platform
+acceptance remain open.
+
 ## Slice 228 — Verify the staged desktop-host migration checkpoint
 
 Status: `verified_agent_host_renderer_runtime_checkpoint_not_parity_complete`

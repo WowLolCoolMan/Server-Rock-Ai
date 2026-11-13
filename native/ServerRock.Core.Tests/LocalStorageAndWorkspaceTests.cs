@@ -253,6 +253,9 @@ internal static class LocalStorageAndWorkspaceTests
             var previewableFiles = WorkspaceFileContext.EnumeratePreviewableFiles([workspacePath]);
             Check(previewableFiles.Any(item => item.RelativePath == "preview.png" && item.Kind == "image") && previewableFiles.Any(item => item.RelativePath == "report.pdf" && item.Kind == "pdf"), "workspace browser enumerates bounded image and PDF previews");
             Check(previewableFiles.All(item => !item.RelativePath.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.EndsWith(".env", StringComparison.OrdinalIgnoreCase)), "workspace browser excludes protected and dependency paths");
+            var browserTextFiles = WorkspaceFileContext.EnumerateTextFiles([workspacePath]);
+            Check(browserTextFiles.Any(item => item.RelativePath == Path.Combine("src", "Program.cs")) && browserTextFiles.Any(item => item.RelativePath == "README.md"), "project browser enumerates bounded text files without reading contents");
+            Check(browserTextFiles.All(item => !item.RelativePath.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.EndsWith(".env", StringComparison.OrdinalIgnoreCase)) && browserTextFiles.Count <= WorkspaceFileContext.MaxBrowserTextEntries, "project browser text enumeration preserves safety exclusions and its bound");
 
             var gitReviewPath = Path.Combine(settingsDirectory, "git-review");
             Directory.CreateDirectory(gitReviewPath);

@@ -203,7 +203,8 @@ public sealed partial class MainPage
         }
         CodeFilesHeader.Visibility = Visibility.Visible;
         CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))}";
-        var files = WorkspaceFileContext.ReadSelectedFiles([project.FolderPaths[0]])
+        var files = WorkspaceFileContext.EnumerateTextFiles([project.FolderPaths[0]])
+            .Select(item => (Path: item.RelativePath, Content: string.Empty))
             .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         if (!string.Equals(_projectExplorerProjectId, project.Id, StringComparison.Ordinal))

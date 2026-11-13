@@ -278,6 +278,7 @@ const requiredCode = [
   ['Command palette uses Core catalog', 'CommandPaletteCatalog.Actions'],
   ['Command palette keeps execution in native shell', 'ResolveCommandPaletteAction'],
   ['Startup recovery application service', '_startupRecovery.Load();'],
+  ['Project explorer uses bounded browser enumeration', 'WorkspaceFileContext.EnumerateTextFiles([project.FolderPaths[0]])'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],

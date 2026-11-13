@@ -316,6 +316,10 @@ handshake advertising `models.list` and `chat.complete`. This remains a staged
 prototype seam; native Uno remains canonical and renderer feature parity is not
 claimed.
 
+Slice 229 separates project navigation from model-context sampling with a
+bounded content-free text-file enumeration used by the Coding Agent explorer.
+The stricter 16-file/48k-character provider-context sample is unchanged.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

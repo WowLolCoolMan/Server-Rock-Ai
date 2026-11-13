@@ -13,8 +13,10 @@ public static class WorkspaceFileContext
     public const int MaxFileCharacters = 8_000;
     public const int MaxTotalCharacters = 48_000;
     public const int MaxPreviewEntries = 24;
+    public const int MaxBrowserTextEntries = 128;
 
     public sealed record WorkspaceFileEntry(string RelativePath, string FullPath, string Kind);
+    public sealed record WorkspaceTextFileEntry(string RelativePath, string FullPath, long Bytes);
 
     private static readonly HashSet<string> ExcludedDirectories = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -80,6 +82,52 @@ public static class WorkspaceFileContext
                     catch (DecoderFallbackException) { }
                 }
 
+                try
+                {
+                    foreach (var child in Directory.EnumerateDirectories(directory).OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        if (!ExcludedDirectories.Contains(Path.GetFileName(child)) && !IsLink(child)) pending.Push(child);
+                    }
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Enumerates a bounded text-file navigation surface without opening file
+    /// contents. This is intentionally separate from the smaller model-context
+    /// sample so browsing does not change what is sent to a provider.
+    /// </summary>
+    public static IReadOnlyList<WorkspaceTextFileEntry> EnumerateTextFiles(IEnumerable<string> selectedFolders)
+    {
+        ArgumentNullException.ThrowIfNull(selectedFolders);
+        var result = new List<WorkspaceTextFileEntry>();
+        foreach (var selected in selectedFolders)
+        {
+            if (result.Count >= MaxBrowserTextEntries || string.IsNullOrWhiteSpace(selected)) break;
+            var root = Path.GetFullPath(selected);
+            if (!Directory.Exists(root) || IsLink(root)) continue;
+            var pending = new Stack<string>();
+            pending.Push(root);
+            while (pending.Count > 0 && result.Count < MaxBrowserTextEntries)
+            {
+                var directory = pending.Pop();
+                IEnumerable<string> files;
+                try { files = Directory.EnumerateFiles(directory).OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray(); }
+                catch (IOException) { continue; }
+                catch (UnauthorizedAccessException) { continue; }
+                foreach (var file in files)
+                {
+                    if (result.Count >= MaxBrowserTextEntries || IsLink(file)) continue;
+                    var name = Path.GetFileName(file);
+                    if (IsExcludedFile(name) || !TextExtensions.Contains(Path.GetExtension(file))) continue;
+                    try { result.Add(new WorkspaceTextFileEntry(Path.GetRelativePath(root, file), Path.GetFullPath(file), new FileInfo(file).Length)); }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
                 try
                 {
                     foreach (var child in Directory.EnumerateDirectories(directory).OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
