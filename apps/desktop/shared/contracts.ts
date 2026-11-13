@@ -40,9 +40,16 @@ export type DesktopConversation = {
   id: string;
   title: string;
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  projectId?: string | null;
+  projectName?: string | null;
+  includeProjectFilesInChat?: boolean;
   updatedAt: string;
   pinned: boolean;
   tags: string[];
+};
+
+export type DesktopConversationSearchResult = DesktopConversation & {
+  display: string;
 };
 
 export type DesktopTask = {

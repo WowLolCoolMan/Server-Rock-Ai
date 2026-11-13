@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -67,6 +67,7 @@ public static class AgentHostLoop
             "tasks.retry" => TransitionTask(request, "retry"),
             "scheduled.list" => ListScheduledTasks(request),
             "conversations.list" => ListConversations(request),
+            "conversations.search" => SearchConversations(request),
             "conversation.save" => SaveConversation(request),
             "settings.get" => GetSettings(request),
             "settings.save" => SaveSettings(request),
@@ -311,12 +312,36 @@ public static class AgentHostLoop
                 id = session.Id,
                 title = session.Title,
                 messages = session.Messages,
+                projectId = session.ProjectId,
+                projectName = session.ProjectName,
+                includeProjectFilesInChat = session.IncludeProjectFilesInChat,
                 updatedAt = session.UpdatedAt,
                 pinned = session.Pinned,
                 tags = session.Tags,
             })
             .ToArray();
         return new(ProtocolVersion, request.Id, true, conversations);
+    }
+
+    private static AgentResponse SearchConversations(AgentRequest request)
+    {
+        var query = OptionalString(request, "query") ?? string.Empty;
+        var matches = ConversationSearchService.Search(CreateConversationStore().Load(), query)
+            .Select(hit => new
+            {
+                id = hit.Session.Id,
+                title = hit.Session.Title,
+                messages = hit.Session.Messages,
+                projectId = hit.Session.ProjectId,
+                projectName = hit.Session.ProjectName,
+                includeProjectFilesInChat = hit.Session.IncludeProjectFilesInChat,
+                updatedAt = hit.Session.UpdatedAt,
+                pinned = hit.Session.Pinned,
+                tags = hit.Session.Tags,
+                display = hit.Display,
+            })
+            .ToArray();
+        return new(ProtocolVersion, request.Id, true, matches);
     }
 
     private static AgentResponse SaveConversation(AgentRequest request)
@@ -335,10 +360,27 @@ public static class AgentHostLoop
               ?? throw new InvalidOperationException("The requested conversation does not exist.");
         session.Title = title;
         session.Messages = messages;
+        var projectId = OptionalString(request, "projectId");
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            session.ProjectId = null;
+            session.ProjectName = null;
+            session.ProjectInstructions = null;
+            session.IncludeProjectFilesInChat = false;
+        }
+        else
+        {
+            var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == projectId)
+                ?? throw new KeyNotFoundException("The selected project does not exist.");
+            session.ProjectId = project.Id;
+            session.ProjectName = project.Name;
+            session.ProjectInstructions = project.Instructions;
+            session.IncludeProjectFilesInChat = true;
+        }
         session.UpdatedAt = DateTimeOffset.UtcNow;
         if (!sessions.Contains(session)) sessions.Add(session);
         store.Save(sessions);
-        return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, updatedAt = session.UpdatedAt });
+        return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, projectId = session.ProjectId, updatedAt = session.UpdatedAt });
     }
 
     private static ConversationStore CreateConversationStore() =>

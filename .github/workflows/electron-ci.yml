@@ -56,3 +56,6 @@ jobs:
 
       - name: Smoke reviewed project editor
         run: npm run smoke:project-editor
+
+      - name: Smoke conversation search
+        run: npm run smoke:conversation-search

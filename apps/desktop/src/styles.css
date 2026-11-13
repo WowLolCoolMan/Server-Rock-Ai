@@ -28,6 +28,7 @@ h1 { margin-bottom: 0; font-size: 15px; letter-spacing: -.02em; }
 .history-item { overflow: hidden; border: 1px solid transparent; border-radius: 7px; padding: 8px 9px; color: #9faec2; background: transparent; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .history-item:hover, .history-item.active { border-color: #304667; color: #f5f8ff; background: #1e2c43; }
 .history-empty { margin: 0; padding: 4px 6px; color: #71839d; font-size: 11px; }
+.history-search input { padding: 8px 9px; color: #c9d8ec; background: #121c2b; font-size: 11px; }
 .sidebar-footer { display: flex; align-items: center; gap: 9px; margin-top: auto; padding: 14px 10px 0; border-top: 1px solid #273140; color: #8ea1ba; font-size: 12px; }
 .status-dot { width: 8px; height: 8px; border-radius: 99px; background: #da6873; box-shadow: 0 0 12px rgba(218, 104, 115, .65); }
 .status-dot.ready { background: #66d39b; box-shadow: 0 0 12px rgba(102, 211, 155, .65); }
