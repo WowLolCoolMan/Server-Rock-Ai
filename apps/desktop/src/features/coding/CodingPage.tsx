@@ -1,6 +1,7 @@
 import type { DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
+import { ModalDialog } from "../../components/ui/ModalDialog";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 
 type DiffRow = { kind: "removed" | "added" | "unchanged"; line: string };
@@ -58,6 +59,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     return query ? projectFiles.filter((file) => file.relativePath.toLowerCase().includes(query)) : projectFiles;
   }, [fileQuery, projectFiles]);
   const fileSearchRef = useRef<HTMLInputElement>(null);
+  const projectNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setPanelMode("editor"); }, [selectedFile, fileOriginal]);
   useEffect(() => { setOpenTabs([]); setTerminalOpen(false); setFileQuery(""); }, [selectedProject?.id]);
@@ -121,6 +123,6 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
       </div>
       {terminalOpen && <div className="project-dock"><TerminalPanel projects={projects} initialProjectId={selectedProject.id} busy={terminalBusy} output={terminalOutput} exitCode={terminalExitCode} compact onRun={onRunTerminal} /></div>}
     </Card>}
-    {dialogOpen && <dialog className="ui-dialog" open aria-labelledby="new-project-title"><form method="dialog" onSubmit={(event) => { event.preventDefault(); void createProject(); }}><div className="dialog-heading"><div><p className="section-kicker">NEW PROJECT</p><h3 id="new-project-title">Connect a workspace</h3><p>Only the folders you select are exposed to the project.</p></div><button type="button" onClick={() => setDialogOpen(false)} aria-label="Close dialog">×</button></div><label>Project name<input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="My project" /></label><label>Instructions<textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} placeholder="Optional instructions for this project" rows={3} /></label><div className="dialog-folders"><div className="dialog-folders-heading"><span>Connected folders</span><Button variant="secondary" type="button" onClick={() => void addFolder()}>Add folder</Button></div>{folders.length === 0 ? <p>No folders connected yet.</p> : folders.map((folder) => <div className="dialog-folder" key={folder}><span>{folder}</span><button type="button" onClick={() => setFolders((current) => current.filter((item) => item !== folder))}>Remove</button></div>)}</div><div className="dialog-actions"><Button variant="ghost" type="button" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" type="submit" disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save project"}</Button></div></form></dialog>}
+    <ModalDialog open={dialogOpen} onClose={() => setDialogOpen(false)} titleId="new-project-title" initialFocusRef={projectNameRef}><form onSubmit={(event) => { event.preventDefault(); void createProject(); }}><div className="dialog-heading"><div><p className="section-kicker">NEW PROJECT</p><h3 id="new-project-title">Connect a workspace</h3><p>Only the folders you select are exposed to the project.</p></div><button type="button" onClick={() => setDialogOpen(false)} aria-label="Close dialog">×</button></div><label>Project name<input ref={projectNameRef} value={name} onChange={(event) => setName(event.target.value)} placeholder="My project" /></label><label>Instructions<textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} placeholder="Optional instructions for this project" rows={3} /></label><div className="dialog-folders"><div className="dialog-folders-heading"><span>Connected folders</span><Button variant="secondary" type="button" onClick={() => void addFolder()}>Add folder</Button></div>{folders.length === 0 ? <p>No folders connected yet.</p> : folders.map((folder) => <div className="dialog-folder" key={folder}><span>{folder}</span><button type="button" onClick={() => setFolders((current) => current.filter((item) => item !== folder))}>Remove</button></div>)}</div><div className="dialog-actions"><Button variant="ghost" type="button" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" type="submit" disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save project"}</Button></div></form></ModalDialog>
   </div>;
 }
