@@ -7347,6 +7347,59 @@ Remaining: update future signed installers, localized resources, published
 artifacts, and external distribution listings when those release surfaces are
 configured.
 
+## Slice 189 — Make Percy the official Skai Desktop companion
+
+Status: `implemented_asset_runtime_build_verified`
+
+The generated blue wolf is now the official Skai Desktop mascot, named Percy.
+The same transparent artwork is configured as the Uno application icon source,
+and Percy is the default companion for new profiles. Existing saved pet IDs are
+preserved; the existing five companions remain selectable. A generated 4×4
+Percy atlas includes idle, walk, thinking, coding, malicious, stuck, success,
+and error poses. Pre-cut 256×256 state frames and a dedicated walk sheet are
+checked into `assets/pets/`, matching the current animation runtime contract.
+
+Changed files:
+
+- `assets/branding/skaiwolficon.png`
+- `assets/pets/percy-sprite-sheet.png`
+- `assets/pets/percy-walk-sprite-sheet.png`
+- `assets/pets/percy-*.png`
+- `assets/pets/cut-percy-atlas.ps1`
+- `assets/pets/README.md`
+- `assets/pets/cut-frames.sh`
+- `native/ServerRock.Native/Assets/Icons/skaiwolficon.png`
+- `native/ServerRock.Native/ServerRock.Native.csproj`
+- `native/ServerRock.Native/CompanionStateStore.cs`
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.Quicklinks.cs` (cross-target `DataTemplate` compatibility fix exposed by the Windows packaging build)
+- `scripts/audit-native-ui.cjs`
+- `docs/PET_OVERHAUL.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- The Windows build also compiles the existing Quicklinks surface through the WinUI XAML compiler; its prior desktop-only `DataTemplate` factory was replaced with an equivalent cross-target template without changing quicklink behavior.
+- The generated Windows manifest names `Skai Desktop` and references emitted `skaiwolficon*` package assets.
+- Percy frame validation confirmed 256×256 state images and the source atlas is present.
+- `npm run audit:native-ui` — passed with Percy asset contracts.
+- The complete Core test suite passed before this asset/UI slice; no pet behavior or existing pet tests were removed.
+
+Privacy/security/licensing: this adds locally packaged/generated artwork only;
+no network, provider, credential, user-data, or execution behavior changes. The
+artwork is original generated content and does not copy Firefox/Mozilla assets.
+
+Rollback: restore the prior icon source and default pet ID, remove Percy asset
+references, and leave existing saved companion preferences untouched.
+
+Remaining: wire the generated walk cycle into the wander UI phase when that
+phase is implemented; current runtime motion uses the existing transform
+animation and the seven supported states.
+
 ## Slice 186 — Centralize outbound protocol identity
 
 Status: `implemented_build_tests_audit_verified`

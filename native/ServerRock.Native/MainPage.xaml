@@ -52,7 +52,7 @@
             </Grid>
             <Button Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="{StaticResource MutedInkBrush}" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
           </Grid>
-          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" HorizontalAlignment="Center" IsHitTestVisible="False" />
+          <TextBlock x:Name="CompanionName" Text="Percy" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" HorizontalAlignment="Center" IsHitTestVisible="False" />
         </StackPanel>
       </Border>
     </Canvas>

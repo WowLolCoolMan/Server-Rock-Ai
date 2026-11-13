@@ -10,6 +10,7 @@ sheet places its poses differently. Cells are numbered from zero, left to right,
 
 | Pet | Grid | idle | thinking | coding | coding_malicious | stuck | success | error |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| percy | 4×4 | 0 | 8 | 9 | 10 | 12 | 13 | 14 |
 | rocky | 3×3 | 0 | 2 | 3 | 5 | 8 | 6 | 7 |
 | byte | 4×4 | 0 | 4 | 6 | 8 | 10 | 14 | 12 |
 | sprout | 4×4 | 0 | 4 | 8 | 10 | 11 | 14 | 12 |
@@ -23,3 +24,7 @@ the same spot in every state and cross-fades line up.
 
 Users can still assign local SVG/PNG/JPEG/WebP frames from the pet customization dialog; custom
 files stay on the device.
+
+Percy is the official Skai Desktop mascot and the default companion for new profiles. His
+generated 4×4 atlas also includes four walk-cycle frames in row 2 (cells 4–7); the current
+companion runtime uses the seven state frames and its existing transform animation for motion.

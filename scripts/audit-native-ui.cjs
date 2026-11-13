@@ -12,6 +12,9 @@ const conversationXaml = readText(path.join(nativeDir, "ConversationNavigationVi
 const conversationCode = readText(path.join(nativeDir, "ConversationNavigationView.xaml.cs"));
 const sidebarXaml = readText(path.join(nativeDir, "SidebarView.xaml"));
 const sidebarCode = readText(path.join(nativeDir, "SidebarView.xaml.cs"));
+const companionCode = readText(path.join(nativeDir, "MainPage.Companion.cs"));
+const companionStore = readText(path.join(nativeDir, "CompanionStateStore.cs"));
+const nativeProject = readText(path.join(nativeDir, "ServerRock.Native.csproj"));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -272,6 +275,24 @@ const requiredGitHubCode = [
   ['GitHub clone progress live status', 'AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite)'],
   ['GitHub clone retry focus recovery', 'if (workspaceDialogOpen)\n                {\n                    DispatcherQueue.TryEnqueue(() =>\n                    {\n                        if (clone.IsEnabled && clone.Focus(FocusState.Programmatic)) return;\n                        FocusRepositoryEntry();'],
 ];
+const requiredPercyContracts = [
+  ["Official Percy companion choice", 'new("percy", "Percy"'],
+  ["Percy default companion", 'string PetId = "percy"'],
+  ["Percy allowed companion ID", '"percy", "rocky"'],
+  ["Official wolf icon source", "UnoIconBackgroundFile>Assets\\Icons\\skaiwolficon.png"],
+];
+const requiredPercyFiles = [
+  "assets/branding/skaiwolficon.png",
+  "assets/pets/percy-sprite-sheet.png",
+  "assets/pets/percy-walk-sprite-sheet.png",
+  "assets/pets/percy-idle.png",
+  "assets/pets/percy-thinking.png",
+  "assets/pets/percy-coding.png",
+  "assets/pets/percy-coding_malicious.png",
+  "assets/pets/percy-stuck.png",
+  "assets/pets/percy-success.png",
+  "assets/pets/percy-error.png",
+];
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
@@ -280,6 +301,8 @@ const missing = [
   ...requiredCode.filter(([, text]) => !(code + composerCode + splitCode).includes(text)),
   ...[['Markdown folder navigation event', 'ExportMarkdownFolderRequested']].filter(([, text]) => !(conversationCode + sidebarCode + code).includes(text)),
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
+  ...requiredPercyContracts.filter(([, text]) => !(companionCode + companionStore + nativeProject).includes(text)),
+  ...requiredPercyFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Official Percy asset", file]),
 ];
 
 if (missing.length) {
@@ -288,4 +311,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + 1} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + requiredPercyContracts.length + requiredPercyFiles.length + 1} contracts).`);

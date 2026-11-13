@@ -11,6 +11,7 @@ cd "$(dirname "$0")"
 
 # pet  grid  idle thinking coding coding_malicious stuck success error   (cells are zero-based)
 MAP="
+percy  4 0 8 9 10 12 13 14
 rocky  3 0 2 3 5 8 6 7
 byte   4 0 4 6 8 10 14 12
 sprout 4 0 4 8 10 11 14 12

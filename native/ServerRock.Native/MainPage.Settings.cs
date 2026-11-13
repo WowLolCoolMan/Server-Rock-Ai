@@ -545,7 +545,7 @@ public sealed partial class MainPage
             pageBody.Children.Add(new TextBlock { Text = "COMPANION", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 0, 0, 2) });
             var customize = new Button { Content = "Choose pet" };
             customize.Click += (_, _) => { actionAfterClose = () => RunUiActionAsync(CustomizeCompanionAsync); dialog.Hide(); };
-            pageBody.Children.Add(MakeSettingsCard("Pet companion", $"Current pet: {CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId)?.Name ?? "Rocky"}. Choose a character and keep it available while you work.", customize));
+            pageBody.Children.Add(MakeSettingsCard("Pet companion", $"Current pet: {CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId)?.Name ?? "Percy"}. Choose a character and keep it available while you work.", customize));
             pageBody.Children.Add(showPet);
             pageBody.Children.Add(petCompletion);
             pageBody.Children.Add(petErrors);

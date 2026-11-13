@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Markup;
 using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
@@ -40,17 +41,14 @@ public sealed partial class MainPage
             status.Text = $"{list.Items.Count} saved quicklink{(list.Items.Count == 1 ? "" : "s")} · local only";
         }
 
-        list.ItemTemplate = new DataTemplate(() =>
-        {
-            var panel = new StackPanel { Spacing = 2 };
-            var name = new TextBlock();
-            name.SetBinding(TextBlock.TextProperty, new Microsoft.UI.Xaml.Data.Binding { Path = new PropertyPath(nameof(Quicklink.Title)) });
-            var address = new TextBlock { Opacity = 0.76, TextWrapping = TextWrapping.Wrap };
-            address.SetBinding(TextBlock.TextProperty, new Microsoft.UI.Xaml.Data.Binding { Path = new PropertyPath(nameof(Quicklink.Url)) });
-            panel.Children.Add(name);
-            panel.Children.Add(address);
-            return panel;
-        });
+        list.ItemTemplate = (DataTemplate)XamlReader.Load("""
+            <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Title}" />
+                <TextBlock Text="{Binding Url}" Opacity="0.76" TextWrapping="Wrap" />
+              </StackPanel>
+            </DataTemplate>
+            """);
         list.SelectionChanged += (_, _) =>
         {
             var selected = list.SelectedItem is Quicklink;

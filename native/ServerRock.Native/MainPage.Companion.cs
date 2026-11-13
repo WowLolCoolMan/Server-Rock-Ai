@@ -23,6 +23,7 @@ public sealed partial class MainPage
     private sealed record CompanionChoice(string Id, string Name, string Description, string AssetUri, string SpriteSheetUri);
     private static readonly CompanionChoice[] CompanionChoices =
     [
+        new("percy", "Percy", "Your blue wolf guide for thoughtful builds.", "ms-appx:///Assets/Svg/percy-idle.png", "ms-appx:///Assets/Svg/percy-sprite-sheet.png"),
         new("rocky", "Rocky", "A steady rock when the diff gets large.", "ms-appx:///Assets/Svg/rocky-idle.png", "ms-appx:///Assets/Svg/rocky-sprite-sheet.png"),
         new("byte", "Byte", "A tiny blue-screen gremlin.", "ms-appx:///Assets/Svg/byte-idle.png", "ms-appx:///Assets/Svg/byte-sprite-sheet.png"),
         new("sprout", "Sprout", "Small green shoots for new ideas.", "ms-appx:///Assets/Svg/sprout-idle.png", "ms-appx:///Assets/Svg/sprout-sprite-sheet.png"),

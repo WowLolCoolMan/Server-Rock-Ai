@@ -1,6 +1,7 @@
 # Pet companion overhaul
 
 Working notes for the pet (desktop companion) overhaul in `native/ServerRock.Native`.
+Percy, the blue cyber-wolf, is the official Skai Desktop mascot and default new-profile companion.
 Pet code: `MainPage.Companion.cs`, `CompanionStateStore.cs`, the `Companion*` elements in
 `MainPage.xaml`, the pet buttons in `SidebarView.xaml`, and the artwork in `assets/pets/`.
 
