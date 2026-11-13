@@ -269,7 +269,10 @@ remains a flat bounded preview list; hierarchical virtualization is still open.
 
 Slice 219 replaces the project file `StackPanel` with a bounded accessible
 `ListView`, providing collection virtualization while preserving safe preview
-and focus behavior. Hierarchical folder disclosure remains open.
+and focus behavior. Slice 220 adds bounded folder disclosure rows with local
+expand/collapse state and accessible controls over the sampled file set. A
+complete repository tree, ignore-state presentation, and live cross-platform
+acceptance remain open.
 
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:

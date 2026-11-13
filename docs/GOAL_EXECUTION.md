@@ -7643,6 +7643,50 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 220 — Add bounded project-folder disclosure
+
+Status: `implemented_native_ui_hierarchy_build_audit_verified`
+
+Requirement alignment: the project explorer now presents folder disclosure
+rows above the bounded sampled file list. Top-level folders start expanded;
+each folder row has an accessible expand/collapse action, stable local state,
+semantic styling, and indentation. Files remain safe preview buttons, and the
+existing filtering, protected-file exclusions, editor focus return, and
+ListView collection boundary are preserved.
+
+This is intentionally a bounded hierarchy over the existing
+`WorkspaceFileContext.ReadSelectedFiles` sample. It does not claim a complete
+repository tree, ignore-state controls, or live cross-platform acceptance.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `node scripts/audit-native-ui.cjs` — passed with 301 contracts, including
+  folder disclosure state, hierarchy construction, and accessible toggles.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: presentation and local expansion-state changes
+only; file filtering, protected-file exclusions, bounded previews, and project
+trust scopes are unchanged. No new dependency or external data path is added.
+
+Risk and rollback: remove the folder-row rendering and restore the previous
+flat file-row loop. No project data or file contents change.
+
+Remaining: full repository-tree loading, ignore-state presentation, richer
+folder actions, cross-platform acceptance, and live first-project journey
+evidence remain open.
+
 ## Slice 219 — Virtualize the project file list
 
 Status: `implemented_native_ui_build_audit_verified`

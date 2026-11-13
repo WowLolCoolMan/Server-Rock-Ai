@@ -203,9 +203,43 @@ public sealed partial class MainPage
         }
         CodeFilesHeader.Visibility = Visibility.Visible;
         CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))}";
-        foreach (var file in WorkspaceFileContext.ReadSelectedFiles([project.FolderPaths[0]])
-            .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase))
+        var files = WorkspaceFileContext.ReadSelectedFiles([project.FolderPaths[0]])
+            .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (!string.Equals(_projectExplorerProjectId, project.Id, StringComparison.Ordinal))
         {
+            _projectExplorerProjectId = project.Id;
+            _expandedProjectFolders.Clear();
+            foreach (var folder in GetProjectFolderPaths(files))
+                if (!folder.Contains('/', StringComparison.Ordinal)) _expandedProjectFolders.Add(folder);
+        }
+        var folders = GetProjectFolderPaths(files);
+        foreach (var folder in folders)
+        {
+            var parent = GetProjectPathParent(folder);
+            if (parent is not null && !_expandedProjectFolders.Contains(parent)) continue;
+            var depth = folder.Count(character => character == '/');
+            var folderButton = new Button
+            {
+                Content = $"{(_expandedProjectFolders.Contains(folder) ? "▾" : "▸")}　📁 {folder[(folder.LastIndexOf('/') + 1)..]}",
+                Tag = folder,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Background = UiTheme.Brush("SurfaceAltBrush"),
+                Foreground = UiTheme.Brush("MutedInkBrush"),
+                Padding = new Thickness(9 + depth * 14, 5, 6, 5),
+                CornerRadius = new CornerRadius(7),
+                FontSize = UiTheme.FontSize("CaptionFontSize")
+            };
+            AutomationProperties.SetName(folderButton, $"{(_expandedProjectFolders.Contains(folder) ? "Collapse" : "Expand")} project folder {folder}");
+            folderButton.Click += ProjectFolderToggleClick;
+            ProjectFileList.Items.Add(folderButton);
+        }
+        foreach (var file in files)
+        {
+            var normalizedPath = NormalizeProjectRelativePath(file.Path);
+            var parent = GetProjectPathParent(normalizedPath);
+            if (parent is not null && !_expandedProjectFolders.Contains(parent)) continue;
+            var depth = normalizedPath.Count(character => character == '/');
             var button = new Button
             {
                 Content = "▤　" + file.Path,
@@ -213,15 +247,42 @@ public sealed partial class MainPage
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 Background = UiTheme.Brush("AccentSoftBrush"),
                 Foreground = UiTheme.Brush("AccentInkBrush"),
-                Padding = new Thickness(9, 6, 6, 6),
+                Padding = new Thickness(9 + depth * 14, 6, 6, 6),
                 CornerRadius = new CornerRadius(7),
                 FontSize = UiTheme.FontSize("CaptionFontSize")
             };
             button.Click += ProjectFileClick;
             ProjectFileList.Items.Add(button);
         }
-        if (ProjectFileList.Items.Count == 0)
+        if (files.Length == 0)
             ProjectFileList.Items.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
+    }
+
+    private void ProjectFolderToggleClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string folder }) return;
+        if (!_expandedProjectFolders.Add(folder)) _expandedProjectFolders.Remove(folder);
+        RenderProjectFiles();
+    }
+
+    private static SortedSet<string> GetProjectFolderPaths(IEnumerable<(string Path, string Content)> files)
+    {
+        var folders = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files)
+        {
+            var path = NormalizeProjectRelativePath(file.Path);
+            var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            for (var index = 1; index < parts.Length; index++) folders.Add(string.Join("/", parts.Take(index)));
+        }
+        return folders;
+    }
+
+    private static string NormalizeProjectRelativePath(string path) => path.Replace('\\', '/').Trim('/');
+
+    private static string? GetProjectPathParent(string path)
+    {
+        var separator = path.LastIndexOf('/');
+        return separator < 0 ? null : path[..separator];
     }
 
     private async Task OpenQuickFileAsync()

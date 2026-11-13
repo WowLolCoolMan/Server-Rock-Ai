@@ -85,6 +85,8 @@ public sealed partial class MainPage : Page
     private bool _compactCodingWorkspaceToolbar;
     private string? _openProjectFileProjectId;
     private readonly List<string> _openProjectFilePaths = [];
+    private readonly HashSet<string> _expandedProjectFolders = new(StringComparer.OrdinalIgnoreCase);
+    private string? _projectExplorerProjectId;
     private bool _companionPersistenceAvailable = true;
     private bool _isCompanionDragging;
     private Point _companionDragOffset;
