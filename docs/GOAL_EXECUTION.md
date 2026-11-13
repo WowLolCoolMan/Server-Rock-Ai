@@ -7262,6 +7262,41 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 187 — Validate release metadata consistency
+
+Status: `implemented_script_gate_verified`
+
+The release configuration check now reads the native release manifest, validates
+its bounded package fields and stable lowercase identifiers, and cross-checks
+its display name against `native/Directory.Build.props`. It still preserves the
+existing opt-in signing-material and environment-version checks. A future
+rebrand now fails the gate if packaging metadata is updated in only one source.
+
+Changed files:
+
+- `scripts/validate-release-config.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run check:release-config` — passed with package metadata validation.
+- `npm run check:hygiene` — passed.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is a local fail-closed validation gate. It
+does not read credentials, contact providers, alter package files, or change
+runtime routing. No dependency or third-party code was added.
+
+Rollback: restore the previous release validator; existing manifest and build
+behavior remain unchanged.
+
+Remaining: signed installers, release-feed integration, clean-machine install,
+upgrade, uninstall, rollback, localization, and cross-platform release
+evidence remain open.
+
 ## Slice 186 — Centralize outbound protocol identity
 
 Status: `implemented_build_tests_audit_verified`
