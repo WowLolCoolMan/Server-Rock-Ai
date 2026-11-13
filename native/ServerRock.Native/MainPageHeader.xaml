@@ -1,0 +1,28 @@
+<UserControl x:Class="ServerRock.Native.MainPageHeader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource SurfaceBrush}">
+  <Grid x:Name="Header" ColumnDefinitions="*,Auto" Padding="22,0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <Button x:Name="ToggleSidebarButton" Width="34" Height="34" Padding="0" Visibility="Collapsed" Click="ToggleSidebarClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="9" ToolTipService.ToolTip="Navigation · Ctrl+Shift+E" AutomationProperties.Name="Open navigation menu" AutomationProperties.HelpText="Show chats, projects, models, and settings. On compact windows, press Control+Shift+E to open or close navigation; press Escape to close."><FontIcon Glyph="&#xE700;" FontSize="14" /></Button>
+      <Button x:Name="BackButton" Content="‹" Width="30" Height="30" Padding="0" Click="BackClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Back" AutomationProperties.Name="Navigate back" AutomationProperties.HelpText="Return to the previous workspace route." />
+      <Button x:Name="ForwardButton" Content="›" Width="30" Height="30" Padding="0" Click="ForwardClick" Style="{StaticResource ContextButtonStyle}" ToolTipService.ToolTip="Forward" AutomationProperties.Name="Navigate forward" AutomationProperties.HelpText="Return to the next workspace route." />
+      <TextBlock x:Name="PageTitle" Text="New chat" FontSize="{StaticResource BodyFontSize}" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="520" />
+      <Border x:Name="ProjectBadge" Visibility="Collapsed" Background="#e8f5f6" BorderBrush="#d5e9eb" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock x:Name="ProjectBadgeText" Text="Project instructions on" FontSize="11" Foreground="#46666c" /></Border>
+      <Border x:Name="ChatFolderBadge" Visibility="Collapsed" Background="#f0f3fb" BorderBrush="#dfe5f2" BorderThickness="1" CornerRadius="12" Padding="8,3" AutomationProperties.Name="Conversation folder"><TextBlock x:Name="ChatFolderBadgeText" Text="Folder" FontSize="11" Foreground="#53617c" /></Border>
+      <Border x:Name="TemporaryBadge" Visibility="Collapsed" Background="#fff5e6" BorderBrush="#f1dfc2" BorderThickness="1" CornerRadius="12" Padding="8,3"><TextBlock Text="Temporary · not saved" FontSize="11" Foreground="#805d2c" /></Border>
+      <StackPanel x:Name="BranchControls" Visibility="Collapsed" Orientation="Horizontal" Spacing="3" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="Conversation branch controls">
+        <Button x:Name="PreviousBranchButton" Content="‹" Width="26" Height="26" Padding="0" Click="PreviousBranchClick" AutomationProperties.Name="Previous conversation branch" />
+        <TextBlock x:Name="BranchPositionText" Text="1 / 1" VerticalAlignment="Center" FontSize="11" Foreground="#536a70" AutomationProperties.Name="Conversation branch position" />
+        <Button x:Name="NextBranchButton" Content="›" Width="26" Height="26" Padding="0" Click="NextBranchClick" AutomationProperties.Name="Next conversation branch" />
+      </StackPanel>
+    </StackPanel>
+    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+      <Button x:Name="ConnectionSettingsButton" Click="SettingsClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="9,4" ToolTipService.ToolTip="Model connection settings" AutomationProperties.Name="Model connection settings">
+        <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
+      </Button>
+      <!-- Header shortcut for a new chat (handy when the sidebar is collapsed). -->
+      <Button x:Name="NewChatButton" Click="NewChatClick" Style="{StaticResource ContextButtonStyle}" Padding="8,6" ToolTipService.ToolTip="New chat" AutomationProperties.Name="Start a new chat" AutomationProperties.HelpText="Start a fresh chat in the current workspace."><FontIcon Glyph="&#xE710;" FontSize="12" /></Button>
+    </StackPanel>
+  </Grid>
+</UserControl>

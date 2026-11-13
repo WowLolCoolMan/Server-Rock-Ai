@@ -1531,6 +1531,45 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 96 — extract the main page header into a dedicated visual control
+
+Status: `implemented_verified_build`
+
+The giant page visual tree now delegates its header to `MainPageHeader`, a
+dedicated UserControl. The extracted control owns navigation buttons, route
+badges, branch controls, connection status, and the new-chat action. It
+forwards semantic events to `MainPage` and exposes only the named controls
+that existing feature partials need, preserving behavior while making the
+layout independently maintainable. The pet-owned companion overlay was not
+changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPageHeader.xaml`
+- `native/ServerRock.Native/MainPageHeader.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
+- `npm run check:syntax` — passed.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+
+Privacy/security/licensing: this is a local visual decomposition only. It
+changes no persistence, provider route, credential handling, prompt content,
+or third-party dependency.
+
+Rollback: restore the header Grid in `MainPage.xaml`, remove
+`MainPageHeader.xaml` and `.xaml.cs`, remove the header event subscriptions and
+compatibility accessors, and keep the lifecycle split intact.
+
+Not yet verified: live packaged-release interaction after the visual split,
+narrow-window visual QA, Linux parity, and the remaining handoff slices.
+
 ## Slice 81 — deterministic date/time variables in reviewed skill prompts
 
 Status: `implemented_verified_core`

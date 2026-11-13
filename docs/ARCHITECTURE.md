@@ -72,11 +72,13 @@ method name still finds it.
 
 | File | What it does |
 | --- | --- |
-| `MainPage.xaml` | Page layout: header, conversation area, composer, companion overlay; the sidebar is `<local:SidebarView>`. Owned by the UI/design work. |
+| `MainPage.xaml` | Page shell: conversation area, composer, coding workspace bar, and companion overlay; the sidebar and header are dedicated controls. Owned by the UI/design work. |
+| `MainPageHeader.xaml` / `.xaml.cs` | Extracted header control: navigation, route badges, branch controls, connection status, and new-chat action. Forwards semantic events and exposes bounded control accessors to MainPage. |
 | `SidebarView.xaml` / `.xaml.cs` | The left sidebar as its own control (from main): mode switch, primary actions, projects, folders, recents, pet controls. Forwards clicks as events and exposes named elements as `*Control` properties. |
 | `MainPage.Sidebar.cs` | Connects MainPage to SidebarView (accessor properties such as `RecentList`, `ChatModeButton`) and the sidebar-only actions: Scheduled tasks, More, Update. |
-| `MainPage.xaml.cs` | Shared page state (fields and Core services) and the constructor (loads settings, history, projects, undo history). |
+| `MainPage.xaml.cs` | Shared page state (fields and Core services) plus compatibility accessors for extracted visual controls. |
 | `MainPage.Infrastructure.cs` | Cross-cutting status classification/history dialog, guarded UI actions, and settings persistence shared by feature partials. |
+| `MainPage.Lifecycle.cs` | Constructor, event wiring, timer setup, settings/history/project recovery, and initial rendering. |
 | `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
 | `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
 | `MainPage.Connection.cs` | Model server connection check and Local/Remote status. |
@@ -278,7 +280,9 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `ServerRock.Core/Services/LocalProjectHealthAnalyzer.cs` |
 | Code Review Agent | `ServerRock.Native/MainPage.CodeReview.cs` |
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
-| Page fields, constructor, status banner | `ServerRock.Native/MainPage.xaml.cs` |
+| Page fields and shared visual-control accessors | `ServerRock.Native/MainPage.xaml.cs` |
+| Header visual tree and header events | `ServerRock.Native/MainPageHeader.xaml` / `.xaml.cs` |
+| Constructor, lifecycle recovery, and event wiring | `ServerRock.Native/MainPage.Lifecycle.cs` |
 | What happens when I press Send | `ServerRock.Native/MainPage.Chat.cs` (`SendClick`) |
 | The system prompt / what's sent to the model | `ServerRock.Core/Infrastructure/ModelInstructions.cs` (text), `ServerRock.Native/MainPage.Chat.cs` (`BuildProviderMessages`), `ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs` |
 | Chat streaming HTTP | `ServerRock.Core/Services/OpenAiCompatibleProvider.cs` |
