@@ -5318,3 +5318,52 @@ existing bounded queue implementation and persistence contract remain intact.
 Not yet verified: live queue removal/reorder/clear accessibility, richer
 cross-device queue synchronization, durable semantic conversation-context
 continuity, 1M+ token context, Linux parity, and packaged-release acceptance.
+
+## Slice 141 — repair and verify queue management controls
+
+Status: `implemented_verified_windows_disposable_queue_management`
+
+The live acceptance of Slice 140 exposed that `ComposerInputView` raised
+`ManageQueueRequested` without `MainPage` subscribing to it. The repaired
+wiring now routes the accessible Queue control into the existing bounded
+management dialog. The queue store also honors `SRAI_QUEUE_PATH`, allowing
+disposable acceptance without reading or writing the real user queue.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ChatMessageQueueStore.cs`
+- `native/ServerRock.Core.Tests/ChatMessageQueueStoreTests.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/ComposerInputView.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/ARCHITECTURE.md`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the explicit disposable `SRAI_QUEUE_PATH` store override.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: 183 contracts, including queue event
+  wiring and the management control’s accessible label.
+- Live Windows disposable profile — passed: the Queue control opened the
+  `Queued messages` dialog; moving the first message down changed the visible
+  order to `Queued two`, `Queued one`, `Queued three`; removing the middle
+  message left two entries; Clear queue closed the dialog, announced
+  `Queued messages cleared. The active response was not changed.`, and wrote
+  `[]` to the disposable queue file.
+- `npm run audit:future-features` and `git diff --check` — passed.
+
+Privacy/security/licensing: the new environment override is opt-in and does
+not change the normal `%APPDATA%` queue location. The live journey used only
+synthetic prompts and local disposable files; no credentials, remote route,
+project data, or pet state was changed.
+
+Rollback: remove the event subscription, the explicit queue-path override and
+its test, the audit contracts, and the documentation updates. The existing
+queue implementation would remain available but its management activation
+would regress, so rollback is only appropriate with an owner decision.
+
+Not yet verified: richer cross-device queue synchronization, durable semantic
+conversation-context continuity, 1M+ token context, Linux parity, and
+packaged-release acceptance.

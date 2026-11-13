@@ -234,6 +234,7 @@ All app data goes under the user's platform app-data folders. On Linux,
 | Settings (non-secret) | `ApplicationData/ServerRock/AI/settings.json` | `JsonSettingsStore` | `SRAI_SETTINGS_PATH` (explicit disposable/test path) |
 | Conversations | `ApplicationData/ServerRock/AI/conversations.json` | `ConversationStore` | `SRAI_CONVERSATIONS_PATH` |
 | Approved memory | `ApplicationData/ServerRock/AI/memory.json` | `MemoryStore` | `SRAI_MEMORY_PATH` (explicit disposable/test path) |
+| Queued messages | `ApplicationData/ServerRock/AI/queued-messages.json` | `ChatMessageQueueStore` | `SRAI_QUEUE_PATH` (explicit disposable/test path) |
 | Projects | `ApplicationData/ServerRock/AI/projects.json` | `ProjectStore` | – |
 | Workspace undo history | `ApplicationData/ServerRock/AI/workspace-undo.json` | `WorkspaceUndoStore` | – |
 | Companion (pet) prefs | `ApplicationData/ServerRock/AI/companion.json` | `CompanionStateStore` (UI project) | `SRAI_COMPANION_STATE_PATH` |

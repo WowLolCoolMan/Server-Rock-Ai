@@ -12,7 +12,7 @@ public sealed class ChatMessageQueueStore
 
     public ChatMessageQueueStore(string? path = null)
     {
-        _path = path ?? Path.Combine(
+        _path = path ?? Environment.GetEnvironmentVariable("SRAI_QUEUE_PATH") ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "ServerRock", "AI", "queued-messages.json");
     }

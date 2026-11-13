@@ -18,6 +18,7 @@ const readPartials = (prefix) =>
     .map((name) => readText(path.join(nativeDir, name)))
     .join("\n");
 const code = readPartials("MainPage.");
+const composerCode = readText(path.join(nativeDir, "ComposerInputView.xaml.cs"));
 const githubCode = readPartials("MainPage.GitHub");
 
 const requiredXaml = [
@@ -34,6 +35,7 @@ const requiredCode = [
   ['Model results label', 'AutomationProperties.SetName(list, "Model search results")'],
   ['Project name label', 'AutomationProperties.SetName(name, "Project name")'],
   ['Project folder action label', 'AutomationProperties.SetName(addFolder, "Add local project folder")'],
+  ['Queue management accessible label', 'AutomationProperties.SetName(ManageQueueButton, "Manage queued messages")'],
   ['Live model status', 'AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)'],
   ['Folder toggle focus tracking', '_chatFolderToggleButtons[folder] = open;'],
   ['Folder toggle focus restoration', 'FocusChatFolderToggleOrFallback(folder)'],
@@ -108,6 +110,7 @@ const requiredCode = [
   ['Memory injection consent', 'AutomationProperties.SetName(allowInjection, "Allow approved memory injection")'],
   ['Memory editor accessible label', 'AutomationProperties.SetName(content, "Memory content")'],
   ['Memory delete action', 'AutomationProperties.SetName(remove, "Delete memory")'],
+  ['Queue management event wiring', 'ComposerToolbarControl.ManageQueueRequested += ManageQueueClick'],
   ['Memory export action', 'AutomationProperties.SetName(export, "Export saved memory backup")'],
   ['Memory import action', 'AutomationProperties.SetName(import, "Import saved memory backup")'],
   ['Activity evidence export action', 'AutomationProperties.SetName(exportActivity, "Export activity evidence")'],
@@ -210,7 +213,7 @@ const requiredGitHubCode = [
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
-  ...requiredCode.filter(([, text]) => !code.includes(text)),
+  ...requiredCode.filter(([, text]) => !(code + composerCode).includes(text)),
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
 ];
 

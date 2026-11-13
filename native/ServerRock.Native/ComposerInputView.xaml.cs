@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
 namespace ServerRock.Native;
@@ -31,6 +32,8 @@ public sealed partial class ComposerInputView : UserControl
     public ComposerInputView()
     {
         InitializeComponent();
+        AutomationProperties.SetName(ManageQueueButton, "Manage queued messages");
+        AutomationProperties.SetHelpText(ManageQueueButton, "Review, remove, or clear messages waiting to send.");
         ToolbarView.ToolbarResized += (sender, args) => ToolbarResized?.Invoke(sender, args);
         ToolbarView.ModelRequested += (sender, args) => ModelRequested?.Invoke(sender, args);
         ToolbarView.ToolsRequested += (sender, args) => ToolsRequested?.Invoke(sender, args);

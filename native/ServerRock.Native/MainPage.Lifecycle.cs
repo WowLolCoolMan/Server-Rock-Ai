@@ -37,6 +37,7 @@ public sealed partial class MainPage
         ConversationSurfaceControl.SettingsRequested += SettingsClick;
         ConversationSurfaceControl.SuggestionRequested += SuggestionClick;
         ComposerToolbarControl.ToolbarResized += ComposerToolbarSizeChanged;
+        ComposerToolbarControl.ManageQueueRequested += ManageQueueClick;
         ComposerToolbarControl.ModelRequested += ModelHotswapClick;
         ComposerToolbarControl.ToolsRequested += ComposerToolsClick;
         ComposerToolbarControl.WebSearchRequested += WebSearchClick;
