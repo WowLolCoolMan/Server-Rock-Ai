@@ -10,6 +10,11 @@ let host;
 let hostReader;
 let nextRequestId = 1;
 const pending = new Map();
+const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
+const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
+const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
+const isPng = (bytes) => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "settings.get",
@@ -111,13 +116,27 @@ app.whenReady().then(() => {
       const result = await dialog.showOpenDialog(window, { properties: ["openFile", "multiSelections"], filters: [{ name: "Chat files", extensions: ["txt", "md", "markdown", "csv", "json", "xml", "yaml", "yml", "toml", "html", "css", "js", "ts", "jsx", "tsx", "cs", "py", "java", "go", "rs", "c", "h", "cpp", "hpp", "sh", "sql", "log", "png", "jpg", "jpeg"] }] });
       if (result.canceled) return { v: 1, ok: true, result: { attachments: [] } };
       const attachments = [];
+      let textCharacters = 0;
+      let imageBytes = 0;
       for (const filePath of result.filePaths.slice(0, 5)) {
         const fileName = path.basename(filePath);
         const extension = path.extname(fileName).toLowerCase();
+        if (isBlockedAttachmentName(fileName)) throw new Error(`That file name cannot be attached: ${fileName}`);
+        const imageType = extension === ".png" ? "image/png" : [".jpg", ".jpeg"].includes(extension) ? "image/jpeg" : null;
+        if (!imageType && !attachmentTextExtensions.has(extension)) throw new Error(`That file type cannot be attached: ${fileName}`);
         const bytes = await fs.readFile(filePath);
         if (bytes.length > 2 * 1024 * 1024) throw new Error(`The selected file is too large: ${fileName}`);
-        const imageType = extension === ".png" ? "image/png" : [".jpg", ".jpeg"].includes(extension) ? "image/jpeg" : null;
-        attachments.push({ fileName, mediaType: imageType, content: imageType ? bytes.toString("base64") : bytes.toString("utf8").slice(0, 16000) });
+        if (imageType) {
+          if (!(imageType === "image/png" ? isPng(bytes) : isJpeg(bytes))) throw new Error(`The selected image is not valid: ${fileName}`);
+          imageBytes += bytes.length;
+          if (imageBytes > 6 * 1024 * 1024) throw new Error("Selected images exceed the combined size limit.");
+          attachments.push({ fileName, mediaType: imageType, content: bytes.toString("base64") });
+        } else {
+          const content = bytes.toString("utf8").slice(0, 16000);
+          textCharacters += content.length;
+          if (textCharacters > 48_000) throw new Error("Selected text files exceed the combined character limit.");
+          attachments.push({ fileName, mediaType: null, content });
+        }
       }
       return { v: 1, ok: true, result: { attachments } };
     }
