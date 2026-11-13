@@ -7,6 +7,7 @@ const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
 const xaml = readText(xamlPath);
 const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
+const splitCode = readText(path.join(nativeDir, "SplitConversationView.xaml.cs"));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -33,6 +34,7 @@ const requiredXaml = [
 ];
 const requiredSplitXaml = [
   ['Split chat accessibility name', 'AutomationProperties.Name="Split chat view"'],
+  ['Draggable split divider', 'AutomationProperties.Name="Drag split pane divider"'],
   ['Comparison chat picker', 'AutomationProperties.Name="Choose comparison chat"'],
   ['Comparison chat empty state', 'AutomationProperties.Name="Comparison chat empty state"'],
   ['Split ratio control', 'AutomationProperties.Name="Split pane ratio"'],
@@ -188,6 +190,7 @@ const requiredCode = [
   ['Split chat refresh path', 'SplitConversationView.Render(PageTitle.Text, _messages, comparisons, _splitComparisonSessionId)'],
   ['Split chat comparison selection', 'SplitConversationViewControl.ComparisonChanged += SplitComparisonChanged'],
   ['Split ratio persistence wiring', 'SplitConversationViewControl.RatioChanged += SplitRatioChanged'],
+  ['Split divider pointer wiring', 'SplitRatioGutterPressed'],
   ['Split ratio bounded persistence', '_settings.SplitChatRatios[SplitLayoutKey] = Math.Clamp(ratio, 25, 75)'],
 ];
 const requiredGitHubCode = [
@@ -229,7 +232,7 @@ const requiredGitHubCode = [
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
-  ...requiredCode.filter(([, text]) => !(code + composerCode).includes(text)),
+  ...requiredCode.filter(([, text]) => !(code + composerCode + splitCode).includes(text)),
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
 ];
 

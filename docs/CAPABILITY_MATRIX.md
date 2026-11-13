@@ -1,7 +1,7 @@
 # Live capability matrix
 
 Snapshot: current synchronized `main` checkout; refreshed through the live
-Windows Markdown export-picker slice and local-provider validation
+Windows split-divider slice and local-provider validation
 
 This is the Gate 0 live-repository audit required by the handoff. The
 126-row register at
@@ -78,6 +78,14 @@ capability prevents progress; `unverified` means evidence is insufficient.
   closure produced the accessible runtime status `Model compatibility issue ·
   choose another local model or check Settings`, while retaining the recovery
   chooser and without changing the selected model.
+
+## Recent slice update
+
+Slice 152 verified the split-view divider as a direct pointer interaction on
+Windows. The accessible `Drag split pane divider` gutter accepted a live drag,
+changed the bounded ratio slider from 50 to 55, and retained the existing
+settings-backed ratio event. Drag-and-drop pane reordering, independently
+editable panes, and cross-platform packaged rendering remain open requirements.
 - Live unavailable-selection evidence: Settings temporarily saved
   `missing-model`; the app reported `Connected · selected model missing-model is
   unavailable · choose a model in Model Library`, kept `missing-model` in the

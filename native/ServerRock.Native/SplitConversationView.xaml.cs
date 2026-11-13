@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 
@@ -12,6 +13,7 @@ public sealed partial class SplitConversationView : UserControl
 {
     private bool _updatingPicker;
     private bool _updatingRatio;
+    private bool _draggingRatio;
 
     public event EventHandler<string?>? ComparisonChanged;
     public event EventHandler<double>? RatioChanged;
@@ -70,6 +72,61 @@ public sealed partial class SplitConversationView : UserControl
     {
         ApplyRatio();
         if (!_updatingRatio) RatioChanged?.Invoke(this, SplitRatioSlider.Value);
+    }
+
+    private void SplitRatioGutterPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (IsInsideRatioSlider(e.OriginalSource as DependencyObject)) return;
+        _draggingRatio = true;
+        SplitRatioGutter.CapturePointer(e.Pointer);
+        UpdateRatioFromPointer(e.GetCurrentPoint(Root).Position.X);
+        e.Handled = true;
+    }
+
+    private void SplitRatioGutterMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_draggingRatio) return;
+        UpdateRatioFromPointer(e.GetCurrentPoint(Root).Position.X);
+        e.Handled = true;
+    }
+
+    private void SplitRatioGutterReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_draggingRatio) return;
+        UpdateRatioFromPointer(e.GetCurrentPoint(Root).Position.X);
+        _draggingRatio = false;
+        SplitRatioGutter.ReleasePointerCapture(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void SplitRatioGutterCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        _draggingRatio = false;
+    }
+
+    private void UpdateRatioFromPointer(double x)
+    {
+        var width = Root.ActualWidth;
+        if (width <= 0 || Root.ColumnDefinitions.Count < 3) return;
+        var gutterWidth = Root.ColumnDefinitions[1].ActualWidth;
+        var usableWidth = Math.Max(1, width - gutterWidth);
+        var left = Math.Clamp(x - gutterWidth / 2, 0, usableWidth);
+        var ratio = 100 * left / usableWidth;
+        _updatingRatio = true;
+        SplitRatioSlider.Value = Math.Clamp(ratio, SplitRatioSlider.Minimum, SplitRatioSlider.Maximum);
+        _updatingRatio = false;
+        ApplyRatio();
+        RatioChanged?.Invoke(this, SplitRatioSlider.Value);
+    }
+
+    private bool IsInsideRatioSlider(DependencyObject? source)
+    {
+        while (source is not null)
+        {
+            if (ReferenceEquals(source, SplitRatioSlider)) return true;
+            source = VisualTreeHelper.GetParent(source);
+        }
+        return false;
     }
 
     private void ApplyRatio()

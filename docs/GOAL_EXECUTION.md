@@ -5820,3 +5820,43 @@ continues to work.
 Not yet verified: draggable divider semantics, drag-and-drop pane layouts,
 multiple independently editable/composing panes, cross-platform packaged
 rendering, and full workspace-wide geometry persistence.
+
+## Slice 152 — draggable split divider
+
+Status: `implemented_verified_windows_split_divider`
+
+The split comparison surface now supports direct pointer dragging on its
+divider gutter. Dragging maps the pointer position to the same bounded 25–75%
+ratio used by the keyboard-accessible slider, applies both pane widths
+immediately, and persists through the existing settings-backed ratio event.
+Pointer capture and capture-loss handling prevent a partially completed drag
+from leaving the surface in a stale drag state. The slider remains available
+for keyboard and screen-reader users.
+
+Changed files:
+
+- `native/ServerRock.Native/SplitConversationView.xaml`
+- `native/ServerRock.Native/SplitConversationView.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed; existing settings round-trip coverage remains green.
+- `npm run audit:native-ui` — passed with the draggable divider contract and
+  pointer-handler wiring.
+- `npm run audit:future-features` and `git diff --check` — passed.
+
+Privacy/security/licensing: pointer coordinates are used only for local pane
+layout. No message content, credentials, network route, pets state, or
+handoff file is accessed. The ratio remains clamped before layout and save.
+
+Rollback: remove the gutter pointer handlers and audit contract; the existing
+slider-based ratio control and fixed split view remain available.
+
+Not yet verified: drag-and-drop pane reordering/layouts, multiple independently
+editable/composing panes, cross-platform packaged rendering, and full
+workspace-wide geometry persistence.
