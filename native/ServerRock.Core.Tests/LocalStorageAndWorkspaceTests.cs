@@ -18,7 +18,7 @@ internal static class LocalStorageAndWorkspaceTests
         try
         {
             var settingsStore = new JsonSettingsStore(Path.Combine(settingsDirectory, "settings.json"));
-            settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", VisionCapabilityOverride = "supported", Temperature = 1.2, WebSearchEnabled = true, SmartPromptRewritingEnabled = true, VoiceOutputEnabled = true, AccentColor = "violet", ThemeMode = "dark", InterfaceDensity = "compact", HostLabel = "Test workstation", RequireLocalModelEndpoints = true, ComfyEndpoint = "http://127.0.0.1:8188", ImageWorkflow = "{\"workflow\":\"{{prompt}}\"}", GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"] });
+            settingsStore.Save(new AppSettings { Endpoint = "http://127.0.0.1:1234/v1", Model = "persisted-model", ModelProvider = "LM Studio", PinnedModels = ["persisted-model", "second-model"], PinnedModelConnections = [new("LM Studio", "persisted-model", "http://127.0.0.1:1234/v1"), new("Ollama", "llama3.2", "http://127.0.0.1:11434/v1")], LocalModelPerformance = new() { ["http://127.0.0.1:1234/v1\npersisted-model"] = new(3, 28.5, 410, DateTimeOffset.Parse("2026-11-03T12:00:00Z")) }, VisionApiFormat = "ollama", VisionCapabilityOverride = "supported", Temperature = 1.2, WebSearchEnabled = true, SmartPromptRewritingEnabled = true, VoiceOutputEnabled = true, AccentColor = "violet", ThemeMode = "dark", InterfaceDensity = "compact", HostLabel = "Test workstation", RequireLocalModelEndpoints = true, ComfyEndpoint = "http://127.0.0.1:8188", ImageWorkflow = "{\"workflow\":\"{{prompt}}\"}", GitHubAppClientId = "Iv1.example-client-id", ChatFolders = ["Research", "Writing"], WorkspaceRouteHistory = ["chat", "coding"] });
             var reloaded = settingsStore.Load();
             Check(reloaded.Model == "persisted-model" && Math.Abs(reloaded.Temperature - 1.2) < 0.001 && reloaded.WebSearchEnabled && reloaded.SmartPromptRewritingEnabled, "settings survive save and reload");
             Check(reloaded.AccentColor == "violet" && reloaded.ThemeMode == "dark" && reloaded.InterfaceDensity == "compact" && reloaded.HostLabel == "Test workstation" && reloaded.RequireLocalModelEndpoints, "appearance and host settings survive save and reload");
@@ -31,6 +31,7 @@ internal static class LocalStorageAndWorkspaceTests
             Check(reloaded.ComfyEndpoint == "http://127.0.0.1:8188" && reloaded.ImageWorkflow.Contains("{{prompt}}", StringComparison.Ordinal), "local ComfyUI image workflow settings survive save and reload");
             Check(reloaded.GitHubAppClientId == "Iv1.example-client-id", "GitHub App client ID persists as a non-secret preference");
             Check(reloaded.ChatFolders.SequenceEqual(["Research", "Writing"]), "chat folders survive settings save and reload");
+            Check(reloaded.WorkspaceRouteHistory.SequenceEqual(["chat", "coding"]), "workspace route history survives settings save and reload");
 
             var corruptSettingsPath = Path.Combine(settingsDirectory, "corrupt-settings.json");
             File.WriteAllText(corruptSettingsPath, "{broken");
@@ -40,7 +41,7 @@ internal static class LocalStorageAndWorkspaceTests
             File.WriteAllText(nullableSettingsPath, "{\"endpoint\":null,\"model\":null,\"modelProvider\":null,\"visionApiFormat\":null,\"comfyEndpoint\":null,\"imageWorkflow\":null,\"gitHubAppClientId\":null,\"pinnedModels\":null,\"pinnedModelConnections\":null,\"localModelPerformance\":null,\"chatFolders\":null}");
             var normalizedSettings = new JsonSettingsStore(nullableSettingsPath).Load();
             Check(normalizedSettings.Endpoint == "http://localhost:11434/v1" && normalizedSettings.Model == "llama3.2" && normalizedSettings.ModelProvider == "Ollama" &&
-                  normalizedSettings.PinnedModels is not null && normalizedSettings.PinnedModelConnections is not null && normalizedSettings.LocalModelPerformance is not null && normalizedSettings.ChatFolders is not null,
+                  normalizedSettings.PinnedModels is not null && normalizedSettings.PinnedModelConnections is not null && normalizedSettings.LocalModelPerformance is not null && normalizedSettings.ChatFolders is not null && normalizedSettings.WorkspaceRouteHistory is not null,
                 "nullable settings fields recover to usable native defaults");
 
             var conversationsPath = Path.Combine(settingsDirectory, "conversations.json");

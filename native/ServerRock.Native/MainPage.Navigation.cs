@@ -111,7 +111,11 @@ public sealed partial class MainPage
         UpdateWebSearchButton();
         UpdateTemporaryControls();
         RenderRecent();
-        if (!_restoringNavigation) _navigationHistory.Record(selected);
+        if (!_restoringNavigation)
+        {
+            _navigationHistory.Record(selected);
+            PersistNavigationHistory();
+        }
         UpdateNavigationControls();
         // Owner decision (2026-11-07): switching to Coding Agent no longer pops up the Create
         // project / folders dialog by itself. The project bar and empty state already offer
@@ -127,6 +131,7 @@ public sealed partial class MainPage
         {
             await SwitchModeAsync(route);
             _navigationHistory.MoveBack();
+            PersistNavigationHistory();
             UpdateNavigationControls();
         }
         finally { _restoringNavigation = false; }
@@ -141,6 +146,7 @@ public sealed partial class MainPage
         {
             await SwitchModeAsync(route);
             _navigationHistory.MoveForward();
+            PersistNavigationHistory();
             UpdateNavigationControls();
         }
         finally { _restoringNavigation = false; }
@@ -150,6 +156,12 @@ public sealed partial class MainPage
     {
         BackButton.IsEnabled = _navigationHistory.CanGoBack;
         ForwardButton.IsEnabled = _navigationHistory.CanGoForward;
+    }
+
+    private void PersistNavigationHistory()
+    {
+        _settings.WorkspaceRouteHistory = _navigationHistory.Snapshot().ToList();
+        SaveSettings();
     }
 
     private void UpdateModeControls()

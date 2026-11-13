@@ -1967,6 +1967,45 @@ Not yet verified: live Windows activation of both buttons, persistent tabs or
 layout state, dialog/overlay route history, Linux/Skia interaction, and narrow
 viewport focus acceptance.
 
+## Slice 92 — durable workspace-route history
+
+Status: `implemented_verified_core_and_native_build`
+
+The bounded Chat/Coding Agent route history from Slice 91 now survives settings
+save/reload. Restore is defensive: invalid or control-character route values
+are skipped, the list remains bounded to 32 entries, and an empty/corrupt list
+falls back to the current Chat route. Back/Forward still operate only on the
+existing workspace-switch path, so temporary-chat confirmation, draft isolation,
+and project context safeguards remain active. No prompt, conversation, file,
+credential, endpoint, or model data is stored in this route history.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/NavigationHistory.cs`
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core.Tests/NavigationHistoryTests.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including route restoration, invalid-route recovery, settings round-trip, and bounded history.
+- native build — passed with 0 warnings/errors.
+- UI audit — passed with the existing 144 native contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded route identifiers are persisted in the
+existing local settings file. Invalid persisted values fail closed. No
+dependency or third-party code was added.
+
+Rollback: remove `WorkspaceRouteHistory` persistence and restore calls; Slice 91
+can continue using session-only navigation history.
+
+Not yet verified: persistent tabs/layout geometry, dialog/overlay routes, live
+restart Back/Forward activation, Linux/Skia interaction, and narrow viewport
+focus acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

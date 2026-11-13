@@ -151,6 +151,8 @@ public sealed partial class MainPage : Page
         });
         PromptBox.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(PromptKeyDown), handledEventsToo: true);
         _settings = _settingsStore.Load();
+        _navigationHistory.Restore(_settings.WorkspaceRouteHistory, _mode);
+        UpdateNavigationControls();
         var legacyProjectInstructions = _settings.ProjectInstructions;
         var warnings = new List<string>();
         try

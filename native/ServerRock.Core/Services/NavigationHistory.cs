@@ -15,6 +15,27 @@ public sealed class NavigationHistory
     public string Current => _entries[_index];
     public bool CanGoBack => _index > 0;
     public bool CanGoForward => _index >= 0 && _index < _entries.Count - 1;
+    public IReadOnlyList<string> Snapshot() => _entries.ToArray();
+
+    public void Restore(IEnumerable<string>? routes, string fallbackRoute)
+    {
+        ValidateRoute(fallbackRoute);
+        _entries.Clear();
+        _index = -1;
+        foreach (var route in routes ?? [])
+        {
+            try
+            {
+                if (_entries.Count == 0 || !string.Equals(_entries[^1], route, StringComparison.Ordinal)) AddRoute(route);
+            }
+            catch (ArgumentException)
+            {
+                // Corrupt or legacy route values are ignored without blocking settings recovery.
+            }
+        }
+        if (_entries.Count == 0) AddRoute(fallbackRoute);
+        else _index = _entries.Count - 1;
+    }
 
     public void Record(string route)
     {

@@ -16,7 +16,10 @@ internal static class NavigationHistoryTests
 
         for (var index = 0; index < NavigationHistory.MaxEntries + 4; index++) history.Record("route-" + index);
         Check(history.Current == "route-35" && !history.CanGoForward, "navigation history remains bounded");
-        Console.WriteLine("PASS bounded branch-aware navigation history");
+        var restored = new NavigationHistory("fallback");
+        restored.Restore(["chat", "coding", "\u0001bad", "settings"], "fallback");
+        Check(restored.Current == "settings" && restored.Snapshot().SequenceEqual(["chat", "coding", "settings"]), "navigation history restores valid routes and skips corrupt values");
+        Console.WriteLine("PASS bounded branch-aware navigation history and recovery");
     }
 
     private static void Check(bool condition, string message)
