@@ -31,12 +31,12 @@ export function MarketplacePage() {
   const selected = filtered.find((card) => card.title === selectedTitle) ?? filtered[0] ?? null;
 
   return <div className="feature-page">
-    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover models, skills, and integrations with clear ownership and explicit setup." />
+    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Find the models, voices, image packs, skills, and tools that power your workspace." />
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">
         <div className="marketplace-search-row">
           <label className="sr-only" htmlFor="marketplace-search">Search marketplace</label>
-          <input id="marketplace-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, skills, integrations…" />
+          <input id="marketplace-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, voices, image packs, skills, and tools…" />
           <span>{filtered.length} {filtered.length === 1 ? "category" : "categories"}</span>
         </div>
         <div className="marketplace-filters" role="group" aria-label="Marketplace categories">
