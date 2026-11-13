@@ -279,6 +279,11 @@ surfaces onto shared semantic typography and light/dark-safe surface tokens.
 Broader code-built legacy token migration and live cross-preset visual
 acceptance remain open.
 
+Slice 222 moves model comparison notes, pagination status, and model-library
+connection status onto shared semantic typography and muted ink tokens. Broader
+code-built legacy token migration and live cross-preset visual acceptance
+remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

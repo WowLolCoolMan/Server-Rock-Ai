@@ -12,12 +12,10 @@
 
 using System.Diagnostics;
 using System.Text;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
-using Microsoft.UI.Xaml.Media;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 using ServerRock.Core.Infrastructure;
@@ -95,7 +93,7 @@ public sealed partial class MainPage
             selections.Children.Add(check);
             checks.Add((model, check));
         }
-        var note = new TextBlock { Text = "Only this plain-text prompt is compared. Attachments, saved memory, project files, and web results are not included. Remote endpoints require confirmation before sending.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 };
+        var note = new TextBlock { Text = "Only this plain-text prompt is compared. Attachments, saved memory, project files, and web results are not included. Remote endpoints require confirmation before sending.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var dialog = new ContentDialog { Title = "Compare pinned models", Content = new StackPanel { Spacing = 10, Children = { prompt, selections, note } }, PrimaryButtonText = "Compare", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         dialog.Opened += (_, _) => prompt.Focus(FocusState.Programmatic);
         ModelComparisonPlan? plan = null;
@@ -296,7 +294,7 @@ public sealed partial class MainPage
         sort.SelectedIndex = 0;
         var previousPage = new Button { Content = "‹", MinWidth = 42, IsEnabled = false };
         var nextPage = new Button { Content = "›", MinWidth = 42, IsEnabled = false };
-        var pageStatus = new TextBlock { Text = "Page 1", VerticalAlignment = VerticalAlignment.Center, FontSize = 11 };
+        var pageStatus = new TextBlock { Text = "Page 1", VerticalAlignment = VerticalAlignment.Center, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var page = 0;
         var pageCount = 1;
         AutomationProperties.SetName(stopBenchmark, "Stop model benchmark");
@@ -306,7 +304,7 @@ public sealed partial class MainPage
         AutomationProperties.SetName(list, "Model search results");
         AutomationProperties.SetHelpText(list, "Select a model to use it, pin it in the composer hotswapper, or benchmark it on this PC.");
         CancellationTokenSource? catalogSearchCancellation = null;
-        var status = new TextBlock { Text = $"Connected endpoint: {_settings.Endpoint}", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 111, 116)) };
+        var status = new TextBlock { Text = $"Connected endpoint: {_settings.Endpoint}", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         AutomationProperties.SetName(status, "Model library status");
         AutomationProperties.SetHelpText(status, "Reports model search, download, selection and benchmark progress or errors.");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
