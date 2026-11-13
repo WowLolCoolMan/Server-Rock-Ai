@@ -1608,6 +1608,44 @@ subscriptions and accessors.
 Not yet verified: live packaged-release interaction after this extraction,
 narrow-window visual QA, Linux parity, and the remaining handoff slices.
 
+## Slice 100 — extract the composer input surface from MainPage.xaml
+
+Status: `implemented_verified_build`
+
+The rest of the composer visual tree is now a dedicated `ComposerInputView`
+UserControl. It owns the attachment/status area, queue and status-history
+actions, slash-command hints, prompt editor, voice controls, stop/send actions,
+and privacy footnote. It hosts the already extracted `ComposerToolbarView` and
+forwards existing events and control accessors, preserving chat, queue,
+attachments, commands, voice, and focus behavior. The pet-owned companion
+overlay was not changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/ComposerInputView.xaml`
+- `native/ServerRock.Native/ComposerInputView.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
+- `npm run check:syntax` — passed.
+
+Privacy/security/licensing: this is a local visual decomposition only. It
+changes no attachment policy, prompt content, provider request, voice data
+handling, persistence, credential handling, or third-party dependency.
+
+Rollback: restore the composer StackPanel and children in `MainPage.xaml`,
+remove `ComposerInputView.xaml` and `.xaml.cs`, and remove its compatibility
+accessors. The separate toolbar extraction can remain or be reverted
+independently.
+
+Not yet verified: live packaged-release interaction after this extraction,
+narrow-window visual QA, Linux parity, and the remaining handoff slices.
+
 ## Slice 99 — extract the composer toolbar from MainPage.xaml
 
 Status: `implemented_verified_build`

@@ -151,5 +151,22 @@ public sealed partial class MainPage : Page
     private Button ProjectFilesButton => ComposerToolbarControl.ProjectFilesButtonControl;
     private Button CancelEditButton => ComposerToolbarControl.CancelEditButtonControl;
     private Button SmartRewriteButton => ComposerToolbarControl.SmartRewriteButtonControl;
+    private StackPanel AttachmentList => ComposerToolbarControl.AttachmentListControl;
+    private Border RuntimeStatusBanner => ComposerToolbarControl.RuntimeStatusBannerControl;
+    private TextBlock RuntimeStatus => ComposerToolbarControl.RuntimeStatusControl;
+    private Button ManageQueueButton => ComposerToolbarControl.ManageQueueButtonControl;
+    private Button StatusHistoryButton => ComposerToolbarControl.StatusHistoryButtonControl;
+    private Border CommandHintPanel => ComposerToolbarControl.CommandHintPanelControl;
+    private StackPanel CommandSuggestions => ComposerToolbarControl.CommandSuggestionsControl;
+    private Border ComposerBorder => ComposerToolbarControl.ComposerBorderControl;
+    private TextBox PromptBox => ComposerToolbarControl.PromptBoxControl;
+    private Button VoiceButton => ComposerToolbarControl.VoiceButtonControl;
+    private FontIcon VoiceButtonIcon => ComposerToolbarControl.VoiceButtonIconControl;
+    private Button VoiceOutputButton => ComposerToolbarControl.VoiceOutputButtonControl;
+    private FontIcon VoiceOutputIcon => ComposerToolbarControl.VoiceOutputIconControl;
+    private TextBlock ProcessingLabel => ComposerToolbarControl.ProcessingLabelControl;
+    private Button StopButton => ComposerToolbarControl.StopButtonControl;
+    private Button SendButton => ComposerToolbarControl.SendButtonControl;
+    private TextBlock PrivacyFootnote => ComposerToolbarControl.PrivacyFootnoteControl;
 
 }

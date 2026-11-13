@@ -77,6 +77,7 @@ method name still finds it.
 | `CodingWorkspaceBar.xaml` / `.xaml.cs` | Extracted Coding Agent workspace bar: project summary, folder context, GitHub, terminal, and undo actions. Forwards actions and the responsive size-change hook to MainPage. |
 | `ConversationSurface.xaml` / `.xaml.cs` | Extracted conversation viewport: welcome state, connection setup, prompt suggestions, and message scroll surface. Forwards setup/suggestion actions and exposes the bounded message-view controls. |
 | `ComposerToolbarView.xaml` / `.xaml.cs` | Extracted composer toolbar: model picker, tools disclosure, optional toggles, rewrite, image studio, and advanced actions. Forwards actions and the responsive size-change hook to MainPage. |
+| `ComposerInputView.xaml` / `.xaml.cs` | Extracted composer input surface: status/queue banner, command hints, prompt editor, voice/send controls, and privacy note. Hosts `ComposerToolbarView` and forwards the existing composer actions to MainPage. |
 | `SidebarView.xaml` / `.xaml.cs` | The left sidebar as its own control (from main): mode switch, primary actions, projects, folders, recents, pet controls. Forwards clicks as events and exposes named elements as `*Control` properties. |
 | `MainPage.Sidebar.cs` | Connects MainPage to SidebarView (accessor properties such as `RecentList`, `ChatModeButton`) and the sidebar-only actions: Scheduled tasks, More, Update. |
 | `MainPage.xaml.cs` | Shared page state (fields and Core services) plus compatibility accessors for extracted visual controls. |
