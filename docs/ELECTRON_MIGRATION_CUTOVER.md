@@ -46,19 +46,27 @@ validate parity.
 ## Current replacement evidence
 
 - `runtime.health`, `models.list`, `projects.list`, `project.save`, `tasks.list`,
-  `scheduled.list`, `conversations.list`, `conversation.save`, `settings.get`,
-  `settings.save`, `image.generate`, and `chat.complete` are available through
-  the versioned host protocol.
+  `tasks.queue`, `tasks.cancel`, `tasks.retry`, `scheduled.list`,
+  `conversations.list`, `conversation.save`, `settings.get`, `settings.save`,
+  `image.generate`, and `chat.complete` are available through the versioned
+  host protocol.
 - The Electron renderer has persisted projects, conversations, settings, model
   discovery, chat, Agent Workbench, and a local ComfyUI Image Studio surface.
 - The Electron chat restores the newest local conversation and saves both the
   user turn and completed assistant response through the bounded Core store.
 - The replacement sidebar now exposes the first eight saved conversations and
   an explicit New chat action; selecting a history item restores its messages.
+- Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
+  safe durable task states; every action refreshes from the host after the
+  transition.
 - `npm run smoke:agent-host` exercises the replacement protocol against
   disposable settings and conversation files, including persistence round trips.
 - `apps/desktop` typecheck and production build pass.
 - The host builds and a live stdio request returns the new capability set.
+- The repository root now defaults to Electron for `start`, `build`, and
+  `open`; explicit `*:legacy-native` aliases preserve the Uno rollback path.
+- `npm run audit:electron-runtime` verifies the default commands and the
+  Electron sandbox/context-isolation/preload boundary.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and

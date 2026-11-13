@@ -3,6 +3,76 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 241 — Enforce the Electron replacement boundary
+
+Status: `implemented_audit_and_build_verified`
+
+The replacement runtime now has a repository audit that fails when root
+commands drift back to Uno or when Electron loses its sandbox, disabled Node
+integration, context isolation, or preload-only renderer boundary. The audit
+is part of the Electron replacement CI workflow alongside renderer and host
+builds and disposable protocol smoke.
+
+Changed files:
+
+- `scripts/audit-electron-runtime.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the audit is read-only and adds no runtime
+permissions, dependencies, or network behavior.
+
+Rollback: remove the audit command and workflow; the runtime behavior remains
+unchanged.
+
+Remaining: complete replacement feature parity, packaged startup, accessibility,
+release signing, data migration, and final Uno retirement gates remain open.
+
+## Slice 240 — Make Electron the default desktop runtime
+
+Status: `implemented_default_runtime_and_ci_verified`
+
+Root `start`, `build`, and `open` commands now target the Electron/React
+renderer and persistent .NET agent host. The previous Uno entry points remain
+available only as explicit `start:legacy-native`, `build:native`, and
+`open:legacy-native` commands so rollback and comparison remain possible while
+parity is completed. A dedicated workflow runs the replacement build and
+protocol smoke on pushes and pull requests.
+
+Changed files:
+
+- `scripts/start-desktop.cjs`
+- `scripts/open-desktop.cjs`
+- `.github/workflows/electron-ci.yml`
+- `docs/ELECTRON_DEFAULT_RUNTIME.md`
+- `package.json`
+
+Evidence:
+
+- `npm run build` — passed through the Electron renderer build.
+- `npm run desktop:typecheck` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run smoke:agent-host` — passed against disposable profile paths.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the default runtime continues to use the
+sandboxed renderer and local host boundary; no user profile or legacy data was
+deleted and no dependency was added.
+
+Rollback: use the explicit legacy-native commands while a replacement parity
+gate is being repaired.
+
+Remaining: full Electron parity, packaged startup, accessibility, release
+signing, data migration, and Uno retirement gates remain open.
+
 ## Slice 239 — Add an isolated Electron host replacement smoke gate
 
 Status: `implemented_protocol_smoke_script_verified`
