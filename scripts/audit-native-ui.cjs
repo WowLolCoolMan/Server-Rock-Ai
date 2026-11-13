@@ -62,6 +62,7 @@ const requiredAppTokens = [
   ['Section label type token', 'x:Key="SectionLabelFontSize"'],
   ['Context button type token', 'x:Key="ContextButtonFontSize"'],
   ['Navigation icon type token', 'x:Key="NavigationIconFontSize"'],
+  ['Device code type token', 'x:Key="DeviceCodeFontSize"'],
   ['Accent button foreground uses token', 'Color="{StaticResource AccentButtonForegroundColor}"'],
   ['Accent button pressed foreground uses token', 'Color="{StaticResource AccentButtonForegroundPressedColor}"'],
 ];

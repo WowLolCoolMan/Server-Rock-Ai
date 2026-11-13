@@ -7369,6 +7369,45 @@ literal typography/color values; migrating those safely is the next UI
 refinement slice, with decorative backdrop colors intentionally remaining
 local to the backdrop renderer.
 
+## Slice 212 — Tokenize GitHub review typography
+
+Status: `implemented_ui_audit_build_verified`
+
+Requirement alignment: the GitHub sign-in, repository clone, and change-review
+dialogs are high-impact workflow surfaces. Their code-built text controls were
+still using raw font sizes despite the shared native type scale. This slice
+migrates those sizes to semantic resources, including the one-time device code,
+so light/dark/accent and future density changes remain consistent across the
+GitHub workflow.
+
+Changed files:
+
+- `native/ServerRock.Native/App.xaml`
+- `native/ServerRock.Native/MainPage.GitHub.cs`
+- `native/ServerRock.Native/MainPage.GitHub.Changes.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 286 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: presentation-only resource references; GitHub
+credentials, repository validation, clone behavior, and conflict safeguards are
+unchanged.
+
+Risk and rollback: restore the prior `FontSize` literals and remove the device
+code token contract. No persisted data or network behavior changes.
+
+Remaining: other code-built dialogs still have legacy literal typography and
+some historical color values; those will be migrated in focused surfaces with
+visual review rather than a broad mechanical rewrite.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

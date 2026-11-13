@@ -52,15 +52,15 @@ public sealed partial class MainPage
             Foreground = UiTheme.Brush("MutedInkBrush")
         };
         var storage = _githubCredentialStore.GetStatus();
-        var storageMessage = new TextBlock { Text = storage.Message, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
-        var connection = new TextBlock { Text = "Not connected", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("InkBrush") };
+        var storageMessage = new TextBlock { Text = storage.Message, FontSize = UiTheme.FontSize("CaptionFontSize"), TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var connection = new TextBlock { Text = "Not connected", FontSize = UiTheme.FontSize("BodyFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("InkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(connection, "GitHub connection state");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(connection, AutomationLiveSetting.Polite);
-        var code = new TextBox { IsReadOnly = true, FontSize = 24, TextAlignment = TextAlignment.Center, FontFamily = UiTheme.CodeFont, Visibility = Visibility.Collapsed };
+        var code = new TextBox { IsReadOnly = true, FontSize = UiTheme.FontSize("DeviceCodeFontSize"), TextAlignment = TextAlignment.Center, FontFamily = UiTheme.CodeFont, Visibility = Visibility.Collapsed };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(code, "GitHub device sign-in code");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(code, "One-time code to enter on GitHub. It expires after a short time.");
         var verification = new Button { Content = "Open GitHub device sign-in", Visibility = Visibility.Collapsed };
-        var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var signInStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(signInStatus, "GitHub connection and repository status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(signInStatus, AutomationLiveSetting.Polite);
         var connect = new Button { Content = "Connect GitHub", IsEnabled = storage.Available, HorizontalAlignment = HorizontalAlignment.Left };
@@ -72,7 +72,7 @@ public sealed partial class MainPage
         var repositoryReference = new TextBox { Header = "Repository", PlaceholderText = "owner/name or https://github.com/owner/name" };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryReference, "Repository to clone");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(repositoryReference, "Enter owner/name or an HTTPS GitHub repository URL.");
-        var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("DangerBrush") };
+        var repositoryValidation = new TextBlock { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("DangerBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(repositoryValidation, "Repository format guidance");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(repositoryValidation, AutomationLiveSetting.Polite);
         var refreshRepositories = new Button { Content = "Refresh repositories", HorizontalAlignment = HorizontalAlignment.Left };
@@ -83,7 +83,7 @@ public sealed partial class MainPage
             PlaceholderText = "Choose a local parent folder"
         };
         var chooseParent = new Button { Content = "Choose folder…", HorizontalAlignment = HorizontalAlignment.Left };
-        var cloneStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var cloneStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(cloneStatus, "GitHub clone status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(cloneStatus, AutomationLiveSetting.Polite);
         var clone = new Button { Content = "Clone and open project", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
@@ -95,7 +95,7 @@ public sealed partial class MainPage
         {
             Text = "Connect GitHub above to browse repositories or enter a repository to clone.",
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12,
+            FontSize = UiTheme.FontSize("SmallFontSize"),
             Foreground = UiTheme.Brush("MutedInkBrush")
         };
         var repoPanel = new StackPanel
@@ -106,12 +106,12 @@ public sealed partial class MainPage
         };
         var content = new StackPanel { Spacing = 16, Children =
         {
-            new TextBlock { Text = "Sign in to browse repositories you can access. Choose one to clone it into a local project. Git credentials stay in your OS keyring.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = UiTheme.Brush("MutedInkBrush") },
+            new TextBlock { Text = "Sign in to browse repositories you can access. Choose one to clone it into a local project. Git credentials stay in your OS keyring.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") },
             signInPanel,
             new Border { Height = 1, Background = UiTheme.Brush("LineSoftBrush"), Margin = new Thickness(0, 0, 0, 1) },
             repositoryAccessHint,
             repoPanel,
-            new TextBlock { Text = "The app’s GitHub App must have Device Flow enabled and Contents read/write permission for private clone, commit, and push.", TextWrapping = TextWrapping.Wrap, FontSize = 10, Foreground = UiTheme.Brush("MutedInkBrush") }
+            new TextBlock { Text = "The app’s GitHub App must have Device Flow enabled and Contents read/write permission for private clone, commit, and push.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SectionLabelFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") }
         } };
         var dialog = new ContentDialog
         {

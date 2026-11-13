@@ -248,6 +248,11 @@ those contracts. This closes one theme-regression path without changing the
 existing light/dark or ambient-backdrop behavior. A broader migration of
 legacy literals in code-built dialogs remains open.
 
+Slice 212 additionally migrated the GitHub sign-in, clone, and change-review
+dialog typography to those semantic tokens, including the device-code control;
+the native UI audit and desktop/Windows build pass. Other code-built dialogs
+remain in the migration backlog.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

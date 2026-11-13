@@ -40,9 +40,9 @@ public sealed partial class MainPage
 
     private async Task GitHubChangesDialogAsync(LocalProject project, string repositoryPath, GitWorkspaceStatus initialStatus, GitHubUserCredential credential)
     {
-        var statusLine = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = UiTheme.Brush("MutedInkBrush") };
-        var protectedNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("WarningInkBrush"), Visibility = Visibility.Collapsed };
-        var conflictNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("DangerBrush"), Visibility = Visibility.Collapsed };
+        var statusLine = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
+        var protectedNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("WarningInkBrush"), Visibility = Visibility.Collapsed };
+        var conflictNotice = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("DangerBrush"), Visibility = Visibility.Collapsed };
         var changedFiles = new StackPanel { Spacing = 4, MaxHeight = 250, HorizontalAlignment = HorizontalAlignment.Stretch };
         var previewDiff = new TextBox
         {
@@ -59,7 +59,7 @@ public sealed partial class MainPage
         ScrollViewer.SetHorizontalScrollBarVisibility(previewDiff, ScrollBarVisibility.Auto);
         ScrollViewer.SetVerticalScrollBarVisibility(previewDiff, ScrollBarVisibility.Auto);
         var commitMessage = new TextBox { Header = "Commit message", PlaceholderText = "Describe these changes", MaxLength = 256 };
-        var actionStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var actionStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(actionStatus, "GitHub changes status");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetLiveSetting(actionStatus, AutomationLiveSetting.Polite);
         var preview = new Button { Content = "Preview selected diff", HorizontalAlignment = HorizontalAlignment.Left };
