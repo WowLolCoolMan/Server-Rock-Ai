@@ -5593,3 +5593,51 @@ its evidence-pending state. Runtime behavior is unchanged.
 Not yet verified: remote compatible-provider discovery and consent, provider
 identity normalization, multi-route scheduling, unload/queue behavior,
 cross-platform/package acceptance, and model-library download workflows.
+
+## Slice 147 — validated Markdown chat transcript export
+
+Status: `implemented_verified_core_native_picker_pending`
+
+The chat export path now offers both the existing portable JSON archive and a
+human-readable Markdown transcript. Markdown export reuses the canonical
+conversation archive validator before writing, includes UTC export metadata,
+conversation identity/status fields, message roles/content, source links, and
+attachment names. Attachment bytes remain in the JSON archive only, keeping
+the Markdown transcript readable and avoiding a second unbounded binary
+export path.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ConversationMarkdownExporter.cs`
+- `native/ServerRock.Core.Tests/ConversationArchiveTests.cs`
+- `native/ServerRock.Native/MainPage.ImportExport.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/ARCHITECTURE.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including Markdown metadata/message/attachment-name coverage and
+  the existing archive validation suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 185 contracts, including the
+  Markdown picker type and serializer wiring.
+- `npm run audit:future-features` and `git diff --check` — passed.
+
+Privacy/security/licensing: export remains explicit and user-initiated. The
+same bounded archive validator protects the Markdown path; source URLs are
+preserved as links, attachment names are disclosed, and attachment bytes are
+not duplicated into the Markdown file. No network, credentials, third-party
+dependency, or pet state is involved.
+
+Rollback: remove the Markdown exporter, its focused test and audit contracts,
+the `.md` picker choice, and the architecture/evidence updates. JSON archive
+export/import remains available.
+
+Not yet verified: native Windows file-picker selection of `.md` and resulting
+file contents, split-pane chat view, per-conversation Markdown directory
+layout, and packaged cross-platform export acceptance. The combined future
+item remains unchecked until split view and picker acceptance are complete.

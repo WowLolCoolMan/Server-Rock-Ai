@@ -23,6 +23,8 @@ internal static class ConversationArchiveTests
         };
         var portableArchive = ConversationArchive.Parse(ConversationArchive.Serialize([portableChat]));
         Check(portableArchive.Count == 1 && portableArchive[0].Mode == "Coding Agent" && portableArchive[0].ProjectInstructions == "Keep changes focused." && portableArchive[0].Messages[0].Attachments?[0].Content == "A local note", "conversation archive round-trips local project context and attachments");
+        var markdown = ConversationMarkdownExporter.Serialize([portableChat]);
+        Check(markdown.Contains("# Chat export", StringComparison.Ordinal) && markdown.Contains("## Portable conversation", StringComparison.Ordinal) && markdown.Contains("`notes.md`", StringComparison.Ordinal), "Markdown chat export includes metadata, messages, and attachment names");
         var electronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-export.json");
         var electronState = await File.ReadAllTextAsync(electronExportPath);
         using (var electronExportDocument = System.Text.Json.JsonDocument.Parse(electronState))

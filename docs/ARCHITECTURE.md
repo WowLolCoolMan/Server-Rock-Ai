@@ -97,7 +97,7 @@ method name still finds it.
 | `MainPage.Settings.cs` | Settings dialog, Advanced (temperature) dialog, `ApplySavedCustomization`, dialog focus restore. |
 | `MainPage.Recents.cs` | Saved-chat list, chat actions menu, rename/archive/delete, `SaveCurrentSession`. |
 | `MainPage.ChatFolders.cs` | Sidebar chat folders. |
-| `MainPage.ImportExport.cs` | Chat archive export/import. |
+| `MainPage.ImportExport.cs` | Chat archive JSON/Markdown export and JSON archive import. |
 | `MainPage.Projects.cs` | Project list, create/edit/remove, folder manager, `SaveProjects`. |
 | `MainPage.CodingAgent.cs` | Coding Agent project file list, file editor, undo history. |
 | `MainPage.CodeReview.cs` | Code Review Agent intake: pre-fills a review prompt in Coding Agent (from main). |
@@ -207,6 +207,7 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `AtomicFileWriter.cs` | Write-to-temp-then-rename used by the stores. |
 | `BoundedFileReader.cs`, `BoundedHttpContent.cs` | Read files/HTTP bodies with hard byte limits before parsing. |
 | `ConversationArchive.cs` | Import/export chat archives (native format and the old Electron export), with validation and duplicate/ID-collision planning. |
+| `ConversationMarkdownExporter.cs` | Validated, human-readable Markdown transcript export with conversation metadata, messages, source links, and attachment names. |
 | `ModelInstructions.cs` | Fixed system-message text: the Chat and Coding Agent prompts and the "untrusted data" warnings. |
 | `LocalEndpoint.cs` | Whether an endpoint is on this device (loopback/localhost only). |
 | `ProviderErrorText.cs` | Plain-language messages for model/image request failures. |

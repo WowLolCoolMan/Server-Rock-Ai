@@ -1,5 +1,5 @@
-// Sidebar Export / Import of saved chats as a portable JSON archive.
-// Export writes every saved conversation through ConversationArchive.Serialize. Import reads a
+// Sidebar Export / Import of saved chats as a portable JSON or human-readable Markdown archive.
+// Export writes every saved conversation through the canonical archive validation path. Import reads a
 // native or legacy Electron archive (25 MB limit), shows a summary of what will be added, skipped
 // as duplicates, or given new IDs, and only then merges and saves.
 // Depends on: ConversationArchive and ConversationStore (ServerRock.Core), the system file pickers
@@ -42,6 +42,7 @@ public sealed partial class MainPage
                 SuggestedFileName = $"{ProductIdentity.FileNameStem}-chats-{DateTime.Now:yyyy-MM-dd}"
             };
             picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} chat archive", new List<string> { ".json" });
+            picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} Markdown transcript", new List<string> { ".md" });
 #if WINDOWS
             var window = (Application.Current as App)?.MainWindow;
             if (window is null) throw new InvalidOperationException("The app window is unavailable.");
@@ -51,8 +52,16 @@ public sealed partial class MainPage
             await Task.Delay(50);
             var file = await picker.PickSaveFileAsync();
             if (file is null) return;
-            await Windows.Storage.FileIO.WriteTextAsync(file, json);
-            RuntimeStatus.Text = $"Exported {_sessions.Count} saved conversation(s) to {file.Name}. The archive contains their messages and attached content.";
+            if (file.FileType.Equals(".md", StringComparison.OrdinalIgnoreCase))
+            {
+                await Windows.Storage.FileIO.WriteTextAsync(file, ConversationMarkdownExporter.Serialize(_sessions));
+                RuntimeStatus.Text = $"Exported {_sessions.Count} saved conversation(s) to {file.Name}. The Markdown transcript contains metadata, messages, source links, and attachment names.";
+            }
+            else
+            {
+                await Windows.Storage.FileIO.WriteTextAsync(file, json);
+                RuntimeStatus.Text = $"Exported {_sessions.Count} saved conversation(s) to {file.Name}. The JSON archive contains their messages and attached content.";
+            }
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Could not export chats: {ex.Message}"; }
     }

@@ -48,6 +48,8 @@ const requiredCode = [
   ['Settings chats and history category', 'AddSection("Chats & history", "archive import export conversations"'],
   ['Settings archive restore actions', 'AutomationProperties.SetName(restore, $"Restore archived chat {session.Title}")'],
   ['Settings archive restore keyboard focus', 'chatRestoreButtons.FirstOrDefault()?.Focus(FocusState.Programmatic)'],
+  ['Chat Markdown export type', 'ProductIdentity.ShortName} Markdown transcript'],
+  ['Chat Markdown export serializer', 'ConversationMarkdownExporter.Serialize(_sessions)'],
   ['Settings model library routing', 'actionAfterClose = () => OpenModelLibraryAndRestoreFocusAsync(false, ModelButton)'],
   ['Settings GitHub workspace routing', 'actionAfterClose = () => RunUiActionAsync(GitHubWorkspaceDialogAsync)'],
   ['Model library focus return', 'OpenModelLibraryAndRestoreFocusAsync(returnToCompactSidebar, sender as Control)'],
