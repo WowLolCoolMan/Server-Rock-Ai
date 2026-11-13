@@ -26,6 +26,7 @@ public sealed partial class MainPage
             Title = "Status history",
             Content = historyScroll,
             CloseButtonText = "Done",
+            DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Status history");

@@ -471,6 +471,7 @@ public sealed partial class MainPage
             Title = "Activity & tasks",
             Content = new ScrollViewer { Content = content, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
             CloseButtonText = "Done",
+            DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Activity and tasks");

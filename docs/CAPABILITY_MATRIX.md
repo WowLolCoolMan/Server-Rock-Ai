@@ -198,3 +198,9 @@ dependency task`, and exposed the saved plan with accessible queue/cancel
 controls. The disposable plan was cancelled before execution, so the Agent
 Workbench gap is now parallel dispatch/isolation/background execution rather
 than dependency selection.
+
+Recent slice note — Slice 162: Activity and status-history dialogs now declare
+an explicit close default and the native audit passes 214 contracts. The live
+Windows accessibility tree still reports `PromptBox` after Activity opens, so
+the Popup focus gap remains open pending a supported focus bridge or dedicated
+accessibility harness.

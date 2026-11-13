@@ -6245,3 +6245,44 @@ remaining task mutation requires cleanup.
 Remaining: parallel dispatch, worktree/process isolation, background execution,
 task-artifact result UI, cross-platform acceptance, and full Popup focus remain
 open.
+
+## Slice 162 — Close-only dialog focus contract
+
+Status: `implemented_build_verified_focus_gap_persists`
+
+Close-only Activity and status-history dialogs now explicitly set
+`DefaultButton = ContentDialogButton.Close` in addition to their loaded-content
+focus retries. This gives the native dialog a declared default focus target and
+keeps keyboard dismissal semantics explicit without changing any action or
+provider behavior.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 214 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Activity & tasks after the rebuild and
+  inspected the rendered accessible dialog tree. The dialog-owned controls and
+  explicit close action remained present, but the native accessibility tree
+  still reported `PromptBox` as focused. The experiment therefore does not
+  claim full keyboard or screen-reader focus acceptance.
+
+Privacy/security/licensing: this is a local dialog-focus contract only. It
+does not send prompts, access credentials, write files, or modify task,
+conversation, provider, or pets state.
+
+Rollback: remove the two `DefaultButton` assignments and their audit contracts;
+the loaded-content retries and dialog actions remain independently reversible.
+
+Remaining: a supported Uno/Win32 Popup focus bridge or dedicated accessibility
+harness is still required for authoritative focus acceptance, along with
+Narrator, Linux/Skia, and packaged-runtime coverage.
