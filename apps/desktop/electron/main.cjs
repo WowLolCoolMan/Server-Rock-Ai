@@ -12,7 +12,7 @@ const pending = new Map();
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "tasks.list",
   "scheduled.list", "conversations.list", "conversation.save", "settings.get",
-  "settings.save", "image.generate", "chat.complete",
+  "settings.save", "image.generate", "project.command.run", "chat.complete",
   "workspace.pickFolder",
 ]);
 

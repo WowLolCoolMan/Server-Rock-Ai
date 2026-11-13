@@ -52,12 +52,13 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
             "project.file.read" => ReadProjectFile(request),
+            "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.queue" => TransitionTask(request, "queue"),
             "tasks.cancel" => TransitionTask(request, "cancel"),
@@ -168,6 +169,26 @@ public static class AgentHostLoop
             catch (DirectoryNotFoundException) { }
         }
         throw new FileNotFoundException("The selected project file is unavailable or protected.");
+    }
+
+    private static async Task<AgentResponse> RunProjectCommandAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var command = RequiredBoundedString(request, "command", WorkspaceCommandRunner.MaxCommandCharacters);
+        var cwd = OptionalString(request, "relativeWorkingDirectory") ?? ".";
+        var timeoutSeconds = OptionalInt(request, "timeoutSeconds") ?? 30;
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault() ?? throw new InvalidOperationException("Select a project folder before running a command.");
+        var result = await new WorkspaceCommandRunner().RunAsync(root, cwd, command, TimeSpan.FromSeconds(timeoutSeconds));
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            exitCode = result.ExitCode,
+            output = result.Output,
+            timedOut = result.TimedOut,
+            outputTruncated = result.OutputTruncated,
+            workingDirectory = result.WorkingDirectory,
+        });
     }
 
     private static AgentResponse ListTasks(AgentRequest request)
