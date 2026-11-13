@@ -19,13 +19,17 @@ public sealed partial class MainPage
         AutomationProperties.SetName(results, "Status history results");
         foreach (var message in _statusHistory.Snapshot())
             results.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+        var historyScroll = new ScrollViewer { Content = results, MaxHeight = 420, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, IsTabStop = true };
+        AutomationProperties.SetName(historyScroll, "Status history results scroll region");
         var dialog = new ContentDialog
         {
             Title = "Status history",
-            Content = new ScrollViewer { Content = results, MaxHeight = 420, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            Content = historyScroll,
             CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
+        AutomationProperties.SetName(dialog, "Status history");
+        dialog.Opened += (_, _) => historyScroll.Focus(FocusState.Programmatic);
         await dialog.ShowAsync();
     }
 

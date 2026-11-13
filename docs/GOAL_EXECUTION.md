@@ -1633,6 +1633,40 @@ live workflow-event search matching, full status-history keyboard/screen-reader
 acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
 packaged acceptance.
 
+## Slice 112 — make status history keyboard-readable
+
+Status: `implemented_verified_build`
+
+The actionable status-history dialog now has an explicit accessible name and a
+focusable, named scroll region containing the bounded history entries. Opening
+the dialog moves focus to that region so keyboard and screen-reader users land
+on the status content instead of an unspecified dialog surface.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (153 contracts).`
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: status history remains local, bounded, and
+read-only. This slice adds no provider request, credential, network route,
+task mutation, dependency, or third-party code.
+
+Rollback: remove the named scroll region, dialog focus handler, and their audit
+contracts; the existing status-history dialog remains available.
+
+Not yet verified: live Windows keyboard/screen-reader acceptance of status
+history, live keyboard activation of every Activity action, seeded live
+workflow-event search matching, OS session hosting, parallel-agent artifacts,
+Linux parity, and packaged acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
