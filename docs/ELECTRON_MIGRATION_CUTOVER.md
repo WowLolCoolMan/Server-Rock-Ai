@@ -77,6 +77,9 @@ validate parity.
 - Electron settings now expose persisted accent, density, deep-sea/deep-space
   backdrop, reduced-motion, and developer-diagnostics options through the same
   host-backed settings contract.
+- Electron now exposes explicit local memory management: bounded save/search,
+  enable/disable, removal, and validated JSON backup through the host. Memory
+  is not learned or injected implicitly.
 - While a response is active, the Electron composer can queue bounded follow-up
   messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the

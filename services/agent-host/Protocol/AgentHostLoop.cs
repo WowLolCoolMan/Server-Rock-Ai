@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -72,6 +72,12 @@ public static class AgentHostLoop
             "conversation.metadata.save" => SaveConversationMetadata(request),
             "conversations.export" => ExportConversations(request),
             "conversation.fork" => ForkConversation(request),
+            "memory.list" => ListMemory(request),
+            "memory.search" => SearchMemory(request),
+            "memory.save" => SaveMemory(request),
+            "memory.remove" => RemoveMemory(request),
+            "memory.enabled" => SetMemoryEnabled(request),
+            "memory.export" => ExportMemory(request),
             "chat.queue.list" => ListQueuedMessages(request),
             "chat.queue.enqueue" => EnqueueChatMessage(request),
             "chat.queue.remove" => RemoveQueuedMessage(request),
@@ -497,8 +503,50 @@ public static class AgentHostLoop
     private static ConversationStore CreateConversationStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
 
+    private static MemoryStore CreateMemoryStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH"));
+
     private static ChatMessageQueueStore CreateChatQueueStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CHAT_QUEUE_PATH"));
+
+    private static AgentResponse ListMemory(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, CreateMemoryStore().Load());
+
+    private static AgentResponse SearchMemory(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, CreateMemoryStore().Search(OptionalString(request, "query"), OptionalString(request, "scope")));
+
+    private static AgentResponse SaveMemory(AgentRequest request)
+    {
+        var store = CreateMemoryStore();
+        var content = RequiredBoundedString(request, "content", MemoryStore.MaxContentCharacters);
+        var scope = RequiredBoundedString(request, "scope", 128);
+        var source = RequiredBoundedString(request, "source", 256);
+        var approvalId = RequiredBoundedString(request, "approvalId", 128);
+        var tags = OptionalStringList(request, "tags", MemoryStore.MaxTags, 64);
+        var id = OptionalString(request, "id");
+        var entry = string.IsNullOrWhiteSpace(id)
+            ? store.Add(content, scope, source, approvalId, tags)
+            : store.Update(id, content, scope, source, approvalId, tags);
+        return new(ProtocolVersion, request.Id, true, entry);
+    }
+
+    private static AgentResponse RemoveMemory(AgentRequest request)
+    {
+        CreateMemoryStore().Remove(RequiredBoundedString(request, "id", 128));
+        return new(ProtocolVersion, request.Id, true, new { removed = true });
+    }
+
+    private static AgentResponse SetMemoryEnabled(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        if (request.Params?.TryGetProperty("enabled", out var enabled) != true || enabled.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new InvalidOperationException("memory.enabled requires a boolean enabled value.");
+        CreateMemoryStore().SetEnabled(id, enabled.GetBoolean());
+        return new(ProtocolVersion, request.Id, true, new { id, enabled = enabled.GetBoolean() });
+    }
+
+    private static AgentResponse ExportMemory(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, new { fileName = "skai-memory-backup.json", json = CreateMemoryStore().ExportJson() });
 
     private static AgentResponse GetSettings(AgentRequest request)
     {

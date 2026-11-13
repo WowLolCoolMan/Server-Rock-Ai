@@ -3,6 +3,46 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 257 — Port explicit Electron local memory management
+
+Status: `implemented_host_renderer_memory_smoke_verified`
+
+Electron now exposes the Core memory store through a dedicated Memory view.
+Users can explicitly save bounded notes with scope/tags, search enabled notes,
+disable or remove entries, and export a validated JSON backup. The host keeps
+the operation local and approval-labelled; no implicit learning or prompt
+injection was added by this slice.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-memory.cjs`
+- `package.json`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run smoke:memory` — passed disposable save, search, disable, export,
+  and removal assertions.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors after
+  isolating a verified orphaned host process lock.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: memory remains local, explicit, bounded, and
+user-controlled. Backup export is initiated by the user and no cloud route was
+added.
+
+Rollback: remove the memory routes, bridge allowlist entries, Memory view, and
+smoke command; existing chat and settings remain functional.
+
+Remaining: opt-in memory injection into Electron chat, memory import UI, and
+full memory acceptance coverage remain separate slices.
+
 ## Slice 256 — Expand Electron workspace customization options
 
 Status: `implemented_renderer_settings_host_persistence_build_verified`
