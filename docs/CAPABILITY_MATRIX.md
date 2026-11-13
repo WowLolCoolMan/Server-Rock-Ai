@@ -37,7 +37,7 @@ capability prevents progress; `unverified` means evidence is insufficient.
 | Settings and appearance | working | Persisted settings, accent/density, light/dark palettes, Deep Sea/Deep Space animated ambient presets, reduced-motion control, model/voice/host controls; Core persistence tests; inline endpoint/model/local-only validation keeps invalid Save attempts open with an accessible error | Broader platform-specific diagnostics and complete live accessibility matrix |
 | Companion/pet | partial | First-party companion state, selection and persistence, bounded local custom-sprite paths, composer avoidance, drawer occlusion guard, keyboard movement, and live Windows selection/placement evidence | Cross-platform packaged positioning, full breakpoint/scale collision matrix, modal focus acceptance, and custom-sprite picker acceptance remain open |
 | Updates and releases | partial | Core now verifies an RSA-authenticated release manifest, channel/version monotonicity, and staged artifact SHA-256; packaging reads manifest-driven display/launcher metadata, Windows shortcuts target the versioned executable with adjacent runtime files, the current self-contained `win-x64` Release artifact passed bounded startup-and-window smoke, the current checkout passes both `net10.0-desktop` and `net10.0-windows10.0.26100` builds, disposable install/upgrade/rollback/uninstall preserved profile data, repository hygiene and release-configuration gates pass, and CI remains fail-closed without silent installation | Signed installers, release-feed integration, clean-machine install/upgrade/uninstall/rollback and platform evidence |
-| Security and privacy | partial | Bounded I/O, path checks, redaction, approval surfaces and local/cloud labeling are present; repository hygiene passes across 325 tracked files and the release configuration validator remains internally consistent; runtime product display identity is centralized in `ProductIdentity` for rebranding | OS isolation, keyring parity, threat-model coverage and full negative scenario suite |
+| Security and privacy | partial | Bounded I/O, path checks, redaction, approval surfaces and local/cloud labeling are present; repository hygiene passes across 325 tracked files and the release configuration validator remains internally consistent; runtime product display identity and stable GitHub credential storage identifiers are centralized in `ProductIdentity` for rebranding | OS isolation, keyring parity, threat-model coverage and full negative scenario suite |
 | Windows/Linux parity | unverified | Windows native/App SDK builds and Core tests are available locally; Ubuntu 24.04 WSL is installed, but a fresh current-checkout Linux build attempt stopped because that distro has no `dotnet` command; repository docs contain historical Linux evidence | Install/enable a supported Linux .NET 10 SDK or use a CI Linux runner, then perform a fresh build/run, exact distro scope, accessibility, packaging and release-artifact validation |
 
 ## Gate 0 evidence collected
@@ -309,6 +309,12 @@ selected folders, filters locally, and previews up to 16 safe text files using
 the existing 8,000-character per-file context budget. Mutating file editing,
 binary/PDF preview, and cross-platform acceptance remain open.
 
+Recent slice note — Slice 179: the Coding Workspace bar now includes a local
+session-state line for mode, message context, pending attachments, reviewed
+file changes, and queued agent plans. It is informational only; background-task
+execution, live cross-platform acceptance, and richer context/change details
+remain open.
+
 Recent slice note — Slice 180: the project browser now also enumerates bounded
 PNG/JPEG and PDF entries. Images are signature-checked and rendered locally;
 PDFs use bounded selectable-text extraction. OCR, app/executable previews,
@@ -320,8 +326,8 @@ extension, reparse-point status, and bounded byte size before parsing; discovery
 remains read-only and execution-free. Authenticated retrieval and real tool
 authorization remain open.
 
-Recent slice note — Slice 179: the Coding Workspace bar now includes a local
-session-state line for mode, message context, pending attachments, reviewed
-file changes, and queued agent plans. It is informational only; background-task
-execution, live cross-platform acceptance, and richer context/change details
-remain open.
+Recent slice note — Slice 183: Chat now has a reviewable documents-only mode.
+It disables web search, requires at least one attached document, and excludes
+project instructions, project files, memory injection, and stale web context
+from the provider prompt. A full persistent NotebookLM-style corpus remains
+open.

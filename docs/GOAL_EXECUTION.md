@@ -1622,7 +1622,6 @@ Changed files:
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `docs/ARCHITECTURE.md`
 - `docs/CAPABILITY_MATRIX.md`
-- `docs/FUTURE_FEATURES.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
@@ -2180,6 +2179,7 @@ Changed files:
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
+- `docs/FUTURE_FEATURES.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
@@ -7141,3 +7141,123 @@ no provider, network, credential, or execution behavior changes.
 
 Rollback: remove the rooted-path guard; all other OpenAPI review validation
 remains unchanged.
+
+## Slice 183 — Reviewable documents-only Chat mode
+
+Status: `implemented_build_core_audit_verified`
+
+Chat now exposes a `Documents only` composer control. When enabled, it turns
+web search off, requires at least one current attachment before sending, adds a
+bounded grounding instruction to the system context, and excludes project
+instructions, project-file excerpts, saved-memory injection, and stale web
+context from that request. The attachment content remains untrusted reference
+data; the mode does not claim that documents contain an answer when they do
+not. Slash-command web enablement and research mode are also blocked while the
+toggle is active.
+
+Changed files:
+
+- `native/ServerRock.Native/ComposerToolbarView.xaml`
+- `native/ServerRock.Native/ComposerToolbarView.xaml.cs`
+- `native/ServerRock.Native/ComposerInputView.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Composer.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Native/MainPage.SlashCommands.cs`
+- `native/ServerRock.Core/Infrastructure/ModelInstructions.cs`
+- `native/ServerRock.Core.Tests/ChatMessageTests.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/FUTURE_FEATURES.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including the documents-only grounding instruction
+  contract and the full existing suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this mode is local UI/prompt policy. It does not
+call a new service, persist document contents, silently route to a cloud model,
+or execute document instructions. Existing explicit remote-attachment consent
+still applies when the selected endpoint is not local.
+
+Rollback: turn the control off or remove its prompt guard/instruction; normal
+Chat routing and existing attachment behavior remain unchanged.
+
+Remaining: durable uploaded-document corpus management, vector/hybrid retrieval,
+OCR, semantic grounding evaluation, cross-platform acceptance, and full
+NotebookLM-style project isolation.
+
+## Slice 184 — Reconcile bounded backlog evidence
+
+Status: `implemented_documentation_reconciled`
+
+The future-feature inventory now distinguishes bounded implementations from
+their broader unchecked requirements: the nested project file browser, local
+text/image/PDF previews, workspace session-state bar, and session-only
+documents-only Chat guard are described without marking the full feature
+families complete. Full tree/mutation workflows, app previews, background task
+status, durable document corpora, and packaged/live acceptance remain open.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Repository inspection confirmed the referenced bounded implementations and
+  their existing Slice 178–183 build, test, and audit records.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: documentation only; no application behavior,
+provider route, credentials, user data, or pet state changed.
+
+Rollback: revert the explanatory parentheticals and this slice record; prior
+unchecked backlog labels remain unchanged.
+
+## Slice 185 — Centralize stable GitHub credential identifiers
+
+Status: `implemented_build_tests_audit_verified`
+
+GitHub credential encryption and keyring-label literals now live in
+`ProductIdentity` as explicitly stable storage identifiers. The credential
+store no longer couples its entropy or Secret Service label directly to the
+current display-name source, while the exact existing values remain unchanged
+so saved credentials continue to decrypt and keyring entries remain addressable
+through a future display rebrand.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/ServerRock.Core/Infrastructure/GitHubCredentialStore.cs`
+- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including the centralized stable-identifier contract
+  and the existing credential tests.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this changes only constant ownership; credential
+bytes remain protected by the existing DPAPI/keyring paths and no credentials
+are read, migrated, or transmitted by the slice.
+
+Rollback: restore the two existing literals in `GitHubCredentialStore`; the
+stable values and credential storage behavior are otherwise unchanged.
+
+Remaining: complete rebrand verification across packaging metadata, installers,
+localization, and all release artifacts; full keyring parity and OS isolation
+remain open.

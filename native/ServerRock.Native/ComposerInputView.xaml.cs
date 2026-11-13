@@ -17,6 +17,7 @@ public sealed partial class ComposerInputView : UserControl
     public event RoutedEventHandler? ImageStudioRequested;
     public event RoutedEventHandler? AdvancedRequested;
     public event RoutedEventHandler? AttachPathRequested;
+    public event RoutedEventHandler? DocumentsOnlyRequested;
     public event RoutedEventHandler? ManageQueueRequested;
     public event RoutedEventHandler? StatusHistoryRequested;
     public event RoutedEventHandler? DismissStatusRequested;
@@ -46,6 +47,8 @@ public sealed partial class ComposerInputView : UserControl
         ToolbarView.ImageStudioRequested += (sender, args) => ImageStudioRequested?.Invoke(sender, args);
         ToolbarView.AdvancedRequested += (sender, args) => AdvancedRequested?.Invoke(sender, args);
         ToolbarView.AttachPathRequested += (sender, args) => AttachPathRequested?.Invoke(sender, args);
+        ToolbarView.DocumentsOnlyRequested += (sender, args) => DocumentsOnlyRequested?.Invoke(sender, args);
+        AutomationProperties.SetName(ToolbarView.DocumentsOnlyButtonControl, "Toggle documents-only mode");
     }
 
     public StackPanel AttachmentListControl => AttachmentList;
@@ -63,6 +66,7 @@ public sealed partial class ComposerInputView : UserControl
     public Button ProjectFilesButtonControl => ToolbarView.ProjectFilesButtonControl;
     public Button CancelEditButtonControl => ToolbarView.CancelEditButtonControl;
     public Button SmartRewriteButtonControl => ToolbarView.SmartRewriteButtonControl;
+    public Button DocumentsOnlyButtonControl => ToolbarView.DocumentsOnlyButtonControl;
     public Border ComposerBorderControl => ComposerBorder;
     public Border CommandHintPanelControl => CommandHintPanel;
     public StackPanel CommandSuggestionsControl => CommandSuggestions;
