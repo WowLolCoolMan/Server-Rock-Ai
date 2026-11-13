@@ -31,6 +31,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `947fb93` — restored Marketplace as a first-class local capability catalog for LLMs, voices/TTS, image models, skills, and tools/integrations with permission-aware copy.
 - `9de3357` — exposed the persisted task brief in Agent Workbench details so proposed work can be reviewed before queueing.
 - `f1dcf2a` — added backend-confirmed Settings save feedback that keeps the user on the Settings surface after persistence.
+- `3c5258e` — added a Chat task brief composer using the existing local-only planning contract and Workbench handoff.
 
 ## Current evidence
 
@@ -62,6 +63,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Task composer interaction check: passed project selection, task brief entry, disabled Worktree state, local proposed-task creation, Agent Workbench handoff, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-coding-task-composer.png`.
 - Task review interaction check: passed opening a proposed task's detail disclosure, rendering its persisted brief, and no horizontal overflow at 1280px.
 - Settings save interaction check: passed a live field change, backend-confirmed save feedback, staying on Settings, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-settings-save-feedback.png`.
+- Chat task composer check: passed local `tasks.plan` submission, proposed-task handoff to Workbench, explicit unavailable Worktree state, no Cloud UI, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-chat-task-composer-open.png` and `output/playwright/skai-chat-task-composer.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
