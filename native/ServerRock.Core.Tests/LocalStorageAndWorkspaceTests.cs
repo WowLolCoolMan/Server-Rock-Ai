@@ -240,11 +240,16 @@ internal static class LocalStorageAndWorkspaceTests
             File.WriteAllText(Path.Combine(workspacePath, ".git", "config"), "private git data");
             File.WriteAllText(Path.Combine(workspacePath, "node_modules", "package.json"), "dependency data");
             File.WriteAllText(Path.Combine(workspacePath, "src", "Program.cs"), "Console.WriteLine(\"local\");");
+            File.WriteAllBytes(Path.Combine(workspacePath, "preview.png"), [0x89, 0x50, 0x4E, 0x47]);
+            File.WriteAllBytes(Path.Combine(workspacePath, "report.pdf"), "%PDF-"u8.ToArray());
             var workspaceFiles = WorkspaceFileContext.ReadSelectedFiles([workspacePath]);
             Check(workspaceFiles.Any(item => item.Path == "README.md"), "selected workspace context reads project documentation");
             Check(workspaceFiles.Any(item => item.Path == Path.Combine("src", "Program.cs")), "selected workspace context reads nested source files");
             Check(workspaceFiles.All(item => !item.Path.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.Path.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.Path.EndsWith(".env", StringComparison.OrdinalIgnoreCase)), "workspace context skips common secrets and dependency metadata");
             Check(workspaceFiles.Count <= WorkspaceFileContext.MaxFiles && workspaceFiles.Sum(item => item.Content.Length) <= WorkspaceFileContext.MaxTotalCharacters, "workspace context stays within its file and character budgets");
+            var previewableFiles = WorkspaceFileContext.EnumeratePreviewableFiles([workspacePath]);
+            Check(previewableFiles.Any(item => item.RelativePath == "preview.png" && item.Kind == "image") && previewableFiles.Any(item => item.RelativePath == "report.pdf" && item.Kind == "pdf"), "workspace browser enumerates bounded image and PDF previews");
+            Check(previewableFiles.All(item => !item.RelativePath.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.EndsWith(".env", StringComparison.OrdinalIgnoreCase)), "workspace browser excludes protected and dependency paths");
 
             var gitReviewPath = Path.Combine(settingsDirectory, "git-review");
             Directory.CreateDirectory(gitReviewPath);

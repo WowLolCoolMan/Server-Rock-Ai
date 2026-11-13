@@ -7032,3 +7032,45 @@ the existing project bar, attachment behavior, and task stores remain intact.
 
 Remaining: true background-task status, richer context/change inspection,
 cross-platform packaged acceptance, and full accessibility/scale validation.
+
+## Slice 180 — Local image and PDF project previews
+
+Status: `implemented_build_tests_audit_verified`
+
+The project file browser now includes bounded PNG/JPEG and PDF entries in
+addition to text files. Image previews read only the bounded local bytes,
+validate the PNG/JPEG signature, and render through the existing native image
+surface. PDF previews read within the existing PDF byte limit and extract
+bounded selectable text locally; scanned PDFs report that OCR is unavailable.
+The browser continues to skip secrets, dependency/build directories, reparse
+points, oversized files, and unsupported types.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.Projects.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including bounded image/PDF enumeration and protected
+  path assertions.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: previews remain local and read-only. Size limits,
+file signatures, secret filtering, excluded directories, and reparse-point
+checks apply before bytes are rendered or PDF text is extracted. No provider,
+network, credential, or telemetry path is involved.
+
+Rollback: remove `EnumeratePreviewableFiles` and the media/PDF branches from
+the browser; the original bounded text preview and project-folder controls
+remain available.
+
+Remaining: OCR, app/executable previews, mutation-aware editing, full artifact
+previews, cross-platform packaged acceptance, and richer file connectors.

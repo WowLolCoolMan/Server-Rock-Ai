@@ -12,6 +12,9 @@ public static class WorkspaceFileContext
     public const int MaxFiles = 16;
     public const int MaxFileCharacters = 8_000;
     public const int MaxTotalCharacters = 48_000;
+    public const int MaxPreviewEntries = 24;
+
+    public sealed record WorkspaceFileEntry(string RelativePath, string FullPath, string Kind);
 
     private static readonly HashSet<string> ExcludedDirectories = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -77,6 +80,58 @@ public static class WorkspaceFileContext
                     catch (DecoderFallbackException) { }
                 }
 
+                try
+                {
+                    foreach (var child in Directory.EnumerateDirectories(directory).OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        if (!ExcludedDirectories.Contains(Path.GetFileName(child)) && !IsLink(child)) pending.Push(child);
+                    }
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
+        }
+        return result;
+    }
+
+    public static IReadOnlyList<WorkspaceFileEntry> EnumeratePreviewableFiles(IEnumerable<string> selectedFolders)
+    {
+        ArgumentNullException.ThrowIfNull(selectedFolders);
+        var result = new List<WorkspaceFileEntry>();
+        foreach (var selected in selectedFolders)
+        {
+            if (result.Count >= MaxPreviewEntries || string.IsNullOrWhiteSpace(selected)) break;
+            var root = Path.GetFullPath(selected);
+            if (!Directory.Exists(root) || IsLink(root)) continue;
+            var pending = new Stack<string>();
+            pending.Push(root);
+            while (pending.Count > 0 && result.Count < MaxPreviewEntries)
+            {
+                var directory = pending.Pop();
+                IEnumerable<string> files;
+                try { files = Directory.EnumerateFiles(directory).OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray(); }
+                catch (IOException) { continue; }
+                catch (UnauthorizedAccessException) { continue; }
+                foreach (var file in files)
+                {
+                    if (result.Count >= MaxPreviewEntries || IsLink(file)) continue;
+                    var name = Path.GetFileName(file);
+                    if (IsExcludedFile(name)) continue;
+                    var kind = ChatAttachmentPolicy.IsAllowedTextName(name) ? "text"
+                        : ChatAttachmentPolicy.GetImageMediaType(name) is not null ? "image"
+                        : ChatAttachmentPolicy.IsAllowedPdfName(name) ? "pdf"
+                        : null;
+                    if (kind is null) continue;
+                    try
+                    {
+                        var length = new FileInfo(file).Length;
+                        var maxBytes = kind == "pdf" ? ChatAttachmentPolicy.MaxPdfBytes : kind == "image" ? ChatAttachmentPolicy.MaxFileBytes : MaxFileCharacters * 4L;
+                        if (length > maxBytes) continue;
+                        result.Add(new WorkspaceFileEntry(Path.GetRelativePath(root, file), Path.GetFullPath(file), kind));
+                    }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
                 try
                 {
                     foreach (var child in Directory.EnumerateDirectories(directory).OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase))

@@ -446,9 +446,9 @@ public sealed partial class MainPage
             if (path is not null && !project.FolderPaths.Contains(path, StringComparer.OrdinalIgnoreCase)) project.FolderPaths.Add(path);
             Refresh();
         };
-        var browse = new Button { Content = "Browse text files" };
-        AutomationProperties.SetName(browse, "Browse project text files");
-        AutomationProperties.SetHelpText(browse, "Open a read-only nested file list from the selected folders and preview a bounded text file.");
+        var browse = new Button { Content = "Browse files" };
+        AutomationProperties.SetName(browse, "Browse project files");
+        AutomationProperties.SetHelpText(browse, "Open a read-only nested file list from the selected folders and preview bounded text, image, or PDF files.");
         browse.Click += async (_, _) => await ShowProjectFileBrowserAsync(project);
         var panel = new StackPanel { Spacing = 10, Children = { count, list, add, browse } };
         var dialog = new ContentDialog { Title = $"Folders · {project.Name}", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
@@ -471,14 +471,18 @@ public sealed partial class MainPage
 
     private async Task ShowProjectFileBrowserAsync(LocalProject project)
     {
-        IReadOnlyList<(string Path, string Content)> files;
-        try { files = WorkspaceFileContext.ReadSelectedFiles(project.FolderPaths); }
+        IReadOnlyList<(string Path, string Content)> textFiles;
+        IReadOnlyList<WorkspaceFileContext.WorkspaceFileEntry> files;
+        try
+        {
+            textFiles = WorkspaceFileContext.ReadSelectedFiles(project.FolderPaths);
+            files = WorkspaceFileContext.EnumeratePreviewableFiles(project.FolderPaths);
+        }
         catch (Exception ex)
         {
             RuntimeStatus.Text = $"Project file browser could not read the selected folders: {ex.Message}";
             return;
         }
-
         var query = new TextBox { Header = "Filter files", PlaceholderText = "relative path" };
         AutomationProperties.SetName(query, "Filter project files");
         var results = new StackPanel { Spacing = 6 };
@@ -486,23 +490,57 @@ public sealed partial class MainPage
         void Refresh()
         {
             results.Children.Clear();
-            var matches = files.Where(item => string.IsNullOrWhiteSpace(query.Text) || item.Path.Contains(query.Text.Trim(), StringComparison.OrdinalIgnoreCase)).Take(16).ToArray();
-            results.Children.Add(new TextBlock { Text = $"{matches.Length} bounded text file{(matches.Length == 1 ? "" : "s")} shown; nothing was changed.", FontSize = 11, Opacity = 0.72 });
+            var matches = files.Where(item => string.IsNullOrWhiteSpace(query.Text) || item.RelativePath.Contains(query.Text.Trim(), StringComparison.OrdinalIgnoreCase)).Take(WorkspaceFileContext.MaxPreviewEntries).ToArray();
+            results.Children.Add(new TextBlock { Text = $"{matches.Length} bounded file{(matches.Length == 1 ? "" : "s")} shown; nothing was changed.", FontSize = 11, Opacity = 0.72 });
             foreach (var file in matches)
             {
-                var preview = new Button { Content = file.Path, HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
-                AutomationProperties.SetName(preview, $"Preview project file {file.Path}");
+                var preview = new Button { Content = $"{file.Kind} · {file.RelativePath}", HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(preview, $"Preview project file {file.RelativePath}");
                 preview.Click += async (_, _) =>
                 {
-                    var body = new TextBlock { Text = file.Content, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+                    UIElement body;
+                    if (file.Kind == "text")
+                    {
+                        var content = textFiles.FirstOrDefault(item => string.Equals(item.Path, file.RelativePath, StringComparison.OrdinalIgnoreCase)).Content ?? "The text preview is unavailable.";
+                        body = new TextBlock { Text = content, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+                    }
+                    else if (file.Kind == "image")
+                    {
+                        try
+                        {
+                            var bytes = WorkspaceFileEditor.ReadBytesBounded(file.FullPath, (int)ChatAttachmentPolicy.MaxFileBytes);
+                            var mediaType = ChatAttachmentPolicy.GetImageMediaType(file.RelativePath);
+                            if (!ChatAttachmentPolicy.HasValidImageSignature(mediaType, bytes)) throw new InvalidDataException("The image signature is not valid.");
+                            var bitmap = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+                            using var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+                            using var output = stream.GetOutputStreamAt(0);
+                            using var writer = new Windows.Storage.Streams.DataWriter(output);
+                            writer.WriteBytes(bytes);
+                            await writer.StoreAsync();
+                            await writer.FlushAsync();
+                            stream.Seek(0);
+                            await bitmap.SetSourceAsync(stream);
+                            body = new Image { Source = bitmap, Stretch = Stretch.Uniform, MaxWidth = 720, MaxHeight = 480 };
+                        }
+                        catch (Exception error) { body = new TextBlock { Text = $"Image preview unavailable: {error.Message}", TextWrapping = TextWrapping.Wrap }; }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var bytes = WorkspaceFileEditor.ReadBytesBounded(file.FullPath, (int)ChatAttachmentPolicy.MaxPdfBytes);
+                            body = new TextBlock { Text = PdfAttachmentTextExtractor.Extract(bytes, 12_000), TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+                        }
+                        catch (Exception error) { body = new TextBlock { Text = $"PDF text preview unavailable: {error.Message}", TextWrapping = TextWrapping.Wrap }; }
+                    }
                     var previewDialog = new ContentDialog
                     {
-                        Title = $"Preview · {file.Path}",
+                        Title = $"Preview · {file.RelativePath}",
                         Content = new ScrollViewer { Content = body, MaxHeight = 560, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
                         CloseButtonText = "Done",
                         XamlRoot = XamlRoot
                     };
-                    AutomationProperties.SetName(previewDialog, $"Preview project file {file.Path}");
+                    AutomationProperties.SetName(previewDialog, $"Preview project file {file.RelativePath}");
                     await previewDialog.ShowAsync();
                 };
                 results.Children.Add(preview);
@@ -517,7 +555,7 @@ public sealed partial class MainPage
             CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
-        AutomationProperties.SetName(dialog, "Browse project text files");
+        AutomationProperties.SetName(dialog, "Browse project files");
         dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => query.Focus(FocusState.Programmatic));
         await dialog.ShowAsync();
     }
