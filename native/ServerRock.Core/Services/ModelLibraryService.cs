@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Services;
 
@@ -189,7 +190,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
             var uri = new Uri("https://huggingface.co/api/models?" +
                 "search=" + Uri.EscapeDataString(searchText) + "&filter=gguf&sort=downloads&direction=-1&limit=50&full=true");
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.UserAgent.ParseAdd("ServerRockAI/1.0 (local model library)");
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("local model library"));
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(30));
             using var response = await _http.SendAsync(request, timeout.Token);
@@ -229,7 +230,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
             if (searchText.Length == 0) continue;
             var uri = new Uri("https://modelscope.cn/openapi/v1/models?search=" + Uri.EscapeDataString(searchText) + "&sort=downloads&page_size=20");
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.UserAgent.ParseAdd("ServerRockAI/1.0 (local model library)");
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("local model library"));
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
             using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, cancellationToken, "ModelScope search response");
@@ -269,7 +270,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
     {
         var uri = new Uri("https://modelscope.cn/api/v1/models/" + repository + "/repo/files?Revision=master&Recursive=True");
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.UserAgent.ParseAdd("ServerRockAI/1.0 (local model library)");
+        request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("local model library"));
         using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!response.IsSuccessStatusCode) return [];
         using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, cancellationToken, "ModelScope file manifest");
@@ -336,7 +337,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
                 if (blobMap.ContainsKey(fileName)) throw new InvalidOperationException("The selected ModelScope package contains duplicate GGUF shard filenames.");
                 var downloadUri = new Uri("https://modelscope.cn/api/v1/models/" + repositoryId + "/repo?Revision=master&FilePath=" + Uri.EscapeDataString(file.Path));
                 using var request = new HttpRequestMessage(HttpMethod.Get, downloadUri);
-                request.Headers.UserAgent.ParseAdd("ServerRockAI/1.0 (local model library)");
+                request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("local model library"));
                 using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
                 if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"ModelScope file download failed ({(int)response.StatusCode}) for {file.Path}.");
                 if (response.Content.Headers.ContentLength is > 0 and var contentLength && file.SizeBytes > 0 && contentLength != file.SizeBytes)

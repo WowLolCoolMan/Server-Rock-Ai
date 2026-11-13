@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 
 namespace ServerRock.Core.Services;
 
@@ -28,7 +29,7 @@ public sealed class WebSearchProvider(HttpClient? httpClient = null)
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(20));
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.UserAgent.ParseAdd("ServerRockAI/1.0 (desktop web search)");
+        request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("desktop web search"));
         using var response = await _http.SendAsync(request, timeout.Token);
         response.EnsureSuccessStatusCode();
         var html = await BoundedHttpContent.ReadTextAsync(response.Content, timeout.Token, "Web search response");

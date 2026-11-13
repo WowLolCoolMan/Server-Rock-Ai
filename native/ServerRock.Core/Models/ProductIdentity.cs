@@ -7,6 +7,14 @@ public static class ProductIdentity
     public const string ShortName = "Server Rock";
     public const string ClientName = "Server Rock AI";
 
+    // Stable protocol identifier for outbound User-Agent headers. This is intentionally
+    // independent from the display name and must not change during a visual rebrand.
+    public const string UserAgentProduct = "ServerRockAI";
+    public const string UserAgentVersion = "1.0";
+
+    public static string UserAgent(string surface) =>
+        $"{UserAgentProduct}/{UserAgentVersion} ({surface})";
+
     // Stable storage identifiers are intentionally independent from the display name so a
     // future rebrand does not strand existing protected GitHub credentials or keyring entries.
     public const string GitHubCredentialEntropy = "Server Rock AI GitHub credential v1";
