@@ -59,6 +59,9 @@ validate parity.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
   safe durable task states; every action refreshes from the host after the
   transition.
+- Electron Projects can open a bounded project-file browser. It shows only
+  relative paths and byte counts, reports protected/dependency/link skips, and
+  never returns file contents to the renderer.
 - `npm run smoke:agent-host` exercises the replacement protocol against
   disposable settings and conversation files, including persistence round trips.
 - `apps/desktop` typecheck and production build pass.
@@ -67,6 +70,8 @@ validate parity.
   `open`; explicit `*:legacy-native` aliases preserve the Uno rollback path.
 - `npm run audit:electron-runtime` verifies the default commands and the
   Electron sandbox/context-isolation/preload boundary.
+- A live disposable host smoke verifies `project.files` filtering and the
+  existing 128-entry browser limit.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and

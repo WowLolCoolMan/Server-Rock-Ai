@@ -3,6 +3,45 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 242 — Port the bounded project browser to Electron
+
+Status: `implemented_host_renderer_safety_smoke_verified`
+
+The Electron replacement now exposes `project.files` through the persistent
+host. It reuses `WorkspaceFileContext.EnumerateTextFileBrowser`, returning only
+relative paths, byte counts, and the existing safe-boundary summary. Protected
+files, dependency/build directories, linked paths, and the 128-entry limit
+remain enforced by Core. The renderer can open a selected project and inspect
+the bounded file list without receiving file contents or direct filesystem
+access.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `services/agent-host/README.md`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- Disposable stdio smoke verified project-file round trip, protected-file and
+  dependency filtering, and the bounded browser summary.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the route reads only explicitly selected project
+folders through the existing Core safety boundary and returns metadata only;
+no file content, credential, or external network capability was added.
+
+Rollback: remove `project.files` and the renderer browser; persisted project
+metadata and the legacy browser remain readable.
+
+Remaining: file preview/editing, multi-file tabs, terminal, Git review,
+attachments/RAG, and the remaining replacement parity gates remain open.
+
 ## Slice 241 — Enforce the Electron replacement boundary
 
 Status: `implemented_audit_and_build_verified`
