@@ -542,6 +542,20 @@ public sealed partial class MainPage
             context.Add(ModelInstructions.UntrustedAttachments);
         if (!string.IsNullOrWhiteSpace(_pendingWebContext)) context.Add(_pendingWebContext);
         if (!string.IsNullOrWhiteSpace(_settings.ProjectInstructions)) context.Add(_settings.ProjectInstructions);
+        if (_settings.MemoryInjectionEnabled)
+        {
+            try
+            {
+                var projectName = _projects.FirstOrDefault(item => item.Id == _activeProjectId)?.Name;
+                var memory = MemoryPromptContext.Build(_memoryStore.Load(), true, projectName);
+                if (!string.IsNullOrWhiteSpace(memory)) context.Add(memory);
+            }
+            catch (Exception exception)
+            {
+                App.Log.Error("Memory", exception, "Saved memory could not be loaded for prompt context");
+                RuntimeStatus.Text = "Saved memory could not be loaded; sending without memory context.";
+            }
+        }
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
         var includeProjectFiles = _mode == WorkspaceModes.CodingAgent || _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
         if (includeProjectFiles && project is not null && project.FolderPaths.Count > 0)

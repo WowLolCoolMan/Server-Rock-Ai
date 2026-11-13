@@ -18,6 +18,7 @@ public sealed class AppSettings
     public double Temperature { get; set; } = 0.7;
     public bool WebSearchEnabled { get; set; }
     public bool SmartPromptRewritingEnabled { get; set; }
+    public bool MemoryInjectionEnabled { get; set; }
     public bool VoiceOutputEnabled { get; set; }
     public string AccentColor { get; set; } = "cyan";
     public string ThemeMode { get; set; } = "light";

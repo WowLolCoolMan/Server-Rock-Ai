@@ -1845,6 +1845,49 @@ Not yet verified: live Windows keyboard/screen-reader activation of the new
 history dialog, cross-platform accessibility behavior, persistent export, and
 full NotificationCenter severity/action semantics.
 
+## Slice 89 — explicit bounded memory injection
+
+Status: `implemented_verified_core_and_native_build`
+
+The existing local memory editor now has a separate global consent switch for
+including enabled memory in future model requests. The switch is off by
+default and is saved only when the user chooses Done in the Memory dialog.
+When enabled, prompt assembly includes only enabled `global` notes and notes
+scoped to the active project, labels them as untrusted reference material, and
+caps the complete context section at 6,000 characters. Disabled, unrelated,
+or unavailable memory is not injected; malformed memory fails closed for
+context while the prompt continues without it and exposes a status message.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Services/MemoryPromptContext.cs`
+- `native/ServerRock.Core.Tests/MemoryPromptContextTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including explicit opt-in, scope filtering, disabled-entry filtering, reference labeling, and the 6,000-character bound.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (141 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: injection is disabled by default and is not
+learned from chats. Enabling it can send approved local notes to the selected
+endpoint, including a remote endpoint; the Memory dialog discloses this before
+the switch is used. Context is bounded and marked as untrusted reference
+material. No dependency or third-party code was added.
+
+Rollback: remove the global setting, `MemoryPromptContext`, prompt assembly
+call, and consent control; local memory editing and backup remain available.
+
+Not yet verified: live Windows toggle/save/send acceptance, remote-endpoint
+consent wording during an actual injected request, cross-platform UI behavior,
+semantic retrieval, and larger-context support.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

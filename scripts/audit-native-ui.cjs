@@ -105,6 +105,7 @@ const requiredCode = [
   ['Settings validation is announced', 'AutomationProperties.SetLiveSetting(saveValidation, AutomationLiveSetting.Assertive)'],
   ['Memory management action', 'AutomationProperties.SetName(memory, "Manage saved memory")'],
   ['Memory local-only disclosure', 'Saved memory is local, explicit, and reviewable. Nothing is extracted from chats automatically'],
+  ['Memory injection consent', 'AutomationProperties.SetName(allowInjection, "Allow approved memory injection")'],
   ['Memory editor accessible label', 'AutomationProperties.SetName(content, "Memory content")'],
   ['Memory delete action', 'AutomationProperties.SetName(remove, "Delete memory")'],
   ['Memory export action', 'AutomationProperties.SetName(export, "Export saved memory backup")'],

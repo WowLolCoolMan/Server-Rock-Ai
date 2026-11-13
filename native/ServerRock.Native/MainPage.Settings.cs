@@ -30,6 +30,7 @@ public sealed partial class MainPage
         var content = new TextBox { Header = "Memory", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 120, MaxHeight = 220, PlaceholderText = "A fact or project note you explicitly want to remember" };
         var tags = new TextBox { Header = "Tags", PlaceholderText = "comma-separated" };
         var enabled = new CheckBox { Content = "Use this memory when enabled by a future context review", IsChecked = true };
+        var allowInjection = new CheckBox { Content = "Allow enabled notes in future model requests", IsChecked = _settings.MemoryInjectionEnabled };
         var save = new Button { Content = "Save memory", MinWidth = 120 };
         var export = new Button { Content = "Export backup", MinWidth = 120 };
         var import = new Button { Content = "Import backup", MinWidth = 120 };
@@ -47,6 +48,8 @@ public sealed partial class MainPage
         AutomationProperties.SetName(export, "Export saved memory backup");
         AutomationProperties.SetName(import, "Import saved memory backup");
         AutomationProperties.SetName(remove, "Delete memory");
+        AutomationProperties.SetName(allowInjection, "Allow approved memory injection");
+        AutomationProperties.SetHelpText(allowInjection, "Off by default. When enabled, only enabled global or active-project notes are sent with a prompt, including to the selected remote endpoint.");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
 
         void ClearEditor()
@@ -207,12 +210,18 @@ public sealed partial class MainPage
                         content,
                         tags,
                         enabled,
+                        allowInjection,
                         new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7, Children = { newEntry, save, import, export, disable, remove } },
                         status
                     }
                 },
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto
             }
+        };
+        dialog.PrimaryButtonClick += (_, _) =>
+        {
+            _settings.MemoryInjectionEnabled = allowInjection.IsChecked == true;
+            SaveSettings();
         };
         UiTheme.Standardize(dialog);
         ClearEditor();
