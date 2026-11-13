@@ -6918,3 +6918,35 @@ controls and `TryValidateCustomAsset` to restore picker-only customization.
 
 Remaining: native picker hosting, packaged cross-platform behavior, full
 breakpoint/scale collision matrix, and modal focus restoration.
+
+## Slice 177 — Read-only agent task detail review
+
+Status: `implemented_build_audit_verified`
+
+Activity & tasks agent artifacts now expose an `Inspect task details` action.
+The read-only dialog presents the bounded task title, status, role, instruction,
+result summary, and artifact labels from the existing local artifact record.
+It does not claim, queue, dispatch, execute, or send anything.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the dialog reads existing local task-artifact
+metadata only. It does not access credentials, send provider or network
+requests, execute instructions, write project files, or change pet state.
+
+Rollback: remove the detail button and its read-only dialog handler; task
+planning, queue, cancellation, and persistence remain unchanged.
+
+Remaining: actual parallel dispatch, process/worktree isolation, task execution
+results beyond local review, background execution, and cross-platform acceptance.

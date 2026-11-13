@@ -236,6 +236,32 @@ public sealed partial class MainPage
                     taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                 if (task.ArtifactLabels.Count > 0)
                     taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                var inspectAgentTask = new Button { Content = "Inspect task details", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(inspectAgentTask, "Inspect agent task details");
+                AutomationProperties.SetHelpText(inspectAgentTask, "Review this local task plan, instruction, result, and artifact labels without starting work.");
+                inspectAgentTask.Click += async (_, _) =>
+                {
+                    var detailContent = new StackPanel { Spacing = 8 };
+                    AutomationProperties.SetName(detailContent, "Agent task details");
+                    detailContent.Children.Add(new TextBlock { Text = task.Title, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = $"{task.Status} · {task.Role} · updated {task.UpdatedAtUtc.ToLocalTime():g}", FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = "Instruction", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                    detailContent.Children.Add(new TextBlock { Text = task.Instruction, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = "Result summary", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                    detailContent.Children.Add(new TextBlock { Text = string.IsNullOrWhiteSpace(task.ResultSummary) ? "No result recorded yet." : task.ResultSummary, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = "Artifact labels", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                    detailContent.Children.Add(new TextBlock { Text = task.ArtifactLabels.Count == 0 ? "No artifact labels recorded." : string.Join(", ", task.ArtifactLabels), TextWrapping = TextWrapping.Wrap });
+                    var detailDialog = new ContentDialog
+                    {
+                        Title = "Agent task details",
+                        Content = new ScrollViewer { Content = detailContent, MaxHeight = 520, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+                        CloseButtonText = "Done",
+                        XamlRoot = XamlRoot
+                    };
+                    AutomationProperties.SetName(detailDialog, "Agent task details");
+                    await detailDialog.ShowAsync();
+                };
+                taskPanel.Children.Add(inspectAgentTask);
                 if (task.Status == AgentTaskStatuses.Proposed)
                 {
                     var queueAgentTask = new Button { Content = "Queue for future executor", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
