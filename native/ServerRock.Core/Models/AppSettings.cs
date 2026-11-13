@@ -40,6 +40,8 @@ public sealed class AppSettings
     public string ImageWorkflow { get; set; } = "";
     public string GitHubAppClientId { get; set; } = "";
     public List<string> ChatFolders { get; set; } = [];
+    /// <summary>Bounded local prompt snippets; never sent unless inserted or explicitly expanded.</summary>
+    public List<PromptSnippet> PromptSnippets { get; set; } = [];
     public List<string> InstalledPlugins { get; set; } = [];
     public string? ProjectPath { get; set; }
     public string? ProjectInstructions { get; set; }

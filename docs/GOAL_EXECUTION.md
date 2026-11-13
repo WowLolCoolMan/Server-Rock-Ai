@@ -6420,3 +6420,54 @@ restart persistence and reduced-motion behavior, then extend the preset catalog
 only through similarly bounded, accessible visual components. Cross-platform
 Skia, packaged-runtime, localization, and full accessibility coverage remain
 open.
+
+## Slice 166 — Local prompt snippets with reviewable expansion
+
+Status: `implemented_verified_windows_save_insert_expansion_pending`
+
+Added a bounded Prompt snippets surface reachable from the command palette and
+More workspace options. Users can save up to 24 local snippets, each capped at
+4,000 characters, insert one into the composer, or explicitly ask the selected
+model to expand it. Expansion is not automatic: the returned candidate is shown
+in an editable review dialog and only the explicit Use expanded text action puts
+it into the composer. Saved snippets remain local settings data and are not sent
+until the user inserts them or requests expansion.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/PromptSnippet.cs`
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.Snippets.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including settings round-trip coverage for snippets.
+- `npm run audit:native-ui` — passed with 221 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Prompt snippets from Ctrl+K, saved disposable
+  `Review checklist`, inserted it into the composer, and observed the saved
+  snippet and exact composer text in the accessibility tree.
+
+Privacy/security/licensing: snippets are bounded local JSON preferences. An
+expansion is a visible, user-triggered provider request using the selected route;
+the review candidate is not auto-sent or silently saved. No files, credentials,
+pet state, or background tasks were accessed.
+
+Rollback: delete the saved snippet from the local settings file or use the
+existing settings recovery path; removing the command and More entry leaves
+normal composer behavior unchanged.
+
+Remaining: run a live expansion against a compatible endpoint, verify provider
+failure and cancellation messaging, then check the future feature item. Full
+cross-platform accessibility and packaged-runtime coverage remain open.

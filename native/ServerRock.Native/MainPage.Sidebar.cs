@@ -734,6 +734,7 @@ public sealed partial class MainPage
         AddAction("Code Review Agent", "review", "Review a folder, ZIP, or GitHub repository with your selected model.");
         AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
         AddAction("In-app documentation", "documentation", "Review local-first usage, privacy, safety, and workflow guidance.");
+        AddAction("Prompt snippets", "snippets", "Save reusable prompt text, insert it into the composer, or preview a model expansion.");
         AddAction("Connection & settings", "settings", "Configure model endpoints, privacy, voice, and local preferences.");
         dialog = new ContentDialog { Title = "More workspace options", Content = actions, CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         await dialog.ShowAsync();
@@ -744,6 +745,7 @@ public sealed partial class MainPage
             case "review": await OpenCodeReviewAgentAsync(); break;
             case "health": await ShowLocalHealthAsync(includeMap: false); break;
             case "documentation": await ShowInAppDocumentationAsync(); break;
+            case "snippets": await OpenSnippetsAsync(); break;
             case "settings": SettingsClick(this, new RoutedEventArgs()); break;
         }
     }

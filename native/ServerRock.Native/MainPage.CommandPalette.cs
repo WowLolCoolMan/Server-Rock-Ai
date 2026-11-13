@@ -29,6 +29,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("Code Review Agent", "review zip repository", OpenCodeReviewAgentAsync),
             new CommandPaletteItem("Health scan", "architecture map diagnostics", () => ShowLocalHealthAsync(includeMap: false)),
             new CommandPaletteItem("In-app documentation", "help guide privacy safety local workflow", ShowInAppDocumentationAsync),
+            new CommandPaletteItem("Prompt snippets", "saved prompts templates expand composer", OpenSnippetsAsync),
         };
 
         var query = new TextBox { PlaceholderText = "Search actions", MinWidth = 420 };
