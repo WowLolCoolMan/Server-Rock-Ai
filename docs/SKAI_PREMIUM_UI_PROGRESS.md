@@ -43,6 +43,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `52808f6` — added the existing transparent Skai wolf icon to the shell brand lockup and wired the tracked asset pack through the renderer build without adding decorative artwork to dense workflows.
 - `f3c9601` — added a branded Chat first-run state and changed the wolf asset reference to a Vite-bundled resource so packaged Electron history routes do not depend on public-root URL resolution.
 - `b771eaa` — replaced sidebar Unicode glyphs with a reusable accessible SVG navigation icon set for workspace routes, utilities, and Settings.
+- `e676e05` — added a local conversation context menu with stable-ID Open, Rename, Pin/Unpin, and Archive actions, plus compact desktop action spacing.
 
 ## Current evidence
 
@@ -87,6 +88,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Branded shell check: passed tracked wolf asset loading with preserved transparency, accessible decorative-image treatment, responsive shell rendering, and no Cloud UI. Screenshot: `output/playwright/skai-branded-shell.png`.
 - Chat first-run check: passed the branded empty state, hashed asset loading from `dist/assets`, visible composer, fresh Electron renderer launch, and no Cloud UI. Screenshot: `output/playwright/skai-chat-branded-empty.png`.
 - Sidebar navigation check: passed all nine route transitions, active-state styling, nine SVG icon instances, no horizontal overflow at 1280px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-svg-icons.png`. Fresh Electron process launch also passed; the Windows accessibility surface did not settle to the renderer content on the final restart, so this checkpoint does not claim a live Electron visual screenshot.
+- Conversation context-menu check: passed right-click and keyboard-visible menu actions for stable-ID pinning and renaming, persisted title rendering, compact action-row geometry at 1440px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-context-menu.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
