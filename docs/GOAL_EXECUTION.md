@@ -6474,3 +6474,49 @@ normal composer behavior unchanged.
 
 Remaining: verify provider failure and cancellation messaging for expansion.
 Full cross-platform accessibility and packaged-runtime coverage remain open.
+
+## Slice 167 — Review-first built-in translator
+
+Status: `implemented_verified_windows_review_and_insert`
+
+Added a bounded translator reachable from Ctrl+K and More workspace options.
+Users enter source text, choose a target language, explicitly request a
+translation through the selected model route, edit the candidate in a review
+dialog, and explicitly insert the reviewed result into the composer. Translation
+never sends the composer automatically.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Translator.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed.
+- `npm run audit:native-ui` — passed with 224 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Translate text from Ctrl+K, entered disposable
+  `Hello handoff`, selected Spanish, observed the editable `Review Spanish
+  translation` result, activated `Use translation`, and verified `Hola, cambio`
+  in `PromptBox` with the status `Nothing was sent.`
+
+Privacy/security/licensing: translation is an explicit provider request through
+the selected route. Source text is disclosed in the translation prompt, the
+candidate remains editable and reviewable, and no message is sent automatically.
+No files, credentials, pets state, or background tasks were accessed.
+
+Rollback: remove the translator command and More action; normal composer and
+provider behavior remain unchanged. Existing settings and conversation data are
+not migrated or rewritten.
+
+Remaining: provider failure/cancellation acceptance, richer language detection,
+localization, full cross-platform accessibility, and packaged-runtime coverage
+remain open.

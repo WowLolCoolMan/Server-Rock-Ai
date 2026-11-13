@@ -735,6 +735,7 @@ public sealed partial class MainPage
         AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
         AddAction("In-app documentation", "documentation", "Review local-first usage, privacy, safety, and workflow guidance.");
         AddAction("Prompt snippets", "snippets", "Save reusable prompt text, insert it into the composer, or preview a model expansion.");
+        AddAction("Translate text", "translator language", "Translate text with the selected model and review it before inserting it into the composer.");
         AddAction("Connection & settings", "settings", "Configure model endpoints, privacy, voice, and local preferences.");
         dialog = new ContentDialog { Title = "More workspace options", Content = actions, CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         await dialog.ShowAsync();
@@ -746,6 +747,7 @@ public sealed partial class MainPage
             case "health": await ShowLocalHealthAsync(includeMap: false); break;
             case "documentation": await ShowInAppDocumentationAsync(); break;
             case "snippets": await OpenSnippetsAsync(); break;
+            case "translator": await OpenTranslatorAsync(); break;
             case "settings": SettingsClick(this, new RoutedEventArgs()); break;
         }
     }

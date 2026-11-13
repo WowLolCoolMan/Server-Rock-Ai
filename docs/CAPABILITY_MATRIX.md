@@ -232,3 +232,9 @@ over a blue gradient), and Deep Space (animated stars, planets, and drifting UFO
 silhouettes). Reduced decorative motion pauses the animation while retaining the
 selected visual. Core settings persistence and desktop build verification passed;
 live Windows visual acceptance remains required before this is release-complete.
+
+Recent slice note — Slice 167: added a review-first built-in translator reachable
+from Ctrl+K and More. A disposable phrase was translated to Spanish through the
+selected local model, shown in an editable review dialog, and explicitly inserted
+into the composer without sending a message. Provider failure, cancellation,
+localization, and cross-platform accessibility coverage remain open.

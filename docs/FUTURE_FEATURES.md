@@ -104,7 +104,7 @@ and acceptance evidence.
 - [ ] Drag-and-drop pane layouts.
 - [x] Custom themes. (Light/dark palettes plus persisted Deep Sea and Deep Space ambient presets with reduced-motion support.)
 - [ ] Cloud sync across devices.
-- [ ] Built-in translator.
+- [x] Built-in translator. (Review-first translation through the selected model with explicit composer insertion.)
 - [x] Text snippets with AI expansion. (Bounded local save/insert plus review-first model expansion.)
 - [ ] Window management.
 - [ ] Quicklinks for frequent-access bookmarks.
