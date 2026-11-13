@@ -5675,3 +5675,39 @@ wording. Runtime behavior is unchanged.
 Not yet verified: selecting `.md` and reading back the written file, split-pane
 chat view, per-conversation Markdown directory layout, and packaged
 cross-platform export acceptance. The combined future item remains unchecked.
+
+## Slice 149 — live Markdown export write/readback
+
+Status: `implemented_verified_windows_markdown_write_readback`
+
+The native Windows export journey now covers the complete disposable Markdown
+write/readback path. A synthetic local-model conversation was exported through
+the native picker with `Server Rock Markdown transcript` selected and the file
+was written to `.tmp-live-slice149/export.md`. The app reported one exported
+conversation, and an independent readback assertion confirmed the `# Chat
+export` header, `Conversations: 1` metadata, synthetic user message, and
+assistant transcript section.
+
+Evidence:
+
+- Launched the built `net10.0-desktop` app with isolated settings and
+  conversation paths under `.tmp-live-slice149/`.
+- Created one synthetic conversation using the local Ollama endpoint.
+- Selected the Markdown type in the native Save As picker and wrote only to
+  the disposable workspace path.
+- Observed the in-app status: `Exported 1 saved conversation(s) to
+  export.md.`
+- Read the resulting 7,237-byte file and ran deterministic marker assertions;
+  all checks passed.
+
+Privacy/security/licensing: the journey used synthetic content and an
+on-device model only. No user Documents data, credentials, network search,
+pets state, or handoff files were accessed or modified.
+
+Rollback: revert this evidence section and remove the disposable validation
+artifacts; runtime behavior is unchanged.
+
+Not yet verified: split-pane chat view, per-conversation Markdown directory
+layout, packaged cross-platform export acceptance, and broader export-content
+fidelity evaluation. The combined future item remains unchecked until split
+view is complete.
