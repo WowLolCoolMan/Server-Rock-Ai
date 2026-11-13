@@ -70,6 +70,10 @@ public sealed partial class MainPage
     {
         if (_companionAnimationHooked) return;
         _companionAnimationHooked = true;
+        // The sidebar has ZIndex 2 (so the compact drawer covers its scrim), which hid the pet
+        // whenever it was dragged or walked over the sidebar. The overlay is collapsed while the
+        // drawer is open (SetCompanionOverlayBlocked), so above the sidebar is always right.
+        Canvas.SetZIndex(CompanionOverlay, 3);
         _companionTransform = new CompositeTransform { CenterX = 40, CenterY = 80 };
         CompanionSprite.RenderTransform = _companionTransform;
         _companionSpeechHideAt = CompanionNow + CompanionIdleSpeechSeconds;
