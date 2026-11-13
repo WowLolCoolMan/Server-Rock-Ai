@@ -103,7 +103,37 @@ files only get small hooks.
 
 ## Wander (phase 2)
 
-Not started.
+Status: built, behind "Let the pet wander" (pet chooser dialog, saved as `wander` in
+`companion.json`; `null` means "not chosen", so the app default applies). Default is still OFF.
+
+- Grid and planning: `ServerRock.Core/Services/PetWanderPlanner.cs` (`PetWanderGrid`,
+  `PetWanderPlanner`, `PetWalk`), tested in `PetWanderPlannerTests.cs` with seeded randoms.
+- UI: `MainPage.CompanionWander.cs`, riding on the pet animation timer (60 fps while walking).
+- Blocked cells: every cell where the pet card (bubble included) would overlap the composer
+  control, Send or Stop, plus 8 px clearance.
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| Walks cell to cell, never jumps | Pass | Logged card position every second: 78–90 px/s, continuous. Core test proves every step is one neighboring cell and the glide never exceeds its speed. |
+| Render rate while walking | Pass | Uno reported 60 rendered frames/s and 60 timer ticks/s during walks (temporary counter, removed). |
+| Rests 2–6 s | Pass | Core test plus log. |
+| Never over the composer at 1440×900 | Pass | 0 overlapping ticks in 60 s. |
+| Never over the composer at 760×560 | Pass, after fix | The shrink itself can drop the pet onto the composer; it used to take ~3 s to leave, now it starts walking off within 0.2 s. |
+| Stop/resume around states | Pass (code) | Slides to a stop over 0.3 s when the state leaves idle; resumes 5 s after idle. |
+| Drag/keys pause 30 s | Pass (code) | Any outside move of the card cancels the walk and waits 30 s. |
+| Hidden / Reduce motion / wander off | Pass | Nothing ticks for wander; the shared timer is stopped while hidden or with Reduce motion. |
+
+Known limits:
+- While the pet is busy (thinking, coding…) it doesn't walk; if a resize drops it on the
+  composer in that moment, it walks off when it's idle again.
+- Rig limitation: on the headless display used here, screen captures only refresh 1–4 times a
+  second (the virtual output throttles presents), so recordings look choppy even though the app
+  renders at 60 fps. The smoothness evidence is the in-app frame counter and position log above,
+  not the videos.
+
+### Full-desktop wandering (research only, not built)
+
+Not yet researched; next round.
 
 ## Push log
 
@@ -112,3 +142,4 @@ Not started.
 | 23:49 | 2582816, 32c4668 | Smoke test round 1, bug list and fix plan; one-line Linux fix for the Markdown export file-name test (owner's file, see commit). |
 | 00:01 | f338d8c 7ec2887 3be18c6 c2f2735 | Re-cut frames, state animations, cross-fades, bubble, Stop/idle fixes; round-2 smoke table. |
 | 00:04 | 0b6dfa6 | Wander planner + Core tests (not wired to the UI yet). |
+| 00:19 | 881c19d | Wander in the UI behind "Let the pet wander" (off by default); wander smoke results. |
