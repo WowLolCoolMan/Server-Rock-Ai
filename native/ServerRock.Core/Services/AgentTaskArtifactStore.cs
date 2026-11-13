@@ -63,13 +63,23 @@ public sealed class AgentTaskArtifactStore
 
     public AgentTaskArtifact Queue(string id) => Transition(id, AgentTaskStatuses.Proposed, AgentTaskStatuses.Queued);
 
+    /// <summary>Returns the oldest dependency-ready queued task without changing local state or dispatching work.</summary>
+    public AgentTaskArtifact? GetNextReady()
+    {
+        var tasks = Load();
+        return tasks
+            .Where(task => IsReady(task, tasks))
+            .OrderBy(task => task.CreatedAtUtc)
+            .Select(Copy)
+            .FirstOrDefault();
+    }
+
     /// <summary>Claims one ready queued task for a future executor; this method performs no external work.</summary>
     public AgentTaskArtifact? TryClaimReady(DateTimeOffset? now = null)
     {
         var tasks = Load().ToList();
         var current = now ?? DateTimeOffset.UtcNow;
-        var task = tasks.Where(item => item.Status == AgentTaskStatuses.Queued && item.DependsOn.All(dependencyId =>
-                tasks.Any(dependency => dependency.Id == dependencyId && dependency.Status == AgentTaskStatuses.Completed)))
+        var task = tasks.Where(item => IsReady(item, tasks))
             .OrderBy(item => item.CreatedAtUtc).FirstOrDefault();
         if (task is null) return null;
         task.Status = AgentTaskStatuses.Running;
@@ -77,6 +87,10 @@ public sealed class AgentTaskArtifactStore
         Save(tasks);
         return Copy(task);
     }
+
+    private static bool IsReady(AgentTaskArtifact task, IReadOnlyList<AgentTaskArtifact> tasks) =>
+        task.Status == AgentTaskStatuses.Queued && task.DependsOn.All(dependencyId =>
+            tasks.Any(dependency => dependency.Id == dependencyId && dependency.Status == AgentTaskStatuses.Completed));
 
     public AgentTaskArtifact Complete(string id, string resultSummary, IEnumerable<string>? artifactLabels = null) =>
         Finish(id, AgentTaskStatuses.Completed, resultSummary, artifactLabels);

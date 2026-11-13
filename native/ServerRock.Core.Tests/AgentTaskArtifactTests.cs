@@ -14,8 +14,11 @@ internal static class AgentTaskArtifactTests
             var first = store.Create("Inspect provider routing", "Review capability preflight evidence.", "researcher", "run-1");
             var second = store.Create("Verify the routing change", "Check the result against the first task.", "verifier", dependsOn: [first.Id]);
             Check(first.Status == AgentTaskStatuses.Proposed && second.DependsOn.SequenceEqual([first.Id]), "agent task artifacts preserve roles and dependencies");
+            Check(store.GetNextReady() is null, "agent task readiness preview ignores proposed tasks");
             Check(store.TryClaimReady() is null, "queued dependent agent task is not claimable before its prerequisite is queued and completed");
             store.Queue(first.Id);
+            var preview = store.GetNextReady();
+            Check(preview?.Id == first.Id && store.Load().Single(task => task.Id == first.Id).Status == AgentTaskStatuses.Queued, "agent task readiness preview is dependency-aware and non-mutating");
             var claimedFirst = store.TryClaimReady();
             Check(claimedFirst?.Id == first.Id && claimedFirst.Status == AgentTaskStatuses.Running, "queued root agent task can be claimed without dispatching external work");
             store.Complete(first.Id, "Routing evidence reviewed.", ["local-review"]);

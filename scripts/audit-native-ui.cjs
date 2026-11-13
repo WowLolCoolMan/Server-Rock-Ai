@@ -125,6 +125,8 @@ const requiredCode = [
   ['Scheduled task run-now control', 'AutomationProperties.SetName(runNow, "Run scheduled task now")'],
   ['Agent task artifact section', 'AutomationProperties.SetName(agentTaskHeader, "Agent task artifacts")'],
   ['Agent task planning action', 'AutomationProperties.SetName(planAgentTask, "Plan agent task")'],
+  ['Agent task readiness preview', 'AutomationProperties.SetName(previewReadyAgentTask, "Preview next ready agent task")'],
+  ['Agent task readiness safety disclosure', 'Preview only; no task was claimed or started.'],
   ['Agent task planning initial focus', 'dialog.Opened += (_, _) => title.Focus(FocusState.Programmatic);'],
   ['Agent task planning disclosure', 'This saves a local plan only. It does not start an agent'],
   ['Agent task dependency picker', 'AutomationProperties.SetName(dependencyPicker, "Agent task prerequisites")'],

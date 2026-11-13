@@ -149,6 +149,21 @@ public sealed partial class MainPage
         AutomationProperties.SetHelpText(planAgentTask, "Save a local task plan for later review. This does not start an agent or send a provider request.");
         planAgentTask.Click += async (_, _) => await CreateAgentTaskAsync(dialog);
         content.Children.Add(planAgentTask);
+        var previewReadyAgentTask = new Button { Content = "Preview next ready task", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(previewReadyAgentTask, "Preview next ready agent task");
+        AutomationProperties.SetHelpText(previewReadyAgentTask, "Inspect the next dependency-ready local task. This does not claim, start, or dispatch it.");
+        previewReadyAgentTask.Click += (_, _) =>
+        {
+            try
+            {
+                var readyTask = _agentTaskStore.GetNextReady();
+                RuntimeStatus.Text = readyTask is null
+                    ? "No agent task is ready. Queue state or prerequisites still require review. No work was started."
+                    : $"Ready agent task: {readyTask.Title}. Preview only; no task was claimed or started.";
+            }
+            catch (Exception ex) { RuntimeStatus.Text = $"Agent task readiness could not be previewed: {ex.Message}"; }
+        };
+        content.Children.Add(previewReadyAgentTask);
         if (agentTasks.Count == 0)
         {
             content.Children.Add(new TextBlock { Text = "No agent task artifacts have been recorded. Task planning remains local and does not dispatch agents automatically.", TextWrapping = TextWrapping.Wrap });

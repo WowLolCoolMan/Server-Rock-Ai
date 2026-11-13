@@ -1942,6 +1942,48 @@ Uno App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
 parallel execution limits, process/container/worktree isolation, background
 execution, cross-platform acceptance, and packaged release acceptance.
 
+## Slice 120 — preview the next dependency-ready agent task
+
+Status: `implemented_verified_build`
+
+The Activity surface now offers `Preview next ready agent task`. It uses a
+read-only dependency-aware store query, chooses the oldest queued task whose
+prerequisites are completed, and leaves the task queued. Proposed tasks and
+queued tasks with incomplete prerequisites are not reported as ready. The
+surface explicitly states that previewing does not claim, start, dispatch, or
+call a provider.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with the readiness-preview contracts.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including non-mutating readiness and dependency gating assertions.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: readiness preview reads only bounded local task
+metadata. It does not mutate task status, access credentials, send network
+requests, invoke tools, or create background work.
+
+Rollback: remove `GetNextReady` and the Activity preview button; queue and
+future-executor state remain unchanged.
+
+Not yet verified: deterministic live activation of the preview control through
+the unavailable Uno App MCP harness, actual sub-agent delegation,
+parallel execution limits, process/container/worktree isolation, background
+execution, cross-platform acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
