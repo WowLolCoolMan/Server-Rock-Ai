@@ -52,10 +52,11 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
+            "project.files" => ListProjectFiles(request),
             "tasks.list" => ListTasks(request),
             "tasks.queue" => TransitionTask(request, "queue"),
             "tasks.cancel" => TransitionTask(request, "cancel"),
@@ -130,6 +131,23 @@ public static class AgentHostLoop
         if (projects.All(item => item.Id != project.Id)) projects.Add(project);
         store.Save(projects);
         return new(ProtocolVersion, request.Id, true, new { id = project.Id, name = project.Name, updatedAt = project.UpdatedAt });
+    }
+
+    private static AgentResponse ListProjectFiles(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var snapshot = WorkspaceFileContext.EnumerateTextFileBrowser(project.FolderPaths);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            projectId = id,
+            files = snapshot.Files.Select(file => new { relativePath = file.RelativePath, bytes = file.Bytes }).ToArray(),
+            protectedFilesSkipped = snapshot.ProtectedFilesSkipped,
+            excludedDirectoriesSkipped = snapshot.ExcludedDirectoriesSkipped,
+            linkedPathsSkipped = snapshot.LinkedPathsSkipped,
+            hitEntryLimit = snapshot.HitEntryLimit,
+        });
     }
 
     private static AgentResponse ListTasks(AgentRequest request)

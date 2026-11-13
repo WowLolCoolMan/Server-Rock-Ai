@@ -94,8 +94,14 @@ textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(
 .folder-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .folder-chips span { max-width: 100%; overflow: hidden; border: 1px solid #3a5277; border-radius: 7px; padding: 6px 8px; color: #b9d2f4; background: #17263c; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .project-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #30425d; border-radius: 10px; padding: 14px; background: #172337; }
+.project-button { width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.project-button:hover, .project-button.selected { border-color: #78a9ff; background: #203554; }
 .project-row div { display: grid; gap: 5px; }
 .project-row span, .project-row small { color: #91a3bc; font-size: 12px; }
+.project-browser { margin-top: 28px; border-top: 1px solid #2d3f5a; padding-top: 18px; }
+.browser-summary { color: #91a3bc; font-size: 12px; }
+.file-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #26364f; padding: 9px 0; color: #cbd8e9; font-family: ui-monospace, monospace; font-size: 12px; }
+.file-row small { color: #71839d; }
 .workbench-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 26px; }
 .section-kicker { margin-bottom: 10px; color: #8ea1ba; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 .task-row { display: grid; gap: 8px; margin-bottom: 9px; border: 1px solid #30425d; border-radius: 10px; padding: 13px; background: #172337; }

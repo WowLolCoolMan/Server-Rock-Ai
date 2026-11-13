@@ -31,6 +31,11 @@ export type DesktopProject = {
   updatedAt: string;
 };
 
+export type DesktopProjectFile = {
+  relativePath: string;
+  bytes: number;
+};
+
 export type DesktopConversation = {
   id: string;
   title: string;
