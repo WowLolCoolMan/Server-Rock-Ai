@@ -94,6 +94,16 @@ public sealed partial class MainPage
         SaveSettings();
     }
 
+    private void PersistExpandedProjectFolders()
+    {
+        if (_activeProjectId is null) return;
+        _settings.ExpandedProjectFolders[_activeProjectId] = _expandedProjectFolders
+            .OrderBy(folder => folder, StringComparer.OrdinalIgnoreCase)
+            .Take(64)
+            .ToList();
+        SaveSettings();
+    }
+
     private async void ResumeFileClick(object sender, RoutedEventArgs e)
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
@@ -213,8 +223,16 @@ public sealed partial class MainPage
         {
             _projectExplorerProjectId = project.Id;
             _expandedProjectFolders.Clear();
-            foreach (var folder in GetProjectFolderPaths(files))
-                if (!folder.Contains('/', StringComparison.Ordinal)) _expandedProjectFolders.Add(folder);
+            if (_settings.ExpandedProjectFolders.TryGetValue(project.Id, out var savedFolders))
+            {
+                var availableFolders = GetProjectFolderPaths(files);
+                foreach (var folder in savedFolders.Where(availableFolders.Contains)) _expandedProjectFolders.Add(folder);
+            }
+            else
+            {
+                foreach (var folder in GetProjectFolderPaths(files))
+                    if (!folder.Contains('/', StringComparison.Ordinal)) _expandedProjectFolders.Add(folder);
+            }
         }
         var folders = GetProjectFolderPaths(files);
         foreach (var folder in folders)
@@ -275,6 +293,7 @@ public sealed partial class MainPage
     {
         if (sender is not Button { Tag: string folder }) return;
         if (!_expandedProjectFolders.Add(folder)) _expandedProjectFolders.Remove(folder);
+        PersistExpandedProjectFolders();
         RenderProjectFiles();
     }
 

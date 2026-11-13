@@ -61,6 +61,20 @@ public sealed class JsonSettingsStore
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(8)
             .ToList();
+        settings.ExpandedProjectFolders ??= new(StringComparer.OrdinalIgnoreCase);
+        settings.ExpandedProjectFolders = settings.ExpandedProjectFolders
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Key) && entry.Key.Length <= 128 && !entry.Key.Any(char.IsControl))
+            .Take(24)
+            .ToDictionary(
+                entry => entry.Key.Trim(),
+                entry => (entry.Value ?? [])
+                    .Where(folder => !string.IsNullOrWhiteSpace(folder) && folder.Length <= 512 && !folder.Any(char.IsControl))
+                    .Select(folder => folder.Trim().Replace('\\', '/'))
+                    .Where(folder => folder.Length > 0 && !folder.StartsWith("/", StringComparison.Ordinal) && !folder.Split('/').Any(part => part is "" or "." or ".."))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Take(64)
+                    .ToList(),
+                StringComparer.OrdinalIgnoreCase);
         settings.ThemeMode = settings.ThemeMode?.ToLowerInvariant() switch
         {
             "dark" => "dark",

@@ -1,6 +1,6 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 233, including the
+Snapshot: `main` at the current checkout through Slice 234, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
 durable project-file tabs/resume action, Git conflict recovery guidance, and
 the capability-neutral agent execution lifecycle, enforced release workflow
@@ -36,6 +36,8 @@ It also includes content-free project-browser safety counts and an accessible
 shown-file/exclusion summary without changing provider context sampling.
 It also includes idempotent startup reconciliation for interrupted agent tasks,
 with retained worktrees preserved for explicit review.
+It also includes bounded per-project persistence for expanded project-browser
+folders, restoring only paths present in the current safe browser view.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

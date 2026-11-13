@@ -3,6 +3,48 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 234 — Persist project-tree expansion state
+
+Status: `implemented_core_tests_native_build_audit_verified`
+
+The Coding Agent project browser now persists a bounded list of expanded folder
+paths per local project. On reload it restores only folders still present in
+the current bounded text-file view; invalid, control-character, traversal,
+oversized, and over-limit settings are normalized away. Projects without saved
+state retain the existing top-level-folder default. Folder toggles save through
+the normal settings store, while provider context sampling and file-content
+access remain unchanged.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including settings round-trip coverage.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 322 contracts.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:future-features` — passed with 160 items and 25 checked.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only local non-secret folder paths are persisted;
+path traversal and linked/content access are not introduced. No dependency or
+third-party code was added.
+
+Rollback: remove the new settings property and restore the existing default
+folder-expansion branch; unknown JSON fields remain ignored by the serializer.
+
+Remaining: full repository-tree loading, ignore-state presentation, tab
+reordering, conflict review, and packaged/live acceptance remain open.
+
 ## Slice 233 — Reconcile interrupted agent tasks at startup
 
 Status: `implemented_core_tests_native_build_audit_verified`
