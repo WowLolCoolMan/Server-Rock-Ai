@@ -412,13 +412,19 @@ public sealed partial class MainPage
         var title = new TextBox { Header = "Task title", PlaceholderText = "A short specialist task name" };
         var instruction = new TextBox { Header = "Instruction", PlaceholderText = "What should be reviewed or prepared?", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         var role = new TextBox { Header = "Role", Text = "specialist", PlaceholderText = "specialist, verifier, or researcher" };
-        var dependencyPicker = new ListView
+        var dependencyPicker = new StackPanel { Spacing = 2, MaxHeight = 140 };
+        var selectedDependencyIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var task in existingTasks.Take(8))
         {
-            ItemsSource = existingTasks,
-            DisplayMemberPath = nameof(AgentTaskArtifact.Title),
-            SelectionMode = ListViewSelectionMode.Multiple,
-            MaxHeight = 140
-        };
+            var prerequisite = new CheckBox { Content = task.Title, Tag = task };
+            AutomationProperties.SetName(prerequisite, $"Prerequisite: {task.Title}");
+            prerequisite.Click += (_, _) =>
+            {
+                if (prerequisite.IsChecked == true) selectedDependencyIds.Add(task.Id);
+                else selectedDependencyIds.Remove(task.Id);
+            };
+            dependencyPicker.Children.Add(prerequisite);
+        }
         AutomationProperties.SetName(dependencyPicker, "Agent task prerequisites");
         var dependencyBlock = new StackPanel
         {
@@ -427,7 +433,7 @@ public sealed partial class MainPage
             {
                 new TextBlock { Text = "Prerequisites (optional)" },
                 dependencyPicker,
-                new TextBlock { Text = existingTasks.Count == 0 ? "No existing local tasks to select." : "Select existing local tasks that must complete first.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.72 }
+                new TextBlock { Text = existingTasks.Count == 0 ? "No existing local tasks to select." : "Select up to eight existing local tasks that must complete first.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.72 }
             }
         };
         AutomationProperties.SetName(title, "Agent task title");
@@ -441,12 +447,13 @@ public sealed partial class MainPage
             CloseButtonText = "Cancel",
             XamlRoot = XamlRoot
         };
+        var dependencies = Array.Empty<string>();
+        dialog.PrimaryButtonClick += (_, _) => dependencies = selectedDependencyIds.ToArray();
         AutomationProperties.SetName(dialog, "Plan agent task");
         dialog.Opened += (_, _) => title.Focus(FocusState.Programmatic);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try
         {
-            var dependencies = dependencyPicker.SelectedItems.OfType<AgentTaskArtifact>().Select(task => task.Id).ToArray();
             _agentTaskStore.Create(title.Text, instruction.Text, role.Text, dependsOn: dependencies);
             RuntimeStatus.Text = "Agent task plan saved locally for review. No agent or provider was started.";
             activityDialog?.Hide();

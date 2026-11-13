@@ -56,6 +56,13 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `git diff --check` — passed.
 
+Live validation note: Windows accessibility inspection confirmed the bounded
+checkbox picker and its local-only disclosure. A manual coordinate journey
+created a task but persisted an empty dependency list, so live dependency
+selection is deliberately not claimed as verified. The implementation now
+captures selected IDs at `ContentDialog.PrimaryButtonClick` before Uno closes
+the dialog; a deterministic packaged/UI harness journey remains required.
+
 Not yet verified:
 
 - Live packaged Windows visual acceptance for light/dark switching.
@@ -1892,8 +1899,8 @@ file content, credential, provider, or network state leaves the application.
 Rollback: remove the dependency picker and pass no `dependsOn` values when
 creating plans; the existing local task planning and queue lifecycle remains.
 
-Not yet verified: live multi-selection of prerequisites, packaged-artifact
-acceptance, actual sub-agent delegation, parallel execution limits,
+Not yet verified: deterministic live multi-selection of prerequisites,
+packaged-artifact acceptance, actual sub-agent delegation, parallel execution limits,
 process/container/worktree isolation, background execution, cross-platform
 acceptance, and packaged release acceptance.
 
