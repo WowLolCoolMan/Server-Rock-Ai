@@ -7608,6 +7608,41 @@ executor field wiring; Core task execution remains available to non-UI callers.
 Remaining: connect lease acquisition to the full Coding Agent session flow,
 add process/parallel isolation, and complete live Windows/Linux acceptance.
 
+## Slice 218 — Tokenize project navigation and browser status
+
+Status: `implemented_native_ui_build_audit_verified`
+
+Requirement alignment: project selection and bounded file browsing are the
+primary Coding Agent entry points. Their code-built rows still used historical
+palette colors and numeric font sizes, so active project state and browser
+status could drift from the shared theme. This slice moves active/inactive
+project rows, project actions, empty-state copy, and bounded file-browser
+counts to semantic brushes and type-scale resources.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Projects.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 296 contracts.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: presentation-only token references; project roots,
+file filtering, bounded previews, and workspace trust behavior are unchanged.
+
+Risk and rollback: restore the previous project-row presentation values and
+remove the focused audit contracts. No project data or file contents change.
+
+Remaining: the project explorer is still a bounded flat preview list rather
+than a virtualized hierarchical tree; cross-platform and live first-project
+acceptance remain open.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

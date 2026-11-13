@@ -263,6 +263,10 @@ Slice 214 migrated the chat history/folder rows, archive controls, attachment
 labels, and web-source cards to semantic brushes and type-scale resources, with
 focused audit contracts and desktop/Windows build evidence.
 
+Slice 218 migrated project navigation rows, actions, empty state, and bounded
+file-browser status text to semantic brushes/type-scale resources. The explorer
+remains a flat bounded preview list; hierarchical virtualization is still open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

@@ -112,12 +112,8 @@ public sealed partial class MainPage
                 Content = "▱　" + project.Name,
                 Tag = project.Id,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(
-                    255,
-                    project.Id == _activeProjectId ? (byte)198 : (byte)223,
-                    project.Id == _activeProjectId ? (byte)232 : (byte)243,
-                    project.Id == _activeProjectId ? (byte)237 : (byte)247)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 43, 69, 77)),
+                Background = UiTheme.Brush(project.Id == _activeProjectId ? "AccentSoftBrush" : "SurfaceAltBrush"),
+                Foreground = UiTheme.Brush("InkBrush"),
                 Padding = new Thickness(10, 8, 10, 8),
                 CornerRadius = new CornerRadius(8)
             };
@@ -131,8 +127,8 @@ public sealed partial class MainPage
                 Height = 36,
                 Padding = new Thickness(0),
                 Margin = new Thickness(4, 0, 0, 0),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 238, 248, 249)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 82, 111, 119)),
+                Background = UiTheme.Brush("SurfaceAltBrush"),
+                Foreground = UiTheme.Brush("StatusInkBrush"),
                 CornerRadius = new CornerRadius(8)
             };
             AutomationProperties.SetName(actions, $"Project actions: {project.Name}");
@@ -151,8 +147,8 @@ public sealed partial class MainPage
             {
                 Text = _projectsAvailable ? "Projects you create appear here." : "Project list is unavailable.",
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)),
-                FontSize = 11,
+                Foreground = UiTheme.Brush("SubtleInkBrush"),
+                FontSize = UiTheme.FontSize("CaptionFontSize"),
                 Margin = new Thickness(8, 4, 8, 4)
             });
         RenderProjectFiles();
@@ -491,7 +487,7 @@ public sealed partial class MainPage
         {
             results.Children.Clear();
             var matches = files.Where(item => string.IsNullOrWhiteSpace(query.Text) || item.RelativePath.Contains(query.Text.Trim(), StringComparison.OrdinalIgnoreCase)).Take(WorkspaceFileContext.MaxPreviewEntries).ToArray();
-            results.Children.Add(new TextBlock { Text = $"{matches.Length} bounded file{(matches.Length == 1 ? "" : "s")} shown; nothing was changed.", FontSize = 11, Opacity = 0.72 });
+            results.Children.Add(new TextBlock { Text = $"{matches.Length} bounded file{(matches.Length == 1 ? "" : "s")} shown; nothing was changed.", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72 });
             foreach (var file in matches)
             {
                 var preview = new Button { Content = $"{file.Kind} · {file.RelativePath}", HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
