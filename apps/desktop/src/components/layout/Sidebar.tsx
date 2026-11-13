@@ -25,8 +25,14 @@ export function Sidebar({ route, onNavigate, conversations, query, collapsed, on
   useEffect(() => {
     if (!menuConversationId) return;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuConversationId(null); };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && (target.closest(".sidebar-context-menu") || target.closest(".sidebar-history-menu-trigger"))) return;
+      setMenuConversationId(null);
+    };
     document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.removeEventListener("pointerdown", closeOnOutsidePointer); };
   }, [menuConversationId]);
   const openMenu = (conversation: DesktopConversation) => { setMenuConversationId(conversation.id); setRenameDraft(conversation.title); };
   const runMetadataAction = async (id: string, patch: ConversationPatch) => { const saved = await onConversationMetadata(id, patch); if (saved) setMenuConversationId(null); };
