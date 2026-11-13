@@ -254,3 +254,9 @@ bounded lexical retrieval pass before prompt construction, while smaller files
 retain full-text injection and images retain the existing vision path. Core
 coverage proves query-relevant chunk selection and output bounding. Vector
 backends, reranking, OCR, and a full NotebookLM-style corpus remain open.
+
+Backlog reconciliation — provider-side bounded context compaction and the
+persisted dependency-aware local agent task list are now checked in
+`FUTURE_FEATURES.md` because their Core tests and prior Windows acceptance
+evidence prove the bounded implementations. Semantic summarization, 1M+
+context, autonomous execution, and parallel delegation remain explicitly open.

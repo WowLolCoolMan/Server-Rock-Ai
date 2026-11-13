@@ -30,7 +30,7 @@ and acceptance evidence.
 - [x] Fork a chat from any message.
 - [ ] Voice input/output, hands-free calls, and advanced voice mode.
 - [ ] Image generation and editing.
-- [ ] Context compaction.
+- [x] Context compaction. (Deterministic bounded provider-side compaction with omitted-history markers; semantic summarization remains open.)
 - [ ] 1M+ token context support.
 - [ ] Omni-modal input for text, images, audio, and video.
 - [x] Chat export and split view.
@@ -43,7 +43,7 @@ and acceptance evidence.
 - [ ] Python sandbox execution.
 - [ ] Parallel sub-agent delegation.
 - [ ] Scheduled automations.
-- [ ] Structured task lists.
+- [x] Structured task lists. (Persisted local agent task plans with dependency-aware readiness, queue, search, and cancellation; autonomous dispatch remains open.)
 - [ ] MCP tools over Streamable HTTP and stdio.
 - [ ] OpenAPI tool auto-discovery.
 - [ ] Git panel for stage, commit, push, and pull requests.

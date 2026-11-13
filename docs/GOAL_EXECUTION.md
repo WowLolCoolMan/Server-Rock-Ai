@@ -6661,3 +6661,42 @@ remain independently usable.
 Remaining: vector database backends, hybrid BM25/vector/rerank search, OCR and
 additional extraction engines, corpus management, agentic retrieval, and a
 full NotebookLM-style uploaded-document mode remain open.
+
+## Slice 171 — Evidence-backed backlog reconciliation
+
+Status: `verified_existing_context_compaction_and_structured_task_list`
+
+Reconciled two future-feature entries against existing implementation and
+evidence rather than adding duplicate behavior. `Context compaction` now
+records the deterministic bounded provider-side compaction path that marks
+omitted history before an oversized request. `Structured task lists` now
+records the persisted local AgentTaskArtifact plan, dependency-aware readiness,
+queue/search/cancel controls, and prior Windows planning acceptance. Neither
+entry claims semantic summarization, 1M+ context, autonomous execution, or
+parallel agent dispatch.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Existing Core provider tests pass for bounded oversized-history compaction,
+  omitted-history markers, newest-turn preservation, and source immutability.
+- Existing AgentTaskArtifact Core tests pass for dependency order, readiness,
+  queue/claim/complete/fail/cancel transitions, persistence, and bounded
+  artifacts.
+- Existing Slice 161 live Windows evidence recorded the review-first planning,
+  dependency selection, persisted plan, and cancellation journey.
+
+Privacy/security/licensing: documentation-only reconciliation; no runtime,
+provider, credential, file, or pets state changed.
+
+Rollback: restore the two checklist markers and their explanatory qualifiers;
+the underlying implementations are unaffected.
+
+Remaining: semantic compaction, larger context windows, autonomous/background
+execution, parallel delegation, and cross-platform/package acceptance remain
+open and are not claimed complete.
