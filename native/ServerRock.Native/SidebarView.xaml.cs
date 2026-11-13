@@ -16,10 +16,10 @@ public sealed partial class SidebarView : UserControl
     public Button NewConversationButtonControl => NewConversationButton;
     public Button NewProjectButtonControl => NewProjectButton;
     public Button GitHubButtonControl => GitHubButton;
-    public StackPanel CodingNavigationSectionControl => CodingNavigationSection;
-    public StackPanel ProjectListControl => ProjectList;
-    public TextBlock CodeFilesHeaderControl => CodeFilesHeader;
-    public StackPanel ProjectFileListControl => ProjectFileList;
+    public StackPanel CodingNavigationSectionControl => ProjectNavigationControl.CodingNavigationSectionControl;
+    public StackPanel ProjectListControl => ProjectNavigationControl.ProjectListControl;
+    public TextBlock CodeFilesHeaderControl => ProjectNavigationControl.CodeFilesHeaderControl;
+    public StackPanel ProjectFileListControl => ProjectNavigationControl.ProjectFileListControl;
     public StackPanel ChatFolderListControl => ConversationNavigationControl.ChatFolderListControl;
     public StackPanel RecentListControl => ConversationNavigationControl.RecentListControl;
     public Ellipse ConnectionDotControl => ConnectionDot;

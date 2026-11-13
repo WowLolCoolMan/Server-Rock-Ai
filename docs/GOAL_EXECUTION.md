@@ -1575,6 +1575,43 @@ and handlers in `SidebarView.xaml.cs`.
 Not yet verified: live packaged interaction after this extraction, narrow-window
 visual QA, Linux parity, and the remaining handoff requirements.
 
+## Slice 131 — extract project navigation from the sidebar
+
+Status: `implemented_verified_build`
+
+The Coding Agent project-context and project-file containers are now hosted by
+`ProjectNavigationView`. `SidebarView` continues to expose the same compatibility
+accessors, and `MainPage` retains project selection, file rendering, editing, and
+Git behavior. This is a visual-only extraction and does not touch pet UI or project
+data.
+
+Changed files:
+
+- `native/ServerRock.Native/ProjectNavigationView.xaml`
+- `native/ServerRock.Native/ProjectNavigationView.xaml.cs`
+- `native/ServerRock.Native/SidebarView.xaml`
+- `native/ServerRock.Native/SidebarView.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run audit:native-ui` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the extraction adds no storage, provider, network,
+credential, dependency, or third-party path. Existing project-file access controls
+remain in the feature code.
+
+Rollback: restore the project-context/file section in `SidebarView.xaml`, remove
+`ProjectNavigationView.xaml` and `.xaml.cs`, and restore the direct accessors in
+`SidebarView.xaml.cs`.
+
+Not yet verified: live packaged interaction after this extraction, narrow-window
+visual QA, Linux parity, and the remaining handoff requirements.
+
 ## Slice 108 — preserve cancellation for approved workspace commands
 
 Status: `implemented_verified_core`

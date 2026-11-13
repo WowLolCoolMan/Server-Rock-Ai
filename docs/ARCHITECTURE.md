@@ -280,7 +280,7 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | --- | --- |
 | App startup, single-instance check | `ServerRock.Native/Platforms/Desktop/Program.cs`, `App.xaml.cs` |
 | The page layout | `ServerRock.Native/MainPage.xaml` |
-| The sidebar | `ServerRock.Native/SidebarView.xaml` (shell layout), `ConversationNavigationView.xaml` (folders/import/export/recents), `MainPage.Sidebar.cs` (wiring, More menu) |
+| The sidebar | `ServerRock.Native/SidebarView.xaml` (shell layout), `ProjectNavigationView.xaml` (project context/files), `ConversationNavigationView.xaml` (folders/import/export/recents), `MainPage.Sidebar.cs` (wiring, More menu) |
 | Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `ServerRock.Core/Services/LocalProjectHealthAnalyzer.cs` |
 | Code Review Agent | `ServerRock.Native/MainPage.CodeReview.cs` |
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
