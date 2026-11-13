@@ -32,6 +32,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `9de3357` — exposed the persisted task brief in Agent Workbench details so proposed work can be reviewed before queueing.
 - `f1dcf2a` — added backend-confirmed Settings save feedback that keeps the user on the Settings surface after persistence.
 - `3c5258e` — added a Chat task brief composer using the existing local-only planning contract and Workbench handoff.
+- `3824ada` — fixed Recent Chats to select conversations by persistent ID and restore the selected message set in place.
 
 ## Current evidence
 
@@ -64,6 +65,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Task review interaction check: passed opening a proposed task's detail disclosure, rendering its persisted brief, and no horizontal overflow at 1280px.
 - Settings save interaction check: passed a live field change, backend-confirmed save feedback, staying on Settings, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-settings-save-feedback.png`.
 - Chat task composer check: passed local `tasks.plan` submission, proposed-task handoff to Workbench, explicit unavailable Worktree state, no Cloud UI, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-chat-task-composer-open.png` and `output/playwright/skai-chat-task-composer.png`.
+- Conversation selection check: passed selecting a saved chat by ID, restoring its messages without leaving Chat, hiding the prior conversation, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-conversation-selection.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
