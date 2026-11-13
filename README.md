@@ -6,8 +6,6 @@
 
 Skai Desktop is being shaped into a serious desktop AI workspace: private by default, useful with local runtimes, and extensible enough to connect hosted providers, coding agents, image engines, and future real-time voice systems.
 
-![Skai Desktop product concept](assets/branding/skai-desktop-hero.png)
-
 > **Status:** active migration. The Uno/.NET desktop app is the current functional product. An Electron + React + TypeScript shell and persistent .NET agent-host seam are now checked in as the next product surface. The replacement UI is not yet feature-parity complete.
 
 ## What is here today
