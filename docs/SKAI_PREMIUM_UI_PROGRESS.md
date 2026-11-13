@@ -39,6 +39,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `fd9f3f1` — added backend-confirmed Memory save feedback and an explicit confirmation step before destructive removal.
 - `d162457` — replaced Terminal's misleading no-project controls with an honest empty state and a real Coding Workspace handoff.
 - `442a3e4` — refined Image Studio into a local ComfyUI workflow surface with readiness validation, prompt recipes, accessible field guidance, and a clear generation-state treatment.
+- `3e49a33` — clarified Model Library provider identity, vision/text capability, and discovered status while preserving the existing model-selection handoff.
 
 ## Current evidence
 
@@ -79,6 +80,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Terminal empty-state check: passed no-project capability messaging, hidden Run action until a project exists, Coding Workspace handoff, no Cloud UI, no duplicate panel title, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-terminal-empty.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Image Studio live Electron check: passed fresh renderer launch, local readiness state rendering, prompt recipe application, workflow-required gating, and no Cloud UI. The generate action remains disabled until all real local inputs are present.
+- Models focused UI check: passed model discovery, provider/capability metadata rendering, discovered status, exact navigation selection, screenshot capture, and no Cloud UI. Screenshot: `output/playwright/skai-models-provider-status.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
