@@ -16,6 +16,8 @@ public sealed class AppSettings
     public string VisionApiFormat { get; set; } = "auto";
     public string VisionCapabilityOverride { get; set; } = "auto";
     public double Temperature { get; set; } = 0.7;
+    /// <summary>Bounded response-budget preference: light, standard, high, or ultra.</summary>
+    public string EffortMode { get; set; } = "standard";
     public bool WebSearchEnabled { get; set; }
     public bool SmartPromptRewritingEnabled { get; set; }
     public bool MemoryInjectionEnabled { get; set; }

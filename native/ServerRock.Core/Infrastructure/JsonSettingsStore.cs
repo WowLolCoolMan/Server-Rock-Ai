@@ -46,6 +46,7 @@ public sealed class JsonSettingsStore
             "supported" or "unsupported" => settings.VisionCapabilityOverride.ToLowerInvariant(),
             _ => defaults.VisionCapabilityOverride
         };
+        settings.EffortMode = ServerRock.Core.Services.EffortModePolicy.Normalize(settings.EffortMode);
         settings.ComfyEndpoint ??= defaults.ComfyEndpoint;
         settings.ImageWorkflow ??= defaults.ImageWorkflow;
         settings.GitHubAppClientId ??= defaults.GitHubAppClientId;

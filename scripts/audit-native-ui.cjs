@@ -161,6 +161,8 @@ const requiredCode = [
   ['Personas saved list label', 'AutomationProperties.SetName(list, "Saved personas")'],
   ['Persona instructions label', 'AutomationProperties.SetName(instructions, "Persona instructions")'],
   ['Percy six-frame runtime', 'var frame = ((int)Math.Floor(now / 0.12) % 6) + 1'],
+  ['Effort mode setting', 'AutomationProperties.SetName(effort, "Effort mode")'],
+  ['Side chat keyboard shortcut', 'e.Key == Windows.System.VirtualKey.S && _mode == WorkspaceModes.Chat'],
   ['Translate text command', 'new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync)'],
   ['Translation source label', 'AutomationProperties.SetName(source, "Translation source text")'],
   ['Translation preview label', 'AutomationProperties.SetName(preview, "Translation preview")'],
@@ -297,6 +299,13 @@ const requiredPercyFiles = [
   "assets/pets/percy-success.png",
   "assets/pets/percy-error.png",
 ];
+const animationPets = ["percy", "rocky", "byte", "sprout", "nova", "ember"];
+const animationStates = ["idle", "thinking", "coding", "coding_malicious", "stuck", "success", "error", "walk"];
+const requiredAnimationFiles = animationPets.flatMap((pet) => [
+  ...animationStates.flatMap((state) => Array.from({ length: 6 }, (_, index) => `assets/pets/${pet}-${state}-${index + 1}.png`)),
+  ...animationStates.map((state) => `assets/pets/${pet}-${state}-frames.png`),
+  `assets/pets/${pet}-animation-sprite-sheet.png`,
+]);
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
@@ -307,6 +316,7 @@ const missing = [
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
   ...requiredPercyContracts.filter(([, text]) => !(companionCode + companionStore + nativeProject).includes(text)),
   ...requiredPercyFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Official Percy asset", file]),
+  ...requiredAnimationFiles.filter((file) => !fs.existsSync(path.join(root, file))).map((file) => ["Pet animation asset", file]),
 ];
 
 if (missing.length) {

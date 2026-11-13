@@ -48,6 +48,13 @@ public sealed partial class MainPage
             return;
         }
 
+        if (controlPressed && shiftPressed && e.Key == Windows.System.VirtualKey.S && _mode == WorkspaceModes.Chat)
+        {
+            e.Handled = true;
+            SplitChatClick(sender, e);
+            return;
+        }
+
         if (e.Key == Windows.System.VirtualKey.Escape && _compactNavigation && Sidebar.Visibility == Visibility.Visible)
         {
             e.Handled = true;

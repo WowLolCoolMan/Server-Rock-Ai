@@ -514,7 +514,7 @@ public sealed partial class MainPage
                     firstTokenMilliseconds ??= Math.Max(1, timer.ElapsedMilliseconds);
                     answer.Append(text);
                 }
-            }, cancellationToken, apiKey: GetProviderApiKey());
+            }, cancellationToken, maxTokens: EffortModePolicy.MaxTokens(_settings.EffortMode), apiKey: GetProviderApiKey());
         }
         finally
         {

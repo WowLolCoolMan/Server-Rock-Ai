@@ -99,7 +99,7 @@ and acceptance evidence.
 - [ ] File and app previews. (Local text, PNG/JPEG, and selectable-text PDF previews exist; app/executable previews remain unsupported.)
 - [ ] Design handoff to a coding agent.
 - [ ] Session bar showing context, changes, and background tasks. (A local informational workspace bar shows mode, message context, pending files, reviewed changes, and queued agent plans; live background status remains open.)
-- [ ] Side chats spawned with a keyboard shortcut.
+- [x] Side chats spawned with a keyboard shortcut. (Ctrl+Shift+S opens the existing bounded side-by-side chat view; detached windows and new parallel threads remain open.)
 - [ ] Detachable chats in their own windows.
 - [ ] Drag-and-drop pane layouts.
 - [x] Custom themes. (Light/dark palettes plus persisted Deep Sea and Deep Space ambient presets with reduced-motion support.)
@@ -131,7 +131,7 @@ and acceptance evidence.
 - [ ] Team-shared commands, snippets, and private extension store.
 - [ ] One-time purchase/no-subscription option.
 - [ ] Model Council that merges answers from multiple models.
-- [ ] Effort modes: Light, Standard, High, and Ultra.
+- [x] Effort modes: Light, Standard, High, and Ultra. (Persisted local choice maps to bounded compatible-provider output budgets; provider-specific reasoning controls remain open.)
 - [ ] Adaptive reasoning depth.
 - [ ] Speculative decoding with DFlash, DSpark, or MTP drafters.
 - [ ] Tensor parallelism across GPUs.
