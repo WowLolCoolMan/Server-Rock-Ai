@@ -20,42 +20,43 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage : Page
 {
+    private readonly MainPageServices _services = MainPageServices.Create();
     private readonly List<ChatMessage> _messages = [];
-    private readonly OpenAiCompatibleProvider _provider = new();
+    private readonly OpenAiCompatibleProvider _provider;
     // OpenRouter keys are session-only; they are never written to settings.json.
     private string _providerApiKey = string.Empty;
-    private readonly ModelLibraryService _modelLibrary = new();
-    private readonly ComfyImageProvider _comfyImageProvider = new();
-    private readonly WebSearchProvider _webSearchProvider = new();
+    private readonly ModelLibraryService _modelLibrary;
+    private readonly ComfyImageProvider _comfyImageProvider;
+    private readonly WebSearchProvider _webSearchProvider;
     // A bounded explicit path is useful for disposable release/accessibility
     // journeys; without the variable, settings stay in the normal user profile.
-    private readonly JsonSettingsStore _settingsStore = new(Environment.GetEnvironmentVariable("SRAI_SETTINGS_PATH"));
-    private readonly ConversationStore _conversationStore = new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
-    private readonly ProjectStore _projectStore = new();
-    private readonly WorkspaceFileEditor _workspaceEditor = new();
-    private readonly WorkspaceUndoStore _workspaceUndoStore = new();
-    private readonly WorkspaceCommandRunner _commandRunner = new();
-    private readonly OperationService _operationService = new();
-    private readonly WorkflowService _workflowService = new();
+    private readonly JsonSettingsStore _settingsStore;
+    private readonly ConversationStore _conversationStore;
+    private readonly ProjectStore _projectStore;
+    private readonly WorkspaceFileEditor _workspaceEditor;
+    private readonly WorkspaceUndoStore _workspaceUndoStore;
+    private readonly WorkspaceCommandRunner _commandRunner;
+    private readonly OperationService _operationService;
+    private readonly WorkflowService _workflowService;
     private readonly WorkflowRunService _workflowRunService;
-    private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer = new();
-    private readonly CompanionStateStore _companionStore = new();
+    private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer;
+    private readonly CompanionStateStore _companionStore;
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteModelComparisonConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
-    private readonly WorkspaceAttachmentDraftStore _attachmentDraftStore = new(Environment.GetEnvironmentVariable("SRAI_ATTACHMENT_DRAFTS_PATH"));
+    private readonly WorkspaceAttachmentDraftStore _attachmentDraftStore;
     private readonly ChatMessageQueue _messageQueue = new();
-    private readonly ChatMessageQueueStore _messageQueueStore = new();
+    private readonly ChatMessageQueueStore _messageQueueStore;
     private WorkspaceDraftStore _workspaceDrafts = new();
-    private readonly ScheduledTaskStore _scheduledTaskStore = new();
-    private readonly AgentTaskArtifactStore _agentTaskStore = new();
+    private readonly ScheduledTaskStore _scheduledTaskStore;
+    private readonly AgentTaskArtifactStore _agentTaskStore;
     private readonly AgentTaskExecutor _agentTaskExecutor;
-    private readonly GitWorktreeCoordinator _gitWorktreeCoordinator = new();
-    private readonly SkillPackageInstaller _skillPackageInstaller = new();
+    private readonly GitWorktreeCoordinator _gitWorktreeCoordinator;
+    private readonly SkillPackageInstaller _skillPackageInstaller;
     // Keep the normal profile as the default; an explicit path supports
     // disposable live acceptance without reading or writing real memory.
-    private readonly MemoryStore _memoryStore = new(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH"));
+    private readonly MemoryStore _memoryStore;
     private bool _restoringWorkspaceDraft;
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;

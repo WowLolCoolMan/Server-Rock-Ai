@@ -294,6 +294,13 @@ section/subtitle/caption type-scale tokens. Approval, reconciliation, workflow,
 and worktree behavior are unchanged; broader code-built legacy migration and
 live cross-preset visual acceptance remain open.
 
+Slice 225 centralizes the native page's existing Core-service construction in a
+typed `MainPageServices` composition root while preserving all current stores,
+environment-variable profile seams, and behavior. This advances the native
+architecture migration without promoting the Electron/agent-host prototype or
+changing the UI framework. View-model/application-service extraction and
+explicit lifetime scopes remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

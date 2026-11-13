@@ -272,6 +272,8 @@ const requiredCode = [
   ['Activity agent header uses semantic typography', 'FontSize = UiTheme.FontSize("SectionLabelFontSize"),\n            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold'],
   ['Activity task detail title uses semantic typography', 'FontSize = UiTheme.FontSize("SubtitleFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold'],
   ['Activity workflow labels use semantic typography', 'FontSize = UiTheme.FontSize("SectionLabelFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold'],
+  ['MainPage service composition root', 'private readonly MainPageServices _services = MainPageServices.Create();'],
+  ['MainPage services assigned at lifecycle boundary', '_provider = _services.Provider;'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],

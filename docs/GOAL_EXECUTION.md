@@ -7643,6 +7643,54 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 225 — Centralize the native page composition root
+
+Status: `implemented_native_architecture_composition_root_build_verified`
+
+Requirement alignment: the native architecture target calls for incremental
+extraction from the MainPage hotspot while preserving the Uno/XAML shell and
+Core boundary. `MainPageServices` now owns construction of the page's existing
+Core services and stores, including the same `SRAI_*_PATH` environment seams.
+The page receives one typed bundle at its lifecycle boundary, then keeps its
+existing fields and behavior. This is a composition-root seam, not a framework
+rewrite, data migration, or behavioral change; later application-service and
+view-model extraction can proceed without duplicating stores or profile paths.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPageServices.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/ARCHITECTURE.md`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed the Core checks.
+- `node scripts/audit-native-ui.cjs` — passed with 317 contracts, including
+  the composition-root and lifecycle assignment contracts.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: construction-only refactor. Existing local JSON
+stores, session-only provider key behavior, project/file boundaries, and
+approval gates are unchanged. No dependency, network path, credential, or
+license surface was added.
+
+Risk and rollback: restore the inline field initializers and remove
+`MainPageServices`; no persisted data or runtime protocol changes are involved.
+
+Remaining: application-service/view-model extraction, explicit DI lifetime
+scopes, host/session orchestration, and live cross-platform acceptance remain
+open. The Electron/agent-host prototype is not promoted to product runtime;
+the canonical architecture remains native Uno/.NET as required by the handoff.
+
 ## Slice 224 — Tokenize Activity and agent-task typography
 
 Status: `implemented_native_ui_token_audit_verified`

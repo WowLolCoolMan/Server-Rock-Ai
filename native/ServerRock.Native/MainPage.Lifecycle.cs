@@ -16,13 +16,34 @@ public sealed partial class MainPage
     public MainPage()
     {
         InitializeComponent();
-        _agentTaskExecutor = new AgentTaskExecutor(_agentTaskStore);
+        _provider = _services.Provider;
+        _modelLibrary = _services.ModelLibrary;
+        _comfyImageProvider = _services.ComfyImageProvider;
+        _webSearchProvider = _services.WebSearchProvider;
+        _settingsStore = _services.SettingsStore;
+        _conversationStore = _services.ConversationStore;
+        _projectStore = _services.ProjectStore;
+        _workspaceEditor = _services.WorkspaceEditor;
+        _workspaceUndoStore = _services.WorkspaceUndoStore;
+        _commandRunner = _services.CommandRunner;
+        _operationService = _services.OperationService;
+        _workflowService = _services.WorkflowService;
+        _workflowRunService = _services.WorkflowRunService;
+        _localHealthAnalyzer = _services.LocalHealthAnalyzer;
+        _companionStore = _services.CompanionStore;
+        _attachmentDraftStore = _services.AttachmentDraftStore;
+        _messageQueueStore = _services.MessageQueueStore;
+        _scheduledTaskStore = _services.ScheduledTaskStore;
+        _agentTaskStore = _services.AgentTaskStore;
+        _agentTaskExecutor = _services.AgentTaskExecutor;
+        _gitWorktreeCoordinator = _services.GitWorktreeCoordinator;
+        _skillPackageInstaller = _services.SkillPackageInstaller;
+        _memoryStore = _services.MemoryStore;
         AutomationProperties.SetName(BackButton, "Navigate back");
         AutomationProperties.SetHelpText(BackButton, "Return to the previous workspace route.");
         AutomationProperties.SetName(ForwardButton, "Navigate forward");
         AutomationProperties.SetHelpText(ForwardButton, "Return to the next workspace route.");
         UpdateNavigationControls();
-        _workflowRunService = new WorkflowRunService(_workflowService);
         MainPageHeaderControl.ToggleSidebarRequested += ToggleSidebarClick;
         MainPageHeaderControl.BackRequested += NavigateBackClick;
         MainPageHeaderControl.ForwardRequested += NavigateForwardClick;

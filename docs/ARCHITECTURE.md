@@ -124,12 +124,17 @@ Other files in the UI project:
 
 ### How the UI calls Core
 
-There is no dependency-injection container or view-model layer yet. `MainPage`
-creates the Core services it needs as private fields and calls them directly:
+There is no dependency-injection container or view-model layer yet. The
+composition root is now centralized in `MainPageServices`, which creates the
+same Core services and preserves the existing environment-variable profile
+paths. `MainPage` receives that typed bundle once during construction and still
+coordinates the current UI flows directly:
 
 ```text
 MainPage (fields)                         ServerRock.Core
-  _provider            ─────────────────▶ OpenAiCompatibleProvider   (chat streaming, /models)
+  MainPageServices     ─────────────────▶ typed service composition root
+       │
+       └── _provider    ─────────────────▶ OpenAiCompatibleProvider   (chat streaming, /models)
   _modelLibrary        ─────────────────▶ ModelLibraryService         (local runtimes, Hugging Face, ModelScope, Ollama pulls)
   _webSearchProvider   ─────────────────▶ WebSearchProvider           (DuckDuckGo HTML)
   _comfyImageProvider  ─────────────────▶ ComfyImageProvider          (local ComfyUI)
