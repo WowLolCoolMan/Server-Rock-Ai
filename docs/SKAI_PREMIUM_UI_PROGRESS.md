@@ -48,6 +48,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `801f9a1` — persisted the local Coding Workspace terminal dock per project, added a keyboard toggle (`Ctrl/Cmd+J`), and exposed the dock state through `aria-pressed`.
 - `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 - `3f38415` — hardened Electron agent-host supervision with bounded pending requests, host-exit cleanup, and Windows process-tree shutdown, with regression assertions in the Electron audit.
+- `e62a632` — split the Chat surface into independent message, composer, and task-rail components; contained the desktop shell to the window; and verified the composer, route navigation, and responsive geometry in a real Electron renderer.
+- `1c27fae` — added the shared strong-border token used by accessible context menus and compact desktop surfaces.
 
 ## Current evidence
 
@@ -107,7 +109,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 ## Outstanding priorities
 
-1. Use the workflow reference to extend the truthful per-task environment selector and task-oriented composer into the chat flow; Local is functional today, while Worktree must remain visibly unavailable until supported. Hosted model routes must remain explicit, labeled, and consent-aware.
+1. Keep the truthful per-task environment selector and task-oriented composer local-only; Local is functional today, while Worktree must remain visibly unavailable until supported. Hosted model routes and cloud execution are out of scope.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the shared modal surfaces and new workspace shortcuts to remaining overlay and menu surfaces, including more real Electron interaction capture.
