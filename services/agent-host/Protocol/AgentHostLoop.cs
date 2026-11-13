@@ -22,19 +22,21 @@ public static class AgentHostLoop
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             AgentResponse response;
+            AgentRequest? parsedRequest = null;
             try
             {
-                var request = JsonSerializer.Deserialize<AgentRequest>(line, JsonOptions)
+                parsedRequest = JsonSerializer.Deserialize<AgentRequest>(line, JsonOptions);
+                var request = parsedRequest
                     ?? throw new InvalidOperationException("Request body was empty.");
                 response = Handle(request);
             }
             catch (JsonException ex)
             {
-                response = new(ProtocolVersion, string.Empty, false, Error: new("INVALID_JSON", ex.Message));
+                response = new(ProtocolVersion, parsedRequest?.Id ?? string.Empty, false, Error: new("INVALID_JSON", ex.Message));
             }
             catch (Exception ex)
             {
-                response = new(ProtocolVersion, string.Empty, false, Error: new("REQUEST_FAILED", ex.Message));
+                response = new(ProtocolVersion, parsedRequest?.Id ?? string.Empty, false, Error: new("REQUEST_FAILED", ex.Message));
             }
 
             await writer.WriteLineAsync(JsonSerializer.Serialize(response, JsonOptions));
