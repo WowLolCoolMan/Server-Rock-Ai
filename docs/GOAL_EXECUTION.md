@@ -3,6 +3,77 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 245 — Add an isolated Electron project-terminal smoke gate
+
+Status: `implemented_disposable_terminal_smoke_verified`
+
+The Electron project terminal now has a repository-level disposable smoke
+command. It saves a temporary project, runs one platform-appropriate explicit
+command through `project.command.run`, and verifies successful output, exit
+status, timeout state, and project-root execution. The smoke creates and
+removes only its own temporary directory and is part of Electron CI.
+
+Changed files:
+
+- `scripts/smoke-project-terminal.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run smoke:project-terminal` — passed explicit command and output
+  round-trip assertions.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the command is explicitly user-triggered, runs in
+the selected project root, removes sensitive-shaped environment variables,
+and enforces Core time/output bounds. No dependency or network capability was
+added.
+
+Rollback: remove the terminal route, UI, smoke command, and workflow step;
+project browsing and preview remain available.
+
+Remaining: richer terminal history/session behavior, mutation-aware editing,
+Git review, attachments/RAG, and final replacement retirement gates remain
+open.
+
+## Slice 246 — Add the bounded Electron project terminal route
+
+Status: `implemented_host_renderer_terminal_build_verified`
+
+The replacement host now advertises `project.command.run`. The renderer has a
+dedicated Terminal route with project selection, relative working-directory
+input, explicit Run action, timeout/truncation status, and bounded output. Core
+`WorkspaceCommandRunner` owns shell selection, containment, sensitive
+environment filtering, timeout, and output limits.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence from the pushed slice:
+
+- Agent-host build — passed.
+- Electron renderer typecheck/build — passed.
+- Terminal stdio smoke — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: no shell access is exposed to the renderer; only
+the allowlisted host method can launch the bounded Core command runner.
+
+Rollback: remove `project.command.run` and the Terminal route; the rest of the
+project workbench remains functional.
+
+Remaining: interactive session persistence, command history, Git review,
+attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 243 — Add an isolated Electron project-browser smoke gate
 
 Status: `implemented_disposable_browser_smoke_verified`

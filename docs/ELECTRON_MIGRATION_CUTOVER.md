@@ -65,6 +65,9 @@ validate parity.
 - Selecting a listed text file opens a bounded, safety-checked preview through
   the host; the renderer still receives no filesystem handle or direct path
   access.
+- Electron Projects also exposes an explicit Terminal route. Commands run only
+  after a user action inside a selected project root, with bounded command,
+  output, working-directory, environment, and timeout controls.
 - `npm run smoke:agent-host` exercises the replacement protocol against
   disposable settings and conversation files, including persistence round trips.
 - `apps/desktop` typecheck and production build pass.
@@ -77,6 +80,8 @@ validate parity.
   existing 128-entry browser limit.
 - `npm run smoke:project-browser` verifies project persistence, exclusion
   reporting, and the metadata-only browser contract against disposable paths.
+- `npm run smoke:project-terminal` verifies the disposable project command
+  round trip and bounded output result.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and
