@@ -51,6 +51,8 @@ validate parity.
 - The Electron renderer has a real persisted-project list and model/chat shell.
 - The Electron chat restores the newest local conversation and saves both the
   user turn and completed assistant response through the bounded Core store.
+- The replacement sidebar now exposes the first eight saved conversations and
+  an explicit New chat action; selecting a history item restores its messages.
 - `apps/desktop` typecheck and production build pass.
 - The host builds and a live stdio request returns the new capability set.
 

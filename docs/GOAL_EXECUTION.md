@@ -3,6 +3,40 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 237 — Add selectable Electron chat history
+
+Status: `implemented_renderer_history_navigation_build_verified`
+
+The Electron sidebar now presents up to eight bounded saved conversations,
+highlights the active conversation, restores a selected conversation's user and
+assistant messages, and provides an explicit New chat action. Saving a response
+updates the local history list without changing the host protocol or provider
+routing. This makes the durable chat route a navigable user journey rather than
+an implicit startup-only restore.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/ELECTRON_MIGRATION_CUTOVER.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the sidebar renders only conversation metadata and
+the bounded messages already returned by the local host; no new filesystem or
+network capability was introduced.
+
+Rollback: remove the history panel and selection handlers; durable host storage
+and the existing chat route remain unchanged.
+
+Remaining: folders/tags/pins/search/forks/export, attachments/RAG, queue,
+memory, comparison, and broader Electron parity remain open.
+
 ## Slice 236 — Port durable chat history to the Electron host
 
 Status: `implemented_host_persistence_renderer_build_verified`
