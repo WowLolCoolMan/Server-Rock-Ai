@@ -61,6 +61,8 @@ validate parity.
 - The active chat exposes a host-backed Pin/Unpin control; the same bounded
   metadata route supports archive, folder, and tag persistence for the next
   history controls.
+- The active chat now exposes bounded folder and comma-separated tag fields
+  with an explicit Save labels action.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
   safe durable task states; every action refreshes from the host after the
   transition.

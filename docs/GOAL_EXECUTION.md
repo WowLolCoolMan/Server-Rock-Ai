@@ -3,6 +3,38 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 250 — Add Electron conversation folder and tag controls
+
+Status: `implemented_renderer_metadata_controls_build_verified`
+
+The Electron active-chat header now exposes bounded folder and comma-separated
+tag fields with an explicit Save labels action. The controls use the already
+verified `conversation.metadata.save` host route, and the renderer restores
+the saved labels when selecting or reloading a conversation.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:conversation-metadata` — passed pin, folder, tag, and
+  persistence assertions through the host.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: labels remain local conversation metadata and are
+sent only to the local agent host; no provider or network behavior changed.
+
+Rollback: remove the header fields and local contract property; the existing
+Pin/Unpin control and host metadata route remain available.
+
+Remaining: archive UI, richer folder/tag navigation, forks/export, queued
+messages, attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 249 — Add bounded Electron conversation organization
 
 Status: `implemented_host_metadata_pin_smoke_verified`
