@@ -20,13 +20,13 @@ public sealed partial class SidebarView : UserControl
     public StackPanel ProjectListControl => ProjectList;
     public TextBlock CodeFilesHeaderControl => CodeFilesHeader;
     public StackPanel ProjectFileListControl => ProjectFileList;
-    public StackPanel ChatFolderListControl => ChatFolderList;
-    public StackPanel RecentListControl => RecentList;
+    public StackPanel ChatFolderListControl => ConversationNavigationControl.ChatFolderListControl;
+    public StackPanel RecentListControl => ConversationNavigationControl.RecentListControl;
     public Ellipse ConnectionDotControl => ConnectionDot;
     public TextBlock ConnectionLabelControl => ConnectionLabel;
     public Button CompanionButtonControl => CompanionButton;
-    public Button ImportChatsButtonControl => ImportChatsButton;
-    public Button ExportChatsButtonControl => ExportChatsButton;
+    public Button ImportChatsButtonControl => ConversationNavigationControl.ImportChatsButtonControl;
+    public Button ExportChatsButtonControl => ConversationNavigationControl.ExportChatsButtonControl;
     public TextBlock NewConversationLabelControl => NewConversationLabel;
     public TextBlock CompanionButtonLabelControl => CompanionButtonLabel;
 
@@ -64,9 +64,9 @@ public sealed partial class SidebarView : UserControl
     private void SettingsClick(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke(sender, e);
     private void PluginStoreClick(object sender, RoutedEventArgs e) => PluginsRequested?.Invoke(sender, e);
     private void GitHubClick(object sender, RoutedEventArgs e) => GitHubRequested?.Invoke(sender, e);
-    private void NewChatFolderClick(object sender, RoutedEventArgs e) => NewChatFolderRequested?.Invoke(sender, e);
-    private void ImportChatsClick(object sender, RoutedEventArgs e) => ImportChatsRequested?.Invoke(sender, e);
-    private void ExportChatsClick(object sender, RoutedEventArgs e) => ExportChatsRequested?.Invoke(sender, e);
+    private void OnNewChatFolderRequested(object sender, RoutedEventArgs e) => NewChatFolderRequested?.Invoke(sender, e);
+    private void OnImportChatsRequested(object sender, RoutedEventArgs e) => ImportChatsRequested?.Invoke(sender, e);
+    private void OnExportChatsRequested(object sender, RoutedEventArgs e) => ExportChatsRequested?.Invoke(sender, e);
     private void ToggleCompanionClick(object sender, RoutedEventArgs e) => ToggleCompanionRequested?.Invoke(sender, e);
     private void CustomizeCompanionClick(object sender, RoutedEventArgs e) => CustomizeCompanionRequested?.Invoke(sender, e);
     private void ScheduledTasksClick(object sender, RoutedEventArgs e) => ScheduledTasksRequested?.Invoke(sender, e);

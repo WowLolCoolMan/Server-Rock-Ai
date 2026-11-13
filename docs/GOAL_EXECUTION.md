@@ -1538,6 +1538,43 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 130 — extract conversation navigation from the sidebar
+
+Status: `implemented_verified_build`
+
+The folders/import-export/recents block is now a dedicated
+`ConversationNavigationView` UserControl. `SidebarView` remains the shell and
+forwards the existing conversation events and compatibility accessors, while
+`MainPage` continues to own all chat persistence, folder actions, rendering, and
+focus recovery. This is a visual decomposition only; no chat, settings, provider,
+or pet behavior changed.
+
+Changed files:
+
+- `native/ServerRock.Native/ConversationNavigationView.xaml`
+- `native/ServerRock.Native/ConversationNavigationView.xaml.cs`
+- `native/ServerRock.Native/SidebarView.xaml`
+- `native/ServerRock.Native/SidebarView.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (181 contracts).`
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the extraction adds no storage, provider, network,
+credential, dependency, or third-party path. It does not modify the pet-owned
+companion surface.
+
+Rollback: restore the conversation section in `SidebarView.xaml`, remove
+`ConversationNavigationView.xaml` and `.xaml.cs`, and restore the direct accessors
+and handlers in `SidebarView.xaml.cs`.
+
+Not yet verified: live packaged interaction after this extraction, narrow-window
+visual QA, Linux parity, and the remaining handoff requirements.
+
 ## Slice 108 — preserve cancellation for approved workspace commands
 
 Status: `implemented_verified_core`

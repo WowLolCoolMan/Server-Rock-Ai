@@ -280,7 +280,7 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | --- | --- |
 | App startup, single-instance check | `ServerRock.Native/Platforms/Desktop/Program.cs`, `App.xaml.cs` |
 | The page layout | `ServerRock.Native/MainPage.xaml` |
-| The sidebar | `ServerRock.Native/SidebarView.xaml` (layout), `MainPage.Sidebar.cs` (wiring, More menu) |
+| The sidebar | `ServerRock.Native/SidebarView.xaml` (shell layout), `ConversationNavigationView.xaml` (folders/import/export/recents), `MainPage.Sidebar.cs` (wiring, More menu) |
 | Health scan / architecture map | `ServerRock.Native/MainPage.ProjectHealth.cs`, `ServerRock.Core/Services/LocalProjectHealthAnalyzer.cs` |
 | Code Review Agent | `ServerRock.Native/MainPage.CodeReview.cs` |
 | Colors, brushes, styles, design tokens | `ServerRock.Native/App.xaml`, `UiTheme.cs`, `DESIGN.md` |
@@ -322,3 +322,13 @@ Fixtures for the legacy Electron archive format are in `Fixtures/`.
 | GitHub commit/push review | `ServerRock.Native/MainPage.GitHub.Changes.cs`, `ServerRock.Core/Services/GitHubWorkspaceService.cs` |
 | Saving settings / chats / projects | `ServerRock.Core/Infrastructure/*Store.cs` |
 | Core tests | `ServerRock.Core.Tests/*Tests.cs` (see Tests above) |
+
+## Visual decomposition notes
+
+The native page is intentionally split into focused partial classes and UserControls.
+`MainPage.xaml` hosts the shell, while `SidebarView`, `MainPageHeader`,
+`CodingWorkspaceBar`, `ConversationSurface`, `ComposerInputView`, and
+`ConversationNavigationView` own independent visual regions. The controls forward
+events and expose compatibility accessors so persistence, provider, and pet behavior
+remain owned by their existing feature code. This keeps the decomposition reversible
+and avoids mixing UI extraction with data or runtime changes.
