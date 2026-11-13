@@ -28,6 +28,7 @@ ChatMessageQueueTests.Run();
 ChatMessageQueueStoreTests.Run();
 ConversationSearchTests.Run();
 ScheduledTaskTests.Run();
+NavigationHistoryTests.Run();
 SkillPackageInstallerTests.Run();
 McpToolPermissionGateTests.Run();
 await McpStdioClientTests.RunAsync();

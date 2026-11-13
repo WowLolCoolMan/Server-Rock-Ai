@@ -1927,6 +1927,46 @@ Not yet verified: live Windows activation of the new control, cross-platform UI
 behavior, OS-level background execution, and durable task synchronization across
 multiple app instances.
 
+## Slice 91 — bounded workspace navigation history
+
+Status: `implemented_verified_core_and_native_build`
+
+The native shell now has a bounded, branch-aware navigation history for the Chat
+and Coding Agent workspace routes. Back and Forward controls are visible in the
+header, expose accessible names/help text, disable when no route is available,
+and restore the existing workspace switching path so temporary-chat safeguards,
+draft isolation, and project context rules still apply. A new route after going
+back truncates forward history; history is capped at 32 entries and is session
+state only, so it does not alter conversations or user files.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/NavigationHistory.cs`
+- `native/ServerRock.Core.Tests/NavigationHistoryTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including bounded history, back/forward movement, and forward-branch truncation.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings/errors.
+- `npm run audit:native-ui` — passed after adding the Back/Forward contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: route history contains only bounded local route
+identifiers; it does not persist prompts, model data, credentials, or files. No
+dependency or third-party code was added.
+
+Rollback: remove `NavigationHistory`, the header controls, route hooks, tests,
+and audit contracts; existing direct workspace switching remains available.
+
+Not yet verified: live Windows activation of both buttons, persistent tabs or
+layout state, dialog/overlay route history, Linux/Skia interaction, and narrow
+viewport focus acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

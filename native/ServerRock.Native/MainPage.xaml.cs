@@ -96,10 +96,17 @@ public sealed partial class MainPage : Page
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
     private readonly DispatcherTimer _scheduledTaskTimer = new() { Interval = TimeSpan.FromSeconds(20) };
     private readonly StatusMessageHistory _statusHistory = new();
+    private readonly NavigationHistory _navigationHistory = new(WorkspaceModes.Chat);
+    private bool _restoringNavigation;
 
     public MainPage()
     {
         InitializeComponent();
+        AutomationProperties.SetName(BackButton, "Navigate back");
+        AutomationProperties.SetHelpText(BackButton, "Return to the previous workspace route.");
+        AutomationProperties.SetName(ForwardButton, "Navigate forward");
+        AutomationProperties.SetHelpText(ForwardButton, "Return to the next workspace route.");
+        UpdateNavigationControls();
         _workflowRunService = new WorkflowRunService(_workflowService);
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
