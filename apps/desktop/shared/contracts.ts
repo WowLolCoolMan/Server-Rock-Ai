@@ -79,6 +79,7 @@ export type DesktopScheduledTask = {
 export type DesktopQueuedMessage = {
   index: number;
   text: string;
+  attachments?: Array<{ fileName: string; mediaType?: string | null }>;
 };
 
 export interface AgentBridge {

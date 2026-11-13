@@ -498,18 +498,29 @@ public static class AgentHostLoop
     private static AgentResponse ListQueuedMessages(AgentRequest request)
     {
         var queue = CreateChatQueueStore().Load();
-        return new(ProtocolVersion, request.Id, true, queue.Select((item, index) => new { index, text = item.Text }).ToArray());
+        return new(ProtocolVersion, request.Id, true, queue.Select((item, index) => new
+        {
+            index,
+            text = item.Text,
+            attachments = item.Attachments?.Select(attachment => new { fileName = attachment.FileName, mediaType = attachment.MediaType }).ToArray(),
+        }).ToArray());
     }
 
     private static AgentResponse EnqueueChatMessage(AgentRequest request)
     {
         var text = RequiredBoundedString(request, "text", 50_000);
+        var attachments = OptionalAttachments(request);
         var store = CreateChatQueueStore();
         var queue = new ChatMessageQueue();
         foreach (var item in store.Load()) queue.Enqueue(item.Text, item.Attachments);
-        queue.Enqueue(text);
+        queue.Enqueue(text, attachments);
         store.Save(queue.Snapshot());
-        return new(ProtocolVersion, request.Id, true, queue.Snapshot().Select((item, index) => new { index, text = item.Text }).ToArray());
+        return new(ProtocolVersion, request.Id, true, queue.Snapshot().Select((item, index) => new
+        {
+            index,
+            text = item.Text,
+            attachments = item.Attachments?.Select(attachment => new { fileName = attachment.FileName, mediaType = attachment.MediaType }).ToArray(),
+        }).ToArray());
     }
 
     private static AgentResponse RemoveQueuedMessage(AgentRequest request)
@@ -666,6 +677,39 @@ public static class AgentHostLoop
 
     private static string? OptionalString(AgentRequest request, string name) =>
         request.Params is { } parameters && parameters.TryGetProperty(name, out var value) ? value.GetString() : null;
+
+    private static IReadOnlyList<ChatAttachment>? OptionalAttachments(AgentRequest request)
+    {
+        if (request.Params is not { } parameters || !parameters.TryGetProperty("attachments", out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+        if (value.ValueKind != JsonValueKind.Array) throw new InvalidOperationException("attachments must be an array.");
+        var attachments = value.Deserialize<List<ChatAttachment>>(JsonOptions) ?? [];
+        if (attachments.Count > ChatAttachmentPolicy.MaxFiles) throw new InvalidOperationException("Too many queued attachments.");
+        var totalTextCharacters = 0;
+        var totalImageBytes = 0L;
+        foreach (var attachment in attachments)
+        {
+            if (!ChatAttachmentPolicy.IsAllowedName(attachment.FileName)) throw new InvalidOperationException($"The attachment name is not allowed: {attachment.FileName}");
+            if (attachment.FileName.Length > 260 || attachment.FileName.Any(char.IsControl) || string.IsNullOrWhiteSpace(attachment.Content)) throw new InvalidOperationException("The queued attachment is invalid.");
+            if (attachment.IsImage)
+            {
+                if (!ChatAttachmentPolicy.IsAllowedImageMediaType(attachment.MediaType)) throw new InvalidOperationException("The queued image type is not allowed.");
+                byte[] bytes;
+                try { bytes = Convert.FromBase64String(attachment.Content); }
+                catch (FormatException error) { throw new InvalidDataException("The queued image encoding is invalid.", error); }
+                if (!ChatAttachmentPolicy.HasValidImageSignature(attachment.MediaType, bytes)) throw new InvalidDataException("The queued image signature is invalid.");
+                totalImageBytes += bytes.Length;
+            }
+            else
+            {
+                totalTextCharacters += attachment.Content.Length;
+                if (attachment.Content.Length > ChatAttachmentPolicy.MaxCharactersPerFile) throw new InvalidOperationException("The queued attachment exceeds its character limit.");
+            }
+        }
+        if (totalTextCharacters > ChatAttachmentPolicy.MaxTotalCharacters) throw new InvalidOperationException("Queued attachments exceed the total character limit.");
+        if (totalImageBytes > ChatAttachmentPolicy.MaxTotalImageBytes) throw new InvalidOperationException("Queued images exceed the total size limit.");
+        return attachments;
+    }
 
     private static List<string> OptionalStringList(AgentRequest request, string name, int maxItems, int maxLength)
     {
