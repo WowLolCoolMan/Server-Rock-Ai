@@ -22,7 +22,7 @@ and acceptance evidence.
 - [ ] Multi-model picker supporting any compatible provider.
 - [ ] Side-by-side model comparison.
 - [ ] File, image, and PDF upload with retrieval-augmented generation (RAG).
-- [ ] Web search with citations.
+- [x] Web search with citations.
 - [x] Persistent memory with a view/edit management UI.
 - [x] Message queueing while the AI is responding.
 - [x] Folders, tags, and pinned chats.

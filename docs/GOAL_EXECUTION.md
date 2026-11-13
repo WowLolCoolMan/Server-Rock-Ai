@@ -5454,3 +5454,53 @@ and capability evidence to their prior state. Runtime behavior is unchanged.
 Not yet verified: live memory backup picker import/export, enabled memory
 injection review after this CRUD journey, semantic conversation continuity,
 cross-platform/package acceptance, and 1M+ token context.
+
+## Slice 144 — live web search with citations
+
+Status: `implemented_verified_windows_web_search_citations`
+
+The opt-in web-search capability is now verified through the native Windows
+journey. In a disposable local-only profile, the composer exposed the Web
+search toggle and its privacy explanation; enabling it reported that the query
+would go to DuckDuckGo and the prompt/results to the selected model. Sending a
+current-information question produced `Found 6 web sources`, a local-model
+answer containing a source table, and six rendered clickable source cards with
+titles, domains, URLs, snippets, and the incomplete-snippet warning.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Live Windows disposable profile — passed: toggle on, query send, local
+  provider response, source table, and six accessible `Open web source` cards
+  were observed end to end.
+- The app persisted source metadata with the assistant message and exposed
+  source links independently from the model-generated prose.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  already passed the parser, URL-safety, and source-metadata coverage used by
+  this path.
+- `npm run audit:future-features` and `git diff --check` — passed after this
+  evidence update.
+
+Privacy/security/licensing: web search is explicit opt-in. The UI discloses
+that the query goes to DuckDuckGo and the query plus bounded snippets go to
+the selected model endpoint. The journey used a local model, synthetic
+question, no credentials, no project files, and no pet state. No third-party
+code was added.
+
+Quality limitation: the live model answer reported a stale date even though
+the source cards were present. This verifies source retrieval and citation UI,
+not factual freshness or citation-grounded answer correctness. Freshness,
+answer-grounding evaluation, source ranking, and broader search-provider
+coverage remain release gaps.
+
+Rollback: revert the three documentation changes to return the item to its
+unchecked/evidence-pending state. Runtime behavior is unchanged.
+
+Not yet verified: web-search freshness and answer-grounding evaluations,
+provider-side citation enforcement, cross-platform/package acceptance, and
+the remaining multi-provider/RAG backlog.
