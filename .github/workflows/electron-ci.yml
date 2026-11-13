@@ -1,0 +1,46 @@
+name: Electron replacement CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: electron-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  replacement-build:
+    name: Electron replacement · build and protocol smoke
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Electron dependencies
+        run: npm ci --prefix apps/desktop
+
+      - name: Typecheck Electron renderer
+        run: npm run desktop:typecheck
+
+      - name: Build Electron renderer
+        run: npm run desktop:build
+
+      - name: Build persistent agent host
+        run: npm run agent-host:build
+
+      - name: Smoke replacement protocol
+        run: npm run smoke:agent-host
