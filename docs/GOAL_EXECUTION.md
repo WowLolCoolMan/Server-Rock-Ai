@@ -5414,3 +5414,43 @@ expander remains available for reviewed local skill packages.
 Not yet verified: dynamic-variable use in installed third-party skills,
 cross-platform and packaged acceptance, and the remaining marketplace trust
 and remote-install gaps.
+
+## Slice 143 — live persistent-memory management CRUD
+
+Status: `implemented_verified_windows_memory_crud`
+
+The persistent-memory management backlog item is now verified through the live
+native Windows UI. A disposable profile seeded one synthetic approved note;
+the Memory manager opened it, displayed its provenance and enabled state,
+edited its content and tags, saved the change, reselected the updated entry,
+and deleted it. The manager ended at `0 saved entries · local only`, and the
+disposable memory file contained `[]` after the journey.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Live Windows disposable profile — passed: Settings → Chats & history →
+  Manage memory exposed the seeded note and accessible view/edit/delete
+  controls; edit/save/reselect/delete completed successfully without a model
+  request.
+- Disposable `SRAI_MEMORY_PATH` — ended as `[]` after deletion; no normal
+  profile data was used.
+- `npm run audit:future-features` — passed with the persistent-memory item
+  checked.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the journey used synthetic local data only. The
+memory manager showed the local-only boundary and explicit approval metadata;
+no credentials, remote endpoint, project files, or pet state were changed.
+
+Rollback: revert the three documentation changes to return the backlog item
+and capability evidence to their prior state. Runtime behavior is unchanged.
+
+Not yet verified: live memory backup picker import/export, enabled memory
+injection review after this CRUD journey, semantic conversation continuity,
+cross-platform/package acceptance, and 1M+ token context.

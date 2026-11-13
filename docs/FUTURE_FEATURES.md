@@ -23,7 +23,7 @@ and acceptance evidence.
 - [ ] Side-by-side model comparison.
 - [ ] File, image, and PDF upload with retrieval-augmented generation (RAG).
 - [ ] Web search with citations.
-- [ ] Persistent memory with a view/edit management UI.
+- [x] Persistent memory with a view/edit management UI.
 - [x] Message queueing while the AI is responding.
 - [x] Folders, tags, and pinned chats.
 - [x] Search within the current chat and jump to a matching message.
