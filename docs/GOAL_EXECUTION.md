@@ -5191,6 +5191,44 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 139 — live Back/Forward workspace navigation
+
+Status: `verified_windows_disposable_navigation`
+
+The existing bounded `NavigationHistory` implementation now has live native
+acceptance evidence. In a disposable settings profile, the Windows app moved
+from Chat to Coding Agent, Back returned to Chat and enabled Forward, and
+Forward returned to Coding Agent while the accessibility tree exposed the
+correct route names and enabled/disabled states. The same disposable settings
+file persisted the route history as `ChatBot` and `Coding Agent`.
+
+Changed files:
+
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — the existing bounded branch-aware navigation and corrupt-route recovery tests remain the Core contract.
+- Live Windows accessibility inspection — passed: Chat and Coding Agent were
+  exposed as named workspace controls; Back was enabled after moving to Coding
+  Agent; Back returned to Chat and enabled Forward; Forward returned to
+  Coding Agent and then disabled itself.
+- Disposable `settings.json` inspection — passed: route history persisted the
+  two visited routes; the real user profile was not opened or modified.
+- `npm run audit:native-ui` and `git diff --check` — passed.
+
+Privacy/security/licensing: the check used only route names and a disposable
+local settings file. No prompt, provider request, credentials, project data,
+or pet state was changed.
+
+Rollback: revert this documentation entry and the capability-matrix wording;
+the runtime implementation and existing Core history contract remain intact.
+
+Not yet verified: persistent tabs/layout geometry, inspector behavior, typed
+dialog routes, live focus/resize acceptance, Linux parity, and packaged-release
+acceptance.
+
 ## Slice 138 — approved-memory injection after app restart
 
 Status: `verified_windows_disposable_memory_restart`
