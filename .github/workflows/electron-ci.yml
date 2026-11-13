@@ -50,3 +50,6 @@ jobs:
 
       - name: Smoke bounded project browser
         run: npm run smoke:project-browser
+
+      - name: Smoke bounded project terminal
+        run: npm run smoke:project-terminal
