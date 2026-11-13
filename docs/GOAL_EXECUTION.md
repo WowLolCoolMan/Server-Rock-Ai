@@ -2118,6 +2118,46 @@ Limitations: successful live provider response, cross-device synchronization,
 and Linux/package parity remain separate gaps and are not implied by this
 backlog closure.
 
+## Slice 125 — inspect live conversation organization controls
+
+The exact Windows desktop build was launched and its navigation/sidebar
+conversation surface was inspected without changing saved user data. The live
+accessibility tree and rendered dialog exposed:
+
+- folder creation plus chat archive import/export controls;
+- per-chat Pin chat, Edit tags, Archive chat, and Fork from here actions;
+- the tag editor's bounded comma-separated input, local-only disclosure, Save
+  tags, and Cancel controls.
+
+The action menu was opened and the tag editor was opened and cancelled. No
+folder was created, no tag was saved, and no chat was pinned, archived, forked,
+deleted, or exported. Companion visibility was briefly toggled by an imprecise
+coordinate during navigation and restored to its prior hidden state; no pet
+code or persisted pet setting was changed by the repository work.
+
+Evidence:
+
+- Live Windows accessibility state showed `Create conversation folder`,
+  `Import saved chats`, `Export saved chats`, `Pin chat`, `Edit tags…`,
+  `Archive chat`, and `Fork from here`.
+- Live tag dialog showed `Chat tags` with the help text “Enter up to eight
+  comma-separated tags. Each tag can contain up to 32 characters.” and the
+  local-only disclosure.
+- Existing Core persistence tests cover folder assignment, pins, tags,
+  archived/fork metadata, and archive round trips.
+
+Privacy/security/licensing: inspection was read-only for user conversation
+data and made no provider, network, credential, shell, Git, or third-party
+calls. The live check did not transmit or export content.
+
+Rollback: documentation-only; no runtime or persisted data changes require
+rollback.
+
+Not yet verified: a complete disposable-data mutation/save/reload journey for
+folder, pin, tags, archive, and fork actions, plus packaged/Linux accessibility
+parity. The future-features item `Folders, tags, and pinned chats` therefore
+remains unchecked.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
