@@ -7114,3 +7114,30 @@ the existing schema discovery service remain unchanged.
 Remaining: authenticated retrieval, external references, tool authorization
 and execution, long-lived MCP resources/notifications, process supervision,
 cross-platform packaged acceptance, and full live picker/path acceptance.
+
+## Slice 182 — Enforce fully qualified OpenAPI fallback paths
+
+Status: `implemented_build_audit_verified`
+
+The OpenAPI local-path fallback now rejects relative paths before normalization,
+matching its documented local-file boundary and the attachment/pet path policy.
+The existing extension, existence, reparse-point, and size checks remain in
+place.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 234 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is a local validation-only boundary change;
+no provider, network, credential, or execution behavior changes.
+
+Rollback: remove the rooted-path guard; all other OpenAPI review validation
+remains unchanged.
