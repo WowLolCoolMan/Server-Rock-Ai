@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Model } from "../../app/types";
-import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
+import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
 export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
   const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
@@ -12,6 +12,51 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
 }
 
 export function MarketplacePage() {
-  const cards = [{ title: "Models", description: "Compare local and compatible providers.", icon: "◌" }, { title: "Skills", description: "Install focused instruction packs for agents.", icon: "✦" }, { title: "Integrations", description: "Connect tools only when you choose.", icon: "⊕" }];
-  return <div className="feature-page"><PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover models, skills, and integrations with clear ownership and explicit setup." /><div className="marketplace-grid">{cards.map((card) => <Card className="marketplace-card" key={card.title}><span className="marketplace-icon">{card.icon}</span><h3>{card.title}</h3><p>{card.description}</p><span className="catalog-unavailable">Catalog connection not configured</span></Card>)}</div></div>;
+  type Category = "All" | "Models" | "Skills" | "Integrations";
+  const cards = [
+    { title: "Models", category: "Models" as const, description: "Compare local and compatible providers.", detail: "A single place to inspect model capabilities, connection health, and setup requirements.", icon: "◌" },
+    { title: "Skills", category: "Skills" as const, description: "Install focused instruction packs for agents.", detail: "Reusable instruction packs can add focused behavior without changing the core application.", icon: "✦" },
+    { title: "Integrations", category: "Integrations" as const, description: "Connect tools only when you choose.", detail: "Review external tools, permissions, and connection ownership before enabling them.", icon: "⊕" }
+  ];
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<Category>("All");
+  const [selectedTitle, setSelectedTitle] = useState(cards[0].title);
+  const filtered = useMemo(() => cards.filter((card) => {
+    const matchesCategory = category === "All" || card.category === category;
+    const haystack = `${card.title} ${card.description} ${card.detail}`.toLowerCase();
+    return matchesCategory && haystack.includes(query.trim().toLowerCase());
+  }), [category, query]);
+  const selected = filtered.find((card) => card.title === selectedTitle) ?? filtered[0] ?? null;
+
+  return <div className="feature-page">
+    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover models, skills, and integrations with clear ownership and explicit setup." />
+    <Card className="marketplace-browser">
+      <div className="marketplace-toolbar">
+        <div className="marketplace-search-row">
+          <label className="sr-only" htmlFor="marketplace-search">Search marketplace</label>
+          <input id="marketplace-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, skills, integrations…" />
+          <span>{filtered.length} {filtered.length === 1 ? "category" : "categories"}</span>
+        </div>
+        <div className="marketplace-filters" role="group" aria-label="Marketplace categories">
+          {(["All", "Models", "Skills", "Integrations"] as Category[]).map((item) => <button className={`marketplace-filter${category === item ? " is-active" : ""}`} key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
+        </div>
+      </div>
+      <div className="marketplace-layout">
+        {filtered.length === 0 ? <EmptyState title="No matching categories" description="Try another search term or clear the category filter." action={<Button variant="ghost" onClick={() => { setQuery(""); setCategory("All"); }}>Clear filters</Button>} /> : <div className="marketplace-grid" aria-label="Marketplace categories">
+          {filtered.map((card) => <button className={`marketplace-card${selected?.title === card.title ? " is-selected" : ""}`} key={card.title} type="button" onClick={() => setSelectedTitle(card.title)} aria-pressed={selected?.title === card.title}>
+            <span className="marketplace-card-heading"><span className="marketplace-icon">{card.icon}</span><StatusBadge>Not connected</StatusBadge></span>
+            <strong>{card.title}</strong>
+            <span>{card.description}</span>
+            <small>View capability details →</small>
+          </button>)}
+        </div>}
+        {selected && <Card className="marketplace-detail">
+          <div className="marketplace-detail-heading"><div><p className="section-kicker">SELECTED CATEGORY</p><h3>{selected.title}</h3></div><StatusBadge>Not connected</StatusBadge></div>
+          <p>{selected.detail}</p>
+          <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>Catalog connection not configured</dd></div><div><dt>Next step</dt><dd>Connect a catalog or local source in Settings.</dd></div></dl>
+          <p className="marketplace-honesty">Discovery is available as a local presentation. Installation and activation stay disabled until a real backend is connected.</p>
+        </Card>}
+      </div>
+    </Card>
+  </div>;
 }
