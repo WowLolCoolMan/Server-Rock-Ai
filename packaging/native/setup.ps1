@@ -1,6 +1,6 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$PackageRoot = $PSScriptRoot,
+    [string]$PackageRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$InstallRoot,
     [switch]$Launch
 )

@@ -1768,7 +1768,8 @@ target the executable inside the versioned `current` directory instead of a
 copied top-level EXE shim, preserving adjacent runtime files. Rollback no
 longer recreates a stale shim, and Linux uses the same manifest metadata for
 its install folder, command launcher, and desktop entry. The Windows setup
-default now resolves its manifest from the packaging script directory.
+default now resolves the archive root from the packaging script directory,
+matching the native artifact workflow.
 
 Changed files:
 
