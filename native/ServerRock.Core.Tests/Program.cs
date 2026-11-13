@@ -40,5 +40,6 @@ ConversationContextPlannerTests.Run();
 MemoryStoreTests.Run();
 StatusMessageHistoryTests.Run();
 MemoryPromptContextTests.Run();
+AgentTaskArtifactTests.Run();
 
 Console.WriteLine("Native core checks passed.");

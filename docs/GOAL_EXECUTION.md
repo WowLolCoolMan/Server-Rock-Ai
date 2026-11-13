@@ -1667,6 +1667,51 @@ history, live keyboard activation of every Activity action, seeded live
 workflow-event search matching, OS session hosting, parallel-agent artifacts,
 Linux parity, and packaged acceptance.
 
+## Slice 113 — add bounded dependency-aware agent task artifacts
+
+Status: `implemented_verified_core`
+
+The Core layer now has a local-only `AgentTaskArtifactStore` for structured
+agent task planning. It persists bounded task metadata, specialist roles,
+parent operation IDs, dependency IDs, terminal result summaries, and bounded
+artifact labels. Tasks can move from proposed to queued, a ready queued task
+can be claimed for a future executor only after all dependencies are completed,
+and terminal completion/failure/cancellation remains explicit. Search is local
+and bounded. The store does not invoke a provider, shell, Git, file tool, MCP
+server, sub-agent, or background process.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AgentTaskArtifact.cs`
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including dependency gating, persistence/reload, search, and unknown-dependency rejection.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (153 contracts).`
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed: 326 tracked files.
+- `npm run check:release-config` — passed.
+- `npm run audit:future-features` — passed: 159 items, 11 sections, 0 checked.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: task records contain only bounded local metadata;
+they do not store credentials, prompt attachments, command output, file
+contents, or provider responses. No new dependency, network route, or
+execution capability was introduced.
+
+Rollback: remove the task model/store/test and the Program registration, then
+restore the prior Agent workbench matrix line. Existing operation journaling
+and reviewed Coding Agent flows remain independent.
+
+Not yet verified: task-artifact UI, actual sub-agent delegation, parallel
+execution limits, process/container/worktree isolation, background execution,
+cross-platform acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

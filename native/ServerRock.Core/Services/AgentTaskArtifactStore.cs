@@ -1,0 +1,185 @@
+using System.Text.Json;
+using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
+
+namespace ServerRock.Core.Services;
+
+/// <summary>Persists a bounded, reviewable local task list without dispatching agents or tools.</summary>
+public sealed class AgentTaskArtifactStore
+{
+    public const int MaxTasks = 256;
+    public const int MaxTitleCharacters = 200;
+    public const int MaxInstructionCharacters = 4_000;
+    public const int MaxRoleCharacters = 80;
+    public const int MaxResultCharacters = 2_000;
+    public const int MaxArtifactLabelCharacters = 160;
+    public const int MaxDependencies = 8;
+    public const int MaxArtifactLabels = 8;
+    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 12 };
+    private readonly string _path;
+
+    public AgentTaskArtifactStore(string? path = null)
+    {
+        _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ServerRock", "AI", "agent-tasks.json");
+    }
+
+    public IReadOnlyList<AgentTaskArtifact> Load()
+    {
+        if (!File.Exists(_path)) return [];
+        try
+        {
+            var tasks = JsonSerializer.Deserialize<List<AgentTaskArtifact>>(BoundedFileReader.ReadText(_path), Options) ?? [];
+            Validate(tasks);
+            return tasks.Select(Copy).OrderByDescending(task => task.UpdatedAtUtc).ToArray();
+        }
+        catch (JsonException error)
+        {
+            throw new InvalidDataException("Agent task artifacts could not be read. The original file was left untouched.", error);
+        }
+    }
+
+    public AgentTaskArtifact Create(string title, string instruction, string role = "specialist", string? parentRunId = null, IEnumerable<string>? dependsOn = null)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var task = new AgentTaskArtifact
+        {
+            Title = Normalize(title, MaxTitleCharacters, "task title"),
+            Instruction = Normalize(instruction, MaxInstructionCharacters, "task instruction"),
+            Role = Normalize(role, MaxRoleCharacters, "task role"),
+            ParentRunId = NormalizeOptional(parentRunId, 128, "parent run ID"),
+            DependsOn = NormalizeIds(dependsOn),
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now
+        };
+        var tasks = Load().ToList();
+        if (tasks.Count >= MaxTasks) throw new InvalidOperationException($"At most {MaxTasks} agent tasks can be saved.");
+        var knownIds = tasks.Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
+        if (task.DependsOn.Any(id => !knownIds.Contains(id))) throw new ArgumentException("Every task dependency must reference an existing task.", nameof(dependsOn));
+        if (task.DependsOn.Contains(task.Id, StringComparer.Ordinal)) throw new ArgumentException("A task cannot depend on itself.", nameof(dependsOn));
+        tasks.Add(task);
+        Save(tasks);
+        return Copy(task);
+    }
+
+    public AgentTaskArtifact Queue(string id) => Transition(id, AgentTaskStatuses.Proposed, AgentTaskStatuses.Queued);
+
+    /// <summary>Claims one ready queued task for a future executor; this method performs no external work.</summary>
+    public AgentTaskArtifact? TryClaimReady(DateTimeOffset? now = null)
+    {
+        var tasks = Load().ToList();
+        var current = now ?? DateTimeOffset.UtcNow;
+        var task = tasks.Where(item => item.Status == AgentTaskStatuses.Queued && item.DependsOn.All(dependencyId =>
+                tasks.Any(dependency => dependency.Id == dependencyId && dependency.Status == AgentTaskStatuses.Completed)))
+            .OrderBy(item => item.CreatedAtUtc).FirstOrDefault();
+        if (task is null) return null;
+        task.Status = AgentTaskStatuses.Running;
+        task.UpdatedAtUtc = current;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    public AgentTaskArtifact Complete(string id, string resultSummary, IEnumerable<string>? artifactLabels = null) =>
+        Finish(id, AgentTaskStatuses.Completed, resultSummary, artifactLabels);
+
+    public AgentTaskArtifact Fail(string id, string resultSummary) => Finish(id, AgentTaskStatuses.Failed, resultSummary, null);
+
+    public AgentTaskArtifact Cancel(string id, string resultSummary) => Finish(id, AgentTaskStatuses.Cancelled, resultSummary, null);
+
+    public IReadOnlyList<AgentTaskArtifact> Search(string? query)
+    {
+        var normalized = query?.Trim() ?? string.Empty;
+        if (normalized.Length > 512 || normalized.Any(char.IsControl)) throw new ArgumentException("The task search query is invalid.", nameof(query));
+        return Load().Where(task => normalized.Length == 0 || task.Title.Contains(normalized, StringComparison.OrdinalIgnoreCase) || task.Instruction.Contains(normalized, StringComparison.OrdinalIgnoreCase) || task.Role.Contains(normalized, StringComparison.OrdinalIgnoreCase) || task.Status.Contains(normalized, StringComparison.OrdinalIgnoreCase)).ToArray();
+    }
+
+    private AgentTaskArtifact Transition(string id, string expected, string next)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != expected) throw new InvalidOperationException($"A task in {task.Status} state cannot be changed to {next}.");
+        task.Status = next;
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    private AgentTaskArtifact Finish(string id, string status, string resultSummary, IEnumerable<string>? artifactLabels)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Running) throw new InvalidOperationException("Only a claimed running task can be finished.");
+        task.Status = status;
+        task.ResultSummary = Normalize(resultSummary, MaxResultCharacters, "task result");
+        task.ArtifactLabels = NormalizeLabels(artifactLabels);
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    private void Save(IEnumerable<AgentTaskArtifact> tasks)
+    {
+        var list = tasks.Select(Copy).ToList();
+        Validate(list);
+        AtomicFileWriter.WriteText(_path, BoundedFileReader.EnsureTextSize(JsonSerializer.Serialize(list, Options), "agent tasks"));
+    }
+
+    private static void Validate(IReadOnlyList<AgentTaskArtifact> tasks)
+    {
+        if (tasks.Count > MaxTasks) throw new InvalidDataException("The agent task store exceeds its safety bound.");
+        var ids = tasks.Select(task => task.Id).ToHashSet(StringComparer.Ordinal);
+        if (ids.Count != tasks.Count || tasks.Any(task => string.IsNullOrWhiteSpace(task.Id))) throw new InvalidDataException("The agent task store contains invalid or duplicate IDs.");
+        foreach (var task in tasks)
+        {
+            Normalize(task.Title, MaxTitleCharacters, "task title");
+            Normalize(task.Instruction, MaxInstructionCharacters, "task instruction");
+            Normalize(task.Role, MaxRoleCharacters, "task role");
+            NormalizeOptional(task.ParentRunId, 128, "parent run ID");
+            NormalizeIds(task.DependsOn);
+            if (task.DependsOn.Any(id => !ids.Contains(id)) || task.DependsOn.Contains(task.Id, StringComparer.Ordinal)) throw new InvalidDataException("The agent task store contains an invalid dependency.");
+            if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
+            if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
+            NormalizeLabels(task.ArtifactLabels);
+        }
+    }
+
+    private static string Normalize(string value, int maxLength, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)) throw new ArgumentException($"The {label} is invalid.", label);
+        return value.Trim();
+    }
+
+    private static string? NormalizeOptional(string? value, int maxLength, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return Normalize(value, maxLength, label);
+    }
+
+    private static List<string> NormalizeIds(IEnumerable<string>? values)
+    {
+        var result = (values ?? []).Select(value => Normalize(value, 128, "task dependency ID")).Distinct(StringComparer.Ordinal).ToList();
+        if (result.Count > MaxDependencies) throw new ArgumentException($"A task can have at most {MaxDependencies} dependencies.");
+        return result;
+    }
+
+    private static List<string> NormalizeLabels(IEnumerable<string>? values)
+    {
+        var result = (values ?? []).Select(value => Normalize(value, MaxArtifactLabelCharacters, "artifact label")).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (result.Count > MaxArtifactLabels) throw new ArgumentException($"A task can have at most {MaxArtifactLabels} artifact labels.");
+        return result;
+    }
+
+    private static AgentTaskArtifact Copy(AgentTaskArtifact source) => new()
+    {
+        Id = source.Id,
+        ParentRunId = source.ParentRunId,
+        Title = source.Title,
+        Instruction = source.Instruction,
+        Role = source.Role,
+        Status = source.Status,
+        DependsOn = source.DependsOn.ToList(),
+        ResultSummary = source.ResultSummary,
+        ArtifactLabels = source.ArtifactLabels.ToList(),
+        CreatedAtUtc = source.CreatedAtUtc,
+        UpdatedAtUtc = source.UpdatedAtUtc
+    };
+}
