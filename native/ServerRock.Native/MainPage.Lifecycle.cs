@@ -29,6 +29,8 @@ public sealed partial class MainPage
         MainPageHeaderControl.NewChatRequested += NewChatClick;
         MainPageHeaderControl.PreviousBranchRequested += PreviousBranchClick;
         MainPageHeaderControl.NextBranchRequested += NextBranchClick;
+        MainPageHeaderControl.SplitChatRequested += SplitChatClick;
+        SplitConversationViewControl.ComparisonChanged += SplitComparisonChanged;
         CodingWorkspaceBarControl.ToolbarResized += CodingWorkspaceToolbarSizeChanged;
         CodingWorkspaceBarControl.ProjectFoldersRequested += ProjectFoldersClick;
         CodingWorkspaceBarControl.GitHubActionsRequested += GitHubActionsClick;

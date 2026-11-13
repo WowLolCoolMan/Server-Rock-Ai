@@ -51,6 +51,7 @@ public sealed partial class MainPage
         bubble.Child = content;
         ConversationMessages.Children.Add(bubble);
         ConversationScroll.ChangeView(null, double.MaxValue, null);
+        RefreshSplitChat();
         return body;
     }
 
@@ -65,6 +66,7 @@ public sealed partial class MainPage
         var assistantIndex = _messages.FindLastIndex(message => message.Role == "assistant");
         if (assistantIndex >= 0) messageContent.Children.Add(BuildMessageActions(assistantIndex, false, markdown));
         ConversationScroll.ChangeView(null, double.MaxValue, null);
+        RefreshSplitChat();
     }
 
     private StackPanel BuildMessageActions(int messageIndex, bool user, string content)

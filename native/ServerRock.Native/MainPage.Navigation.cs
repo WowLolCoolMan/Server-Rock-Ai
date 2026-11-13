@@ -88,6 +88,7 @@ public sealed partial class MainPage
         }
         if (!await ConfirmTemporaryDiscardAsync($"switch to {selected}")) return;
         _workspaceDrafts.Set(_mode, PromptBox.Text);
+        CloseSplitChat();
         SaveCurrentSession();
         ClearPendingAttachments();
         _mode = selected;
@@ -172,6 +173,7 @@ public sealed partial class MainPage
         UiTheme.ApplySegmentState(ChatModeButton, chatMode);
         UiTheme.ApplySegmentState(CodingModeButton, !chatMode);
         CodingWorkspaceBar.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
+        SplitChatButton.Visibility = chatMode ? Visibility.Visible : Visibility.Collapsed;
         CodingNavigationSection.Visibility = chatMode ? Visibility.Collapsed : Visibility.Visible;
         // NewProjectButton stays hidden: the sidebar moved "New project" under More (main's
         // SidebarView), and showing the empty placeholder covered the More row.

@@ -33,7 +33,7 @@ and acceptance evidence.
 - [ ] Context compaction.
 - [ ] 1M+ token context support.
 - [ ] Omni-modal input for text, images, audio, and video.
-- [ ] Chat export and split view.
+- [x] Chat export and split view.
 - [ ] NotebookLM-style mode grounded only in uploaded documents.
 
 ## Agents and tools

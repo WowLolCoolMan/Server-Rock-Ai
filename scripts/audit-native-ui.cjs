@@ -6,6 +6,7 @@ const nativeDir = path.join(root, "native", "ServerRock.Native");
 const xamlPath = path.join(nativeDir, "MainPage.xaml");
 const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
 const xaml = readText(xamlPath);
+const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -28,6 +29,12 @@ const requiredXaml = [
   ['Status history action', 'AutomationProperties.Name="View status history"'],
   ['Composer responsive hook', 'SizeChanged="ComposerToolbarSizeChanged"'],
   ['Coding workspace responsive hook', 'SizeChanged="CodingWorkspaceToolbarSizeChanged"'],
+  ['Split conversation surface', '<local:SplitConversationView'],
+];
+const requiredSplitXaml = [
+  ['Split chat accessibility name', 'AutomationProperties.Name="Split chat view"'],
+  ['Comparison chat picker', 'AutomationProperties.Name="Choose comparison chat"'],
+  ['Comparison chat empty state', 'AutomationProperties.Name="Comparison chat empty state"'],
 ];
 const requiredCode = [
   ['Model source label', 'AutomationProperties.SetName(source, "Model source")'],
@@ -176,6 +183,9 @@ const requiredCode = [
   ['Memory context injection control', 'AutomationProperties.SetName(injection, "Allow approved memory injection")'],
   ['Memory context preview', 'AutomationProperties.SetName(preview, "Approved memory context preview")'],
   ['Memory context review focus', 'dialog.Opened += (_, _) => injection.Focus(FocusState.Programmatic);'],
+  ['Split chat header action', 'MainPageHeaderControl.SplitChatRequested += SplitChatClick'],
+  ['Split chat refresh path', 'SplitConversationView.Render(PageTitle.Text, _messages, comparisons, _splitComparisonSessionId)'],
+  ['Split chat comparison selection', 'SplitConversationViewControl.ComparisonChanged += SplitComparisonChanged'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
@@ -215,6 +225,7 @@ const requiredGitHubCode = [
 
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
+  ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
   ...requiredCode.filter(([, text]) => !(code + composerCode).includes(text)),
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
 ];
@@ -225,4 +236,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredCode.length + requiredGitHubCode.length} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredCode.length + requiredGitHubCode.length} contracts).`);

@@ -5711,3 +5711,61 @@ Not yet verified: split-pane chat view, per-conversation Markdown directory
 layout, packaged cross-platform export acceptance, and broader export-content
 fidelity evaluation. The combined future item remains unchecked until split
 view is complete.
+
+## Slice 150 — bounded live split chat view
+
+Status: `implemented_verified_windows_split_chat`
+
+The native chat surface now supports a reversible split view. The current
+conversation remains on the left while a saved conversation selected from an
+accessible comparison picker renders on the right. The split view is
+read-only by design: sending, editing, retrying, and other mutations remain
+owned by the normal composer surface, preventing accidental writes to the
+comparison chat. Closing the view restores the regular conversation surface.
+
+Changed files:
+
+- `native/ServerRock.Native/SplitConversationView.xaml`
+- `native/ServerRock.Native/SplitConversationView.xaml.cs`
+- `native/ServerRock.Native/MainPage.SplitChat.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPageHeader.xaml`
+- `native/ServerRock.Native/MainPageHeader.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.Recents.cs`
+- `native/ServerRock.Native/MainPage.Messages.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed with `Native core checks passed.`
+- `npm run audit:native-ui` — passed with 192 contracts covering the split
+  surface, picker, toggle wiring, and accessibility names.
+- Live Windows journey used isolated `.tmp-live-slice150/` settings/history,
+  created two synthetic local-Ollama chats, opened the `Close split chat view`
+  state, verified `Current split chat title`, `Choose comparison chat`, and
+  both transcript panes, then closed the view and observed the normal single
+  conversation surface restored.
+- `npm run audit:future-features` and `git diff --check` — passed.
+
+Privacy/security/licensing: comparison content stays local and read-only in
+the current window. No remote route, new dependency, credential, network
+search, pets state, or handoff file was used. The picker excludes archived
+and current conversations and does not change saved history.
+
+Rollback: remove the split control, split surface, event wiring, audit
+contracts, backlog check, and this evidence entry. Normal chat rendering and
+export remain available.
+
+Not yet verified: draggable/resizable split ratios, persisted pane geometry,
+cross-platform packaged rendering, and editing or composing independently in
+both panes. Those remain separate layout/workspace requirements.

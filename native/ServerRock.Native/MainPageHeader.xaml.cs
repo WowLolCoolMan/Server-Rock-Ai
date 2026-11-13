@@ -14,6 +14,7 @@ public sealed partial class MainPageHeader : UserControl
     public event RoutedEventHandler? NewChatRequested;
     public event RoutedEventHandler? PreviousBranchRequested;
     public event RoutedEventHandler? NextBranchRequested;
+    public event RoutedEventHandler? SplitChatRequested;
 
     public MainPageHeader()
     {
@@ -40,6 +41,7 @@ public sealed partial class MainPageHeader : UserControl
     public Button NextBranchButtonControl => NextBranchButton;
     public Ellipse HeaderConnectionDotControl => HeaderConnectionDot;
     public TextBlock HeaderConnectionLabelControl => HeaderConnectionLabel;
+    public Button SplitChatButtonControl => SplitChatButton;
 
     private void ToggleSidebarClick(object sender, RoutedEventArgs e) => ToggleSidebarRequested?.Invoke(sender, e);
     private void BackClick(object sender, RoutedEventArgs e) => BackRequested?.Invoke(sender, e);
@@ -48,4 +50,5 @@ public sealed partial class MainPageHeader : UserControl
     private void NewChatClick(object sender, RoutedEventArgs e) => NewChatRequested?.Invoke(sender, e);
     private void PreviousBranchClick(object sender, RoutedEventArgs e) => PreviousBranchRequested?.Invoke(sender, e);
     private void NextBranchClick(object sender, RoutedEventArgs e) => NextBranchRequested?.Invoke(sender, e);
+    private void SplitChatClick(object sender, RoutedEventArgs e) => SplitChatRequested?.Invoke(sender, e);
 }

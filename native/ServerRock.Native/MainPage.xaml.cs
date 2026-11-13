@@ -173,5 +173,9 @@ public sealed partial class MainPage : Page
     private Button StopButton => ComposerToolbarControl.StopButtonControl;
     private Button SendButton => ComposerToolbarControl.SendButtonControl;
     private TextBlock PrivacyFootnote => ComposerToolbarControl.PrivacyFootnoteControl;
+    private Button SplitChatButton => MainPageHeaderControl.SplitChatButtonControl;
+    private bool _splitChatVisible;
+    private string? _splitComparisonSessionId;
+    private SplitConversationView SplitConversationView => SplitConversationViewControl;
 
 }

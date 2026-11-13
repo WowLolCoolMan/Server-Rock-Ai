@@ -31,6 +31,7 @@ public sealed partial class MainPage
             return;
         }
         SaveCurrentSession();
+        CloseSplitChat();
         ClearPendingAttachments();
         _activeSessionId = null;
         _activeChatFolder = null;
@@ -211,6 +212,7 @@ public sealed partial class MainPage
         var session = _sessions.FirstOrDefault(item => item.Id == sessionId);
         if (session is null) return;
         if (!await ConfirmTemporaryDiscardAsync("open a saved chat")) return;
+        CloseSplitChat();
         SaveCurrentSession();
         ClearPendingAttachments();
         _isTemporaryChat = false;

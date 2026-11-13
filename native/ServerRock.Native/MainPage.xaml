@@ -12,7 +12,10 @@
       <local:CodingWorkspaceBar x:Name="CodingWorkspaceBarControl" Grid.Row="1" />
 
       <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="{StaticResource SurfaceBrush}">
-        <local:ConversationSurface x:Name="ConversationSurfaceControl" Grid.Row="0" AutomationProperties.Name="Connect a model" />
+        <Grid Grid.Row="0" x:Name="ChatViewHost">
+          <local:ConversationSurface x:Name="ConversationSurfaceControl" AutomationProperties.Name="Connect a model" />
+          <local:SplitConversationView x:Name="SplitConversationViewControl" Visibility="Collapsed" />
+        </Grid>
 
       <!-- Composer input, status, command hints, and send actions live in their own control. -->
       <!-- Responsive contract: SizeChanged="ComposerToolbarSizeChanged" -->

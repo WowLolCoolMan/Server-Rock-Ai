@@ -18,6 +18,7 @@
       </StackPanel>
     </StackPanel>
     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+      <Button x:Name="SplitChatButton" Click="SplitChatClick" Content="Split" Style="{StaticResource ContextButtonStyle}" Padding="9,5" ToolTipService.ToolTip="Open split chat view" AutomationProperties.Name="Open split chat view" AutomationProperties.HelpText="Show the current conversation beside another saved chat." />
       <Button x:Name="ConnectionSettingsButton" Click="SettingsClick" Background="{StaticResource SurfaceAltBrush}" Foreground="{StaticResource MutedInkBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="9,4" ToolTipService.ToolTip="Model connection settings" AutomationProperties.Name="Model connection settings">
         <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse x:Name="HeaderConnectionDot" Width="7" Height="7" Fill="{StaticResource WarningBrush}" /><TextBlock x:Name="HeaderConnectionLabel" Text="Checking" FontSize="11" /></StackPanel>
       </Button>

@@ -274,6 +274,7 @@ public sealed partial class MainPage
             await StreamChatAsync(response, assistantIndex, requestMessages, _requestCancellation.Token);
             if (_mode == WorkspaceModes.CodingAgent) AttachWorkspaceProposals(response, assistantIndex);
             RenderAssistantMessage(response, _messages[assistantIndex].Content, _messages[assistantIndex].Sources);
+            RefreshSplitChat();
             RecordActiveProviderAttempt("completed");
             CompleteActiveOperation();
             SetCompanionCompletionSummary(_messages[assistantIndex].Content);
