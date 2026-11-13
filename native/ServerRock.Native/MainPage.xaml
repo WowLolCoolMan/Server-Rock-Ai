@@ -26,24 +26,8 @@
             <Button Grid.Column="3" Content="×" Click="DismissRuntimeStatusClick" Background="Transparent" Foreground="#60777d" BorderThickness="0" Padding="6,2" AutomationProperties.Name="Dismiss status message" />
           </Grid>
         </Border>
-        <Grid x:Name="ComposerToolbar" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0,0,0,8" SizeChanged="ComposerToolbarSizeChanged">
-          <Grid x:Name="PrimaryComposerToolbar" ColumnDefinitions="Auto,Auto">
-            <Button x:Name="ModelButton" Content="◉　Ollama　·　llama3.2　⌄" Click="ModelHotswapClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="Switch pinned model" AutomationProperties.HelpText="Choose a pinned model for this chat. Use Manage models to pin or unpin models." />
-            <Button x:Name="ComposerToolsButton" Grid.Column="1" Content="Tools　⌄" Click="ComposerToolsClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open composer tools" AutomationProperties.HelpText="Show optional composer controls such as web search, temporary chat, project files, and smart rewriting." />
-          </Grid>
-          <!-- Optional switches scroll sideways on narrow windows instead of being clipped. -->
-          <ScrollViewer x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
-          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-            <Button x:Name="WebSearchButton" Content="⌕　Web off" Click="WebSearchClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle web search" AutomationProperties.HelpText="Turn optional DuckDuckGo web search on or off. Search result excerpts and your prompt are sent to the selected model server." />
-            <Button x:Name="TemporaryButton" Grid.Column="1" Content="◌　Temporary off" Click="TemporaryClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle temporary chat" AutomationProperties.HelpText="Start or end a temporary chat. Temporary messages are kept only in memory and are not written to Recents or local history." />
-            <Button x:Name="ProjectFilesButton" Grid.Column="2" Content="▤　Project files off" Click="ProjectFilesClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Toggle project files in Chat" AutomationProperties.HelpText="Include or exclude bounded, secret-filtered excerpts from the active project's selected folders. A remote model requires consent before files are sent." />
-            <Button x:Name="CancelEditButton" Grid.Column="3" Content="Cancel edit" Click="CancelEditClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Cancel editing this message" />
-            <Button x:Name="SmartRewriteButton" Grid.Column="4" Content="✦　Rewrite off" Click="SmartRewriteClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Toggle smart prompt rewriting" AutomationProperties.HelpText="Ask the selected model to rewrite your draft using the conversation context before sending. You review the rewrite before it is sent." />
-            <Button Grid.Column="5" Content="Image studio" Click="ImageStudioClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open local image studio" AutomationProperties.HelpText="Generate images with your configured local ComfyUI workflow." />
-            <Button Grid.Column="6" Content="Advanced" Click="AdvancedClick" Style="{StaticResource ContextButtonStyle}" Margin="6,0,0,0" AutomationProperties.Name="Open advanced generation controls" AutomationProperties.HelpText="Adjust response temperature and reset it to the recommended value." />
-          </Grid>
-          </ScrollViewer>
-        </Grid>
+        <!-- Responsive contract: SizeChanged="ComposerToolbarSizeChanged" -->
+        <local:ComposerToolbarView x:Name="ComposerToolbarControl" />
         <Border x:Name="CommandHintPanel" Visibility="Collapsed" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="0,0,0,8">
           <StackPanel Spacing="4">
             <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">

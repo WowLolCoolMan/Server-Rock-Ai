@@ -1608,6 +1608,42 @@ subscriptions and accessors.
 Not yet verified: live packaged-release interaction after this extraction,
 narrow-window visual QA, Linux parity, and the remaining handoff slices.
 
+## Slice 99 — extract the composer toolbar from MainPage.xaml
+
+Status: `implemented_verified_build`
+
+The composer toolbar is now a dedicated `ComposerToolbarView` UserControl. It
+owns the model picker, tools disclosure, optional web/temporary/project-file
+toggles, message-edit cancellation, smart rewrite, image studio, and advanced
+controls. It forwards the existing feature actions and responsive size-change
+hook to MainPage, preserving the current compact/expanded layout behavior.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/ComposerToolbarView.xaml`
+- `native/ServerRock.Native/ComposerToolbarView.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
+- `npm run check:syntax` — passed.
+
+Privacy/security/licensing: this is a local visual decomposition only. It
+changes no model routing, web-search behavior, local-file consent, persistence,
+credential handling, or third-party dependency.
+
+Rollback: restore the composer-toolbar Grid in `MainPage.xaml`, remove
+`ComposerToolbarView.xaml` and `.xaml.cs`, and remove its lifecycle
+subscriptions and compatibility accessors.
+
+Not yet verified: live packaged-release interaction after this extraction,
+narrow-window visual QA, Linux parity, and the remaining handoff slices.
+
 ## Slice 98 — extract the conversation surface from MainPage.xaml
 
 Status: `implemented_verified_build`

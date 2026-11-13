@@ -141,5 +141,15 @@ public sealed partial class MainPage : Page
     private Button SuggestionThree => ConversationSurfaceControl.SuggestionThreeControl;
     private ScrollViewer ConversationScroll => ConversationSurfaceControl.ConversationScrollControl;
     private StackPanel ConversationMessages => ConversationSurfaceControl.ConversationMessagesControl;
+    private Grid ComposerToolbar => ComposerToolbarControl.ToolbarControl;
+    private Grid PrimaryComposerToolbar => ComposerToolbarControl.PrimaryToolbarControl;
+    private ScrollViewer SecondaryComposerToolbar => ComposerToolbarControl.SecondaryToolbarControl;
+    private Button ModelButton => ComposerToolbarControl.ModelButtonControl;
+    private Button ComposerToolsButton => ComposerToolbarControl.ComposerToolsButtonControl;
+    private Button WebSearchButton => ComposerToolbarControl.WebSearchButtonControl;
+    private Button TemporaryButton => ComposerToolbarControl.TemporaryButtonControl;
+    private Button ProjectFilesButton => ComposerToolbarControl.ProjectFilesButtonControl;
+    private Button CancelEditButton => ComposerToolbarControl.CancelEditButtonControl;
+    private Button SmartRewriteButton => ComposerToolbarControl.SmartRewriteButtonControl;
 
 }

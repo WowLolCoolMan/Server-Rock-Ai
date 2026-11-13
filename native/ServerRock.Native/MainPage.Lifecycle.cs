@@ -36,6 +36,16 @@ public sealed partial class MainPage
         CodingWorkspaceBarControl.UndoHistoryRequested += UndoHistoryClick;
         ConversationSurfaceControl.SettingsRequested += SettingsClick;
         ConversationSurfaceControl.SuggestionRequested += SuggestionClick;
+        ComposerToolbarControl.ToolbarResized += ComposerToolbarSizeChanged;
+        ComposerToolbarControl.ModelRequested += ModelHotswapClick;
+        ComposerToolbarControl.ToolsRequested += ComposerToolsClick;
+        ComposerToolbarControl.WebSearchRequested += WebSearchClick;
+        ComposerToolbarControl.TemporaryRequested += TemporaryClick;
+        ComposerToolbarControl.ProjectFilesRequested += ProjectFilesClick;
+        ComposerToolbarControl.CancelEditRequested += CancelEditClick;
+        ComposerToolbarControl.SmartRewriteRequested += SmartRewriteClick;
+        ComposerToolbarControl.ImageStudioRequested += ImageStudioClick;
+        ComposerToolbarControl.AdvancedRequested += AdvancedClick;
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
         SidebarView.CodingModeRequested += CodingModeClick;
