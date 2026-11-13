@@ -1,10 +1,10 @@
 # Companion sprite sheets
 
-Each built-in pet has one sprite sheet (`<pet>-sprite-sheet.png`) and seven pre-cut state frames
-(`<pet>-<state>.png`, 256×256, transparent). The app only loads the pre-cut frames, so it never
-decodes a full sheet at runtime. Percy additionally has six aligned frames per state
-(`percy-<state>-1.png` through `percy-<state>-6.png`) and six walk frames; the native runtime
-cycles those frames at 8 FPS while retaining its transform animation for motion.
+Each built-in pet has one identity sprite sheet (`<pet>-sprite-sheet.png`) and seven source state
+frames (`<pet>-<state>.png`, 256×256, transparent). The production animation layer now provides
+six aligned frames per state (`<pet>-<state>-1.png` through `<pet>-<state>-6.png`) and six walk
+frames for every pet. The native runtime cycles those frames at 8 FPS while retaining its
+transform animation for motion.
 
 The sheets do not share one layout: Rocky's sheet is a 3×3 grid, the others are 4×4, and each
 sheet places its poses differently. Cells are numbered from zero, left to right, top to bottom.
@@ -28,5 +28,5 @@ files stay on the device.
 
 Percy is the official Skai Desktop mascot and the default companion for new profiles. His
 generated 4×4 atlas also includes four source walk-cycle frames in row 2 (cells 4–7). The
-six-frame production atlas is `percy-animation-sprite-sheet.png`; regenerate it with
-`pwsh -NoProfile -ExecutionPolicy Bypass -File assets/pets/make-percy-frames.ps1`.
+six-frame production atlases are `<pet>-animation-sprite-sheet.png`; regenerate every pet with
+`pwsh -NoProfile -ExecutionPolicy Bypass -File assets/pets/make-pet-frames.ps1`.

@@ -23,7 +23,7 @@ reconciliation, parallel agents and recovery.
 
 ## Baseline
 
-- Repository: `WowLolCoolMan/Server-Rock-Ai`
+- Repository: `WowLolCoolMan/skai-desktop`
 - Branch: `main`
 - Baseline commit: `3e34156` (`feat: add bounded chat tags`)
 - Working tree: clean apart from the preserved untracked handoff directory
@@ -39,7 +39,7 @@ Requirement alignment: the handoff targets light/dark themes and the live README
 previously identified dark mode as unavailable. This slice adds a persisted
 light/dark choice to Settings → Appearance, applies the selected native theme
 to the application root and standardized dialogs, and switches the shared
-Server Rock design-token palette without changing provider or workspace data.
+Skai Desktop design-token palette without changing provider or workspace data.
 
 Changed files:
 
@@ -871,7 +871,7 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed: `Native UI audit passed (83 contracts).`
 - `git diff --check` — passed.
-- Live Windows check: the built `Server Rock: AI` window exposed accessible names for the message composer, Send message, Activity & tasks, and the Queue control contract. End-to-end queue interaction was not claimed because the automation helper returned no click geometry for the Send action while multiple native windows were present.
+- Live Windows check: the built `Skai Desktop` window exposed accessible names for the message composer, Send message, Activity & tasks, and the Queue control contract. End-to-end queue interaction was not claimed because the automation helper returned no click geometry for the Send action while multiple native windows were present.
 
 Privacy/security/licensing: queue contents remain local process memory and the
 management surface renders bounded previews only. Explicit clear is reversible
@@ -5647,8 +5647,8 @@ item remains unchecked until split view and picker acceptance are complete.
 Status: `implemented_verified_windows_markdown_picker`
 
 The disposable Windows acceptance journey confirmed that the native Save As
-picker exposes both supported export choices: the existing `Server Rock chat
-archive` JSON type and the new `Server Rock Markdown transcript` type. This
+picker exposes both supported export choices: the existing `Skai Desktop chat
+archive` JSON type and the new `Skai Desktop Markdown transcript` type. This
 closes the picker-choice evidence gap for the Markdown export path while
 keeping the combined export-and-split-view backlog item open.
 
@@ -5682,7 +5682,7 @@ Status: `implemented_verified_windows_markdown_write_readback`
 
 The native Windows export journey now covers the complete disposable Markdown
 write/readback path. A synthetic local-model conversation was exported through
-the native picker with `Server Rock Markdown transcript` selected and the file
+the native picker with `Skai Desktop Markdown transcript` selected and the file
 was written to `.tmp-live-slice149/export.md`. The app reported one exported
 conversation, and an independent readback assertion confirmed the `# Chat
 export` header, `Conversations: 1` metadata, synthetic user message, and
@@ -7350,6 +7350,51 @@ Percy URI selection and preload loop. Existing companion preferences remain vali
 
 Remaining: add richer hand-authored frame timing and an in-app animation preview
 when the broader pet customization backlog is revisited.
+
+## Slice 192 — Audit and standardize all pet animation strips
+
+Status: `implemented_all_pet_assets_runtime_build_verified`
+
+The pet audit found that only Percy had production six-frame strips and that
+Percy's old generated state frames carried opaque edge pixels. Replaced the
+animation layer for all six built-in pets with deterministic six-frame strips
+for all seven states plus a six-frame walk loop. The generator clears a shared
+transparent edge band, keeps a 256×256 cell contract, and emits a per-pet review
+atlas. The runtime now preloads and cycles the six-frame strips for every built-in
+pet, including walking, while custom sprites and reduced-motion behavior remain
+unchanged.
+
+Changed files:
+
+- `assets/pets/make-pet-frames.ps1`
+- `assets/pets/<pet>-<state>-1.png` through `<pet>-<state>-6.png` for all six pets
+- `assets/pets/<pet>-<state>-frames.png` for all seven states and all six pets
+- `assets/pets/<pet>-walk-1.png` through `<pet>-walk-6.png` for all six pets
+- `assets/pets/<pet>-walk-frames.png` and `<pet>-animation-sprite-sheet.png`
+- `assets/pets/README.md`
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `native/ServerRock.Native/MainPage.CompanionAnimation.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Every built-in pet has 7×6 state frames plus 6 walk frames.
+- Every production frame is 256×256; every strip is 1,536×256; every atlas is 1,536×2,048.
+- Edge-alpha audit passes after the shared six-pixel cleanup band.
+- Native UI audit now checks all 252 frame files and six per-pet atlases.
+- Desktop and Windows builds verify that the glob-packaged assets resolve through the native app.
+
+Privacy/security/licensing: local artwork and frame selection only; no network,
+provider, credential, or user-data behavior changed. The art remains project-owned
+generated/derived content.
+
+Rollback: restore the previous Percy-only animation selection and remove the new
+generated strips. Existing companion IDs, state preferences, and custom sprite
+paths remain compatible.
+
+Remaining: a live visual smoke run across each pet/state and hand-authored motion
+timing remain worthwhile follow-up acceptance work.
 
 ## Slice 187 — Validate release metadata consistency
 
