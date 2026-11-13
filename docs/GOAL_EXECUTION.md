@@ -5641,3 +5641,37 @@ Not yet verified: native Windows file-picker selection of `.md` and resulting
 file contents, split-pane chat view, per-conversation Markdown directory
 layout, and packaged cross-platform export acceptance. The combined future
 item remains unchecked until split view and picker acceptance are complete.
+
+## Slice 148 — live Windows Markdown export picker evidence
+
+Status: `implemented_verified_windows_markdown_picker`
+
+The disposable Windows acceptance journey confirmed that the native Save As
+picker exposes both supported export choices: the existing `Server Rock chat
+archive` JSON type and the new `Server Rock Markdown transcript` type. This
+closes the picker-choice evidence gap for the Markdown export path while
+keeping the combined export-and-split-view backlog item open.
+
+Evidence:
+
+- Launched the built `net10.0-desktop` app with isolated settings and
+  conversation paths under `.tmp-live-slice148/`.
+- Created one synthetic local-model conversation and opened the accessible
+  `Export saved chats` action.
+- Inspected the native Save As `Save as type` list and observed both JSON and
+  Markdown choices.
+- Canceled the disposable picker without writing to the user's Documents
+  folder or normal conversation history.
+- Slice 147 core tests, native build, and 185-contract native UI audit remain
+  passing; this slice adds the live picker observation.
+
+Privacy/security/licensing: the journey used only synthetic prompt content and
+the local Ollama endpoint. No user data, credentials, network search, pets
+state, or handoff files were accessed or modified.
+
+Rollback: revert this evidence section and the corresponding capability-matrix
+wording. Runtime behavior is unchanged.
+
+Not yet verified: selecting `.md` and reading back the written file, split-pane
+chat view, per-conversation Markdown directory layout, and packaged
+cross-platform export acceptance. The combined future item remains unchecked.
