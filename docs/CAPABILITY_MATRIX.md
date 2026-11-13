@@ -164,3 +164,9 @@ Schedule task dialog, exposed accessible prompt/date/time/workspace/recurrence
 controls and the review-only safety disclosure, then cancelled without creating
 a task or mutating provider/conversation state. Persistence, run-now, timezone
 and autonomous execution remain open.
+
+Recent slice note — Slice 160: added bounded in-app documentation reachable from
+More and Ctrl+K. Live Windows verification rendered five guide sections in an
+accessible scroll region; native audit now passes 212 contracts and the future
+feature inventory has 11 checked items. Localization, richer help content, and
+Popup focus acceptance remain open.

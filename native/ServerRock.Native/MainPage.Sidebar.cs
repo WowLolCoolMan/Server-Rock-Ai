@@ -719,6 +719,7 @@ public sealed partial class MainPage
         AddAction("Search conversations", "search", "Find saved chats and coding sessions.");
         AddAction("Code Review Agent", "review", "Review a folder, ZIP, or GitHub repository with your selected model.");
         AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
+        AddAction("In-app documentation", "documentation", "Review local-first usage, privacy, safety, and workflow guidance.");
         AddAction("Connection & settings", "settings", "Configure model endpoints, privacy, voice, and local preferences.");
         dialog = new ContentDialog { Title = "More workspace options", Content = actions, CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         await dialog.ShowAsync();
@@ -728,8 +729,31 @@ public sealed partial class MainPage
             case "search": SearchClick(this, new RoutedEventArgs()); break;
             case "review": await OpenCodeReviewAgentAsync(); break;
             case "health": await ShowLocalHealthAsync(includeMap: false); break;
+            case "documentation": await ShowInAppDocumentationAsync(); break;
             case "settings": SettingsClick(this, new RoutedEventArgs()); break;
         }
+    }
+
+    private async Task ShowInAppDocumentationAsync()
+    {
+        var content = new StackPanel { Spacing = 10, MaxWidth = 720 };
+        void AddSection(string heading, string body)
+        {
+            content.Children.Add(new TextBlock { Text = heading, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            content.Children.Add(new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap, Opacity = 0.84 });
+        }
+
+        AddSection("Getting started", $"{ProductIdentity.DisplayName} keeps your conversations and workspace state on this device by default. Choose a model in Model Library, review the connection status, then send a prompt from Chat or Coding Agent.");
+        AddSection("Privacy and routing", "The composer shows whether the selected endpoint is on-device. Web search, remote endpoints, memory injection, and attachments are opt-in surfaces. Review the provider, model, and privacy label before sending.");
+        AddSection("Review-first actions", "Files, shell commands, Git changes, workflow steps, scheduled prompts, and agent task plans expose a review or approval step. A preview or queue action does not automatically send a provider request or run a tool.");
+        AddSection("Local data controls", "Use Settings, Memory, Activity & tasks, and chat export to inspect, edit, or back up local state. Exports are explicit and bounded; protected files and secret-like paths are rejected.");
+        AddSection("Where to look next", "Use the command palette with Ctrl+K for fast navigation. Open Projects & folders for scoped files, GitHub & source control for repository review, Extensions & skills for local packages, and Images for the local image workflow.");
+
+        var scroll = new ScrollViewer { Content = content, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        AutomationProperties.SetName(scroll, "In-app documentation content");
+        var dialog = new ContentDialog { Title = $"{ProductIdentity.DisplayName} guide", Content = scroll, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        AutomationProperties.SetName(dialog, "In-app documentation");
+        await dialog.ShowAsync();
     }
 
     private async void UpdateClick(object sender, RoutedEventArgs e)

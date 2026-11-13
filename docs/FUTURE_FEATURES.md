@@ -108,7 +108,7 @@ and acceptance evidence.
 - [ ] Text snippets with AI expansion.
 - [ ] Window management.
 - [ ] Quicklinks for frequent-access bookmarks.
-- [ ] In-app documentation.
+- [x] In-app documentation.
 - [ ] Developer mode.
 - [ ] Global quick-AI fallback for non-command input.
 - [ ] Native multi-session sidebar with drag-and-drop panes.

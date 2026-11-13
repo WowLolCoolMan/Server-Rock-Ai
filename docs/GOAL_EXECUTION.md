@@ -6163,3 +6163,47 @@ product state requires rollback.
 Remaining: keyboard/screen-reader focus reporting for Popup dialogs, actual
 scheduled-task persistence/run-now outcomes across restart, timezone/locale
 coverage, and autonomous/background execution remain open.
+
+## Slice 160 — In-app documentation
+
+Status: `implemented_verified_windows_more_and_command_palette`
+
+Added a bounded, local in-app guide covering getting started, privacy and
+routing, review-first actions, local data controls, and navigation to major
+workspaces. It is reachable from More workspace options and from the Ctrl+K
+command palette, uses the centralized product identity, and renders its
+content inside an accessible scroll region.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed.
+- `npm run audit:native-ui` — passed with 212 contracts.
+- `npm run audit:future-features` — passed with 160 items, 11 sections, and 11
+  checked items.
+- `git diff --check` — passed.
+- Live Windows journey: More workspace options displayed In-app documentation;
+  the guide rendered five readable sections in an accessible scroll region.
+  Ctrl+K filtered to `documentation`, showed exactly the new command, and
+  Run action opened the same guide. Both journeys closed without provider or
+  file activity.
+
+Privacy/security/licensing: the guide is static local UI text and does not
+inspect conversations, route prompts, access credentials, or add a dependency.
+
+Rollback: remove the documentation command/menu action and revert the checked
+backlog item; no persisted user state is created by opening the guide.
+
+Remaining: richer versioned help content, localization, searchable external
+handoff references, and full Popup focus/screen-reader acceptance remain open.
