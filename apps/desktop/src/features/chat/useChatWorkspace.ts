@@ -112,7 +112,15 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
   };
 
   const startNewChat = () => { setConversationId(null); setMessages([]); setAttachments([]); onError(null); };
+  const selectConversation = (id: string) => {
+    const selected = conversations.find((conversation) => conversation.id === id);
+    if (!selected) return;
+    setConversationId(selected.id);
+    setMessages(selected.messages.filter((item) => item.role !== "system") as Message[]);
+    setAttachments([]);
+    onError(null);
+  };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
