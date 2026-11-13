@@ -22,6 +22,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `d635db8` — migrated the command palette onto the shared modal primitive and removed duplicate focus lifecycle logic.
 - `6e6eab9` — upgraded Marketplace from static cards to a searchable, filterable catalog shell with selectable detail context and honest unavailable states.
 - `ccd20a5` — extracted typed route composition from `App.tsx` into an independently testable `AppRouteView` boundary while preserving the existing feature/service contracts.
+- `890e42d` — moved renderer state, persistence effects, backend commands, and feature callbacks into `useDesktopWorkspace`; `App.tsx` is now shell composition only.
 
 ## Current evidence
 
@@ -47,17 +48,18 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Unified overlay interaction check: passed for command-palette initial focus, boundary wrapping, Escape restoration, filtered keyboard navigation, Coding dialog initial focus, boundary wrapping, Escape restoration, and responsive overflow at 1280px. Screenshots: `output/playwright/skai-command-palette-unified.png` and `output/playwright/skai-coding-dialog-unified.png`.
 - Marketplace interaction check: passed for search, category filtering, selectable detail context, empty-state recovery, keyboard-visible focus, and responsive overflow at 1280px and 960px. Screenshots: `output/playwright/skai-marketplace-populated.png` and `output/playwright/skai-marketplace.png`.
 - Route composition sweep: passed for all nine routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the built renderer.
+- Workspace-coordinator regression sweep: passed after extraction for all nine routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the rebuilt renderer.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
 
 ## Current task
 
-Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. Route composition is now isolated behind a typed `AppRouteView`; the command palette and Coding Workspace dialog share one verified focus/escape/restoration contract, alongside the theme/backdrop contrast pass and the first honest Marketplace discovery shell. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
+Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. Route composition is isolated behind a typed `AppRouteView`, and `App.tsx` now composes the shell through `useDesktopWorkspace`; the command palette and Coding Workspace dialog share one verified focus/escape/restoration contract, alongside the theme/backdrop contrast pass and the first honest Marketplace discovery shell. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
 
 ## Outstanding priorities
 
-1. Continue reducing `App.tsx` orchestration by extracting runtime state/commands into feature-scoped hooks or services. The typed route boundary is complete; the state/command coordinator remains the next architectural slice.
+1. Split `useDesktopWorkspace` into feature-scoped runtime hooks/services where the boundaries are clear, beginning with chat and coding commands; keep request validation and existing backend behavior unchanged.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the shared modal surfaces to remaining overlay and menu surfaces, including real Electron capture when the provider can target the correct window.
