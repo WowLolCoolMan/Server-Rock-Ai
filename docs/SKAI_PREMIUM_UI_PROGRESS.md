@@ -27,6 +27,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `559f642` — isolated coding/project discovery, folder selection, guarded file editing/undo, and bounded terminal commands in `useCodingWorkspace`.
 - `db4b966` — added a local-only task brief composer, truthful Local/Worktree environment state, and a review-first `tasks.plan` Agent Host capability; Cloud is intentionally out of scope.
 - `2175eef` — added keyboard-first workspace navigation for command palette, new chat, Settings, sidebar, Chat, Coding, and Terminal shortcuts.
+- `b2b39cb` — aligned the visible navigation with the local-first product contract by removing Marketplace from the active route surface while retaining its catalog code for future local extensions.
+- `PENDING` — exposed the persisted task brief in Agent Workbench details so proposed work can be reviewed before queueing.
 
 ## Current evidence
 
@@ -50,12 +52,13 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Theme/backdrop visual audit: passed for light/dark × Deep Sea/Deep Space combinations, readable headings and surfaces, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-theme-light-deep-sea.png`, `output/playwright/skai-theme-light-deep-space.png`, `output/playwright/skai-theme-dark-deep-sea.png`, and `output/playwright/skai-theme-dark-deep-space.png`.
 - Coding dialog accessibility check: passed for initial field focus, Shift+Tab/Tab wrapping, Escape close, submit close, focus restoration after both close paths, and responsive overflow at 1280px. Screenshot: `output/playwright/skai-coding-dialog-open.png`.
 - Unified overlay interaction check: passed for command-palette initial focus, boundary wrapping, Escape restoration, filtered keyboard navigation, Coding dialog initial focus, boundary wrapping, Escape restoration, and responsive overflow at 1280px. Screenshots: `output/playwright/skai-command-palette-unified.png` and `output/playwright/skai-coding-dialog-unified.png`.
-- Marketplace interaction check: passed for search, category filtering, selectable detail context, empty-state recovery, keyboard-visible focus, and responsive overflow at 1280px and 960px. Screenshots: `output/playwright/skai-marketplace-populated.png` and `output/playwright/skai-marketplace.png`.
-- Route composition sweep: passed for all nine routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the built renderer.
-- Workspace-coordinator regression sweep: passed after extraction for all nine routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the rebuilt renderer.
+- Marketplace interaction check: previously passed for the standalone catalog shell; the catalog is no longer an active top-level route after `b2b39cb`, and its installation/activation remains intentionally unavailable.
+- Route composition sweep: passed for all eight active routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the built renderer.
+- Workspace-coordinator regression sweep: passed after extraction for all eight active routes, active navigation state, route-specific document titles, browser back navigation, and no horizontal overflow at 1280px and 960px using the rebuilt renderer.
 - Chat runtime regression: passed the existing FIFO queue smoke plus renderer interaction coverage for conversation loading, queued follow-up while the model is busy, indexed removal, completion response rendering, and 1280px overflow.
 - Coding runtime regression: passed project-browser, project-terminal, and project-editor smoke tests plus renderer coverage for project selection, file read, diff review, guarded save, docked terminal execution, output rendering, and 1280px overflow. Screenshot: `output/playwright/skai-coding-coordinator.png`.
 - Task composer interaction check: passed project selection, task brief entry, disabled Worktree state, local proposed-task creation, Agent Workbench handoff, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-coding-task-composer.png`.
+- Task review interaction check: passed opening a proposed task's detail disclosure, rendering its persisted brief, and no horizontal overflow at 1280px.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.

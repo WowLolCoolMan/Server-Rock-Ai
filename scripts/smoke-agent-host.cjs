@@ -64,7 +64,7 @@ async function run() {
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
   if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
   const tasks = await request("tasks.list");
-  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task") throw new Error("tasks.plan persistence round-trip failed.");
+  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow.") throw new Error("tasks.plan persistence round-trip failed.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
   if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
   console.log("Agent host replacement smoke passed: health, disposable conversation/settings persistence, and local task planning.");

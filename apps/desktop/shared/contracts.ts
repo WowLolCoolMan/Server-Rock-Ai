@@ -59,6 +59,7 @@ export type DesktopConversationSearchResult = DesktopConversation & {
 export type DesktopTask = {
   id: string;
   title: string;
+  instruction: string;
   role: string;
   status: string;
   resultSummary?: string | null;

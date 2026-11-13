@@ -26,6 +26,7 @@ function TaskDetails({ task }: { task: DesktopTask }) {
     <summary>View task details</summary>
     <dl>
       <div><dt>Task ID</dt><dd>{task.id}</dd></div>
+      <div><dt>Task brief</dt><dd className="task-instruction">{task.instruction}</dd></div>
       <div><dt>Role</dt><dd>{task.role}</dd></div>
       <div><dt>Dependencies</dt><dd>{task.dependsOn.length ? task.dependsOn.join(", ") : "None"}</dd></div>
       <div><dt>Result</dt><dd>{task.resultSummary || "No result recorded yet."}</dd></div>

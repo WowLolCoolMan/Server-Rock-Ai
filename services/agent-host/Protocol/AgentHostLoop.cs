@@ -282,6 +282,7 @@ public static class AgentHostLoop
             {
                 id = task.Id,
                 title = task.Title,
+                instruction = task.Instruction,
                 role = task.Role,
                 status = task.Status,
                 resultSummary = task.ResultSummary,
