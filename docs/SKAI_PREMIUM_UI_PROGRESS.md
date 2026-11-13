@@ -15,6 +15,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `a106d84` — connected the selected coding project to Terminal and Agent Workbench handoffs, preserving project context when opening Terminal.
 - `7cfcd82` — added a local, bounded coding diff-review mode tied to the existing guarded file save and undo flow.
 - `e95ed81` — deepened Memory and Agent Workbench with loading/error recovery, full task lifecycle columns, dependency context, timestamps, and responsive reflow.
+- `e68bde5` — added keyboard-accessible Workbench task-detail disclosures with dependency/result context and honest approval/failure capability notes.
 
 ## Current evidence
 
@@ -33,6 +34,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Project explorer search check: passed for `Ctrl+P` focus, filename/path filtering, no-match recovery, and responsive overflow at 960px. Screenshot: `output/playwright/skai-coding-file-search.png`.
 - Memory edit interaction check: passed for loading an existing entry, entering edit mode, updating by stable ID, refreshing persisted content, canceling edit, and responsive overflow at 960px. Screenshot: `output/playwright/skai-memory-edit.png`.
 - Memory/Workbench interaction checks: passed for loading, empty state, Memory failure/retry, lifecycle columns, dependency context, and responsive overflow.
+- Workbench detail interaction check: passed for opening every task-detail disclosure, keyboard focus on native summaries, dependency/result rendering, approval/failure capability notes, and responsive overflow at 960px. Screenshot: `output/playwright/skai-workbench-details.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
@@ -45,7 +47,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 1. Integrate the coding workspace into a dockable project workflow with file tabs, terminal output, guarded diff review, and explicit approvals. File tabs and a docked terminal panel now share the selected project; broader review and explicit approval surfaces remain.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
-3. Continue improving Memory and Agent Workbench interaction depth with detail views and richer recovery actions. Memory editing is now backed by the existing ID-aware save path; Workbench detail/recovery depth remains.
+3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Add stronger keyboard-focus and dialog accessibility tests, including real Electron capture when the provider can target the correct window.
 5. Audit dark/light/system themes and density/backdrop combinations across every major route.
 6. Add workflow/skills/integration surfaces only where the existing runtime has a real capability; do not fabricate integrations.
