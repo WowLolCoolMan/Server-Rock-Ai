@@ -100,6 +100,10 @@ textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(
 .task-row div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .task-row span, .task-row small { color: #91a3bc; font-size: 12px; }
 .task-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-actions { display: flex; gap: 7px; }
+.tiny-button { border: 1px solid #40516d; border-radius: 7px; padding: 5px 8px; color: #bfd2ef; background: #1e2c43; font-size: 11px; cursor: pointer; }
+.tiny-button:hover { border-color: #84b3ff; color: #f1f4f8; }
+.tiny-button:disabled { opacity: .5; cursor: wait; }
 .compact-empty { min-height: 90px; border: 1px dashed #30425d; border-radius: 10px; }
 .inline-error { margin: 12px 0; color: #f49a9f; font-size: 13px; }
 @media (max-width: 1050px) { .workbench-grid { grid-template-columns: 1fr; } }

@@ -52,11 +52,14 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "tasks.list" => ListTasks(request),
+            "tasks.queue" => TransitionTask(request, "queue"),
+            "tasks.cancel" => TransitionTask(request, "cancel"),
+            "tasks.retry" => TransitionTask(request, "retry"),
             "scheduled.list" => ListScheduledTasks(request),
             "conversations.list" => ListConversations(request),
             "conversation.save" => SaveConversation(request),
@@ -129,7 +132,7 @@ public static class AgentHostLoop
 
     private static AgentResponse ListTasks(AgentRequest request)
     {
-        var tasks = new AgentTaskArtifactStore().Load()
+        var tasks = CreateTaskStore().Load()
             .OrderByDescending(task => task.UpdatedAtUtc)
             .Select(task => new
             {
@@ -143,6 +146,20 @@ public static class AgentHostLoop
             })
             .ToArray();
         return new(ProtocolVersion, request.Id, true, tasks);
+    }
+
+    private static AgentResponse TransitionTask(AgentRequest request, string operation)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var store = CreateTaskStore();
+        var task = operation switch
+        {
+            "queue" => store.Queue(id),
+            "cancel" => store.CancelPlanned(id),
+            "retry" => store.RetryBlocked(id),
+            _ => throw new InvalidOperationException("Unknown task operation."),
+        };
+        return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });
     }
 
     private static AgentResponse ListScheduledTasks(AgentRequest request)
@@ -260,6 +277,9 @@ public static class AgentHostLoop
 
     private static ProjectStore CreateProjectStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_PROJECTS_PATH"));
+
+    private static AgentTaskArtifactStore CreateTaskStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_TASKS_PATH"));
 
     private static string RequiredString(AgentRequest request, string name)
     {
