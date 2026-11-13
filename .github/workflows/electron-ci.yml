@@ -47,3 +47,6 @@ jobs:
 
       - name: Smoke replacement protocol
         run: npm run smoke:agent-host
+
+      - name: Smoke bounded project browser
+        run: npm run smoke:project-browser
