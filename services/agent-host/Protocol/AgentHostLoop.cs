@@ -1,7 +1,7 @@
 using System.Text.Json;
-using ServerRock.Core.Infrastructure;
-using ServerRock.Core.Models;
-using ServerRock.Core.Services;
+using SkaiDesktop.Core.Infrastructure;
+using SkaiDesktop.Core.Models;
+using SkaiDesktop.Core.Services;
 
 namespace ServerRock.AgentHost.Protocol;
 
@@ -498,6 +498,14 @@ public static class AgentHostLoop
             session.Pinned = pinned.GetBoolean();
         if (parameters.TryGetProperty("archived", out var archived) && archived.ValueKind is JsonValueKind.True or JsonValueKind.False)
             session.Archived = archived.GetBoolean();
+        if (parameters.TryGetProperty("title", out var title))
+        {
+            if (title.ValueKind is not JsonValueKind.String) throw new InvalidOperationException("title must be text.");
+            var nextTitle = title.GetString()?.Trim();
+            if (string.IsNullOrWhiteSpace(nextTitle) || nextTitle.Length > 200 || nextTitle.Any(char.IsControl))
+                throw new InvalidOperationException("title must be between 1 and 200 visible characters.");
+            session.Title = nextTitle;
+        }
         if (parameters.TryGetProperty("folderName", out var folder))
         {
             if (folder.ValueKind is not JsonValueKind.String) throw new InvalidOperationException("folderName must be text.");
@@ -513,7 +521,7 @@ public static class AgentHostLoop
         }
         session.UpdatedAt = DateTimeOffset.UtcNow;
         store.Save(sessions);
-        return new(ProtocolVersion, request.Id, true, new { id = session.Id, pinned = session.Pinned, archived = session.Archived, folderName = session.FolderName, tags = session.Tags, updatedAt = session.UpdatedAt });
+        return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, pinned = session.Pinned, archived = session.Archived, folderName = session.FolderName, tags = session.Tags, updatedAt = session.UpdatedAt });
     }
 
     private static AgentResponse ListQueuedMessages(AgentRequest request)
