@@ -1597,6 +1597,42 @@ workflow-event search matching, full status-history keyboard/screen-reader
 acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
 packaged acceptance.
 
+## Slice 110 — make Activity dialog entry keyboard predictable
+
+Status: `implemented_verified_build`
+
+The dynamically created Activity & Tasks dialog now has an explicit accessible
+name and moves focus to the non-mutating Export evidence action when it opens.
+This gives keyboard and assistive-technology users a deterministic entry point
+while leaving task scheduling, run-now, approval, and reconciliation actions
+explicitly user initiated.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (148 contracts).`
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is a local focus and accessibility change.
+It adds no provider request, credential, network route, task mutation,
+dependency, or third-party code.
+
+Rollback: remove the dialog accessible-name/focus wiring and the two audit
+contracts; the existing Activity actions remain available with their existing
+explicit approval behavior.
+
+Not yet verified: live keyboard activation of every Activity action, seeded
+live workflow-event search matching, full status-history keyboard/screen-reader
+acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
+packaged acceptance.
+
 ## Slice 96 — extract the main page header into a dedicated visual control
 
 Status: `implemented_verified_build`

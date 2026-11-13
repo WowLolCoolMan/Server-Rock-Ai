@@ -320,6 +320,8 @@ public sealed partial class MainPage
             CloseButtonText = "Done",
             XamlRoot = XamlRoot
         };
+        AutomationProperties.SetName(dialog, "Activity and tasks");
+        dialog.Opened += (_, _) => exportActivity.Focus(FocusState.Programmatic);
         if (approvalTimer is not null)
         {
             dialog.Closed += (_, _) => approvalTimer.Stop();

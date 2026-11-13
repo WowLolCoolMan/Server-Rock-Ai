@@ -112,6 +112,8 @@ const requiredCode = [
   ['Memory import action', 'AutomationProperties.SetName(import, "Import saved memory backup")'],
   ['Activity evidence export action', 'AutomationProperties.SetName(exportActivity, "Export activity evidence")'],
   ['Activity evidence search action', 'AutomationProperties.SetName(searchActivity, "Search activity evidence")'],
+  ['Activity dialog accessible name', 'AutomationProperties.SetName(dialog, "Activity and tasks")'],
+  ['Activity dialog initial focus', 'dialog.Opened += (_, _) => exportActivity.Focus(FocusState.Programmatic);'],
   ['Operation activity search results', 'AutomationProperties.SetName(results, "Operation activity search results")'],
   ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
