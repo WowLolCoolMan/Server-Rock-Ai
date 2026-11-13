@@ -208,48 +208,4 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .workbench-view-actions { display: flex; gap: 6px; }.workbench-layout { display: grid; grid-template-columns: minmax(300px,.85fr) minmax(0,1.35fr); gap: 14px; min-width: 0; }.workbench-task-list, .workbench-task-detail { min-width: 0; padding: 16px; }.workbench-task-groups { display: grid; gap: 16px; }.workbench-task-group { display: grid; gap: 7px; }.workbench-task-group-heading { display: flex; align-items: center; justify-content: space-between; color: var(--skai-color-text-muted); font-family: var(--skai-font-mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }.workbench-task-group-heading b { display: grid; place-items: center; min-width: 18px; height: 18px; border-radius: 999px; background: var(--skai-color-surface-soft); font-size: 9px; }.workbench-task-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 12px; border: 1px solid var(--skai-color-border); border-radius: 9px; color: var(--skai-color-text); background: var(--skai-color-surface-soft); text-align: left; }.workbench-task-row:hover, .workbench-task-row.is-selected { border-color: color-mix(in srgb, var(--skai-color-accent) 60%, var(--skai-color-border)); background: color-mix(in srgb, var(--skai-color-accent) 9%, var(--skai-color-surface-soft)); }.workbench-task-row > span:first-child { display: grid; min-width: 0; gap: 4px; }.workbench-task-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.workbench-task-row small { overflow: hidden; color: var(--skai-color-text-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }.workbench-task-row .status-badge { flex: 0 0 auto; }.workbench-task-detail { display: grid; align-content: start; gap: 14px; }.workbench-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--skai-color-border); }.workbench-detail-heading h3 { margin: 5px 0 4px; color: var(--skai-color-text); font-size: 21px; letter-spacing: -.03em; }.workbench-detail-heading p:last-child { margin: 0; color: var(--skai-color-text-muted); font-size: 11px; }.workbench-result { margin: 0; padding: 11px 12px; border: 1px solid rgba(99,217,233,.2); border-radius: 8px; color: var(--skai-color-text); background: rgba(99,217,233,.06); font-size: 11px; line-height: 1.45; }.workbench-task-detail .task-details { margin-top: 0; border-top: 0; }.workbench-task-detail .task-details summary { display: none; }.workbench-task-detail .task-card-actions { padding-top: 4px; border-top: 1px solid var(--skai-color-border); }
 @media (max-width:900px) { .workbench-layout { grid-template-columns: 1fr; }.workbench-task-detail { order: -1; }.workbench-board { grid-template-columns: repeat(3,minmax(170px,1fr)); }.memory-layout { grid-template-columns: 1fr; } }
 @media (max-width:640px) { .workbench-view-actions { width: 100%; }.workbench-view-actions .ui-button { flex: 1; }.workbench-board { grid-template-columns: repeat(2,minmax(150px,1fr)); }.terminal-controls { grid-template-columns: 1fr; }.terminal-command-row { display: grid; }.project-file-layout { grid-template-columns: 1fr; }.project-file-list { max-height: 220px; }.task-composer-fields, .environment-options { grid-template-columns: 1fr; }.task-composer-footer { display: grid; justify-items: start; } }
-
 .ui-empty-visual { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 14px; border: 1px solid color-mix(in srgb, var(--skai-color-accent) 28%, var(--skai-color-border)); border-radius: 16px; background: color-mix(in srgb, var(--skai-color-accent) 8%, var(--skai-color-surface-soft)); }.ui-empty-visual img { display: block; width: 44px; height: 44px; object-fit: contain; }
-
-/* Chat workspace: keep the conversation and composer in the viewport while the rail scrolls independently. */
-.app-main { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100vh; min-height: 0; overflow: hidden; }
-.app-content { width: 100%; max-width: none; height: 100%; min-height: 0; overflow: auto; }
-.app-content:has(.chat-page) { overflow: hidden; padding-bottom: 20px; }
-.chat-page { width: min(100%, 1360px); height: 100%; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
-.chat-context-bar { min-height: 64px; }
-.chat-context-bar > div:first-child { max-width: min(52%, 640px); }
-.chat-layout { height: 100%; min-height: 0; align-items: stretch; }
-.chat-column { min-height: 0; overflow: hidden; }
-.conversation-card { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; }
-.message-list { min-height: 0; overflow: auto; align-content: start; scrollbar-gutter: stable; }
-.composer-card { min-height: 0; overflow: auto; }
-.composer-card form { display: grid; gap: 0; }
-.chat-rail { min-height: 0; overflow: auto; padding-right: 2px; scrollbar-gutter: stable; }
-.app-shell { height: 100vh; min-height: 0; overflow: hidden; }
-.app-sidebar { height: 100%; min-height: 0; overflow: hidden; }
-.sidebar-history { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
-
-@media (max-width:900px) {
-  .app-content:has(.chat-page) { overflow: auto; }
-  .chat-page { height: auto; min-height: calc(100vh - 120px); }
-  .chat-layout { height: auto; }
-  .chat-column { overflow: visible; }
-  .conversation-card { min-height: 380px; }
-  .chat-rail { overflow: visible; }
-}
-
-/* Window containment: the shell owns the viewport; only feature regions scroll. */
-.app-shell { height: 100vh; min-height: 0; overflow: hidden; }
-.app-sidebar { height: 100%; min-height: 0; overflow: hidden; }
-.sidebar-history { flex: 1 1 auto; min-height: 0; overflow: auto; scrollbar-width: thin; }
-@media (max-width:640px) {
-  .app-shell { height: auto; min-height: 100vh; overflow: visible; }
-  .app-sidebar { height: auto; min-height: auto; overflow: visible; }
-  .sidebar-history { flex: initial; overflow: hidden; }
-}
-
-@media (max-width:640px) {
-  .app-shell { height: auto; min-height: 100vh; overflow: visible; }
-  .app-sidebar { height: auto; min-height: auto; overflow: visible; }
-  .sidebar-history { flex: initial; overflow: hidden; }
-}
