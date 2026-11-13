@@ -1801,6 +1801,45 @@ Not yet verified: clean-machine Windows install/upgrade/rollback/uninstall,
 unsigned-package rejection, Linux packaging, signed artifacts, and packaged
 release acceptance.
 
+## Slice 88 — bounded actionable status history
+
+Status: `implemented_verified_core_and_static_ui`
+
+The runtime status banner now keeps a bounded in-memory history of actionable
+messages. Dismissing a banner no longer loses the failure context: the banner
+exposes an accessible `Status history` action that shows the newest messages
+first in a scrollable review dialog. Informational messages continue to use
+the existing short-lived banner behavior, and consecutive duplicate failures
+are coalesced.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/StatusMessageHistory.cs`
+- `native/ServerRock.Core.Tests/StatusMessageHistoryTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including bounded ordering, duplicate suppression, blank-message handling, and oversized-message truncation.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (140 contracts).`
+- `git diff --check` — passed.
+
+Privacy/security/licensing: history is process-local and bounded to 50
+messages of at most 2,000 characters each. It is not persisted, sent to a
+provider, or written into conversation history; no dependency or third-party
+code was added.
+
+Rollback: remove `StatusMessageHistory`, the history button/dialog, and its
+audit contracts; the existing banner and dismissal behavior remain available.
+
+Not yet verified: live Windows keyboard/screen-reader activation of the new
+history dialog, cross-platform accessibility behavior, persistent export, and
+full NotificationCenter severity/action semantics.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

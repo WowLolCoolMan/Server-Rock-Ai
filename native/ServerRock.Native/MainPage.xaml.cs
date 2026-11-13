@@ -95,6 +95,7 @@ public sealed partial class MainPage : Page
 #endif
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
     private readonly DispatcherTimer _scheduledTaskTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    private readonly StatusMessageHistory _statusHistory = new();
 
     public MainPage()
     {
@@ -135,7 +136,10 @@ public sealed partial class MainPage : Page
         {
             var message = RuntimeStatus.Text;
             RuntimeStatusBanner.Visibility = string.IsNullOrWhiteSpace(message) ? Visibility.Collapsed : Visibility.Visible;
+            StatusHistoryButton.Visibility = _statusHistory.Snapshot().Count == 0 ? Visibility.Collapsed : Visibility.Visible;
             _runtimeStatusTimer.Stop();
+            if (!string.IsNullOrWhiteSpace(message) && IsActionableRuntimeStatus(message)) _statusHistory.Record(message);
+            StatusHistoryButton.Visibility = _statusHistory.Snapshot().Count == 0 ? Visibility.Collapsed : Visibility.Visible;
             if (!string.IsNullOrWhiteSpace(message) && !IsActionableRuntimeStatus(message)) _runtimeStatusTimer.Start();
         });
         PromptBox.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(PromptKeyDown), handledEventsToo: true);
@@ -229,6 +233,22 @@ public sealed partial class MainPage : Page
     }
 
     private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
+
+    private async void StatusHistoryClick(object sender, RoutedEventArgs e)
+    {
+        var results = new StackPanel { Spacing = 8 };
+        AutomationProperties.SetName(results, "Status history results");
+        foreach (var message in _statusHistory.Snapshot())
+            results.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+        var dialog = new ContentDialog
+        {
+            Title = "Status history",
+            Content = new ScrollViewer { Content = results, MaxHeight = 420, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
 
     private static bool IsActionableRuntimeStatus(string message) =>
         new[] { "could not", "cannot", "failed", "error", "unavailable", "wait for", "timed out", "timeout", "expired", "no readable", "no results", "not available", "not saved", "refused", "rejected", "requires", "enter ", "choose ", "add a project", "not connected", "check settings", "not enabled", "stopped", "preserve newer", "protected" }

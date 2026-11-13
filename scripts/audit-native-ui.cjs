@@ -24,6 +24,7 @@ const requiredXaml = [
   ['Connection setup action', 'AutomationProperties.Name="Connect a model"'],
   ['Navigation menu', 'AutomationProperties.Name="Open navigation menu"'],
   ['Message composer', 'AutomationProperties.Name="Message composer"'],
+  ['Status history action', 'AutomationProperties.Name="View status history"'],
   ['Composer responsive hook', 'SizeChanged="ComposerToolbarSizeChanged"'],
   ['Coding workspace responsive hook', 'SizeChanged="CodingWorkspaceToolbarSizeChanged"'],
 ];
@@ -122,6 +123,8 @@ const requiredCode = [
   ['OpenAPI schema review action', 'AutomationProperties.SetName(reviewOpenApi, "Review local OpenAPI schema")'],
   ['OpenAPI operation results', 'AutomationProperties.SetName(results, "OpenAPI operation results")'],
   ['OpenAPI discovery stays execution-free', 'Nothing was fetched, executed, or authorized.'],
+  ['Status history title', 'Title = "Status history"'],
+  ['Status history results', 'AutomationProperties.SetName(results, "Status history results")'],
   ['Workspace drafts are isolated', '_workspaceDrafts.Set(_mode, PromptBox.Text)'],
   ['Workspace draft restored on mode switch', 'PromptBox.Text = _workspaceDrafts.Get(_mode)'],
   ['New chat clears active workspace draft', '_workspaceDrafts.Clear(_mode)'],
