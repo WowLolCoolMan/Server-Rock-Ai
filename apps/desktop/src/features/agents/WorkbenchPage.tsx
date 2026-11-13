@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import type { DesktopScheduledTask, DesktopTask } from "../../../shared/contracts";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
@@ -12,6 +12,9 @@ const groups = [
   { key: "failed", label: "Failed" },
   { key: "cancelled", label: "Cancelled" },
 ];
+
+const VIEW_MODE_KEY = "skai.workbench.viewMode";
+const SELECTED_TASK_KEY = "skai.workbench.selectedTask";
 
 function toneFor(status: string) {
   return status === "failed" ? "danger" as const : status === "blocked" || status === "awaiting_approval" ? "warning" as const : status === "completed" ? "success" as const : "neutral" as const;
@@ -48,21 +51,44 @@ type WorkbenchPageProps = {
 };
 
 export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition }: WorkbenchPageProps) {
-  const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
+
+  const orderedTaskIds = groups.flatMap((group) => tasks.filter((task) => task.status === group.key).map((task) => task.id));
 
   useEffect(() => {
     if (selectedTaskId && tasks.some((task) => task.id === selectedTaskId)) return;
     setSelectedTaskId(tasks[0]?.id ?? null);
   }, [selectedTaskId, tasks]);
 
+  useEffect(() => { localStorage.setItem(VIEW_MODE_KEY, viewMode); }, [viewMode]);
+  useEffect(() => {
+    if (selectedTaskId) localStorage.setItem(SELECTED_TASK_KEY, selectedTaskId);
+    else localStorage.removeItem(SELECTED_TASK_KEY);
+  }, [selectedTaskId]);
+
+  const handleTaskKeyDown = (event: KeyboardEvent<HTMLButtonElement>, taskId: string) => {
+    const currentIndex = orderedTaskIds.indexOf(taskId);
+    if (currentIndex < 0) return;
+    const nextIndex = event.key === "ArrowDown" ? Math.min(currentIndex + 1, orderedTaskIds.length - 1)
+      : event.key === "ArrowUp" ? Math.max(currentIndex - 1, 0)
+      : event.key === "Home" ? 0
+      : event.key === "End" ? orderedTaskIds.length - 1
+      : -1;
+    if (nextIndex < 0 || nextIndex === currentIndex) return;
+    event.preventDefault();
+    const nextId = orderedTaskIds[nextIndex];
+    setSelectedTaskId(nextId);
+    document.getElementById(`workbench-task-${nextId}`)?.focus();
+  };
+
   const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
 
   return <div className="feature-page">
     <PageHeader eyebrow="AGENT WORKBENCH" title="Plan, execute, verify" description="A clear task lifecycle for work that needs progress, approvals, and recovery." actions={<div className="workbench-view-actions"><Button variant={viewMode === "list" ? "secondary" : "ghost"} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>List view</Button><Button variant={viewMode === "board" ? "secondary" : "ghost"} aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")}>Board view</Button></div>} />
     {error ? <div className="surface-error workbench-error" role="alert"><strong>Agent workbench is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="workbench-loading" aria-label="Loading agent workbench">{[1, 2, 3].map((item) => <Card className="loading-card" key={item}><span /><span /><span /></Card>)}</div> : viewMode === "list" ? <div className="workbench-layout">
-      <Card className="workbench-task-list"><div className="panel-heading"><div><p className="section-kicker">TASK ACTIVITY</p><h3>All tasks</h3></div><span className="panel-count">{tasks.length}</span></div>{tasks.length === 0 ? <EmptyState title="No tasks yet" description="Plan a local task from Chat or Coding Workspace to review it here." /> : <div className="workbench-task-groups">{groups.map((group) => { const items = tasks.filter((task) => task.status === group.key); return items.length ? <section className="workbench-task-group" key={group.key}><div className="workbench-task-group-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.map((task) => <button className={`workbench-task-row ${selectedTaskId === task.id ? "is-selected" : ""}`} key={task.id} onClick={() => setSelectedTaskId(task.id)} type="button"><span><strong>{task.title}</strong><small>{task.role} · {timeLabel(task.updatedAt)}</small></span><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge></button>)}</section> : null; })}</div>}</Card>
+      <Card className="workbench-task-list"><div className="panel-heading"><div><p className="section-kicker">TASK ACTIVITY</p><h3>All tasks</h3></div><span className="panel-count">{tasks.length}</span></div>{tasks.length === 0 ? <EmptyState title="No tasks yet" description="Plan a local task from Chat or Coding Workspace to review it here." /> : <div className="workbench-task-groups">{groups.map((group) => { const items = tasks.filter((task) => task.status === group.key); return items.length ? <section className="workbench-task-group" key={group.key}><div className="workbench-task-group-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.map((task) => <button className={`workbench-task-row ${selectedTaskId === task.id ? "is-selected" : ""}`} id={`workbench-task-${task.id}`} key={task.id} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => handleTaskKeyDown(event, task.id)} aria-keyshortcuts="ArrowUp ArrowDown Home End" type="button"><span><strong>{task.title}</strong><small>{task.role} · {timeLabel(task.updatedAt)}</small></span><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge></button>)}</section> : null; })}</div>}</Card>
       <Card className="workbench-task-detail">{selectedTask ? <><div className="workbench-detail-heading"><div><p className="section-kicker">SELECTED TASK</p><h3>{selectedTask.title}</h3><p>{selectedTask.role} · {timeLabel(selectedTask.updatedAt)}</p></div><StatusBadge tone={toneFor(selectedTask.status)}>{groups.find((group) => group.key === selectedTask.status)?.label ?? selectedTask.status}</StatusBadge></div>{selectedTask.dependsOn.length > 0 && <p className="task-dependencies">Depends on {selectedTask.dependsOn.length} task{selectedTask.dependsOn.length === 1 ? "" : "s"}</p>}{selectedTask.resultSummary && <p className="workbench-result">{selectedTask.resultSummary}</p>}<TaskDetails task={selectedTask} openByDefault />{taskActions(selectedTask)}</> : <EmptyState title="Select a task" description="Choose a task from the activity list to review its brief, status, and available actions." />}</Card>
     </div> : <div className="workbench-board">{groups.map((group) => {
       const items = tasks.filter((task) => task.status === group.key);
