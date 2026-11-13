@@ -12,8 +12,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using ServerRock.Core.Models;
 using ServerRock.Core.Infrastructure;
+using Windows.Storage.Streams;
 
 namespace ServerRock.Native;
 
@@ -205,6 +207,62 @@ public sealed partial class MainPage
                 RenderPendingAttachments();
             };
             AttachmentList.Children.Add(chip);
+            var preview = new Button
+            {
+                Content = "Preview",
+                Tag = attachment,
+                Padding = new Thickness(9, 5, 9, 5),
+                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 247, 250, 250)),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 44, 79, 87)),
+                BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 212, 231, 234)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(12)
+            };
+            AutomationProperties.SetName(preview, $"Preview attachment {attachment.FileName}");
+            preview.Click += async (_, _) => await PreviewPendingAttachmentAsync(attachment);
+            AttachmentList.Children.Add(preview);
         }
+    }
+
+    private async Task PreviewPendingAttachmentAsync(ChatAttachment attachment)
+    {
+        UIElement content;
+        if (attachment.IsImage)
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                using var stream = new InMemoryRandomAccessStream();
+                using var output = stream.GetOutputStreamAt(0);
+                using var writer = new DataWriter(output);
+                writer.WriteBytes(Convert.FromBase64String(attachment.Content));
+                await writer.StoreAsync();
+                await writer.FlushAsync();
+                stream.Seek(0);
+                await bitmap.SetSourceAsync(stream);
+                content = new Image { Source = bitmap, Stretch = Stretch.Uniform, MaxWidth = 700, MaxHeight = 420 };
+            }
+            catch
+            {
+                content = new TextBlock { Text = "The image could not be rendered locally, but it remains available for the selected vision-capable model.", TextWrapping = TextWrapping.Wrap };
+            }
+        }
+        else
+        {
+            var text = attachment.Content.Length > 12000 ? attachment.Content[..12000] + "\n\n[Preview truncated locally]" : attachment.Content;
+            var preview = new TextBox { Text = text, IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MaxHeight = 420 };
+            AutomationProperties.SetName(preview, $"Attachment preview {attachment.FileName}");
+            content = preview;
+        }
+        var note = new TextBlock { Text = "Local read-only preview. The attachment remains untrusted content and is not sent by opening this preview.", TextWrapping = TextWrapping.Wrap, Opacity = 0.82 };
+        var dialog = new ContentDialog
+        {
+            Title = $"Preview · {attachment.FileName}",
+            Content = new StackPanel { Spacing = 9, Children = { note, content } },
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        };
+        AutomationProperties.SetName(dialog, $"Attachment preview {attachment.FileName}");
+        await dialog.ShowAsync();
     }
 }

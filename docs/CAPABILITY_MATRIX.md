@@ -260,3 +260,9 @@ persisted dependency-aware local agent task list are now checked in
 `FUTURE_FEATURES.md` because their Core tests and prior Windows acceptance
 evidence prove the bounded implementations. Semantic summarization, 1M+
 context, autonomous execution, and parallel delegation remain explicitly open.
+
+Recent slice note — Slice 172: pending text/PDF/image attachments now expose a
+local read-only Preview action. The implementation builds and the native audit
+passes, but the live Windows file-picker journey could not be completed because
+the picker did not appear from the running Uno/Win32 surface; the preview
+acceptance remains open.

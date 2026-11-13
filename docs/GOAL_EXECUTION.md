@@ -6700,3 +6700,45 @@ the underlying implementations are unaffected.
 Remaining: semantic compaction, larger context windows, autonomous/background
 execution, parallel delegation, and cross-platform/package acceptance remain
 open and are not claimed complete.
+
+## Slice 172 — Pending attachment previews
+
+Status: `implemented_build_core_and_audit_verified_live_picker_gap_open`
+
+Pending text, PDF, and image attachments now expose a separate Preview action
+beside the existing remove action. Text and PDF previews are local read-only
+bounded views (12,000 characters with a truncation marker); images are decoded
+locally for a bounded image view, with a safe fallback message if rendering
+fails. Opening a preview does not send the attachment or call a provider.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Attachments.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+- Live Windows inspection confirmed the Attach a file control, but repeated
+  activation did not surface a native file-picker window in this Uno/Win32
+  session, so no attachment was selected and the preview dialog was not
+  falsely claimed as live-accepted.
+
+Privacy/security/licensing: preview content stays in the existing local pending
+attachment draft. The dialog is read-only, content remains untrusted, image
+decoding is bounded, and no new dependency, network call, credential access,
+or pets state is involved.
+
+Rollback: remove the Preview buttons and `PreviewPendingAttachmentAsync`; the
+existing attach/remove/send flow remains unchanged.
+
+Remaining: resolve or provide a supported native picker harness, then live-test
+text, PDF, and image previews; full RAG, OCR, cross-platform, and packaged
+acceptance remain open.

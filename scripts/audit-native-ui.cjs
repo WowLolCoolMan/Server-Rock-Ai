@@ -163,6 +163,8 @@ const requiredCode = [
   ['Developer diagnostics command', 'new CommandPaletteItem("Developer diagnostics", "developer mode inspect runtime local diagnostics", OpenDeveloperDiagnosticsAsync)'],
   ['Developer mode setting label', 'AutomationProperties.SetName(developerMode, "Enable developer mode")'],
   ['Developer diagnostics summary label', 'AutomationProperties.SetName(preview, "Developer diagnostics summary")'],
+  ['Attachment preview action', 'AutomationProperties.SetName(preview, $"Preview attachment {attachment.FileName}")'],
+  ['Attachment preview dialog', 'AutomationProperties.SetName(dialog, $"Attachment preview {attachment.FileName}")'],
   ['Status history default close button', 'DefaultButton = ContentDialogButton.Close'],
   ['Status history scroll region label', 'AutomationProperties.SetName(historyScroll, "Status history results scroll region")'],
   ['Operation activity search results', 'AutomationProperties.SetName(results, "Operation activity search results")'],
