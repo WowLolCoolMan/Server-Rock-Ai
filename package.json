@@ -10,7 +10,7 @@
     "start:native": "node scripts/start-native.cjs",
     "build:native": "node scripts/build-native.cjs",
     "open:native": "node scripts/open-native.cjs",
-    "check:syntax": "node --check scripts/start-native.cjs && node --check scripts/build-native.cjs && node --check scripts/open-native.cjs && node --check scripts/check-repo-hygiene.cjs && node --check scripts/audit-native-ui.cjs && node --check scripts/audit-future-features.cjs && node --check scripts/smoke-native-artifact.cjs && node --check scripts/validate-release-config.cjs",
+    "check:syntax": "node --check scripts/start-native.cjs && node --check scripts/build-native.cjs && node --check scripts/open-native.cjs && node --check scripts/check-repo-hygiene.cjs && node --check scripts/audit-native-ui.cjs && node --check scripts/audit-release-workflow.cjs && node --check scripts/audit-future-features.cjs && node --check scripts/smoke-native-artifact.cjs && node --check scripts/validate-release-config.cjs",
     "audit:future-features": "node scripts/audit-future-features.cjs",
     "check:hygiene": "node scripts/check-repo-hygiene.cjs",
     "check:release-config": "node scripts/validate-release-config.cjs",

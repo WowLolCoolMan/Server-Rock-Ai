@@ -30,6 +30,7 @@ jobs:
       - run: npm run check:hygiene
       - run: npm run check:release-config
       - run: npm run audit:native-ui
+      - run: npm run audit:release-workflow
       - run: dotnet restore native/ServerRock.Native.sln
       - run: npm test -- --no-restore
       - run: dotnet build native/ServerRock.Native/ServerRock.Native.csproj --framework net10.0-desktop -c Release --no-restore

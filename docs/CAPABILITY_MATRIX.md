@@ -240,7 +240,7 @@ silhouettes). Reduced decorative motion pauses the animation while retaining the
 selected visual. Core settings persistence and desktop build verification passed;
 live Windows visual acceptance remains required before this is release-complete.
 
-## Handoff refresh — current through Slice 209
+## Handoff refresh — current through Slice 210
 
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:

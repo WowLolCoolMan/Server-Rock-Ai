@@ -7292,6 +7292,46 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 210 — Enforce release-workflow audit in CI
+
+Status: `implemented_ci_contract_verified`
+
+Requirement alignment: the release workflow audit added in Slice 203 must be
+enforced by the repository gates, not only run manually. This slice adds the
+audit script to `npm run check:syntax`, native CI, and the tagged-release
+verification job. A future edit that removes tag-only publishing, explicit
+gates, signing evidence, or checksum enforcement now fails both source checks
+and release verification before packaging/publishing.
+
+Changed files:
+
+- `package.json`
+- `.github/workflows/native-ci.yml`
+- `.github/workflows/native-release.yml`
+- `docs/NATIVE_RELEASE_ACCEPTANCE.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed and now parses
+  `scripts/audit-release-workflow.cjs`.
+- `npm run audit:release-workflow` — passed with the tag-only,
+  gated, signed-evidence contract.
+- `npm run check:hygiene` — passed (749 tracked files).
+- `npm run check:release-config` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: CI configuration and local static checks only; no
+credentials, release tags, artifacts, network calls, or third-party code were
+introduced.
+
+Risk and rollback: remove the two workflow steps and the syntax entry to return
+to the prior advisory-only state; the release workflow's runtime gates remain
+unchanged.
+
+Remaining: an actual tagged CI run with owner-provided signing material,
+clean-machine lifecycle evidence, and distro acceptance are still required.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`
