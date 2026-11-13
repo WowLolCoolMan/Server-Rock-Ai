@@ -474,7 +474,7 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Activity and tasks");
-        dialog.Opened += (_, _) => exportActivity.Focus(FocusState.Programmatic);
+        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => exportActivity.Focus(FocusState.Programmatic));
         if (approvalTimer is not null)
         {
             dialog.Closed += (_, _) => approvalTimer.Stop();
@@ -530,7 +530,7 @@ public sealed partial class MainPage
         var dependencies = Array.Empty<string>();
         dialog.PrimaryButtonClick += (_, _) => dependencies = selectedDependencyIds.ToArray();
         AutomationProperties.SetName(dialog, "Plan agent task");
-        dialog.Opened += (_, _) => title.Focus(FocusState.Programmatic);
+        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => title.Focus(FocusState.Programmatic));
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try
         {

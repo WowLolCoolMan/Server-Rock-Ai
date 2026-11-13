@@ -6045,3 +6045,44 @@ contracts; search remains functional with the previous immediate focus call.
 Not yet verified: Narrator-specific announcements, Linux/Skia focus parity,
 and full keyboard activation of every Activity action such as export and
 schedule.
+
+## Slice 157 — Dialog action focus hardening
+
+Status: `implemented_build_verified_live_acceptance_open`
+
+The Activity & tasks dialog, status-history dialog, and agent-task planning
+dialog now enqueue their initial focus after opening. The intent is to keep
+focus inside the newly opened dialog when the underlying composer or sidebar
+finishes its own activation work. The existing Activity and agent-task search
+focus handoff remains covered by Slice 156.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed.
+- `npm run audit:native-ui` — passed with 206 contracts.
+- `npm run audit:future-features` and `git diff --check` — passed.
+- Live Windows journey: opened Activity & tasks from the sidebar and confirmed
+  the dialog and action controls were present. Native accessibility still
+  reported the underlying Message composer as the focused element after the
+  dispatcher handoff, so keyboard/screen-reader focus acceptance remains open.
+
+Privacy/security/licensing: this change only routes local focus and does not
+send provider requests, write files, access credentials, or modify pets state.
+
+Rollback: revert the dispatcher-backed initial-focus handlers and their audit
+contracts; the dialogs retain their prior opening behavior.
+
+Next: isolate the native Popup/ContentDialog focus race with a targeted
+keyboard test for Activity export, status-history dismissal, and agent-task
+planning before marking this seam verified on Windows. Narrator announcements,
+Linux/Skia parity, and packaged-runtime acceptance also remain open.

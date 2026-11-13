@@ -146,3 +146,9 @@ Linux parity, and keyboard acceptance for export/schedule actions remain open.
 No item is marked release-complete by this matrix. Each slice must append
 commands, outcomes, changed files, tests, platform scope, privacy/licensing
 impact and rollback notes to `docs/GOAL_EXECUTION.md`.
+
+Recent slice note — Slice 157: dialog action focus is now dispatcher-backed
+for Activity & tasks, status history, and agent-task planning, with 206 native
+UI audit contracts passing. A live Windows accessibility check still reported
+the underlying composer as focused after Activity opened, so keyboard and
+screen-reader focus acceptance remains an explicit open gap.

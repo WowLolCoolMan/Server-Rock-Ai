@@ -29,7 +29,7 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         AutomationProperties.SetName(dialog, "Status history");
-        dialog.Opened += (_, _) => historyScroll.Focus(FocusState.Programmatic);
+        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => historyScroll.Focus(FocusState.Programmatic));
         await dialog.ShowAsync();
     }
 
