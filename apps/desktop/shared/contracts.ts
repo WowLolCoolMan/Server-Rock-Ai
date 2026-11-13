@@ -46,6 +46,7 @@ export type DesktopConversation = {
   updatedAt: string;
   pinned: boolean;
   tags: string[];
+  folderName?: string | null;
 };
 
 export type DesktopConversationSearchResult = DesktopConversation & {

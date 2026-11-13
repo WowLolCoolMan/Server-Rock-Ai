@@ -36,6 +36,7 @@ h1 { margin-bottom: 0; font-size: 15px; letter-spacing: -.02em; }
 .main-canvas { padding: 38px 56px 64px; }
 .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; max-width: 1120px; margin: 0 auto 42px; }
 .topbar-actions { display: flex; gap: 8px; }
+.metadata-input { width: 110px; padding: 8px 9px; font-size: 11px; }
 h2 { max-width: 650px; margin-bottom: 0; font-size: clamp(28px, 4vw, 52px); line-height: 1.02; letter-spacing: -.055em; }
 .ghost-button, .secondary-button { border: 1px solid #40516d; border-radius: 9px; padding: 10px 14px; color: #d7e0ed; background: rgba(26, 37, 55, .68); cursor: pointer; }
 .ghost-button:hover, .secondary-button:hover { border-color: #78a9ff; }
