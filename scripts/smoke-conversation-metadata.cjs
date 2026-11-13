@@ -50,7 +50,9 @@ async function run() {
   if (!hidden.ok || hidden.result.length !== 0) throw new Error("archived conversations were not hidden from the active list.");
   const restoredView = await request("conversations.list", { includeArchived: true });
   if (!restoredView.ok || restoredView.result.length !== 1 || restoredView.result[0].archived !== true) throw new Error("archived conversation view did not return the archived item.");
-  console.log("Conversation metadata smoke passed: labels, archive, active filtering, and archive restore view.");
+  const exportResult = await request("conversations.export", { includeArchived: true });
+  if (!exportResult.ok || exportResult.result?.conversationCount !== 1 || !String(exportResult.result?.markdown).includes("Organized chat")) throw new Error("conversation Markdown export did not include the archived fixture.");
+  console.log("Conversation metadata smoke passed: labels, archive, active filtering, archived view, and Markdown export.");
 }
 
 run().catch(error => {

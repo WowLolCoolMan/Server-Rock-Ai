@@ -3,14 +3,15 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
-## Slice 252 — Port Electron conversation archive controls
+## Slice 253 — Port Electron conversation archive controls and Markdown export
 
-Status: `implemented_host_renderer_archive_smoke_verified`
+Status: `implemented_host_renderer_archive_export_smoke_verified`
 
 The replacement host now accepts `includeArchived` for conversation listing and
 returns archive and folder metadata consistently. Electron exposes an explicit
 archived-chat view plus Archive/Restore actions, while active history continues
-to hide archived conversations by default.
+to hide archived conversations by default. The host also serializes a bounded
+Markdown export and the renderer downloads it without filesystem access.
 
 Changed files:
 
@@ -25,10 +26,11 @@ Evidence:
 - `npm run desktop:typecheck` — passed.
 - `npm run desktop:build` — passed.
 - `npm run smoke:conversation-metadata` — passed disposable labels,
-  archive persistence, active filtering, and archived-view assertions.
+  archive persistence, active filtering, archived-view, and Markdown export
+  assertions.
 - `git diff --check` — passed.
 
-Remaining: archived search filtering, bulk archive actions, and full export
+Remaining: archived search filtering, bulk archive actions, and folder export
 parity remain separate slices.
 
 ## Slice 251 — Port the durable Electron chat message queue

@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -70,6 +70,7 @@ public static class AgentHostLoop
             "conversations.search" => SearchConversations(request),
             "conversation.save" => SaveConversation(request),
             "conversation.metadata.save" => SaveConversationMetadata(request),
+            "conversations.export" => ExportConversations(request),
             "chat.queue.list" => ListQueuedMessages(request),
             "chat.queue.enqueue" => EnqueueChatMessage(request),
             "chat.queue.remove" => RemoveQueuedMessage(request),
@@ -350,6 +351,16 @@ public static class AgentHostLoop
             })
             .ToArray();
         return new(ProtocolVersion, request.Id, true, matches);
+    }
+
+    private static AgentResponse ExportConversations(AgentRequest request)
+    {
+        var includeArchived = request.Params?.TryGetProperty("includeArchived", out var archivedValue) == true
+            && archivedValue.ValueKind == JsonValueKind.True;
+        var sessions = CreateConversationStore().Load();
+        if (!includeArchived) sessions = sessions.Where(session => !session.Archived).ToList();
+        var markdown = ConversationMarkdownExporter.Serialize(sessions);
+        return new(ProtocolVersion, request.Id, true, new { fileName = "skai-chat-export.md", markdown, conversationCount = sessions.Count });
     }
 
     private static AgentResponse SaveConversation(AgentRequest request)
