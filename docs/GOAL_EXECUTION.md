@@ -1675,6 +1675,33 @@ build, reviewed workflow execution adapters, OS session hosting, automatic
 result capture, timezone/backoff policy, parallel agents, Linux parity, and
 packaged acceptance.
 
+## Slice 103 — fresh Windows target build evidence
+
+Status: `verified_windows_build`
+
+After stopping only the disposable native development process launched for
+live inspection, the synchronized checkout built the Windows App SDK target
+successfully. This confirms that the recent visual-control decomposition and
+the current handoff state compile for both the shared Skia desktop target and
+the Windows target; it does not claim packaged installer or clean-machine
+acceptance.
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — previously passed for the current slice.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors; produced `bin/Debug/net10.0-windows10.0.26100/win-x64/ServerRock.Native.dll`.
+
+Privacy/security/licensing: compilation only; no application data, provider,
+credential, network, installer, or third-party dependency was accessed or
+changed.
+
+Rollback: documentation-only; remove this evidence entry if the build is not
+reproducible from the recorded commit.
+
+Not yet verified: signed installers, clean-machine install/upgrade/rollback/
+uninstall, Linux artifact/build/run evidence from this commit, packaged UI
+interaction, and release-feed publication.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
