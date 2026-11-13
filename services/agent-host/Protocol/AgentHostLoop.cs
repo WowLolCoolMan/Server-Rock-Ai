@@ -52,11 +52,12 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
+            "project.file.read" => ReadProjectFile(request),
             "tasks.list" => ListTasks(request),
             "tasks.queue" => TransitionTask(request, "queue"),
             "tasks.cancel" => TransitionTask(request, "cancel"),
@@ -148,6 +149,25 @@ public static class AgentHostLoop
             linkedPathsSkipped = snapshot.LinkedPathsSkipped,
             hitEntryLimit = snapshot.HitEntryLimit,
         });
+    }
+
+    private static AgentResponse ReadProjectFile(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var relativePath = RequiredBoundedString(request, "relativePath", 512);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        foreach (var root in project.FolderPaths)
+        {
+            try
+            {
+                var content = new WorkspaceFileEditor().ReadText(root, relativePath);
+                return new(ProtocolVersion, request.Id, true, new { projectId = id, relativePath, content });
+            }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
+        }
+        throw new FileNotFoundException("The selected project file is unavailable or protected.");
     }
 
     private static AgentResponse ListTasks(AgentRequest request)
