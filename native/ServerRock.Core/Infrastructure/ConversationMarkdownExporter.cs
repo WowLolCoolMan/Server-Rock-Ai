@@ -94,7 +94,8 @@ public static class ConversationMarkdownExporter
 
     private static string SanitizeFileName(string value, string fallback)
     {
-        var invalid = Path.GetInvalidFileNameChars();
+        // Also strip Windows-reserved characters: Linux only reports '/' and NUL as invalid, so exports must stay portable.
+        var invalid = Path.GetInvalidFileNameChars().Concat("<>:\"/\\|?*").ToArray();
         var builder = new StringBuilder(value.Length);
         foreach (var character in value.Trim())
             builder.Append(invalid.Contains(character) || char.IsControl(character) ? '_' : character);
