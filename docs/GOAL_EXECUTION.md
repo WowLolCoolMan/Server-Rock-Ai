@@ -5890,7 +5890,8 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
 - `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
-  — passed, including safe filename coverage for invalid title characters.
+  — passed, including safe filename coverage for invalid title characters and
+  deterministic one-file-per-conversation directory write/readback coverage.
 - `npm run audit:native-ui` — passed with 202 contracts, including the folder
   action, event forwarding, and per-session filename/write path.
 - `npm run audit:future-features` and `git diff --check` — passed.
@@ -5903,7 +5904,8 @@ handoff files.
 Rollback: remove the folder action and `FileNameFor` helper; the existing
 single-file exports and import path remain intact.
 
-Not yet verified: live Windows FolderPicker selection and write/readback, rich
-Markdown editing, cross-platform packaged picker behavior, and attachment
-binary export (the Markdown files retain attachment names and the JSON archive
-remains the content-preserving format).
+Not yet verified: live Windows FolderPicker selection and packaged picker
+behavior (the current desktop runtime did not surface the picker during the
+disposable UI attempt), rich Markdown editing, and attachment binary export
+(the Markdown files retain attachment names and the JSON archive remains the
+content-preserving format).

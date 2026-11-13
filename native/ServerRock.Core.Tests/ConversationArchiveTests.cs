@@ -27,6 +27,17 @@ internal static class ConversationArchiveTests
         Check(markdown.Contains("# Chat export", StringComparison.Ordinal) && markdown.Contains("## Portable conversation", StringComparison.Ordinal) && markdown.Contains("`notes.md`", StringComparison.Ordinal), "Markdown chat export includes metadata, messages, and attachment names");
         var markdownFileName = ConversationMarkdownExporter.FileNameFor(new ChatSession { Id = "unsafe-id", Title = "Unsafe:/ title?" });
         Check(markdownFileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) && !markdownFileName.Contains(':') && !markdownFileName.Contains('/'), "Markdown directory export produces a safe per-conversation file name");
+        var markdownDirectory = Directory.CreateTempSubdirectory("server-rock-markdown-");
+        try
+        {
+            var written = await ConversationMarkdownExporter.WriteDirectoryAsync([portableChat, new ChatSession { Id = "second", Title = "Second chat", Messages = [new ChatMessage("user", "Hello folder")] }], markdownDirectory.FullName);
+            var markdownFiles = Directory.GetFiles(markdownDirectory.FullName, "*.md");
+            Check(written == 2 && markdownFiles.Length == 2 && File.ReadAllText(markdownFiles.Single(path => path.Contains("second", StringComparison.Ordinal))).Contains("Hello folder", StringComparison.Ordinal), "Markdown directory export writes one transcript per conversation");
+        }
+        finally
+        {
+            markdownDirectory.Delete(true);
+        }
         var electronExportPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "electron-localstorage-export.json");
         var electronState = await File.ReadAllTextAsync(electronExportPath);
         using (var electronExportDocument = System.Text.Json.JsonDocument.Parse(electronState))

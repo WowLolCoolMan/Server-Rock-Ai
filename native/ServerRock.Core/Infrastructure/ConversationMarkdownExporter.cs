@@ -69,6 +69,26 @@ public static class ConversationMarkdownExporter
         return output.ToString();
     }
 
+    public static async Task<int> WriteDirectoryAsync(
+        IEnumerable<ChatSession> sessions,
+        string destinationDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sessions);
+        if (string.IsNullOrWhiteSpace(destinationDirectory)) throw new ArgumentException("A destination directory is required.", nameof(destinationDirectory));
+        var items = sessions.ToList();
+        _ = ConversationArchive.Parse(ConversationArchive.Serialize(items));
+        Directory.CreateDirectory(destinationDirectory);
+        var root = Path.GetFullPath(destinationDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        foreach (var session in items)
+        {
+            var target = Path.GetFullPath(Path.Combine(destinationDirectory, FileNameFor(session)));
+            if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The Markdown export path escaped its destination directory.");
+            await File.WriteAllTextAsync(target, Serialize([session]), cancellationToken);
+        }
+        return items.Count;
+    }
+
     private static string EscapeHeading(string value) => value.Replace("\r", " ", StringComparison.Ordinal).Replace("\n", " ", StringComparison.Ordinal).Trim();
     private static string EscapeLinkText(string value) => value.Replace("[", "\\[", StringComparison.Ordinal).Replace("]", "\\]", StringComparison.Ordinal);
 

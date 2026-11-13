@@ -97,12 +97,8 @@ public sealed partial class MainPage
             var destination = await picker.PickSingleFolderAsync();
             if (destination is null) return;
             var exportFolder = await destination.CreateFolderAsync($"{ProductIdentity.FileNameStem}-markdown-{DateTime.Now:yyyy-MM-dd}", Windows.Storage.CreationCollisionOption.GenerateUniqueName);
-            foreach (var session in _sessions)
-            {
-                var file = await exportFolder.CreateFileAsync(ConversationMarkdownExporter.FileNameFor(session), Windows.Storage.CreationCollisionOption.ReplaceExisting);
-                await Windows.Storage.FileIO.WriteTextAsync(file, ConversationMarkdownExporter.Serialize([session]));
-            }
-            RuntimeStatus.Text = $"Exported {_sessions.Count} conversation(s) as individual Markdown files to {exportFolder.Name}.";
+            var written = await ConversationMarkdownExporter.WriteDirectoryAsync(_sessions, exportFolder.Path);
+            RuntimeStatus.Text = $"Exported {written} conversation(s) as individual Markdown files to {exportFolder.Name}.";
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Could not export Markdown folder: {ex.Message}"; }
     }
