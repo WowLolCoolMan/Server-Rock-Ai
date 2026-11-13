@@ -3,6 +3,73 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 243 — Add an isolated Electron project-browser smoke gate
+
+Status: `implemented_disposable_browser_smoke_verified`
+
+The project browser now has a repository-level disposable smoke command. It
+creates a temporary workspace containing a readable text file, a protected
+`.env`, and an excluded dependency directory; saves a project through the
+host; requests `project.files`; and verifies the safe file list and exclusion
+summary. The smoke uses an explicit temporary project store and removes only
+its own directory.
+
+Changed files:
+
+- `scripts/smoke-project-browser.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run smoke:project-browser` — passed project round trip, filtering, and
+  exclusion-summary assertions.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the fixture is disposable, never uses the user
+profile, and asserts that protected content is not returned. No dependency or
+network capability was added.
+
+Rollback: remove the smoke command and workflow step; runtime behavior is
+unchanged.
+
+Remaining: preview/editing acceptance, terminal, Git review, attachments/RAG,
+and the broader replacement parity and Uno-retirement gates remain open.
+
+## Slice 244 — Port bounded project-file preview to Electron
+
+Status: `implemented_host_renderer_preview_build_verified`
+
+The replacement host now exposes `project.file.read` for a selected project
+and relative file. It reuses the Core workspace editor’s containment,
+protected-name, extension, UTF-8, and size checks. The renderer opens previews
+from the bounded browser and displays text only through the host bridge.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence from the pushed slice:
+
+- Agent-host build — passed.
+- Electron renderer typecheck/build — passed.
+- Disposable README preview request — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: preview requests are constrained to persisted
+project roots and return bounded text; the renderer has no direct filesystem
+or Node access.
+
+Rollback: remove `project.file.read` and the preview panel; the metadata-only
+browser remains available.
+
+Remaining: mutation-aware editing, multi-file tabs, terminal, Git review,
+attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 242 — Port the bounded project browser to Electron
 
 Status: `implemented_host_renderer_safety_smoke_verified`
