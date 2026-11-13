@@ -45,10 +45,12 @@ validate parity.
 
 ## Current replacement evidence
 
-- `runtime.health`, `models.list`, `projects.list`, `tasks.list`,
-  `scheduled.list`, `conversations.list`, `conversation.save`, and
-  `chat.complete` are available through the versioned host protocol.
-- The Electron renderer has a real persisted-project list and model/chat shell.
+- `runtime.health`, `models.list`, `projects.list`, `project.save`, `tasks.list`,
+  `scheduled.list`, `conversations.list`, `conversation.save`, `settings.get`,
+  `settings.save`, `image.generate`, and `chat.complete` are available through
+  the versioned host protocol.
+- The Electron renderer has persisted projects, conversations, settings, model
+  discovery, chat, Agent Workbench, and a local ComfyUI Image Studio surface.
 - The Electron chat restores the newest local conversation and saves both the
   user turn and completed assistant response through the bounded Core store.
 - The replacement sidebar now exposes the first eight saved conversations and
