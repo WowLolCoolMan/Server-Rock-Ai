@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -69,6 +69,7 @@ public static class AgentHostLoop
             "conversations.list" => ListConversations(request),
             "conversations.search" => SearchConversations(request),
             "conversation.save" => SaveConversation(request),
+            "conversation.metadata.save" => SaveConversationMetadata(request),
             "settings.get" => GetSettings(request),
             "settings.save" => SaveSettings(request),
             "image.generate" => GenerateImageAsync(request).GetAwaiter().GetResult(),
@@ -383,6 +384,36 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, projectId = session.ProjectId, updatedAt = session.UpdatedAt });
     }
 
+    private static AgentResponse SaveConversationMetadata(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var store = CreateConversationStore();
+        var sessions = store.Load();
+        var session = sessions.SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The conversation does not exist.");
+        if (request.Params is not { } parameters) throw new InvalidOperationException("conversation.metadata.save requires metadata.");
+        if (parameters.TryGetProperty("pinned", out var pinned) && pinned.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            session.Pinned = pinned.GetBoolean();
+        if (parameters.TryGetProperty("archived", out var archived) && archived.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            session.Archived = archived.GetBoolean();
+        if (parameters.TryGetProperty("folderName", out var folder))
+        {
+            if (folder.ValueKind is not JsonValueKind.String) throw new InvalidOperationException("folderName must be text.");
+            session.FolderName = OptionalBoundedValue(folder.GetString(), 80);
+        }
+        if (parameters.TryGetProperty("tags", out var tags))
+        {
+            if (tags.ValueKind != JsonValueKind.Array) throw new InvalidOperationException("tags must be an array.");
+            session.Tags = tags.EnumerateArray().Select(item => item.GetString() ?? string.Empty).ToList();
+            if (session.Tags.Count > 8 || session.Tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32 || tag.Any(char.IsControl)))
+                throw new InvalidOperationException("tags exceed the safety limit.");
+            session.Tags = session.Tags.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+        session.UpdatedAt = DateTimeOffset.UtcNow;
+        store.Save(sessions);
+        return new(ProtocolVersion, request.Id, true, new { id = session.Id, pinned = session.Pinned, archived = session.Archived, folderName = session.FolderName, tags = session.Tags, updatedAt = session.UpdatedAt });
+    }
+
     private static ConversationStore CreateConversationStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
 
@@ -456,6 +487,13 @@ public static class AgentHostLoop
     {
         var value = RequiredString(request, name);
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
+        return value.Trim();
+    }
+
+    private static string? OptionalBoundedValue(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException("Metadata value exceeds the safety limit.");
         return value.Trim();
     }
 
