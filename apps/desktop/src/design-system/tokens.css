@@ -57,12 +57,10 @@
 }
 
 [data-backdrop="deep-sea"] {
-  --skai-color-canvas: #061a2c;
   --skai-color-accent: #67e8f9;
 }
 
 [data-backdrop="deep-space"] {
-  --skai-color-canvas: #080717;
   --skai-color-accent: #b5a5ff;
 }
 
