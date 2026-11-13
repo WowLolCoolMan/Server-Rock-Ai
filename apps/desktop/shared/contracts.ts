@@ -31,6 +31,15 @@ export type DesktopProject = {
   updatedAt: string;
 };
 
+export type DesktopConversation = {
+  id: string;
+  title: string;
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  updatedAt: string;
+  pinned: boolean;
+  tags: string[];
+};
+
 export type DesktopTask = {
   id: string;
   title: string;

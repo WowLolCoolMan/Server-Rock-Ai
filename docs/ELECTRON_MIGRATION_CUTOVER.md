@@ -45,9 +45,12 @@ validate parity.
 
 ## Current replacement evidence
 
-- `runtime.health`, `models.list`, `projects.list`, and `chat.complete` are
-  available through the versioned host protocol.
+- `runtime.health`, `models.list`, `projects.list`, `tasks.list`,
+  `scheduled.list`, `conversations.list`, `conversation.save`, and
+  `chat.complete` are available through the versioned host protocol.
 - The Electron renderer has a real persisted-project list and model/chat shell.
+- The Electron chat restores the newest local conversation and saves both the
+  user turn and completed assistant response through the bounded Core store.
 - `apps/desktop` typecheck and production build pass.
 - The host builds and a live stdio request returns the new capability set.
 

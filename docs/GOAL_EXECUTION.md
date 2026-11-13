@@ -3,6 +3,52 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 236 — Port durable chat history to the Electron host
+
+Status: `implemented_host_persistence_renderer_build_verified`
+
+The replacement shell now has a real durable chat-history journey. Protocol v1
+adds `conversations.list` and `conversation.save`, backed by the existing
+bounded `ConversationStore`; the renderer restores the newest non-archived
+conversation on host connection, saves the user turn before provider dispatch,
+and saves the completed assistant response afterward. A disposable
+`SRAI_CONVERSATIONS_PATH` seam keeps protocol smoke isolated from the user
+profile. Provider routing remains unchanged and no automatic cloud fallback is
+introduced.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `services/agent-host/README.md`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+- `docs/ELECTRON_MIGRATION_CUTOVER.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- Disposable live stdio smoke returned an empty history, saved one conversation, and returned that same conversation from a second list request.
+
+Privacy/security/licensing: only explicitly supplied local conversation text is
+persisted; the renderer remains sandboxed, the host uses Core validation, and
+the disposable smoke path avoids the real profile. No dependency or third-party
+code was added.
+
+Rollback: remove the two conversation protocol routes and renderer restore/save
+calls; existing Core conversation files remain readable by the legacy and
+replacement boundaries.
+
+Remaining: chat folders/tags/pins/search/forks/export, attachments/RAG, queue,
+memory, model comparison, and full Electron settings/provider parity remain
+open.
+
 ## Slice 235 — Approve Electron replacement boundary and port persisted projects
 
 Status: `implemented_host_protocol_renderer_build_verified`

@@ -52,11 +52,13 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "tasks.list" => ListTasks(request),
             "scheduled.list" => ListScheduledTasks(request),
+            "conversations.list" => ListConversations(request),
+            "conversation.save" => SaveConversation(request),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -139,10 +141,61 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, tasks);
     }
 
+    private static AgentResponse ListConversations(AgentRequest request)
+    {
+        var conversations = CreateConversationStore().Load()
+            .Where(session => !session.Archived)
+            .OrderByDescending(session => session.Pinned)
+            .ThenByDescending(session => session.UpdatedAt)
+            .Select(session => new
+            {
+                id = session.Id,
+                title = session.Title,
+                messages = session.Messages,
+                updatedAt = session.UpdatedAt,
+                pinned = session.Pinned,
+                tags = session.Tags,
+            })
+            .ToArray();
+        return new(ProtocolVersion, request.Id, true, conversations);
+    }
+
+    private static AgentResponse SaveConversation(AgentRequest request)
+    {
+        var title = RequiredBoundedString(request, "title", 200);
+        var messages = request.Params?.TryGetProperty("messages", out var messageValue) == true
+            ? messageValue.Deserialize<List<ChatMessage>>(JsonOptions)
+            : throw new InvalidOperationException("conversation.save requires a messages array.");
+        if (messages is null) throw new InvalidOperationException("conversation.save requires a messages array.");
+        var store = CreateConversationStore();
+        var sessions = store.Load();
+        var requestedId = OptionalString(request, "id");
+        var session = string.IsNullOrWhiteSpace(requestedId)
+            ? new ChatSession { Title = title, Messages = messages }
+            : sessions.SingleOrDefault(item => item.Id == requestedId)
+              ?? throw new InvalidOperationException("The requested conversation does not exist.");
+        session.Title = title;
+        session.Messages = messages;
+        session.UpdatedAt = DateTimeOffset.UtcNow;
+        if (!sessions.Contains(session)) sessions.Add(session);
+        store.Save(sessions);
+        return new(ProtocolVersion, request.Id, true, new { id = session.Id, title = session.Title, updatedAt = session.UpdatedAt });
+    }
+
+    private static ConversationStore CreateConversationStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
+
     private static string RequiredString(AgentRequest request, string name)
     {
         var value = OptionalString(request, name);
         return string.IsNullOrWhiteSpace(value) ? throw new InvalidOperationException($"{name} is required.") : value;
+    }
+
+    private static string RequiredBoundedString(AgentRequest request, string name, int maxLength)
+    {
+        var value = RequiredString(request, name);
+        if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
+        return value.Trim();
     }
 
     private static string? OptionalString(AgentRequest request, string name) =>

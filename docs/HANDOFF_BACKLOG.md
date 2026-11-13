@@ -38,6 +38,9 @@ It also includes idempotent startup reconciliation for interrupted agent tasks,
 with retained worktrees preserved for explicit review.
 It also includes bounded per-project persistence for expanded project-browser
 folders, restoring only paths present in the current safe browser view.
+It also includes the first durable Electron chat-history route: the host lists
+and saves bounded local conversations, and the renderer restores the latest
+conversation before sending new turns.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AgentResponse, DesktopProject, DesktopScheduledTask, DesktopTask, RuntimeHealth } from "../shared/contracts";
+import type { AgentResponse, DesktopConversation, DesktopProject, DesktopScheduledTask, DesktopTask, RuntimeHealth } from "../shared/contracts";
 import { PRODUCT_DISPLAY_NAME } from "../shared/productIdentity";
 
 type ConnectionState = "checking" | "ready" | "error";
@@ -20,6 +20,8 @@ export default function App() {
   const [projects, setProjects] = useState<DesktopProject[]>([]);
   const [tasks, setTasks] = useState<DesktopTask[]>([]);
   const [scheduledTasks, setScheduledTasks] = useState<DesktopScheduledTask[]>([]);
+  const [conversations, setConversations] = useState<DesktopConversation[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -28,16 +30,20 @@ export default function App() {
   const discoverModels = async () => { saveConnection(); setError(null); const response = await request("models.list", { endpoint }); if (!response.ok) { setError(response.error?.message ?? "Model discovery failed."); return; } setModels((response.result as Model[]) ?? []); };
   const loadProjects = async () => { setError(null); const response = await request("projects.list"); if (!response.ok) { setError(response.error?.message ?? "Project loading failed."); return; } setProjects((response.result as DesktopProject[]) ?? []); };
   const loadWorkbench = async () => { setError(null); const [taskResponse, scheduleResponse] = await Promise.all([request("tasks.list"), request("scheduled.list")]); if (!taskResponse.ok || !scheduleResponse.ok) { setError(taskResponse.error?.message ?? scheduleResponse.error?.message ?? "Workbench loading failed."); return; } setTasks((taskResponse.result as DesktopTask[]) ?? []); setScheduledTasks((scheduleResponse.result as DesktopScheduledTask[]) ?? []); };
+  const loadConversations = async () => { setError(null); const response = await request("conversations.list"); if (!response.ok) { setError(response.error?.message ?? "Conversation history failed."); return; } const loaded = (response.result as DesktopConversation[]) ?? []; setConversations(loaded); const first = loaded[0]; if (first) { setConversationId(first.id); setMessages(first.messages.filter((message) => message.role === "user" || message.role === "assistant") as Message[]); } };
+  const saveConversation = async (nextMessages: Message[], id = conversationId) => { const title = nextMessages.find((message) => message.role === "user")?.content.slice(0, 80) || "New chat"; const response = await request("conversation.save", { id: id ?? undefined, title, messages: nextMessages }); if (!response.ok) throw new Error(response.error?.message ?? "Conversation could not be saved."); setConversationId((response.result as { id: string }).id); };
   const sendMessage = async () => {
     const content = draft.trim(); if (!content || busy) return;
     const next = [...messages, { role: "user" as const, content }]; setMessages(next); setDraft(""); setBusy(true); setError(null); saveConnection();
+    try { await saveConversation(next); } catch (saveError) { setBusy(false); setError(saveError instanceof Error ? saveError.message : "Conversation could not be saved."); return; }
     const response = await request("chat.complete", { endpoint, model, messages: next }); setBusy(false);
     if (!response.ok) { setError(response.error?.message ?? "The model request failed."); return; }
-    setMessages([...next, { role: "assistant", content: (response.result as { content: string }).content }]);
+    const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }]; setMessages(completed); try { await saveConversation(completed); } catch (saveError) { setError(saveError instanceof Error ? saveError.message : "Conversation could not be saved."); }
   };
   useEffect(() => { document.title = PRODUCT_DISPLAY_NAME; request("runtime.health").then((response: AgentResponse) => { if (!response.ok) { setConnection("error"); setError(response.error?.message ?? "Agent host unavailable."); return; } setHealth(response.result as RuntimeHealth); setConnection("ready"); }).catch((requestError: unknown) => { setConnection("error"); setError(requestError instanceof Error ? requestError.message : "Agent host unavailable."); }); }, []);
   useEffect(() => { if (view === "projects" && connection === "ready") void loadProjects(); }, [view, connection]);
   useEffect(() => { if (view === "workbench" && connection === "ready") void loadWorkbench(); }, [view, connection]);
+  useEffect(() => { if (connection === "ready") void loadConversations(); }, [connection]);
   const title = useMemo(() => ({ chat: "Chat", projects: "Projects", workbench: "Agent workbench", models: "Models", settings: "Settings" }[view]), [view]);
   return <div className="app-shell">
     <aside className="sidebar" aria-label="Primary navigation">
