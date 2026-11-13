@@ -5546,3 +5546,50 @@ item to its evidence-pending state. Runtime behavior is unchanged.
 Not yet verified: remote comparison consent and provider diversity, resource
 scheduling/unloading, comparison cancellation, cross-platform/package
 acceptance, and the broader multi-model picker requirement.
+
+## Slice 146 — live generic compatible-provider model picker
+
+Status: `implemented_verified_windows_compatible_picker`
+
+The provider-agnostic model picker is now verified against a disposable local
+OpenAI-compatible endpoint. A temporary loopback `/v1/models` service
+advertised `mock-chat-small` and `mock-chat-large`. The native app connected
+to that endpoint with local-only routing enabled, discovered both models in
+Model Library alongside the installed Ollama inventory, selected
+`mock-chat-large`, pinned it, and exposed both pinned routes in the composer
+model switcher. The live route displayed the selected endpoint and model in
+the connection status and model accessibility description.
+
+Changed files:
+
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Live Windows disposable profile — passed: generic compatible endpoint
+  connection, two-model discovery, model selection, pinning, and hotswitcher
+  inspection completed without a cloud endpoint or credential.
+- The temporary test service implemented only bounded `/v1/models` and
+  `/v1/chat/completions` responses and was stopped after the journey; it was
+  not added to the repository.
+- `npm run audit:future-features` and `git diff --check` — passed after this
+  evidence update.
+
+Privacy/security/licensing: the endpoint was loopback-only and the disposable
+settings required local model endpoints. No API key, remote request, project
+file, memory, third-party package, or pet state was used.
+
+Quality limitation: the live route proves the generic OpenAI-compatible
+discovery/selection path, not every hosted provider or remote-consent branch.
+The selected discovered model was labeled `Current local endpoint`, so
+durable provider identity normalization across all provider types remains an
+open routing-quality item.
+
+Rollback: revert the three documentation changes to return the picker item to
+its evidence-pending state. Runtime behavior is unchanged.
+
+Not yet verified: remote compatible-provider discovery and consent, provider
+identity normalization, multi-route scheduling, unload/queue behavior,
+cross-platform/package acceptance, and model-library download workflows.
