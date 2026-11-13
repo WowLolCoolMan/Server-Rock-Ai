@@ -1,6 +1,6 @@
 # Skai Desktop Agent and Architecture Audit
 
-Date: 2026-11-13  
+Date: 2026-11-13
 Scope: `codex/skai-current-worktree`, working tree, Electron replacement path,
 .NET agent host, Core provider layer, AirLLM integration, and the two active
 implementation chats.
@@ -40,11 +40,12 @@ Reviewed:
 - `services/agent-host/Protocol/AgentHostLoop.cs` and the Electron bridge.
 - `native/SkaiDesktop.Core/Services/AirLlmProvider.cs`,
   `services/airllm/skai_airllm.py`, and AirLLM setup documentation.
-- Current uncommitted Electron Chat retry and C# voice changes.
+- Current Electron Chat retry, C# voice, provider-contract, and AirLLM host changes.
 - Active chats `Add future features list` and `Find a lightweight TTS model`.
 - Checks run during this audit: desktop typecheck, desktop build, syntax audit,
-  Electron boundary audit, and Core tests passed; agent-host build failed because
-  a live `ServerRock.AgentHost` process held its output DLL.
+  Electron boundary audit, and Core tests passed; the first agent-host build
+  was blocked by a live `ServerRock.AgentHost` process, then passed after the
+  host was shut down cleanly.
 
 ## Decision register
 
@@ -70,43 +71,45 @@ Electron renderer -> preload -> Electron main -> JSON-lines C# host
                                                    -> local stores and guarded tools
 ```
 
-The AirLLM path is not on that route. It currently exists here:
+The AirLLM adapter is now reachable from that route, but its release contract
+is not closed. The intended path is:
 
 ```text
-Legacy Uno MainPage.Chat
+Electron chat.complete
+    -> .NET Agent Host provider strategy
     -> SkaiDesktop.Core AirLlmProvider
     -> Python JSON-lines worker
     -> AirLLM AutoModel
 ```
 
-The Electron host's `chat.complete` handler currently constructs only an
-`OpenAiCompatibleProvider`. Therefore the approved desktop shell cannot use the
-AirLLM implementation that the earlier work reports as integrated.
+The host now supports explicit AirLLM selection and a bounded local capacity
+fallback, and returns provider/fallback provenance. Real Electron inference,
+runtime health, cancellation, and trust/consent evidence are still missing.
 
-The voice work is converging on the correct C# host boundary, but the checkout
-still contains Rust-era generated `native/voice-host/target` output and UI copy
-that says future model packs depend on a Rust runtime. That is architecture drift,
-not harmless polish.
+The voice work is now on the correct C# host boundary, with the Rust voice
+source, target output, and stale runtime wording removed. Host lifecycle and
+future model-pack installation remain separate release gates.
 
 ## Findings
 
-### Critical: AirLLM is unreachable from the approved desktop path
+### Corrected in this branch: AirLLM is reachable from the approved desktop path
 
-**Observation.** `AirLlmProvider` is called by `native/ServerRock.Native/MainPage.Chat.cs`.
-`services/agent-host/Protocol/AgentHostLoop.cs` handles Electron `chat.complete`
-with `OpenAiCompatibleProvider` and has no AirLLM route.
+**Observation.** `services/agent-host/Protocol/AgentHostLoop.cs` now routes
+explicit `AirLLM` requests through `AirLlmProvider` and retries only a local
+Hugging Face-shaped model after a classified capacity failure. The Electron
+request carries provider identity and the response reports the selected route.
 
 **Condition.** A user runs the approved Electron app, selects or needs a
 Hugging Face model that does not fit the normal runtime, and sends a message.
 
-**Consequence.** The feature promised to the user is absent from the app that
-the repository calls the replacement target. The user either gets a normal
-provider failure or must use the legacy Uno surface.
+**Consequence.** The original reachability gap is closed, but the feature is
+not yet release-ready: the runtime may be absent, a real model journey has not
+been exercised, and long-running inference still has no request cancellation.
 
-**Minimal correction.** Put the provider selection and AirLLM adapter behind the
-C# host/Core contract. `chat.complete`, `models.list`, runtime health, operation
-provenance, and cancellation must all use the same provider strategy. Keep the
-legacy Uno adapter only as a compatibility caller until cutover.
+**Remaining correction.** Complete the shared provider strategy across
+`chat.complete`, `models.list`, runtime health, operation provenance, and
+cancellation. Keep the legacy Uno adapter only as a compatibility caller until
+cutover.
 
 **Closure check.** A disposable Electron run sends a compatible Hugging Face
 model request through the host, records `normal -> AirLLM` locally, returns a
@@ -116,10 +119,12 @@ the model itself failed.
 
 ### Critical: arbitrary model code is currently trusted inside the AirLLM worker
 
-**Observation.** `services/airllm/skai_airllm.py` sets `trust_remote_code=True`
-and accepts a user-supplied Hugging Face model ID. AirLLM's upstream quickstart
-also loads models by repository ID and warns that the first run decomposes and
-stores model layers locally. Upstream issue #293 documents the remote-code risk.
+**Observation.** `services/airllm/skai_airllm.py` now defaults
+`trust_remote_code` to false, but accepts a user-supplied Hugging Face model ID
+and does not yet pin provenance or isolate the worker. AirLLM's upstream
+quickstart loads models by repository ID and warns that the first run decomposes
+and stores model layers locally. Upstream issue #293 documents the remote-code
+risk, so the flag alone is not sufficient evidence of safety.
 
 **Condition.** A user selects a repository whose configuration/tokenizer/model
 code is not trusted, and Skai starts the Python worker.
@@ -141,21 +146,19 @@ an explicitly approved pinned fixture runs in the isolated worker; environment
 secrets are absent; revoking approval blocks the next request; and provenance is
 visible in the model/runtime status.
 
-### Important: automatic fallback is underspecified and can mislead users
+### Important: automatic fallback is improved but not release-complete
 
-**Observation.** The current native fallback uses exception-text matching such
-as `memory`, `does not fit`, or `model compatibility`, and only falls back when a
-model string looks like a Hugging Face ID. There is no corresponding Electron
-host route, preflight resource check, or durable provider identity in the new
-shell.
+**Observation.** The host now carries provider identity, checks that the route
+is local before fallback, checks that the AirLLM Python imports are available,
+and preserves the fallback failure context. Capacity classification is still
+based on bounded exception text, and there is no disk/model preflight.
 
 **Condition.** A normal provider reports an unrelated error containing a memory
 word, or a selected model is not a Hugging Face/AirLLM-compatible model.
 
-**Consequence.** Skai can retry through a provider that cannot load the model,
-hide the original cause, or leave the user believing that any local provider can
-be converted into AirLLM. A silent model/runtime switch also makes troubleshooting
-and quality comparison harder.
+**Consequence.** Skai can still misclassify a provider error containing a memory
+word, or start a large download without enough disk. A silent model/runtime
+switch would also make troubleshooting and quality comparison harder.
 
 **Minimal correction.** Define an explicit local fallback policy: preflight the
 selected model/provider, check AirLLM installation and disk budget, classify only
@@ -197,8 +200,8 @@ AirLLM receives the same cancellation and deadline contract.
 
 **Observation.** The pushed commit contains 522 files and mixes the native-core
 rename, UI migrations, handoff archives, AirLLM, presets, and active agent work.
-The current working tree is again dirty with voice/UI changes and generated
-`artifacts/`/Rust target output.
+The current working tree contains intentional voice/UI/host changes; generated
+artifacts and Rust voice targets have been removed from the checkout.
 
 **Consequence.** Reviewers cannot distinguish architectural changes from
 generated material or unrelated slices. A green check on one surface can hide a
@@ -215,10 +218,10 @@ Rust target, `dist`, or process-lock residue is present.
 
 ### Improvement: provider UX is not yet an intent-based provider system
 
-**Observation.** The Electron model surface derives provider labels from model
-names and sends an endpoint/model pair to the host. The legacy native settings
-have friendlier copy, but the replacement shell does not yet persist a provider
-identity or explain local/large-model/hosted choices as user goals.
+**Observation.** The Electron shell now persists and sends provider identity,
+and the host returns it with settings and discovered models. The replacement
+shell still does not explain local/large-model/hosted choices as user goals or
+provide the setup/consent flow.
 
 **Correction.** Add a small provider setup flow after the host contract is stable:
 “Use models already on this computer,” “Use a very large model locally,” and
@@ -254,15 +257,13 @@ use narrow follow-up commits plus architecture gates before any merge.
 ## Priority correction sequence
 
 1. Finish and checkpoint the two current bounded slices; no new scope.
-2. Remove generated artifacts and all Rust voice residue; make host lifecycle
+2. Keep generated artifacts and all Rust voice residue out; make host lifecycle
    shutdown deterministic.
-3. Implement the provider strategy in the C# host so Electron `chat.complete`
-   can reach AirLLM under the same contract as normal local providers.
-4. Add AirLLM provenance, model compatibility, trust/consent, disk/runtime
+3. Complete AirLLM provenance, model compatibility, trust/consent, disk/runtime
    health, cancellation, and bounded fallback tests.
-5. Add the intent-based provider setup flow in Electron and durable provider
-   identity.
-6. Re-run packaged Electron acceptance, Core tests, host smoke, and a real
+4. Add the intent-based provider setup flow in Electron on top of the durable
+   provider identity.
+5. Re-run packaged Electron acceptance, Core tests, host smoke, and a real
    disposable AirLLM model test before discussing merge.
 
 ## Open evidence gaps
