@@ -29,6 +29,11 @@ public sealed partial class MainPage
         MainPageHeaderControl.NewChatRequested += NewChatClick;
         MainPageHeaderControl.PreviousBranchRequested += PreviousBranchClick;
         MainPageHeaderControl.NextBranchRequested += NextBranchClick;
+        CodingWorkspaceBarControl.ToolbarResized += CodingWorkspaceToolbarSizeChanged;
+        CodingWorkspaceBarControl.ProjectFoldersRequested += ProjectFoldersClick;
+        CodingWorkspaceBarControl.GitHubActionsRequested += GitHubActionsClick;
+        CodingWorkspaceBarControl.TerminalRequested += OpenTerminalClick;
+        CodingWorkspaceBarControl.UndoHistoryRequested += UndoHistoryClick;
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
         SidebarView.CodingModeRequested += CodingModeClick;

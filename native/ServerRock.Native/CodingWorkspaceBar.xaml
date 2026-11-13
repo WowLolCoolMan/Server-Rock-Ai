@@ -1,0 +1,26 @@
+<UserControl x:Class="ServerRock.Native.CodingWorkspaceBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border x:Name="WorkspaceBar" Visibility="Collapsed" Background="#fafcfb" BorderBrush="#e7edeb" BorderThickness="0,0,0,1" Padding="22,9">
+    <Grid x:Name="CodingWorkspaceToolbar" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" SizeChanged="ToolbarSizeChanged">
+      <StackPanel x:Name="CodingWorkspaceSummary" Spacing="2" VerticalAlignment="Center">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+          <TextBlock Text="⌂" FontSize="15" Foreground="#15849a" VerticalAlignment="Center" />
+          <TextBlock x:Name="WorkspaceProjectName" Grid.Column="1" Text="Choose a project" FontSize="13" FontWeight="SemiBold" Foreground="#273a3d" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          <Border x:Name="WorkspaceFolderBadge" Grid.Column="2" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource AccentInkBrush}" /></Border>
+        </Grid>
+        <TextBlock x:Name="WorkspaceProjectPath" Text="Select a local folder to give the Coding Agent project context." FontSize="11" Foreground="#7b8b8d" TextTrimming="CharacterEllipsis" />
+      </StackPanel>
+      <Grid x:Name="CodingWorkspaceActions" Grid.Column="1" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+        <Grid x:Name="CodingWorkspaceProjectActions" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+          <Button x:Name="ProjectFoldersButton" Content="Choose project" Click="ProjectFoldersClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Choose or manage project folders" AutomationProperties.HelpText="Select a Coding Agent project or choose its local source folders." />
+          <Button x:Name="GitHubActionsButton" Grid.Column="1" Content="Commit / push" Visibility="Collapsed" Click="GitHubActionsClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Review GitHub changes and commit or push" AutomationProperties.HelpText="Review changed project files, create a commit, or push the current branch." />
+        </Grid>
+        <Grid x:Name="CodingWorkspaceTools" Grid.Column="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+          <Button x:Name="TerminalButton" Content="Terminal" Visibility="Collapsed" Click="OpenTerminalClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Open project terminal" AutomationProperties.HelpText="Open a terminal at the active local project folder." />
+          <Button x:Name="UndoHistoryButton" Grid.Column="1" Content="Undo history" Click="UndoHistoryClick" Style="{StaticResource ContextButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="Review approved project file changes and undo" AutomationProperties.HelpText="Review changes the Coding Agent applied and restore an earlier file version." />
+        </Grid>
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

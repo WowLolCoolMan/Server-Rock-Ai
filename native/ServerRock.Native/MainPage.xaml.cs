@@ -118,5 +118,19 @@ public sealed partial class MainPage : Page
     private Button NextBranchButton => MainPageHeaderControl.NextBranchButtonControl;
     private Ellipse HeaderConnectionDot => MainPageHeaderControl.HeaderConnectionDotControl;
     private TextBlock HeaderConnectionLabel => MainPageHeaderControl.HeaderConnectionLabelControl;
+    private Border CodingWorkspaceBar => CodingWorkspaceBarControl.BarControl;
+    private Grid CodingWorkspaceToolbar => CodingWorkspaceBarControl.ToolbarControl;
+    private StackPanel CodingWorkspaceSummary => CodingWorkspaceBarControl.SummaryControl;
+    private Grid CodingWorkspaceActions => CodingWorkspaceBarControl.ActionsControl;
+    private Grid CodingWorkspaceProjectActions => CodingWorkspaceBarControl.ProjectActionsControl;
+    private Grid CodingWorkspaceTools => CodingWorkspaceBarControl.ToolsControl;
+    private TextBlock WorkspaceProjectName => CodingWorkspaceBarControl.WorkspaceProjectNameControl;
+    private Border WorkspaceFolderBadge => CodingWorkspaceBarControl.WorkspaceFolderBadgeControl;
+    private TextBlock WorkspaceFolderCount => CodingWorkspaceBarControl.WorkspaceFolderCountControl;
+    private TextBlock WorkspaceProjectPath => CodingWorkspaceBarControl.WorkspaceProjectPathControl;
+    private Button ProjectFoldersButton => CodingWorkspaceBarControl.ProjectFoldersButtonControl;
+    private Button GitHubActionsButton => CodingWorkspaceBarControl.GitHubActionsButtonControl;
+    private Button TerminalButton => CodingWorkspaceBarControl.TerminalButtonControl;
+    private Button UndoHistoryButton => CodingWorkspaceBarControl.UndoHistoryButtonControl;
 
 }

@@ -1570,6 +1570,44 @@ compatibility accessors, and keep the lifecycle split intact.
 Not yet verified: live packaged-release interaction after the visual split,
 narrow-window visual QA, Linux parity, and the remaining handoff slices.
 
+## Slice 97 — continue the main page visual split with the Coding Agent bar
+
+Status: `implemented_verified_build`
+
+Continuing the Slice 95/96 UI decomposition, the Coding Agent workspace bar is
+now a dedicated `CodingWorkspaceBar` UserControl. It owns the project summary,
+folder count, project/GitHub actions, terminal action, undo-history action, and
+responsive toolbar visual tree. MainPage keeps the existing feature methods
+through forwarded events and compatibility accessors, so project behavior and
+responsive layout logic remain unchanged. The pet-owned companion overlay was
+not changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
+- `npm run check:syntax` — passed.
+
+Privacy/security/licensing: this is a local visual decomposition only. It
+changes no project persistence, GitHub credential handling, command execution,
+provider route, or third-party dependency.
+
+Rollback: restore the Coding Agent workspace-bar Grid in `MainPage.xaml`,
+remove `CodingWorkspaceBar.xaml` and `.xaml.cs`, and remove its lifecycle
+subscriptions and accessors.
+
+Not yet verified: live packaged-release interaction after this extraction,
+narrow-window visual QA, Linux parity, and the remaining handoff slices.
+
 ## Slice 81 — deterministic date/time variables in reviewed skill prompts
 
 Status: `implemented_verified_core`

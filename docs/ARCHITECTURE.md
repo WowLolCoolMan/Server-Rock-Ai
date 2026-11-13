@@ -74,6 +74,7 @@ method name still finds it.
 | --- | --- |
 | `MainPage.xaml` | Page shell: conversation area, composer, coding workspace bar, and companion overlay; the sidebar and header are dedicated controls. Owned by the UI/design work. |
 | `MainPageHeader.xaml` / `.xaml.cs` | Extracted header control: navigation, route badges, branch controls, connection status, and new-chat action. Forwards semantic events and exposes bounded control accessors to MainPage. |
+| `CodingWorkspaceBar.xaml` / `.xaml.cs` | Extracted Coding Agent workspace bar: project summary, folder context, GitHub, terminal, and undo actions. Forwards actions and the responsive size-change hook to MainPage. |
 | `SidebarView.xaml` / `.xaml.cs` | The left sidebar as its own control (from main): mode switch, primary actions, projects, folders, recents, pet controls. Forwards clicks as events and exposes named elements as `*Control` properties. |
 | `MainPage.Sidebar.cs` | Connects MainPage to SidebarView (accessor properties such as `RecentList`, `ChatModeButton`) and the sidebar-only actions: Scheduled tasks, More, Update. |
 | `MainPage.xaml.cs` | Shared page state (fields and Core services) plus compatibility accessors for extracted visual controls. |
