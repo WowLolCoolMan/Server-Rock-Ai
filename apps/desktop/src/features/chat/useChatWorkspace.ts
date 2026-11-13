@@ -37,7 +37,8 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
   }, [connection, onError, request]);
 
   const saveConversation = async (nextMessages: Message[], id = conversationId) => {
-    const title = nextMessages.find((item) => item.role === "user")?.content.slice(0, 80) || "New chat";
+    const existingTitle = id ? conversations.find((conversation) => conversation.id === id)?.title : undefined;
+    const title = existingTitle || nextMessages.find((item) => item.role === "user")?.content.slice(0, 80) || "New chat";
     const response = await request("conversation.save", { id: id ?? undefined, title, messages: nextMessages });
     if (!response.ok) { onError(response.error?.message ?? "Conversation could not be saved."); return id; }
     const savedId = (response.result as { id: string }).id;
@@ -54,6 +55,19 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
+  };
+
+  const retryMessage = async (messageIndex: number) => {
+    if (busy || !conversationId) return;
+    const originalMessages = messages;
+    const prefix = messages.slice(0, messageIndex);
+    if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
+    setMessages(prefix); setBusy(true); onError(null);
+    const response = await request("chat.complete", { endpoint, model, messages: prefix });
+    setBusy(false);
+    if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
+    const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
+    setMessages(completed); await saveConversation(completed, conversationId);
   };
 
   const pickAttachments = async () => {
@@ -123,5 +137,5 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
   };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
