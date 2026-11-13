@@ -3,6 +3,44 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 249 — Add bounded Electron conversation organization
+
+Status: `implemented_host_metadata_pin_smoke_verified`
+
+The replacement chat now exposes `conversation.metadata.save`, with Core-backed
+bounds for pin state, archive state, folder names, and tags. The renderer has a
+visible Pin/Unpin control for the active conversation. A disposable smoke
+verifies metadata persistence through the host and the existing conversation
+store; the route is also available for the remaining folder/tag/archive UI.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-conversation-metadata.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:conversation-metadata` — passed pin, folder, tag, and
+  persistence assertions against disposable paths.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: metadata changes are local-only, bounded, and
+validated by the existing conversation archive/store before atomic persistence.
+No message content or external provider route is introduced.
+
+Rollback: remove the metadata route, pin control, smoke command, and workflow
+step; existing history navigation and search remain available.
+
+Remaining: full folder/tag/archive management UI, forks/export, queued
+messages, attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 248 — Add bounded Electron conversation search
 
 Status: `implemented_host_renderer_search_smoke_verified`

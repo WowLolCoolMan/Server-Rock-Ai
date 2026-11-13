@@ -58,6 +58,9 @@ validate parity.
   an explicit New chat action; selecting a history item restores its messages.
 - Conversation history now has host-backed bounded search across titles,
   messages, project/folder labels, tags, attachment names, and source metadata.
+- The active chat exposes a host-backed Pin/Unpin control; the same bounded
+  metadata route supports archive, folder, and tag persistence for the next
+  history controls.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
   safe durable task states; every action refreshes from the host after the
   transition.
@@ -88,6 +91,8 @@ validate parity.
   round trip and bounded output result.
 - `npm run smoke:conversation-search` verifies persisted message matching and
   bounded display results against disposable history.
+- `npm run smoke:conversation-metadata` verifies pin, folder, tag, and
+  persistence round trips against disposable history.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and
