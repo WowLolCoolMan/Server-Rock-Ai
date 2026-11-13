@@ -231,7 +231,7 @@ All app data goes under the user's platform app-data folders. On Linux,
 
 | Data | Location | Written by | Override (env var) |
 | --- | --- | --- | --- |
-| Settings (non-secret) | `ApplicationData/ServerRock/AI/settings.json` | `JsonSettingsStore` | – |
+| Settings (non-secret) | `ApplicationData/ServerRock/AI/settings.json` | `JsonSettingsStore` | `SRAI_SETTINGS_PATH` (explicit disposable/test path) |
 | Conversations | `ApplicationData/ServerRock/AI/conversations.json` | `ConversationStore` | `SRAI_CONVERSATIONS_PATH` |
 | Projects | `ApplicationData/ServerRock/AI/projects.json` | `ProjectStore` | – |
 | Workspace undo history | `ApplicationData/ServerRock/AI/workspace-undo.json` | `WorkspaceUndoStore` | – |

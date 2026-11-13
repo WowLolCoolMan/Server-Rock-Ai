@@ -27,7 +27,9 @@ public sealed partial class MainPage : Page
     private readonly ModelLibraryService _modelLibrary = new();
     private readonly ComfyImageProvider _comfyImageProvider = new();
     private readonly WebSearchProvider _webSearchProvider = new();
-    private readonly JsonSettingsStore _settingsStore = new();
+    // A bounded explicit path is useful for disposable release/accessibility
+    // journeys; without the variable, settings stay in the normal user profile.
+    private readonly JsonSettingsStore _settingsStore = new(Environment.GetEnvironmentVariable("SRAI_SETTINGS_PATH"));
     private readonly ConversationStore _conversationStore = new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
     private readonly ProjectStore _projectStore = new();
     private readonly WorkspaceFileEditor _workspaceEditor = new();

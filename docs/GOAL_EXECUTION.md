@@ -1605,6 +1605,83 @@ later invalidated.
 Not yet verified: packaged-artifact interaction after the extraction, narrow-window
 visual QA, Linux parity, and full handoff completion.
 
+## Slice 134 — disposable live organization persistence journey
+
+Status: `verified_windows_disposable_mutation_and_reload`
+
+The app now has an explicit `SRAI_SETTINGS_PATH` boundary in addition to the
+existing conversations-path override, allowing a disposable Windows acceptance
+profile. Against that profile, a seeded local chat was folder-created, pinned,
+tagged with `handoff` and `disposable`, moved into the new folder, and then
+reloaded in a fresh app process. The post-reload accessibility tree showed the
+folder with one chat, the pinned title, both tags, and `All chats are in folders.`
+The real user profile and pet state were not used or changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `docs/ARCHITECTURE.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/FUTURE_FEATURES.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Disposable profile used `SRAI_SETTINGS_PATH` and `SRAI_CONVERSATIONS_PATH`
+  under a temporary workspace directory; the temporary files were removed after
+  the journey.
+- Live Windows accessibility inspection exposed the folder creation dialog,
+  saved folder, pin state, tag editor and saved tags, move action, folder row
+  with one chat, and post-restart persistence of all organization state.
+- `npm run audit:future-features` — passed: `160 items, 11 sections, 3 checked`.
+- No provider request, cloud route, credential, real-profile mutation, or pet
+  action occurred.
+
+Privacy/security/licensing: the disposable environment prevented test prompts,
+folder names, and organization metadata from entering the user's real profile.
+The environment variables are explicit local test controls and add no dependency
+or third-party code.
+
+Rollback: remove the temporary-path constructor argument and restore the checked
+backlog item only if this evidence is invalidated; no production user data needs
+restoration.
+
+Not yet verified: live per-message fork activation, live memory setting save/send
+with an eligible note, semantic compaction and 1M+ context, packaged interaction,
+Linux parity, and the remaining handoff requirements.
+
+## Slice 133 — add a disposable settings profile boundary
+
+Status: `implemented_verified_build`
+
+The native app now honors the explicit `SRAI_SETTINGS_PATH` environment variable
+when constructing its settings store. The default remains the normal platform
+application-data path; the override exists so live acceptance journeys can use a
+disposable settings file alongside the existing `SRAI_CONVERSATIONS_PATH` history
+override. No provider, credential, pet, or default-profile behavior changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run audit:native-ui` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the override is opt-in, local-only, and explicit;
+without it the existing profile path is unchanged. It adds no network, credential,
+dependency, or third-party path.
+
+Rollback: remove the environment-variable argument and restore `new
+JsonSettingsStore()`; the default profile behavior is unchanged.
+
+Not yet verified: disposable live folder/tag/pin mutation and reload, packaged
+interaction, Linux parity, and the remaining handoff requirements.
+
 ## Slice 131 — extract project navigation from the sidebar
 
 Status: `implemented_verified_build`
