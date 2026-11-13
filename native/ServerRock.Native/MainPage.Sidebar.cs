@@ -164,6 +164,48 @@ public sealed partial class MainPage
             catch (Exception ex) { RuntimeStatus.Text = $"Agent task readiness could not be previewed: {ex.Message}"; }
         };
         content.Children.Add(previewReadyAgentTask);
+        var searchAgentTasks = new Button { Content = "Search agent tasks", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(searchAgentTasks, "Search agent tasks");
+        AutomationProperties.SetHelpText(searchAgentTasks, "Search bounded local task plans and artifacts. This does not start or dispatch work.");
+        searchAgentTasks.Click += async (_, _) =>
+        {
+            var query = new TextBox { Header = "Search task plans", PlaceholderText = "title, instruction, role, or status" };
+            AutomationProperties.SetName(query, "Agent task search query");
+            var results = new StackPanel { Spacing = 6 };
+            AutomationProperties.SetName(results, "Agent task search results");
+            void RefreshAgentTaskResults()
+            {
+                results.Children.Clear();
+                try
+                {
+                    var matches = _agentTaskStore.Search(query.Text).Take(20).ToArray();
+                    results.Children.Add(new TextBlock { Text = $"{matches.Length} local task plan{(matches.Length == 1 ? "" : "s")} matched.", FontSize = 11, Opacity = 0.72 });
+                    foreach (var match in matches)
+                    {
+                        var dependencies = match.DependsOn.Count == 0 ? "no dependencies" : $"{match.DependsOn.Count} dependencies";
+                        results.Children.Add(new TextBlock
+                        {
+                            Text = $"{match.Status} · {match.Role} · {match.Title}\n{dependencies} · task {match.Id[..Math.Min(8, match.Id.Length)]}",
+                            TextWrapping = TextWrapping.Wrap
+                        });
+                    }
+                }
+                catch (Exception ex) { results.Children.Add(new TextBlock { Text = $"Task search could not run: {ex.Message}", TextWrapping = TextWrapping.Wrap }); }
+            }
+            query.TextChanged += (_, _) => RefreshAgentTaskResults();
+            RefreshAgentTaskResults();
+            var searchAgentTaskDialog = new ContentDialog
+            {
+                Title = "Search agent tasks",
+                Content = new ScrollViewer { Content = new StackPanel { Spacing = 8, Children = { query, results } }, MaxHeight = 520, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+                CloseButtonText = "Done",
+                XamlRoot = XamlRoot
+            };
+            AutomationProperties.SetName(searchAgentTaskDialog, "Search agent tasks");
+            searchAgentTaskDialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+            await searchAgentTaskDialog.ShowAsync();
+        };
+        content.Children.Add(searchAgentTasks);
         if (agentTasks.Count == 0)
         {
             content.Children.Add(new TextBlock { Text = "No agent task artifacts have been recorded. Task planning remains local and does not dispatch agents automatically.", TextWrapping = TextWrapping.Wrap });

@@ -2025,6 +2025,45 @@ App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
 parallel execution limits, process/container/worktree isolation, background
 execution, cross-platform acceptance, and packaged release acceptance.
 
+## Slice 122 — search bounded agent-task artifacts
+
+Status: `implemented_verified_build`
+
+Activity now offers `Search agent tasks`, a read-only dialog that searches the
+bounded local task store by title, instruction, role, or status and renders up
+to twenty matching plan summaries. The query is local-only, updates as typed,
+and opening the dialog focuses the search field. No task status changes and no
+agent, provider, tool, or background work is started.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with the task-search accessibility
+  contracts.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including bounded local task search coverage.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: task search reads only bounded local metadata and
+does not transmit query text or task content to any provider or network route.
+
+Rollback: remove the search action/dialog and its audit contracts; the Activity
+task cards and local task store remain available.
+
+Not yet verified: deterministic live activation through the unavailable Uno
+App MCP harness, packaged-artifact acceptance, actual sub-agent delegation,
+parallel execution limits, process/container/worktree isolation, background
+execution, cross-platform acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
