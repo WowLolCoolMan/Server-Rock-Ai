@@ -48,6 +48,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `801f9a1` — persisted the local Coding Workspace terminal dock per project, added a keyboard toggle (`Ctrl/Cmd+J`), and exposed the dock state through `aria-pressed`.
 - `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 - `cea27b1` — enforced loopback-only model/image endpoints in the Electron workspace and added a release audit that rejects hosted/cloud runtime references from shipped sources.
+- `3f38415` — hardened Electron agent-host supervision with bounded pending requests, host-exit cleanup, and Windows process-tree shutdown, with regression assertions in the Electron audit.
 
 ## Current evidence
 
@@ -97,6 +98,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Coding terminal persistence check: passed renderer typecheck/build plus project-browser and guarded-editor smoke coverage for the local coding workflow; the per-project dock preference is stored locally and no Cloud references are present in shipped source. Live Electron visual interaction remains limited by the Windows screenshot/input bridge returning another app's pixels.
 - Workbench navigation check: passed renderer typecheck/build, verified local-only source boundaries, and reviewed the focused diff for persisted view/task state and keyboard navigation. Further feature work is paused pending the architecture audit's host lifecycle, provider, and AirLLM gates.
 - Local-only boundary check: passed `audit:local-only`, syntax checks, renderer typecheck, and production build. Invalid saved endpoints fall back to loopback defaults; model discovery, settings save, and image generation reject non-loopback endpoints before sending a host request.
+- Electron supervision check: passed `audit:electron-runtime`, repository syntax checks, and diff validation for request timeouts, pending-call cleanup, and process-tree shutdown. C# request cancellation and AirLLM end-to-end verification remain open in the parallel architecture slice.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
