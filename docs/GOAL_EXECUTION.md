@@ -1797,6 +1797,40 @@ Not yet verified: each future item remains independently tracked as incomplete
 until its implementation and acceptance evidence are recorded in a later
 slice.
 
+## Slice 107 — future-features backlog integrity audit
+
+Status: `implemented_verified_repository_tooling`
+
+Added a deterministic repository audit for `docs/FUTURE_FEATURES.md`. It
+requires the core backlog sections, validates checkbox syntax, rejects empty
+or duplicate feature labels, and reports the item/section/checked counts. The
+audit is available as `npm run audit:future-features` and its script is included
+in `npm run check:syntax`, so future backlog edits fail visibly before they
+become the planning source for another implementation slice.
+
+Changed files:
+
+- `scripts/audit-future-features.cjs`
+- `package.json`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:future-features` — passed: `159 items, 11 sections, 0 checked`.
+- `npm run check:syntax` — passed, including the new audit script.
+- `npm run check:hygiene` — passed: `325 tracked files`.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this is local documentation validation only. It
+does not execute feature content, access user data, add dependencies, or alter
+runtime/provider behavior.
+
+Rollback: remove `scripts/audit-future-features.cjs`, its package scripts, and
+this evidence entry; the future-features document remains readable manually.
+
+Not yet verified: implementation and acceptance of the individual future
+features, which remain deliberately unchecked.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
