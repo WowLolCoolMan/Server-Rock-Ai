@@ -122,6 +122,9 @@ public sealed partial class MainPage
             return;
         }
         _companionTimer?.Stop();
+        // A walk is timed from its start: resuming it after a pause would teleport the pet to
+        // where it "should" be by now. Drop it; the pet stands where it stopped.
+        ForgetCompanionWalk();
         // With Reduce motion the pet rests in its plain pose, and fades finish at once.
         if (CompanionReduceMotion) SettleCompanionVisuals();
     }
