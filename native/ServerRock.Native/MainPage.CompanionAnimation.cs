@@ -34,6 +34,7 @@ public sealed partial class MainPage
     }
 
     private const double CompanionFrameSeconds = 1.0 / 30;
+    private const double CompanionWalkFrameSeconds = 1.0 / 60;
     private const double CompanionFadeSeconds = 0.22;
     private const double CompanionBlendSeconds = 0.35;
     private const double CompanionSpeechFadeSeconds = 0.25;
@@ -57,6 +58,7 @@ public sealed partial class MainPage
     private double _companionSpeechFrom = 1;
     private double _companionSpeechFadeStartedAt = double.NegativeInfinity;
     private double _companionSpeechHideAt = double.PositiveInfinity;
+    private double _companionLastTickAt;
 
     private double CompanionNow => _companionClock.Elapsed.TotalSeconds;
 
@@ -268,7 +270,14 @@ public sealed partial class MainPage
         var blend = (now - _companionStateChangedAt) / CompanionBlendSeconds;
         if (blend < 1)
             pose = CompanionPose.Lerp(CompanionStatePose(_companionBlendFromState, now), pose, EaseInOut(Math.Max(0, blend)));
-        ApplyCompanionPose(pose);
+        // Wander (MainPage.CompanionWander.cs) moves the card and swaps in the walking motion.
+        var walkPose = CompanionWanderTick(now);
+        var tickSeconds = Math.Clamp(now - _companionLastTickAt, 0, 0.1);
+        _companionLastTickAt = now;
+        ApplyCompanionPose(ComposeCompanionPose(pose, walkPose, tickSeconds));
+        // 60 fps while walking so the glide is smooth, 30 fps otherwise.
+        var interval = TimeSpan.FromSeconds(CompanionIsWalking ? CompanionWalkFrameSeconds : CompanionFrameSeconds);
+        if (_companionTimer is { } timer && timer.Interval != interval) timer.Interval = interval;
 
         // Frame cross-fade.
         var fade = (now - _companionFadeStartedAt) / CompanionFadeSeconds;
