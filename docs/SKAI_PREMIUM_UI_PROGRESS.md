@@ -46,6 +46,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `e676e05` — added a local conversation context menu with stable-ID Open, Rename, Pin/Unpin, and Archive actions, plus compact desktop action spacing.
 - `d9fe241` — added a host-backed Chat Retry action that replaces only the selected assistant response, preserves custom conversation titles, and restores the prior response on failure.
 - `801f9a1` — persisted the local Coding Workspace terminal dock per project, added a keyboard toggle (`Ctrl/Cmd+J`), and exposed the dock state through `aria-pressed`.
+- `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 
 ## Current evidence
 
@@ -93,6 +94,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Conversation context-menu check: passed right-click and keyboard-visible menu actions for stable-ID pinning and renaming, persisted title rendering, compact action-row geometry at 1440px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-context-menu.png`.
 - Chat retry check: passed replacement of the selected assistant response through `chat.complete`, stable conversation persistence, custom-title preservation, failure recovery with the previous response restored, and no Cloud UI. Screenshot: `output/playwright/skai-chat-retry.png`.
 - Coding terminal persistence check: passed renderer typecheck/build plus project-browser and guarded-editor smoke coverage for the local coding workflow; the per-project dock preference is stored locally and no Cloud references are present in shipped source. Live Electron visual interaction remains limited by the Windows screenshot/input bridge returning another app's pixels.
+- Workbench navigation check: passed renderer typecheck/build, verified local-only source boundaries, and reviewed the focused diff for persisted view/task state and keyboard navigation. Further feature work is paused pending the architecture audit's host lifecycle, provider, and AirLLM gates.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
