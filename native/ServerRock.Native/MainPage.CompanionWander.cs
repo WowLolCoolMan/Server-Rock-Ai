@@ -104,6 +104,16 @@ public sealed partial class MainPage
         return null;
     }
 
+    // Called when the animation timer stops (hidden, minimized, Reduce motion). Also forgets the
+    // last placed spot, so layout moves made while paused don't count as the person moving it.
+    private void ForgetCompanionWalk()
+    {
+        _companionWalk = null;
+        _companionStopStartedAt = double.NegativeInfinity;
+        _companionWanderPlaced = null;
+        _companionWanderNextAt = Math.Max(_companionWanderNextAt, CompanionNow + 1);
+    }
+
     private void StartCompanionWalk(double now)
     {
         if (!TryGetCompanionWanderGrid(out var grid, out var blocked))
@@ -199,9 +209,18 @@ public sealed partial class MainPage
         // PositionCompanion also runs on every state change; only a real size change matters.
         var size = (CompanionOverlay.ActualWidth, CompanionOverlay.ActualHeight, CompanionCard.ActualWidth, CompanionCard.ActualHeight);
         if (size == _companionWanderLayoutSize) return;
+        // During start-up layout the overlay is briefly tiny; clamping then pinned the pet to
+        // the top-left corner instead of its saved spot. Wait for a real size.
+        if (size.Item1 < size.Item3 + 16 || size.Item2 < size.Item4 + 16) return;
+        var firstLayout = _companionWanderLayoutSize == default;
         _companionWanderLayoutSize = size;
         if (!TryGetCompanionWanderGrid(out var grid, out var blocked)) return;
-        var position = grid.ClampPetPosition(CurrentCompanionPosition());
+        // The first time, start from the saved spot (PositionCompanion's own placement is
+        // skipped while wander owns the position, so the card would otherwise start at 0,0).
+        var start = firstLayout
+            ? new PetPoint(_companionState.Left < 0 ? size.Item1 : _companionState.Left, _companionState.Top)
+            : CurrentCompanionPosition();
+        var position = grid.ClampPetPosition(start);
         _companionWalk = null;
         _companionStopStartedAt = double.NegativeInfinity;
         PlaceCompanion(position, clamp: false);
