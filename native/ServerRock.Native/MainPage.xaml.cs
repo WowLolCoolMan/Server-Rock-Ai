@@ -46,7 +46,7 @@ public sealed partial class MainPage : Page
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private readonly ChatMessageQueue _messageQueue = new();
     private readonly ChatMessageQueueStore _messageQueueStore = new();
-    private readonly WorkspaceDraftStore _workspaceDrafts = new();
+    private WorkspaceDraftStore _workspaceDrafts = new();
     private readonly ScheduledTaskStore _scheduledTaskStore = new();
     private readonly AgentTaskArtifactStore _agentTaskStore = new();
     private readonly SkillPackageInstaller _skillPackageInstaller = new();
@@ -101,6 +101,7 @@ public sealed partial class MainPage : Page
 #endif
     private readonly DispatcherTimer _runtimeStatusTimer = new() { Interval = TimeSpan.FromSeconds(7) };
     private readonly DispatcherTimer _scheduledTaskTimer = new() { Interval = TimeSpan.FromSeconds(20) };
+    private readonly DispatcherTimer _draftPersistenceTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly StatusMessageHistory _statusHistory = new();
     private readonly NavigationHistory _navigationHistory = new(WorkspaceModes.Chat);
     private bool _restoringNavigation;

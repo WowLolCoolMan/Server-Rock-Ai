@@ -40,6 +40,7 @@ public sealed partial class MainPage
         ConversationSurfaceControl.SettingsRequested += SettingsClick;
         ConversationSurfaceControl.SuggestionRequested += SuggestionClick;
         ComposerToolbarControl.ToolbarResized += ComposerToolbarSizeChanged;
+        ComposerToolbarControl.PromptTextChangedRequested += PromptTextChanged;
         ComposerToolbarControl.ManageQueueRequested += ManageQueueClick;
         ComposerToolbarControl.ModelRequested += ModelHotswapClick;
         ComposerToolbarControl.ToolsRequested += ComposerToolsClick;
@@ -94,6 +95,15 @@ public sealed partial class MainPage
         });
         PromptBox.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(PromptKeyDown), handledEventsToo: true);
         _settings = _settingsStore.Load();
+        _workspaceDrafts = new WorkspaceDraftStore(_settings.WorkspaceDrafts);
+        _restoringWorkspaceDraft = true;
+        PromptBox.Text = _workspaceDrafts.Get(_mode);
+        _restoringWorkspaceDraft = false;
+        _draftPersistenceTimer.Tick += (_, _) =>
+        {
+            _draftPersistenceTimer.Stop();
+            PersistWorkspaceDrafts();
+        };
         _navigationHistory.Restore(_settings.WorkspaceRouteHistory, _mode);
         UpdateNavigationControls();
         var legacyProjectInstructions = _settings.ProjectInstructions;

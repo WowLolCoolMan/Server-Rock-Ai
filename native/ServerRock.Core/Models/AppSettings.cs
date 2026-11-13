@@ -20,6 +20,8 @@ public sealed class AppSettings
     public bool SmartPromptRewritingEnabled { get; set; }
     public bool MemoryInjectionEnabled { get; set; }
     public List<string> WorkspaceRouteHistory { get; set; } = [];
+    /// <summary>Bounded unsent composer drafts keyed by workspace.</summary>
+    public Dictionary<string, string> WorkspaceDrafts { get; set; } = new(StringComparer.Ordinal);
     /// <summary>Bounded split-chat ratios keyed by workspace and project context.</summary>
     public Dictionary<string, double> SplitChatRatios { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool VoiceOutputEnabled { get; set; }

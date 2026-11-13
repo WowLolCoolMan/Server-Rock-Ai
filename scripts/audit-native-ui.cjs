@@ -48,6 +48,7 @@ const requiredExportXaml = [
   ['Markdown folder export event hookup', 'ExportMarkdownFolderRequested="OnExportMarkdownFolderRequested"'],
 ];
 const requiredCode = [
+  ['Composer draft persistence event', 'ComposerToolbarControl.PromptTextChangedRequested += PromptTextChanged'],
   ['Model source label', 'AutomationProperties.SetName(source, "Model source")'],
   ['Model search label', 'AutomationProperties.SetName(query, "Search models")'],
   ['Model results label', 'AutomationProperties.SetName(list, "Model search results")'],

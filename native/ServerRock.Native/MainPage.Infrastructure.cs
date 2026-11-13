@@ -60,4 +60,17 @@ public sealed partial class MainPage
             return false;
         }
     }
+
+    private void PersistWorkspaceDrafts()
+    {
+        if (_settings is null) return;
+        _settings.WorkspaceDrafts = _workspaceDrafts.Snapshot();
+        SaveSettings();
+    }
+
+    private void ScheduleWorkspaceDraftPersistence()
+    {
+        _draftPersistenceTimer.Stop();
+        _draftPersistenceTimer.Start();
+    }
 }

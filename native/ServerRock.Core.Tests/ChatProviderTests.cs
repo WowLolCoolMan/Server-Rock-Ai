@@ -243,5 +243,8 @@ internal static class ChatProviderTests
         Check(drafts.Get("ChatBot") == "draft for chat" && drafts.Get("CodingAgent") == "draft for coding"
             && drafts.Get("missing") == string.Empty,
             "workspace drafts remain isolated by workspace");
+        var restoredDrafts = new WorkspaceDraftStore(drafts.Snapshot());
+        Check(restoredDrafts.Get("ChatBot") == "draft for chat" && restoredDrafts.Get("CodingAgent") == "draft for coding",
+            "workspace drafts restore from a persisted snapshot");
     }
 }

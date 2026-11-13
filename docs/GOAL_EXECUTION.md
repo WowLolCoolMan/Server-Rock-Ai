@@ -5909,3 +5909,52 @@ behavior (the current desktop runtime did not surface the picker during the
 disposable UI attempt), rich Markdown editing, and attachment binary export
 (the Markdown files retain attachment names and the JSON archive remains the
 content-preserving format).
+
+## Slice 154 — durable workspace composer drafts
+
+Status: `implemented_verified_windows_restart`
+
+Composer drafts are now stored in the existing local settings JSON by
+workspace. The in-memory store accepts and emits bounded snapshots, the UI
+debounces writes for 500 ms instead of writing on every keystroke, workspace
+switches and new-chat clearing flush immediately, and startup restores the
+active workspace draft without triggering a second persistence cycle.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core/Services/WorkspaceDraftStore.cs`
+- `native/ServerRock.Core.Tests/ChatProviderTests.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.Recents.cs`
+- `native/ServerRock.Native/MainPage.SlashCommands.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including isolated workspace and snapshot-restore coverage.
+- `npm run audit:native-ui` — passed with 203 contracts, including the
+  composer text-change persistence event.
+- `npm run audit:future-features` and `git diff --check` — passed.
+- Live Windows disposable journey: typed `draft survives restart`, observed
+  `workspaceDrafts.ChatBot` in the isolated settings JSON, closed the app,
+  relaunched with the same isolated profile, and observed the exact draft
+  restored in the accessible Message composer.
+
+Privacy/security/licensing: drafts remain local, bounded, and workspace-keyed.
+They are not sent to a model until the user presses Send, and no credentials,
+pets state, or handoff files are included.
+
+Rollback: remove the settings field, debounce timer, startup restoration, and
+snapshot APIs; existing in-memory workspace switching still remains available.
+
+Not yet verified: encrypted-at-rest draft storage, cross-device synchronization,
+attachment-draft persistence, and cross-platform packaged restart behavior.

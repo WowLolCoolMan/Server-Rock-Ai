@@ -29,7 +29,10 @@ public sealed partial class MainPage
     {
         var text = PromptBox.Text;
         if (!_restoringWorkspaceDraft)
+        {
             _workspaceDrafts.Set(_mode, text);
+            ScheduleWorkspaceDraftPersistence();
+        }
         CommandSuggestions.Children.Clear();
         _selectedSlashSuggestion = -1;
         if (!text.StartsWith('/'))

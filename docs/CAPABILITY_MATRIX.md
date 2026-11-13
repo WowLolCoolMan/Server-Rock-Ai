@@ -92,6 +92,11 @@ validated, sanitized per-conversation `.md` file while preserving the existing
 single-file JSON and Markdown exports. Core filename coverage, native build,
 and the 202-contract UI audit pass; live FolderPicker/write/readback evidence
 and rich Markdown editing remain open.
+
+Slice 154 verified durable workspace composer drafts. A debounced local settings
+write and startup restore survived a disposable Windows process restart; the
+remaining gap is encrypted or cross-device draft synchronization and
+attachment-draft persistence.
 - Live unavailable-selection evidence: Settings temporarily saved
   `missing-model`; the app reported `Connected · selected model missing-model is
   unavailable · choose a model in Model Library`, kept `missing-model` in the

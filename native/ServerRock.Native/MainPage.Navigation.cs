@@ -88,6 +88,7 @@ public sealed partial class MainPage
         }
         if (!await ConfirmTemporaryDiscardAsync($"switch to {selected}")) return;
         _workspaceDrafts.Set(_mode, PromptBox.Text);
+        PersistWorkspaceDrafts();
         CloseSplitChat();
         SaveCurrentSession();
         ClearPendingAttachments();
