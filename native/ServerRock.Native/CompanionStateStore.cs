@@ -40,7 +40,8 @@ internal sealed class CompanionStateStore
         var json = BoundedFileReader.ReadText(_path, MaxBytes);
         var state = JsonSerializer.Deserialize(json, CompanionStateJsonContext.Default.CompanionState)
             ?? throw new JsonException("The companion preferences file is empty.");
-        return Normalize(state);
+        // A reaction (error, success, …) belongs to the session that caused it: always start idle.
+        return Normalize(state) with { CurrentState = "idle" };
     }
 
     public void Save(CompanionState state)
