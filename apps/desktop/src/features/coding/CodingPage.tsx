@@ -1,5 +1,5 @@
 import type { DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 
@@ -47,15 +47,32 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
   const [instructions, setInstructions] = useState("");
   const [folders, setFolders] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
+  const [fileQuery, setFileQuery] = useState("");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
   const diffRows = useMemo(() => createDiff(fileOriginal, fileDraft), [fileDraft, fileOriginal]);
+  const filteredFiles = useMemo(() => {
+    const query = fileQuery.trim().toLowerCase();
+    return query ? projectFiles.filter((file) => file.relativePath.toLowerCase().includes(query)) : projectFiles;
+  }, [fileQuery, projectFiles]);
+  const fileSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setPanelMode("editor"); }, [selectedFile, fileOriginal]);
-  useEffect(() => { setOpenTabs([]); setTerminalOpen(false); }, [selectedProject?.id]);
+  useEffect(() => { setOpenTabs([]); setTerminalOpen(false); setFileQuery(""); }, [selectedProject?.id]);
   useEffect(() => { if (selectedFile) setOpenTabs((current) => current.includes(selectedFile) ? current : [...current, selectedFile]); }, [selectedFile]);
+  useEffect(() => {
+    const onShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p") {
+        event.preventDefault();
+        fileSearchRef.current?.focus();
+        fileSearchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onShortcut);
+    return () => window.removeEventListener("keydown", onShortcut);
+  }, []);
 
   const createProject = async () => {
     if (!name.trim() || saving) return;
@@ -96,7 +113,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>{selectedProject.name}</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
       <div className="project-file-layout">
-        <div className="project-file-list">{projectFiles.length === 0 ? <EmptyState title="No readable files" description="Protected names and unsupported files are hidden." /> : projectFiles.map((file) => <button className={selectedFile === file.relativePath ? "is-selected" : ""} key={file.relativePath} onClick={() => openFile(file.relativePath)} type="button"><span>{file.relativePath}</span><small>{file.bytes.toLocaleString()} bytes</small></button>)}</div>
+        <div className="project-file-explorer"><div className="file-list-toolbar"><input ref={fileSearchRef} value={fileQuery} onChange={(event) => setFileQuery(event.target.value)} placeholder="Filter files…" aria-label="Filter project files" /><kbd>Ctrl P</kbd></div><div className="project-file-list">{projectFiles.length === 0 ? <EmptyState title="No readable files" description="Protected names and unsupported files are hidden." /> : filteredFiles.length === 0 ? <EmptyState title="No matching files" description="Try a shorter path or filename." /> : filteredFiles.map((file) => <button className={selectedFile === file.relativePath ? "is-selected" : ""} key={file.relativePath} onClick={() => openFile(file.relativePath)} type="button"><span>{file.relativePath}</span><small>{file.bytes.toLocaleString()} bytes</small></button>)}</div></div>
         <div className="file-editor-panel">
           {openTabs.length > 0 && <div className="file-tabs" role="tablist" aria-label="Open project files">{openTabs.map((path) => <div className={`file-tab ${selectedFile === path ? "is-active" : ""}`} key={path}><button type="button" role="tab" aria-selected={selectedFile === path} onClick={() => openFile(path)}><span>{path}</span>{selectedFile === path && hasChanges ? <i aria-label="Unsaved changes">•</i> : null}</button><button className="file-tab-close" type="button" onClick={() => closeTab(path)} disabled={selectedFile === path && hasChanges} aria-label={`Close ${path}`}>×</button></div>)}</div>}
           {selectedFile ? <><div className="file-editor-heading"><span>{selectedFile}</span><div><Button variant={panelMode === "editor" ? "secondary" : "ghost"} onClick={() => setPanelMode("editor")}>Editor</Button><Button variant={panelMode === "diff" ? "secondary" : "ghost"} disabled={!hasChanges} onClick={() => setPanelMode("diff")}>Review diff</Button><Button variant="ghost" disabled={fileBusy} onClick={onUndoFile}>Undo</Button><Button variant="primary" disabled={fileBusy || !hasChanges} onClick={onSaveFile}>{fileBusy ? "Saving…" : "Save edit"}</Button></div></div>{panelMode === "diff" ? <div className="diff-preview" aria-label="Local diff preview">{diffRows.map((row, index) => <div className={`diff-row diff-${row.kind}`} key={`${row.kind}-${index}`}><span aria-hidden="true">{row.kind === "removed" ? "−" : row.kind === "added" ? "+" : "·"}</span><code>{row.line || " "}</code></div>)}</div> : <textarea value={fileDraft} onChange={(event) => onDraftChange(event.target.value)} aria-label={`Edit ${selectedFile}`} rows={16} />}</> : <EmptyState title="Select a file" description="Choose a readable file to preview or edit it with guarded write-back." />}
