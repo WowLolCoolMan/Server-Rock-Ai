@@ -1,6 +1,6 @@
 # Architecture
 
-Server Rock: AI is a single native desktop app written in C# with the
+Skai Desktop is a single native desktop app written in C# with the
 [Uno Platform](https://platform.uno/) (WinUI/XAML API). Everything that ships
 lives under `native/`. The repository's Node.js scripts are only release and
 hygiene helpers; they are not part of the app.

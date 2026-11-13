@@ -1,8 +1,8 @@
 # Server-Rock-Ai
 
-**Server Rock: AI**
+**Skai Desktop**
 
-A local-first desktop workspace for chatting with local models and compatible AI endpoints. It uses a compact, keyboard-friendly layout inspired by modern chat desktop apps.
+A local-first desktop workspace for chatting with local models and compatible AI endpoints. Skai Desktop is the rebranded successor to Server Rock AI. It uses a compact, keyboard-friendly layout inspired by modern chat desktop apps.
 
 ## Native cross-platform app (target stack)
 

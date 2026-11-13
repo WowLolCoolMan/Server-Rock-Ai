@@ -1,6 +1,6 @@
-# Server Rock: AI — Production Readiness Gaps
+# Skai Desktop — Production Readiness Gaps
 
-This is the current release roadmap. It records what remains before Server Rock: AI can be described as a production-ready native replacement and a signed public release.
+This is the current release roadmap. It records what remains before Skai Desktop can be described as a production-ready native replacement and a signed public release. Skai Desktop is the rebrand of Server Rock AI; stable local data and credential identifiers remain unchanged.
 
 ## P0 — release blockers
 

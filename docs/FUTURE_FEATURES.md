@@ -1,4 +1,4 @@
-# Server Rock: AI — Future Features
+# Skai Desktop — Future Features
 
 This is the product backlog for future capabilities. It is intentionally broader
 than the current release roadmap. Features should be implemented one bounded

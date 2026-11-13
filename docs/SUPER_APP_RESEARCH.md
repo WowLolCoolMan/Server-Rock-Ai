@@ -1,4 +1,4 @@
-# Server Rock: AI super-app research
+# Skai Desktop super-app research
 
 Research date: 2026-11-03
 

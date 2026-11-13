@@ -7297,6 +7297,56 @@ Remaining: signed installers, release-feed integration, clean-machine install,
 upgrade, uninstall, rollback, localization, and cross-platform release
 evidence remain open.
 
+## Slice 188 — Rebrand the product to Skai Desktop
+
+Status: `implemented_rebrand_build_tests_audit_verified`
+
+The user-facing product identity is now `Skai Desktop`, with `Skai` used for
+short assistant labels and local export names. Native package metadata, the
+release manifest, the secondary desktop identity source, workflow artifact
+labels, launch errors, README, and current product documentation use the new
+name. Stable identifiers remain intentionally unchanged: the local profile
+path, GitHub credential entropy and keyring label, technical User-Agent product
+token, repository namespaces, install folder, and launcher ID are migration
+contracts rather than display branding.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ProductIdentity.cs`
+- `native/ServerRock.Core.Tests/ProductIdentityTests.cs`
+- `native/Directory.Build.props`
+- `packaging/native/release-manifest.json`
+- `apps/desktop/shared/productIdentity.ts`
+- `scripts/open-native.cjs`
+- `.github/workflows/native-artifacts.yml`
+- `README.md`
+- current product and research documentation under `docs/`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including the Skai Desktop identity and stable-identifier contracts.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run check:syntax` — passed.
+- `npm run check:release-config` — passed, including manifest/MSBuild display-name consistency.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `npm run audit:future-features` — passed with 160 items and 18 checked.
+- `npm run check:hygiene` and `git diff --check` — passed.
+
+Privacy/security/licensing: display labels and export filename stems changed;
+existing local profile data, credential protection, protocol headers, provider
+routes, and third-party licensing boundaries are unchanged. No pet files or
+pet behavior were modified by this slice.
+
+Rollback: restore the previous display labels and `ProductIdentity` values;
+retain the stable storage/protocol identifiers and package IDs. No migration
+or deletion is required.
+
+Remaining: update future signed installers, localized resources, published
+artifacts, and external distribution listings when those release surfaces are
+configured.
+
 ## Slice 186 — Centralize outbound protocol identity
 
 Status: `implemented_build_tests_audit_verified`
