@@ -2234,6 +2234,45 @@ Not yet verified: live Windows activation of the command-palette item, result
 selection, and scroll jump; packaged/Linux accessibility parity. The new
 backlog item remains unchecked until that native journey is exercised.
 
+## Slice 128 — live current-chat search and jump acceptance
+
+The exact Windows desktop executable was launched with an existing saved chat.
+The command palette was opened with `Ctrl+K`, filtered to `Find in current
+chat`, and the action was run. The dialog exposed the local-only help text,
+bounded search field, result list, `Jump to match`, and `Close` controls. The
+query `validation` returned both matching saved messages; the second result
+was selected and the jump action closed the dialog, scrolled to the selected
+message, exposed the accessible group `Conversation message 2`, and announced
+`Jumped to message 2 of 2.`
+
+No provider request, web search, file access, edit, fork, or saved-chat
+mutation occurred. The exact validation executable was stopped after the
+journey.
+
+Evidence:
+
+- Live Windows accessibility state exposed `Find in current chat` in the
+  command-palette results.
+- Live search state exposed `Search current conversation messages`, its
+  no-provider help text, `Current conversation search results`, two matching
+  list items, and `Jump to match`.
+- Live post-jump state exposed `Conversation message 2` and the announced
+  `Jumped to message 2 of 2.`
+- The native Core search tests, UI contract audit, and desktop build remain
+  green from Slice 127.
+
+Privacy/security/licensing: the journey searched only already-loaded local
+conversation content and transmitted no data. No dependency or third-party
+code was added.
+
+Rollback: documentation-only closure; reverting the checkbox and evidence
+does not alter the implementation.
+
+Limitations: Linux and packaged accessibility parity remain unverified. The
+new feature is checked in the future-features register because the native
+Windows journey is now evidenced; broader global search and semantic search
+remain separate capabilities.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

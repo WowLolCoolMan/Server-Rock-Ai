@@ -26,7 +26,7 @@ and acceptance evidence.
 - [ ] Persistent memory with a view/edit management UI.
 - [x] Message queueing while the AI is responding.
 - [ ] Folders, tags, and pinned chats.
-- [ ] Search within the current chat and jump to a matching message.
+- [x] Search within the current chat and jump to a matching message.
 - [ ] Fork a chat from any message.
 - [ ] Voice input/output, hands-free calls, and advanced voice mode.
 - [ ] Image generation and editing.
