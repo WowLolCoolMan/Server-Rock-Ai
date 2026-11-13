@@ -36,6 +36,9 @@ jobs:
       - name: Typecheck Electron renderer
         run: npm run desktop:typecheck
 
+      - name: Audit Electron replacement boundary
+        run: npm run audit:electron-runtime
+
       - name: Build Electron renderer
         run: npm run desktop:build
 

@@ -1,0 +1,30 @@
+const fs = require("node:fs");
+const path = require("node:path");
+
+const root = path.resolve(__dirname, "..");
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const desktopPackage = JSON.parse(fs.readFileSync(path.join(root, "apps", "desktop", "package.json"), "utf8"));
+const main = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "main.cjs"), "utf8");
+const preload = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "preload.cjs"), "utf8");
+
+const failures = [];
+const expect = (condition, message) => { if (!condition) failures.push(message); };
+expect(packageJson.scripts.start === "node scripts/start-desktop.cjs", "root start must launch Electron");
+expect(packageJson.scripts.build === "npm run desktop:build", "root build must build Electron");
+expect(packageJson.scripts.open === "node scripts/open-desktop.cjs", "root open must launch Electron");
+expect(packageJson.scripts["start:legacy-native"] === "node scripts/start-native.cjs", "legacy start alias must remain explicit");
+expect(packageJson.scripts["open:legacy-native"] === "node scripts/open-native.cjs", "legacy open alias must remain explicit");
+expect(desktopPackage.main === "electron/main.cjs", "desktop package must use Electron main");
+expect(main.includes("contextIsolation: true"), "context isolation must remain enabled");
+expect(main.includes("nodeIntegration: false"), "Node integration must remain disabled");
+expect(main.includes("sandbox: true"), "renderer sandbox must remain enabled");
+expect(preload.includes("contextBridge.exposeInMainWorld"), "renderer communication must use preload");
+expect(!preload.includes("require(\"node:fs\")"), "preload must not expose filesystem access");
+
+if (failures.length) {
+  console.error("Electron replacement audit failed:");
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exitCode = 1;
+} else {
+  console.log("Electron replacement audit passed: default commands, secure boundary, and rollback aliases are present.");
+}
