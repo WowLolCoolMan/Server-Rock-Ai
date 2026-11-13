@@ -7568,6 +7568,46 @@ Remaining: connect this lease flow to the native Coding Agent UI/session
 creation, add process and parallel-session isolation, and complete live
 Windows/Linux acceptance.
 
+## Slice 217 — Surface retained worktrees in Activity
+
+Status: `implemented_native_ui_build_audit_verified`
+
+Requirement alignment: durable isolation is not useful if a user cannot see or
+recover the retained target. Activity & tasks now shows when an agent artifact
+has a retained worktree, includes its repository/path/branch in task details,
+and offers an explicit `Release clean worktree` action. The action delegates to
+the Core clean-only release boundary; dirty worktrees remain visible and are
+never force-deleted. No task is claimed, executed, or dispatched by this UI.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 293 contracts, including retained
+  worktree status, detail, and release-action contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- The release action is guarded by the Core coordinator and reports refusal
+  instead of deleting a dirty target.
+
+Privacy/security/licensing: the UI displays local repository/worktree paths
+already persisted on the task artifact; no credentials, network calls, model
+routing, or new dependencies were added.
+
+Risk and rollback: remove the Activity lease display/release action and the
+executor field wiring; Core task execution remains available to non-UI callers.
+
+Remaining: connect lease acquisition to the full Coding Agent session flow,
+add process/parallel isolation, and complete live Windows/Linux acceptance.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

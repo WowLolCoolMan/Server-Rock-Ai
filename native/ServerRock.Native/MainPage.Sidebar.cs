@@ -236,6 +236,8 @@ public sealed partial class MainPage
                     taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                 if (task.ArtifactLabels.Count > 0)
                     taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                if (task.WorktreePath is not null)
+                    taskPanel.Children.Add(new TextBlock { Text = $"Worktree retained for review · {task.WorktreeBranch}", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("StatusInkBrush"), TextWrapping = TextWrapping.Wrap });
                 var inspectAgentTask = new Button { Content = "Inspect task details", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 AutomationProperties.SetName(inspectAgentTask, "Inspect agent task details");
                 AutomationProperties.SetHelpText(inspectAgentTask, "Review this local task plan, instruction, result, and artifact labels without starting work.");
@@ -251,6 +253,8 @@ public sealed partial class MainPage
                     detailContent.Children.Add(new TextBlock { Text = string.IsNullOrWhiteSpace(task.ResultSummary) ? "No result recorded yet." : task.ResultSummary, TextWrapping = TextWrapping.Wrap });
                     detailContent.Children.Add(new TextBlock { Text = "Artifact labels", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
                     detailContent.Children.Add(new TextBlock { Text = task.ArtifactLabels.Count == 0 ? "No artifact labels recorded." : string.Join(", ", task.ArtifactLabels), TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = "Worktree lease", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                    detailContent.Children.Add(new TextBlock { Text = task.WorktreePath is null ? "No retained worktree." : $"Repository: {task.WorktreeRepositoryRoot}\nTarget: {task.WorktreePath}\nBranch: {task.WorktreeBranch}", TextWrapping = TextWrapping.Wrap });
                     var detailDialog = new ContentDialog
                     {
                         Title = "Agent task details",
@@ -262,6 +266,23 @@ public sealed partial class MainPage
                     await detailDialog.ShowAsync();
                 };
                 taskPanel.Children.Add(inspectAgentTask);
+                if (task.WorktreePath is not null && task.Status is not AgentTaskStatuses.Running)
+                {
+                    var releaseWorktree = new Button { Content = "Release clean worktree", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    AutomationProperties.SetName(releaseWorktree, "Release retained agent worktree");
+                    AutomationProperties.SetHelpText(releaseWorktree, "Release this retained worktree only when it is clean. Dirty worktrees remain for explicit review and are never force-deleted.");
+                    releaseWorktree.Click += async (_, _) =>
+                    {
+                        try
+                        {
+                            await _agentTaskExecutor.ReleaseTaskWorktreeAsync(task.Id, _gitWorktreeCoordinator);
+                            RuntimeStatus.Text = "The clean agent worktree was released. Dirty worktrees remain available for review.";
+                            dialog?.Hide();
+                        }
+                        catch (Exception ex) { RuntimeStatus.Text = $"Agent worktree was not released: {ex.Message}"; }
+                    };
+                    taskPanel.Children.Add(releaseWorktree);
+                }
                 if (task.Status == AgentTaskStatuses.Proposed)
                 {
                     var queueAgentTask = new Button { Content = "Queue for future executor", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };

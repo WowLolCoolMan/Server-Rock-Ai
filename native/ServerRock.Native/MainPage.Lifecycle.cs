@@ -16,6 +16,7 @@ public sealed partial class MainPage
     public MainPage()
     {
         InitializeComponent();
+        _agentTaskExecutor = new AgentTaskExecutor(_agentTaskStore);
         AutomationProperties.SetName(BackButton, "Navigate back");
         AutomationProperties.SetHelpText(BackButton, "Return to the previous workspace route.");
         AutomationProperties.SetName(ForwardButton, "Navigate forward");

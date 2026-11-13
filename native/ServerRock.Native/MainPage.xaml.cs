@@ -50,6 +50,8 @@ public sealed partial class MainPage : Page
     private WorkspaceDraftStore _workspaceDrafts = new();
     private readonly ScheduledTaskStore _scheduledTaskStore = new();
     private readonly AgentTaskArtifactStore _agentTaskStore = new();
+    private readonly AgentTaskExecutor _agentTaskExecutor;
+    private readonly GitWorktreeCoordinator _gitWorktreeCoordinator = new();
     private readonly SkillPackageInstaller _skillPackageInstaller = new();
     // Keep the normal profile as the default; an explicit path supports
     // disposable live acceptance without reading or writing real memory.
