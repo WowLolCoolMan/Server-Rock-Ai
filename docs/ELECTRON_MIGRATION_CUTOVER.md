@@ -80,6 +80,9 @@ validate parity.
 - Electron now exposes explicit local memory management: bounded save/search,
   enable/disable, removal, and validated JSON backup through the host. Memory
   is not learned or injected implicitly.
+- Electron can opt in to bounded approved-memory injection for chat; the host
+  scopes it to global/active-project entries and labels it as untrusted
+  reference material before provider dispatch.
 - While a response is active, the Electron composer can queue bounded follow-up
   messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the

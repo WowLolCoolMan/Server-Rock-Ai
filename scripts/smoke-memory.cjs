@@ -11,7 +11,7 @@ const root = path.resolve(__dirname, "..");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skai-memory-smoke-"));
 const child = spawn("dotnet", ["run", "--project", path.join(root, "services", "agent-host", "ServerRock.AgentHost.csproj"), "--no-build", "--", "--stdio"], {
   cwd: root,
-  env: { ...process.env, SRAI_MEMORY_PATH: path.join(tempRoot, "memory.json") },
+  env: { ...process.env, SRAI_MEMORY_PATH: path.join(tempRoot, "memory.json"), SRAI_SETTINGS_PATH: path.join(tempRoot, "settings.json") },
   stdio: ["pipe", "pipe", "pipe"],
   windowsHide: true,
 });
@@ -28,6 +28,10 @@ function request(method, params) {
 }
 
 async function run() {
+  const setting = await request("settings.save", { endpoint: "http://localhost:11434/v1", model: "memory-smoke", memoryInjectionEnabled: true });
+  if (!setting.ok || setting.result?.memoryInjectionEnabled !== true) throw new Error("memory injection setting did not persist.");
+  const loadedSetting = await request("settings.get");
+  if (!loadedSetting.ok || loadedSetting.result?.memoryInjectionEnabled !== true) throw new Error("memory injection setting did not round-trip.");
   const saved = await request("memory.save", { content: "User prefers local-first workflows.", scope: "global", source: "user", approvalId: "memory-smoke", tags: ["preference"] });
   if (!saved.ok || !saved.result?.id) throw new Error("memory.save did not create an entry.");
   const searched = await request("memory.search", { query: "local-first" });

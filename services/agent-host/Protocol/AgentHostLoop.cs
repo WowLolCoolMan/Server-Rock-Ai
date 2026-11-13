@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -78,6 +78,7 @@ public static class AgentHostLoop
             "memory.remove" => RemoveMemory(request),
             "memory.enabled" => SetMemoryEnabled(request),
             "memory.export" => ExportMemory(request),
+            "workspace.attachment.extract" => ExtractPdfAttachment(request),
             "chat.queue.list" => ListQueuedMessages(request),
             "chat.queue.enqueue" => EnqueueChatMessage(request),
             "chat.queue.remove" => RemoveQueuedMessage(request),
@@ -124,15 +125,22 @@ public static class AgentHostLoop
         if (messages.Count == 0) throw new InvalidOperationException("chat.complete requires at least one message.");
 
         var projectId = OptionalString(request, "projectId");
+        string? projectName = null;
         if (!string.IsNullOrWhiteSpace(projectId))
         {
             var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == projectId)
                 ?? throw new KeyNotFoundException("The selected project does not exist.");
+            projectName = project.Name;
             var context = BuildProjectContext(project);
             if (!string.IsNullOrWhiteSpace(context)) messages.Insert(0, new ChatMessage("system", context));
         }
 
         var settings = new AppSettings { Endpoint = endpoint, Model = model, Temperature = OptionalDouble(request, "temperature") ?? 0.7 };
+        if (CreateSettingsStore().Load().MemoryInjectionEnabled)
+        {
+            var memoryContext = MemoryPromptContext.Build(CreateMemoryStore().Load(), true, projectName);
+            if (!string.IsNullOrWhiteSpace(memoryContext)) messages.Insert(0, new ChatMessage("system", memoryContext));
+        }
         var text = new System.Text.StringBuilder();
         await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
             OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
@@ -370,6 +378,21 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, new { fileName = "skai-chat-export.md", markdown, conversationCount = sessions.Count });
     }
 
+    private static AgentResponse ExtractPdfAttachment(AgentRequest request)
+    {
+        var fileName = RequiredBoundedString(request, "fileName", 260);
+        if (!ChatAttachmentPolicy.IsAllowedPdfName(fileName))
+            throw new InvalidOperationException("Only approved PDF attachments can be extracted.");
+        var encoded = RequiredBoundedString(request, "content", checked((int)(((ChatAttachmentPolicy.MaxPdfBytes + 2) / 3) * 4 + 4)));
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(encoded); }
+        catch (FormatException exception) { throw new InvalidDataException("The PDF attachment encoding is invalid.", exception); }
+        if (bytes.Length > ChatAttachmentPolicy.MaxPdfBytes)
+            throw new InvalidDataException("The PDF attachment exceeds the size limit.");
+        var content = PdfAttachmentTextExtractor.Extract(bytes, ChatAttachmentPolicy.MaxCharactersPerFile);
+        return new(ProtocolVersion, request.Id, true, new { fileName, mediaType = (string?)null, content });
+    }
+
     private static AgentResponse SaveConversation(AgentRequest request)
     {
         var title = RequiredBoundedString(request, "title", 200);
@@ -561,6 +584,7 @@ public static class AgentHostLoop
             backdropPreset = settings.BackdropPreset,
             reduceMotion = settings.ReduceMotion,
             developerMode = settings.DeveloperMode,
+            memoryInjectionEnabled = settings.MemoryInjectionEnabled,
         });
     }
 
@@ -582,11 +606,13 @@ public static class AgentHostLoop
                 settings.BackdropPreset = backdrop.GetString() ?? settings.BackdropPreset;
             if (parameters.TryGetProperty("developerMode", out var developer) && developer.ValueKind is JsonValueKind.True or JsonValueKind.False)
                 settings.DeveloperMode = developer.GetBoolean();
+            if (parameters.TryGetProperty("memoryInjectionEnabled", out var memoryInjection) && memoryInjection.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.MemoryInjectionEnabled = memoryInjection.GetBoolean();
             if (parameters.TryGetProperty("reduceMotion", out var reduceMotion) && reduceMotion.ValueKind is JsonValueKind.True or JsonValueKind.False)
                 settings.ReduceMotion = reduceMotion.GetBoolean();
         }
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
     }
 
     private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)

@@ -18,7 +18,7 @@ const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] ===
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
-  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete",
+  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract",
   "workspace.pickFolder",
 ]);
 
@@ -113,7 +113,7 @@ app.whenReady().then(() => {
     }
     if (method === "workspace.pickFiles") {
       const window = BrowserWindow.fromWebContents(event.sender);
-      const result = await dialog.showOpenDialog(window, { properties: ["openFile", "multiSelections"], filters: [{ name: "Chat files", extensions: ["txt", "md", "markdown", "csv", "json", "xml", "yaml", "yml", "toml", "html", "css", "js", "ts", "jsx", "tsx", "cs", "py", "java", "go", "rs", "c", "h", "cpp", "hpp", "sh", "sql", "log", "png", "jpg", "jpeg"] }] });
+      const result = await dialog.showOpenDialog(window, { properties: ["openFile", "multiSelections"], filters: [{ name: "Chat files", extensions: ["txt", "md", "markdown", "csv", "json", "xml", "yaml", "yml", "toml", "html", "css", "js", "ts", "jsx", "tsx", "cs", "py", "java", "go", "rs", "c", "h", "cpp", "hpp", "sh", "sql", "log", "pdf", "png", "jpg", "jpeg"] }] });
       if (result.canceled) return { v: 1, ok: true, result: { attachments: [] } };
       const attachments = [];
       let textCharacters = 0;
@@ -123,14 +123,17 @@ app.whenReady().then(() => {
         const extension = path.extname(fileName).toLowerCase();
         if (isBlockedAttachmentName(fileName)) throw new Error(`That file name cannot be attached: ${fileName}`);
         const imageType = extension === ".png" ? "image/png" : [".jpg", ".jpeg"].includes(extension) ? "image/jpeg" : null;
-        if (!imageType && !attachmentTextExtensions.has(extension)) throw new Error(`That file type cannot be attached: ${fileName}`);
+        const isPdf = extension === ".pdf";
+        if (!imageType && !isPdf && !attachmentTextExtensions.has(extension)) throw new Error(`That file type cannot be attached: ${fileName}`);
         const bytes = await fs.readFile(filePath);
-        if (bytes.length > 2 * 1024 * 1024) throw new Error(`The selected file is too large: ${fileName}`);
+        if (bytes.length > (isPdf ? 20 * 1024 * 1024 : 2 * 1024 * 1024)) throw new Error(`The selected file is too large: ${fileName}`);
         if (imageType) {
           if (!(imageType === "image/png" ? isPng(bytes) : isJpeg(bytes))) throw new Error(`The selected image is not valid: ${fileName}`);
           imageBytes += bytes.length;
           if (imageBytes > 6 * 1024 * 1024) throw new Error("Selected images exceed the combined size limit.");
           attachments.push({ fileName, mediaType: imageType, content: bytes.toString("base64") });
+        } else if (isPdf) {
+          attachments.push({ fileName, mediaType: null, content: bytes.toString("base64") });
         } else {
           const content = bytes.toString("utf8").slice(0, 16000);
           textCharacters += content.length;

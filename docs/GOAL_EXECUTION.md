@@ -3,6 +3,43 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 258 — Add opt-in Electron memory injection
+
+Status: `implemented_host_renderer_opt_in_memory_smoke_verified`
+
+Electron settings now persist an explicit “Inject approved memory into chat”
+toggle. When enabled, the host loads only enabled global or active-project
+entries through `MemoryPromptContext`, bounds the injected section, and marks it
+as untrusted reference material. The default remains disabled; no implicit
+learning or automatic memory capture was introduced.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/src/App.tsx`
+- `scripts/smoke-memory.cjs`
+
+Evidence:
+
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run smoke:memory` — passed settings persistence plus explicit memory
+  save, search, disable, export, and removal assertions.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm test` — passed the Core memory injection safety tests and the full native
+  Core suite.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: injection is local, opt-in, bounded, scoped, and
+framed as untrusted reference data. It does not route memory to a provider
+unless the user sends a chat request with the toggle enabled.
+
+Rollback: disable the preference or remove the host injection block; memory
+management and ordinary chat remain available.
+
+Remaining: live provider acceptance of the injected system context and memory
+import UI remain separate slices.
+
 ## Slice 257 — Port explicit Electron local memory management
 
 Status: `implemented_host_renderer_memory_smoke_verified`
