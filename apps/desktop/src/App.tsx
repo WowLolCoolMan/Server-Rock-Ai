@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AgentResponse, ChatAttachment, DesktopConversation, DesktopConversationSearchResult, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, RuntimeHealth } from "../shared/contracts";
 import { PRODUCT_DISPLAY_NAME } from "../shared/productIdentity";
-
-type ConnectionState = "checking" | "ready" | "error";
-type View = "chat" | "projects" | "workbench" | "models" | "images" | "terminal" | "memory" | "settings";
-type Message = { role: "user" | "assistant"; content: string; attachments?: ChatAttachment[] };
-type Model = { model: string; vision: string; capabilities: string[] };
-type MemoryEntry = { id: string; scope: string; content: string; source: string; approvalId: string; tags: string[]; enabled: boolean; updatedAtUtc: string };
+import type { ConnectionState, MemoryEntry, Message, Model, View } from "./app/types";
+import { createAgentClient } from "./services/agentClient";
 const defaultEndpoint = localStorage.getItem("skai.endpoint") ?? "http://localhost:11434/v1";
 const defaultModel = localStorage.getItem("skai.model") ?? "llama3.2";
 const defaultImageEndpoint = localStorage.getItem("skai.imageEndpoint") ?? "http://127.0.0.1:8188";
@@ -72,7 +68,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [queuedMessages, setQueuedMessages] = useState<DesktopQueuedMessage[]>([]);
   const [queueBusy, setQueueBusy] = useState(false);
-  const request = (method: string, params?: Record<string, unknown>) => window.serverRockAgent.request(method, params);
+  const agent = useMemo(() => createAgentClient((method, params) => window.serverRockAgent.request(method, params)), []);
+  const request = agent.request;
   const saveConnection = () => { localStorage.setItem("skai.endpoint", endpoint); localStorage.setItem("skai.model", model); };
   const loadSettings = async () => { const response = await request("settings.get"); if (!response.ok) return; const settings = response.result as { endpoint?: string; model?: string; themeMode?: string; accentColor?: string; interfaceDensity?: string; backdropPreset?: string; reduceMotion?: boolean; developerMode?: boolean; memoryInjectionEnabled?: boolean }; if (settings.endpoint) setEndpoint(settings.endpoint); if (settings.model) setModel(settings.model); if (settings.themeMode === "light" || settings.themeMode === "dark") setThemeMode(settings.themeMode); if (settings.accentColor) setAccentColor(settings.accentColor); if (settings.interfaceDensity) setInterfaceDensity(settings.interfaceDensity); if (settings.backdropPreset) setBackdropPreset(settings.backdropPreset); if (typeof settings.reduceMotion === "boolean") setReduceMotion(settings.reduceMotion); if (typeof settings.developerMode === "boolean") setDeveloperMode(settings.developerMode); if (typeof settings.memoryInjectionEnabled === "boolean") setMemoryInjectionEnabled(settings.memoryInjectionEnabled); };
   const persistSettings = async () => { saveConnection(); const response = await request("settings.save", { endpoint, model, themeMode, accentColor, interfaceDensity, backdropPreset, reduceMotion, developerMode, memoryInjectionEnabled }); if (!response.ok) setError(response.error?.message ?? "Settings could not be saved."); };

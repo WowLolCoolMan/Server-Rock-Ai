@@ -1,0 +1,367 @@
+
+=== DIRECTORY TREE (max depth 3, source files only) ===
+.github
+.github\workflows
+.github\workflows\electron-ci.yml
+.github\workflows\native-artifacts.yml
+.github\workflows\native-ci.yml
+.github\workflows\native-platform-acceptance.yml
+.github\workflows\native-release.yml
+.gitignore
+.tmp-live-slice133
+.tmp-live-slice135
+.tmp-live-slice136
+.tmp-live-slice137
+.tmp-live-slice138
+.tmp-live-slice139
+.tmp-live-slice140
+.tmp-live-slice141
+.tmp-live-slice142
+.tmp-live-slice143
+.tmp-live-slice144
+.tmp-live-slice145
+.tmp-live-slice146
+.tmp-live-slice148
+.tmp-live-slice149
+.tmp-live-slice150
+.tmp-live-slice151
+.tmp-live-slice153
+.tmp-live-slice154
+.tmp-live-slice155
+.ui-shots
+.ui-shots\activity-audit-390x844-closed.png
+.ui-shots\activity-audit-390x844.png
+.ui-shots\after-audit-fixes
+.ui-shots\after-audit-fixes\advanced-1100x750.png
+.ui-shots\after-audit-fixes\advanced-1440x900.png
+.ui-shots\after-audit-fixes\advanced-390x844.png
+.ui-shots\after-audit-fixes\advanced-800x700.png
+.ui-shots\after-audit-fixes\chat-dark-1100x750.png
+.ui-shots\after-audit-fixes\chat-dark-1440x900.png
+.ui-shots\after-audit-fixes\chat-dark-390x844.png
+.ui-shots\after-audit-fixes\chat-dark-800x700.png
+.ui-shots\after-audit-fixes\chat-light-1100x750.png
+.ui-shots\after-audit-fixes\chat-light-1440x900.png
+.ui-shots\after-audit-fixes\chat-light-390x844.png
+.ui-shots\after-audit-fixes\chat-light-800x700.png
+.ui-shots\after-audit-fixes\coding-agent-1100x750.png
+.ui-shots\after-audit-fixes\coding-agent-1440x900.png
+.ui-shots\after-audit-fixes\coding-agent-390x844.png
+.ui-shots\after-audit-fixes\coding-agent-800x700.png
+.ui-shots\after-audit-fixes\empty-dark-1100x750.png
+.ui-shots\after-audit-fixes\empty-dark-1440x900.png
+.ui-shots\after-audit-fixes\empty-dark-390x844.png
+.ui-shots\after-audit-fixes\empty-dark-800x700.png
+.ui-shots\after-audit-fixes\empty-light-1100x750.png
+.ui-shots\after-audit-fixes\empty-light-1440x900.png
+.ui-shots\after-audit-fixes\empty-light-390x844.png
+.ui-shots\after-audit-fixes\empty-light-800x700.png
+.ui-shots\after-audit-fixes\mode-menu-1100x750.png
+.ui-shots\after-audit-fixes\mode-menu-1440x900.png
+.ui-shots\after-audit-fixes\mode-menu-390x844.png
+.ui-shots\after-audit-fixes\mode-menu-800x700.png
+.ui-shots\after-audit-fixes\model-picker-1100x750.png
+.ui-shots\after-audit-fixes\model-picker-1440x900.png
+.ui-shots\after-audit-fixes\model-picker-390x844.png
+.ui-shots\after-audit-fixes\model-picker-800x700.png
+.ui-shots\after-audit-fixes\settings-1100x750.png
+.ui-shots\after-audit-fixes\settings-1440x900.png
+.ui-shots\after-audit-fixes\settings-390x844.png
+.ui-shots\after-audit-fixes\settings-800x700.png
+.ui-shots\after-audit-fixes\settings-light-1100x750.png
+.ui-shots\after-audit-fixes\settings-light-1440x900.png
+.ui-shots\after-audit-fixes\settings-light-390x844.png
+.ui-shots\after-audit-fixes\settings-light-800x700.png
+.ui-shots\after-audit-fixes\slash-command-1100x750.png
+.ui-shots\after-audit-fixes\slash-command-1440x900.png
+.ui-shots\after-audit-fixes\slash-command-390x844.png
+.ui-shots\after-audit-fixes\slash-command-800x700.png
+.ui-shots\after-audit-mobile-check
+.ui-shots\after-audit-mobile-check\advanced-1100x750.png
+.ui-shots\after-audit-mobile-check\advanced-1440x900.png
+.ui-shots\after-audit-mobile-check\advanced-390x844.png
+.ui-shots\after-audit-mobile-check\advanced-800x700.png
+.ui-shots\after-audit-mobile-check\chat-dark-1100x750.png
+.ui-shots\after-audit-mobile-check\chat-dark-1440x900.png
+.ui-shots\after-audit-mobile-check\chat-dark-390x844.png
+.ui-shots\after-audit-mobile-check\chat-dark-800x700.png
+.ui-shots\after-audit-mobile-check\chat-light-1100x750.png
+.ui-shots\after-audit-mobile-check\chat-light-1440x900.png
+.ui-shots\after-audit-mobile-check\chat-light-390x844.png
+.ui-shots\after-audit-mobile-check\chat-light-800x700.png
+.ui-shots\after-audit-mobile-check\mode-menu-1100x750.png
+.ui-shots\after-audit-mobile-check\mode-menu-1440x900.png
+.ui-shots\after-audit-mobile-check\mode-menu-390x844.png
+.ui-shots\after-audit-mobile-check\mode-menu-800x700.png
+.ui-shots\audit-2026-11-04
+.ui-shots\audit-2026-11-04\advanced-1100x750.png
+.ui-shots\audit-2026-11-04\advanced-1440x900.png
+.ui-shots\audit-2026-11-04\advanced-390x844.png
+.ui-shots\audit-2026-11-04\advanced-800x700.png
+.ui-shots\audit-2026-11-04\chat-dark-1100x750.png
+.ui-shots\audit-2026-11-04\chat-dark-1440x900.png
+.ui-shots\audit-2026-11-04\chat-dark-390x844.png
+.ui-shots\audit-2026-11-04\chat-dark-800x700.png
+.ui-shots\audit-2026-11-04\chat-light-1100x750.png
+.ui-shots\audit-2026-11-04\chat-light-1440x900.png
+.ui-shots\audit-2026-11-04\chat-light-390x844.png
+.ui-shots\audit-2026-11-04\chat-light-800x700.png
+.ui-shots\audit-2026-11-04\coding-agent-1100x750.png
+.ui-shots\audit-2026-11-04\coding-agent-1440x900.png
+.ui-shots\audit-2026-11-04\coding-agent-390x844.png
+.ui-shots\audit-2026-11-04\coding-agent-800x700.png
+.ui-shots\audit-2026-11-04\empty-dark-1100x750.png
+.ui-shots\audit-2026-11-04\empty-dark-1440x900.png
+.ui-shots\audit-2026-11-04\empty-dark-390x844.png
+.ui-shots\audit-2026-11-04\empty-dark-800x700.png
+.ui-shots\audit-2026-11-04\empty-light-1100x750.png
+.ui-shots\audit-2026-11-04\empty-light-1440x900.png
+.ui-shots\audit-2026-11-04\empty-light-390x844.png
+.ui-shots\audit-2026-11-04\empty-light-800x700.png
+.ui-shots\audit-2026-11-04\mode-menu-1100x750.png
+.ui-shots\audit-2026-11-04\mode-menu-1440x900.png
+.ui-shots\audit-2026-11-04\mode-menu-390x844.png
+.ui-shots\audit-2026-11-04\mode-menu-800x700.png
+.ui-shots\audit-2026-11-04\model-picker-1100x750.png
+.ui-shots\audit-2026-11-04\model-picker-1440x900.png
+.ui-shots\audit-2026-11-04\model-picker-390x844.png
+.ui-shots\audit-2026-11-04\model-picker-800x700.png
+.ui-shots\audit-2026-11-04\settings-1100x750.png
+.ui-shots\audit-2026-11-04\settings-1440x900.png
+.ui-shots\audit-2026-11-04\settings-390x844.png
+.ui-shots\audit-2026-11-04\settings-800x700.png
+.ui-shots\audit-2026-11-04\settings-light-1100x750.png
+.ui-shots\audit-2026-11-04\settings-light-1440x900.png
+.ui-shots\audit-2026-11-04\settings-light-390x844.png
+.ui-shots\audit-2026-11-04\settings-light-800x700.png
+.ui-shots\audit-2026-11-04\slash-command-1100x750.png
+.ui-shots\audit-2026-11-04\slash-command-1440x900.png
+.ui-shots\audit-2026-11-04\slash-command-390x844.png
+.ui-shots\audit-2026-11-04\slash-command-800x700.png
+.ui-shots\audit-review
+.ui-shots\audit-review\advanced-1100x750.png
+.ui-shots\audit-review\advanced-1440x900.png
+.ui-shots\audit-review\advanced-800x700.png
+.ui-shots\audit-review\chat-dark-1100x750.png
+.ui-shots\audit-review\chat-dark-1440x900.png
+.ui-shots\audit-review\chat-dark-800x700.png
+.ui-shots\audit-review\chat-light-1100x750.png
+.ui-shots\audit-review\chat-light-1440x900.png
+.ui-shots\audit-review\chat-light-800x700.png
+.ui-shots\audit-review\coding-agent-1100x750.png
+.ui-shots\audit-review\coding-agent-1440x900.png
+.ui-shots\audit-review\coding-agent-800x700.png
+.ui-shots\audit-review\empty-dark-1100x750.png
+.ui-shots\audit-review\empty-dark-1440x900.png
+.ui-shots\audit-review\empty-dark-800x700.png
+.ui-shots\audit-review\empty-light-1100x750.png
+.ui-shots\audit-review\empty-light-1440x900.png
+.ui-shots\audit-review\empty-light-800x700.png
+.ui-shots\audit-review\mode-menu-1100x750.png
+.ui-shots\audit-review\mode-menu-1440x900.png
+.ui-shots\audit-review\mode-menu-800x700.png
+.ui-shots\audit-review\model-picker-1100x750.png
+.ui-shots\audit-review\model-picker-1440x900.png
+.ui-shots\audit-review\model-picker-800x700.png
+.ui-shots\audit-review\settings-1100x750.png
+.ui-shots\audit-review\settings-1440x900.png
+.ui-shots\audit-review\settings-800x700.png
+.ui-shots\audit-review\settings-light-1100x750.png
+.ui-shots\audit-review\settings-light-1440x900.png
+.ui-shots\audit-review\settings-light-800x700.png
+.ui-shots\audit-review\slash-command-1100x750.png
+.ui-shots\audit-review\slash-command-1440x900.png
+.ui-shots\audit-review\slash-command-800x700.png
+.ui-shots\audit-sweep
+.ui-shots\audit-sweep\advanced-1100x750.png
+.ui-shots\audit-sweep\advanced-1440x900.png
+.ui-shots\audit-sweep\advanced-390x844.png
+.ui-shots\audit-sweep\advanced-800x700.png
+.ui-shots\audit-sweep\chat-dark-1100x750.png
+.ui-shots\audit-sweep\chat-dark-1440x900.png
+.ui-shots\audit-sweep\chat-dark-390x844.png
+.ui-shots\audit-sweep\chat-dark-800x700.png
+.ui-shots\audit-sweep\chat-light-1100x750.png
+.ui-shots\audit-sweep\chat-light-1440x900.png
+.ui-shots\audit-sweep\chat-light-390x844.png
+.ui-shots\audit-sweep\chat-light-800x700.png
+.ui-shots\audit-sweep\empty-dark-1100x750.png
+.ui-shots\audit-sweep\empty-dark-1440x900.png
+.ui-shots\audit-sweep\empty-dark-390x844.png
+.ui-shots\audit-sweep\empty-dark-800x700.png
+.ui-shots\audit-sweep\empty-light-1100x750.png
+.ui-shots\audit-sweep\empty-light-1440x900.png
+.ui-shots\audit-sweep\empty-light-390x844.png
+.ui-shots\audit-sweep\empty-light-800x700.png
+.ui-shots\audit-sweep\mode-menu-1100x750.png
+.ui-shots\audit-sweep\mode-menu-1440x900.png
+.ui-shots\audit-sweep\mode-menu-390x844.png
+.ui-shots\audit-sweep\mode-menu-800x700.png
+.ui-shots\responsive-audit
+.ui-shots\responsive-audit\activity-320x568.png
+.ui-shots\responsive-audit\chat-dark-1100x750.png
+
+=== STACK DETECTION (manifest files) ===
+
+--- package-lock.json ---
+{
+  "name": "skai-desktop",
+  "version": "0.1.2",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "skai-desktop",
+      "version": "0.1.2",
+      "license": "MIT"
+    }
+  }
+}
+
+--- package.json ---
+{
+  "name": "skai-desktop",
+  "version": "0.1.2",
+  "description": "Skai Desktop — a local-first desktop AI workspace with pluggable model providers",
+  "author": "Skai Desktop",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node scripts/start-desktop.cjs",
+    "start:desktop": "node scripts/start-desktop.cjs",
+    "start:native": "node scripts/start-native.cjs",
+    "start:legacy-native": "node scripts/start-native.cjs",
+    "build": "npm run desktop:build",
+    "build:native": "node scripts/build-native.cjs",
+    "open": "node scripts/open-desktop.cjs",
+    "open:desktop": "node scripts/open-desktop.cjs",
+    "open:native": "node scripts/open-native.cjs",
+    "open:legacy-native": "node scripts/open-native.cjs",
+    "check:syntax": "node --check scripts/start-desktop.cjs && node --check scripts/open-desktop.cjs && node --check scripts/start-native.cjs && node --check scripts/build-native.cjs && node --check scripts/open-native.cjs && node --check scripts/check-repo-hygiene.cjs && node --check scripts/audit-native-ui.cjs && node --check scripts/audit-release-workflow.cjs && node --check scripts/audit-future-features.cjs && node --check scripts/audit-electron-runtime.cjs && node --check scripts/smoke-native-artifact.cjs && node --check scripts/smoke-agent-host.cjs && node --check scripts/smoke-project-browser.cjs && node --check scripts/smoke-project-terminal.cjs && node --check scripts/smoke-project-editor.cjs && node --check scripts/smoke-conversation-search.cjs && node --check scripts/smoke-conversation-metadata.cjs && node --check scripts/smoke-chat-queue.cjs && node --check scripts/smoke-memory.cjs && node --check scripts/smoke-pdf-attachment.cjs && node --check scripts/validate-release-config.cjs",
+    "audit:future-features": "node scripts/audit-future-features.cjs",
+    "audit:electron-runtime": "node scripts/audit-electron-runtime.cjs",
+    "check:hygiene": "node scripts/check-repo-hygiene.cjs",
+    "check:release-config": "node scripts/validate-release-config.cjs",
+    "audit:native-ui": "node scripts/audit-native-ui.cjs",
+    "audit:release-workflow": "node scripts/audit-release-workflow.cjs",
+    "smoke:native:artifact": "node scripts/smoke-native-artifact.cjs",
+    "smoke:agent-host": "node scripts/smoke-agent-host.cjs",
+    "smoke:project-browser": "node scripts/smoke-project-browser.cjs",
+    "smoke:project-terminal": "node scripts/smoke-project-terminal.cjs",
+    "smoke:project-editor": "node scripts/smoke-project-editor.cjs",
+    "smoke:conversation-search": "node scripts/smoke-conversation-search.cjs",
+    "smoke:conversation-metadata": "node scripts/smoke-conversation-metadata.cjs",
+    "smoke:chat-queue": "node scripts/smoke-chat-queue.cjs",
+    "smoke:memory": "node scripts/smoke-memory.cjs",
+    "smoke:pdf-attachment": "node scripts/smoke-pdf-attachment.cjs",
+    "test": "dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj",
+    "agent-host:build": "dotnet build services/agent-host/ServerRock.AgentHost.csproj",
+    "desktop:install": "npm --prefix apps/desktop install",
+    "desktop:dev": "npm --prefix apps/desktop run dev",
+    "desktop:build": "npm --prefix apps/desktop run build",
+    "desktop:typecheck": "npm --prefix apps/desktop run typecheck"
+  }
+}
+
+
+=== ENTRY POINTS ===
+No common entry points found. Check 'main' or 'scripts.start' in manifest files above.
+
+=== LINTING AND FORMATTING CONFIG ===
+No linting or formatting config files found in project root.
+
+=== ENVIRONMENT VARIABLE TEMPLATES ===
+No .env.example or .env.template found. Identify required environment variables by searching the code and config for environment variable reads.
+
+=== TODO / FIXME / HACK (production code only, test dirs excluded) ===
+native\ServerRock.Core\Services\LocalProjectHealthAnalyzer.cs:3: // (TODOs, secret-looking strings, very large UI files) as a compact Markdown report.
+native\ServerRock.Core\Services\LocalProjectHealthAnalyzer.cs:112: if (text.Contains("TODO", StringComparison.OrdinalIgnoreCase) || text.Contains("FIXME", StringComparison.OrdinalIgnoreCase))
+native\ServerRock.Core\Services\LocalProjectHealthAnalyzer.cs:112: if (text.Contains("TODO", StringComparison.OrdinalIgnoreCase) || text.Contains("FIXME", StringComparison.OrdinalIgnoreCase))
+native\ServerRock.Core\Services\LocalProjectHealthAnalyzer.cs:113: Add(findings, new("Info", "Deferred work marker", "TODO/FIXME marker found", relative));
+native\ServerRock.Core\Services\LocalProjectHealthAnalyzer.cs:113: Add(findings, new("Info", "Deferred work marker", "TODO/FIXME marker found", relative));
+native\ServerRock.Core.Tests\ProjectHealthTests.cs:18: await File.WriteAllTextAsync(Path.Combine(healthRoot, "Program.cs"), "// TODO: cover this path\nvar api_key=\"test\";\n");
+
+=== GIT RECENT COMMITS (last 20) ===
+dce869e test: validate electron pdf attachment boundary
+23b8bfa feat: add opt-in electron memory injection
+8f22b3c feat: add electron local memory management
+cfaf199 style: flatten chat session header
+7b4a24d style: align desktop chat with focused workspace flow
+46785b8 feat: expand electron workspace customization
+8291ed2 feat: add guarded desktop attachments
+1946492 feat: add electron chat attachments
+a2ae5cc fix: expose electron conversation fork
+2b27412 feat: add electron conversation forking
+2483645 fix: expose electron conversation export
+3b1ea34 feat: add electron conversation markdown export
+441d0b9 fix: expose electron chat queue bridge
+e044cb7 feat: add electron conversation archive controls
+1304e4b feat: refresh desktop workspace visual system
+f61cbf6 docs: record electron chat queue evidence
+e3ead36 feat: add electron chat message queue
+17a1704 docs: record electron conversation labels
+4c1339b feat: add electron conversation labels
+c4052d2 fix: harden electron production policy
+
+=== HIGH-CHURN FILES (last 90 days, top 20) ===
+ 266 docs/GOAL_EXECUTION.md
+ 229 docs/CAPABILITY_MATRIX.md
+ 141 scripts/audit-native-ui.cjs
+ 140 native/ServerRock.Native/MainPage.xaml.cs
+  67 native/ServerRock.Core.Tests/Program.cs
+  54 docs/NATIVE_RELEASE_ACCEPTANCE.md
+  52 native/ServerRock.Native/MainPage.Sidebar.cs
+  45 native/ServerRock.Native/MainPage.xaml
+  39 package.json
+  35 docs/HANDOFF_BACKLOG.md
+  35 README.md
+  28 native/ServerRock.Native/MainPage.Chat.cs
+  27 apps/desktop/src/App.tsx
+  27 docs/FUTURE_FEATURES.md
+  26 docs/ARCHITECTURE.md
+  25 native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs
+  25 native/ServerRock.Native/GitHubWorkspaceUi.cs
+  24 services/agent-host/Protocol/AgentHostLoop.cs
+  23 apps/desktop/src/styles.css
+  22 native/ServerRock.Native/MainPage.Settings.cs
+
+=== MONOREPO SIGNALS ===
+Sub-package directory found: apps/
+Sub-package directory found: services/
+
+=== CODE METRICS ===
+Total files scanned: 1854
+Total lines of code: 60869
+
+Files by language:
+  Other: 1620
+  C#: 220
+  Python: 9
+  TypeScript: 3
+  TypeScript/React: 2
+
+Top 10 largest files:
+release-check-8\Server Rock AI Setup 0.1.0.exe: 197541.0KB
+release-check-7\Server Rock AI Setup 0.1.0.exe: 197541.0KB
+release-check-6\Server Rock AI Setup 0.1.0.exe: 197540.4KB
+release-check-4\Server Rock AI Setup 0.1.0.exe: 197538.7KB
+release-check-5\Server Rock AI Setup 0.1.0.exe: 197538.6KB
+release-check-3\Server Rock AI Setup 0.1.0.exe: 197538.6KB
+release-check-2\Server Rock AI Setup 0.1.0.exe: 197538.1KB
+release-check\Server Rock AI Setup 0.1.0.exe: 197537.8KB
+release-check-7\server-rock-ai-0.1.0-x64.nsis.7z: 196985.8KB
+release-check\win-unpacked\Server Rock AI.exe: 196517.0KB
+
+=== CI/CD PIPELINES ===
+CI/CD: GitHub Actions
+
+=== CONTAINERS & ORCHESTRATION ===
+No containerization configs detected.
+
+=== SECURITY & COMPLIANCE ===
+No security configs detected.
+
+=== PERFORMANCE & TESTING ===
+No performance testing configs detected.
+
+=== SCAN COMPLETE ===
