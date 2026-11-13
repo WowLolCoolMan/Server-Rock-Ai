@@ -84,6 +84,8 @@ textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(
 .model-row:hover, .model-row.selected { border-color: #78a9ff; background: #203554; }
 .model-row span { color: #91a3bc; font-size: 12px; }
 .project-list { display: grid; gap: 10px; margin-top: 24px; }
+.project-create { display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 10px; align-items: end; margin-top: 24px; }
+.project-create textarea { min-height: 44px; }
 .project-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #30425d; border-radius: 10px; padding: 14px; background: #172337; }
 .project-row div { display: grid; gap: 5px; }
 .project-row span, .project-row small { color: #91a3bc; font-size: 12px; }
@@ -96,3 +98,4 @@ textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(
 .compact-empty { min-height: 90px; border: 1px dashed #30425d; border-radius: 10px; }
 .inline-error { margin: 12px 0; color: #f49a9f; font-size: 13px; }
 @media (max-width: 1050px) { .workbench-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .project-create { grid-template-columns: 1fr; } }

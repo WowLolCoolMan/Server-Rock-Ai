@@ -52,9 +52,10 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "tasks.list", "scheduled.list", "conversations.list", "conversation.save", "settings.get", "settings.save", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
+            "project.save" => SaveProject(request),
             "tasks.list" => ListTasks(request),
             "scheduled.list" => ListScheduledTasks(request),
             "conversations.list" => ListConversations(request),
@@ -77,7 +78,7 @@ public static class AgentHostLoop
 
     private static AgentResponse ListProjects(AgentRequest request)
     {
-        var projects = new ProjectStore().Load()
+        var projects = CreateProjectStore().Load()
             .OrderByDescending(project => project.UpdatedAt)
             .Select(project => new
             {
@@ -105,6 +106,24 @@ public static class AgentHostLoop
         await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
             OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
         return new(ProtocolVersion, request.Id, true, new { model, content = text.ToString() });
+    }
+
+    private static AgentResponse SaveProject(AgentRequest request)
+    {
+        var name = RequiredBoundedString(request, "name", 200);
+        var instructions = OptionalString(request, "instructions") ?? string.Empty;
+        if (instructions.Length > 500_000 || instructions.Any(char.IsControl)) throw new InvalidOperationException("Project instructions exceed the safety limit.");
+        var store = CreateProjectStore();
+        var projects = store.Load();
+        var id = OptionalString(request, "id");
+        var project = string.IsNullOrWhiteSpace(id) ? new LocalProject { Name = name } : projects.SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        project.Name = name;
+        project.Instructions = instructions;
+        project.UpdatedAt = DateTimeOffset.UtcNow;
+        if (projects.All(item => item.Id != project.Id)) projects.Add(project);
+        store.Save(projects);
+        return new(ProtocolVersion, request.Id, true, new { id = project.Id, name = project.Name, updatedAt = project.UpdatedAt });
     }
 
     private static AgentResponse ListTasks(AgentRequest request)
@@ -222,6 +241,9 @@ public static class AgentHostLoop
 
     private static JsonSettingsStore CreateSettingsStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_SETTINGS_PATH"));
+
+    private static ProjectStore CreateProjectStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_PROJECTS_PATH"));
 
     private static string RequiredString(AgentRequest request, string name)
     {
