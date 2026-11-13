@@ -6127,3 +6127,39 @@ dialog actions and search behavior remain otherwise unchanged.
 Next: add a focused Windows accessibility harness or a supported Popup focus
 bridge before claiming keyboard/screen-reader acceptance. Narrator behavior,
 Linux/Skia parity, and packaged-runtime acceptance remain open.
+
+## Slice 159 — Scheduled-task dialog journey
+
+Status: `implemented_verified_windows_dialog_cancel`
+
+The existing local scheduler received a fresh Windows user-journey check. The
+Activity & tasks surface opened the Schedule task form, exposed the prompt,
+date, time, workspace, and recurrence controls with accessible names, and
+showed the safety disclosure that scheduled work is surfaced for review rather
+than sent automatically. The disposable form was cancelled before submission,
+so no scheduled task, conversation, provider request, or file mutation was
+created.
+
+Changed files:
+
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- Live Windows journey: opened Activity & tasks, activated Schedule task,
+  inspected the rendered form and its accessible control tree, then activated
+  Cancel and confirmed return to the workspace with no scheduled-task row.
+- The native build, Core checks, and 208-contract UI audit remain green from
+  Slice 158; this slice changed documentation only.
+
+Privacy/security/licensing: the journey remained local and was cancelled before
+any durable scheduler write or model/provider action. No credentials, cloud
+route, pets state, or third-party content was involved.
+
+Rollback: remove this evidence entry if the live journey is invalidated; no
+product state requires rollback.
+
+Remaining: keyboard/screen-reader focus reporting for Popup dialogs, actual
+scheduled-task persistence/run-now outcomes across restart, timezone/locale
+coverage, and autonomous/background execution remain open.

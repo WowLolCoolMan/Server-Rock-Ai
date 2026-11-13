@@ -158,3 +158,9 @@ low dispatcher priority and the native audit passes 208 contracts. Activity
 rendering and actions were rechecked live on Windows, but the accessibility
 tree still reports `PromptBox` as focused; this remains an explicit release
 gap pending a supported Popup focus bridge or dedicated accessibility harness.
+
+Recent slice note — Slice 159: live Windows Activity acceptance opened the
+Schedule task dialog, exposed accessible prompt/date/time/workspace/recurrence
+controls and the review-only safety disclosure, then cancelled without creating
+a task or mutating provider/conversation state. Persistence, run-now, timezone
+and autonomous execution remain open.
