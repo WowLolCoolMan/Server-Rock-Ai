@@ -120,9 +120,9 @@ jobs:
           $root = Join-Path $env:RUNNER_TEMP 'serverrock-native'
           $publish = Join-Path $root '${{ matrix.rid }}'
           Copy-Item 'docs/NATIVE_RELEASE_ACCEPTANCE.md' $publish
-          Compress-Archive -Path (Join-Path $publish '*') -DestinationPath (Join-Path $root 'Server-Rock-AI-native-win-x64.zip')
+          Compress-Archive -Path (Join-Path $publish '*') -DestinationPath (Join-Path $root 'Skai-Desktop-native-win-x64.zip')
           if (Test-Path (Join-Path $publish 'SIGNATURES-win-x64.txt')) { Copy-Item (Join-Path $publish 'SIGNATURES-win-x64.txt') (Join-Path $root 'SIGNATURES-win-x64.txt') }
-          (Get-FileHash -Algorithm SHA256 (Join-Path $root 'Server-Rock-AI-native-win-x64.zip')).Hash.ToLowerInvariant() + '  Server-Rock-AI-native-win-x64.zip' | Set-Content -Encoding ascii (Join-Path $root 'SHA256SUMS.txt')
+          (Get-FileHash -Algorithm SHA256 (Join-Path $root 'Skai-Desktop-native-win-x64.zip')).Hash.ToLowerInvariant() + '  Skai-Desktop-native-win-x64.zip' | Set-Content -Encoding ascii (Join-Path $root 'SHA256SUMS.txt')
       - name: Archive Linux artifact
         if: runner.os == 'Linux'
         shell: bash
@@ -131,8 +131,8 @@ jobs:
           publish="$root/${{ matrix.rid }}"
           cp docs/NATIVE_RELEASE_ACCEPTANCE.md "$publish/"
           chmod +x "$publish/${{ matrix.executable }}"
-          tar -czf "$root/Server-Rock-AI-native-linux-x64.tar.gz" -C "$publish" .
-          (cd "$root" && sha256sum Server-Rock-AI-native-linux-x64.tar.gz > SHA256SUMS.txt)
+          tar -czf "$root/Skai-Desktop-native-linux-x64.tar.gz" -C "$publish" .
+          (cd "$root" && sha256sum Skai-Desktop-native-linux-x64.tar.gz > SHA256SUMS.txt)
       - name: Sign Linux archive
         if: runner.os == 'Linux' && env.RELEASE_SIGNING_READY == 'true'
         shell: bash
@@ -143,14 +143,14 @@ jobs:
           if [ -z "$RELEASE_GPG_PRIVATE_KEY" ]; then echo 'Linux signing is enabled but RELEASE_GPG_PRIVATE_KEY is missing.' >&2; exit 1; fi
           root="$RUNNER_TEMP/serverrock-native"
           printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
-          gpg --batch --yes --armor --detach-sign --output "$root/Server-Rock-AI-native-linux-x64.tar.gz.asc" "$root/Server-Rock-AI-native-linux-x64.tar.gz"
+          gpg --batch --yes --armor --detach-sign --output "$root/Skai-Desktop-native-linux-x64.tar.gz.asc" "$root/Skai-Desktop-native-linux-x64.tar.gz"
           gpg --batch --list-secret-keys --with-colons | awk -F: '$1 == "sec" { print "keyid=" $5; exit }' > "$root/SIGNATURES-linux-x64.txt"
-          printf 'signature=Server-Rock-AI-native-linux-x64.tar.gz.asc\n' >> "$root/SIGNATURES-linux-x64.txt"
+          printf 'signature=Skai-Desktop-native-linux-x64.tar.gz.asc\n' >> "$root/SIGNATURES-linux-x64.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: Server-Rock-AI-native-${{ matrix.rid }}-${{ github.sha }}
+          name: Skai-Desktop-native-${{ matrix.rid }}-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/serverrock-native/Server-Rock-AI-native-*
+            ${{ runner.temp }}/serverrock-native/Skai-Desktop-native-*
             ${{ runner.temp }}/serverrock-native/SIGNATURES-*.txt
             ${{ runner.temp }}/serverrock-native/SHA256SUMS.txt
           if-no-files-found: error
@@ -179,7 +179,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
-          pattern: Server-Rock-AI-native-*
+          pattern: Skai-Desktop-native-*
           merge-multiple: true
       - name: Generate release checksums
         run: find release-assets -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS.txt

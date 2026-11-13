@@ -14,7 +14,7 @@ internal static class ReleaseManifestVerifierTests
         {
             Version = "1.2.3",
             Channel = "stable",
-            Artifact = "Server-Rock-AI-native-win-x64.zip",
+            Artifact = "Skai-Desktop-native-win-x64.zip",
             Sha256 = Convert.ToHexString(SHA256.HashData(artifact)).ToLowerInvariant(),
             KeyId = "release-key-1"
         };

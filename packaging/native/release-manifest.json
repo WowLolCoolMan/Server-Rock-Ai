@@ -1,8 +1,8 @@
 {
   "version": "0.0.0",
   "displayName": "Skai Desktop",
-  "installFolder": "server-rock-ai",
-  "launcherName": "server-rock-ai",
+  "installFolder": "Skai-Desktop",
+  "launcherName": "Skai-Desktop",
   "previousVersion": null,
   "artifact": "ServerRock.Native.exe",
   "profilePath": "%LOCALAPPDATA%\\ServerRock\\AI",
