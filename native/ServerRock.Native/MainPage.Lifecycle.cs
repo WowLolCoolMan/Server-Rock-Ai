@@ -49,6 +49,7 @@ public sealed partial class MainPage
         ComposerToolbarControl.ProjectFilesRequested += ProjectFilesClick;
         ComposerToolbarControl.CancelEditRequested += CancelEditClick;
         ComposerToolbarControl.SmartRewriteRequested += SmartRewriteClick;
+        ComposerToolbarControl.DocumentsOnlyRequested += DocumentsOnlyClick;
         ComposerToolbarControl.ImageStudioRequested += ImageStudioClick;
         ComposerToolbarControl.AdvancedRequested += AdvancedClick;
         ComposerToolbarControl.AttachPathRequested += AttachLocalPathClick;

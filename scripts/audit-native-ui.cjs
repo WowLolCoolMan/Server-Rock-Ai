@@ -205,6 +205,8 @@ const requiredCode = [
   ['OpenAPI schema review action', 'AutomationProperties.SetName(reviewOpenApi, "Review local OpenAPI schema")'],
   ['OpenAPI local path fallback', 'AutomationProperties.SetName(reviewOpenApiPath, "Review OpenAPI JSON from local path")'],
   ['OpenAPI local path input', 'AutomationProperties.SetName(localOpenApiPath, "Local OpenAPI JSON path")'],
+  ['Documents-only mode action', 'AutomationProperties.SetName(DocumentsOnlyButton, "Toggle documents-only mode")'],
+  ['Documents-only mode safety disclosure', 'at least one attachment is required'],
   ['OpenAPI operation results', 'AutomationProperties.SetName(results, "OpenAPI operation results")'],
   ['OpenAPI discovery stays execution-free', 'Nothing was fetched, executed, or authorized.'],
   ['Status history title', 'Title = "Status history"'],

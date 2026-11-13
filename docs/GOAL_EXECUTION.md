@@ -7141,3 +7141,54 @@ no provider, network, credential, or execution behavior changes.
 
 Rollback: remove the rooted-path guard; all other OpenAPI review validation
 remains unchanged.
+
+## Slice 183 — Reviewable documents-only Chat mode
+
+Status: `implemented_build_core_audit_verified`
+
+Chat now exposes a `Documents only` composer control. When enabled, it turns
+web search off, requires at least one current attachment before sending, adds a
+bounded grounding instruction to the system context, and excludes project
+instructions, project-file excerpts, saved-memory injection, and stale web
+context from that request. The attachment content remains untrusted reference
+data; the mode does not claim that documents contain an answer when they do
+not. Slash-command web enablement and research mode are also blocked while the
+toggle is active.
+
+Changed files:
+
+- `native/ServerRock.Native/ComposerToolbarView.xaml`
+- `native/ServerRock.Native/ComposerToolbarView.xaml.cs`
+- `native/ServerRock.Native/ComposerInputView.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Composer.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `native/ServerRock.Native/MainPage.SlashCommands.cs`
+- `native/ServerRock.Core/Infrastructure/ModelInstructions.cs`
+- `native/ServerRock.Core.Tests/ChatMessageTests.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including the documents-only grounding instruction
+  contract and the full existing suite.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 236 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this mode is local UI/prompt policy. It does not
+call a new service, persist document contents, silently route to a cloud model,
+or execute document instructions. Existing explicit remote-attachment consent
+still applies when the selected endpoint is not local.
+
+Rollback: turn the control off or remove its prompt guard/instruction; normal
+Chat routing and existing attachment behavior remain unchanged.
+
+Remaining: durable uploaded-document corpus management, vector/hybrid retrieval,
+OCR, semantic grounding evaluation, cross-platform acceptance, and full
+NotebookLM-style project isolation.

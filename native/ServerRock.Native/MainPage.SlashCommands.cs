@@ -134,6 +134,7 @@ public sealed partial class MainPage
                 break;
             case "/web":
                 if (_mode != WorkspaceModes.Chat) RuntimeStatus.Text = "Web search is available in the Chat workspace.";
+                else if (_documentsOnlyMode) RuntimeStatus.Text = "Documents-only mode keeps web search off. Turn it off before enabling web search.";
                 else
                 {
                     var argument = commandText.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).Skip(1).FirstOrDefault();
@@ -173,6 +174,11 @@ public sealed partial class MainPage
         if (_mode != WorkspaceModes.Chat)
         {
             RuntimeStatus.Text = "Research mode is available in ChatBot. Switch to ChatBot before researching.";
+            return;
+        }
+        if (_documentsOnlyMode)
+        {
+            RuntimeStatus.Text = "Documents-only mode keeps web research off. Turn it off before researching.";
             return;
         }
         _settings.WebSearchEnabled = true;

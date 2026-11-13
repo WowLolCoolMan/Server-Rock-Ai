@@ -16,6 +16,7 @@ public sealed partial class ComposerToolbarView : UserControl
     public event RoutedEventHandler? ImageStudioRequested;
     public event RoutedEventHandler? AdvancedRequested;
     public event RoutedEventHandler? AttachPathRequested;
+    public event RoutedEventHandler? DocumentsOnlyRequested;
 
     public ComposerToolbarView()
     {
@@ -32,6 +33,7 @@ public sealed partial class ComposerToolbarView : UserControl
     public Button ProjectFilesButtonControl => ProjectFilesButton;
     public Button CancelEditButtonControl => CancelEditButton;
     public Button SmartRewriteButtonControl => SmartRewriteButton;
+    public Button DocumentsOnlyButtonControl => DocumentsOnlyButton;
 
     private void ToolbarSizeChanged(object sender, SizeChangedEventArgs e) => ToolbarResized?.Invoke(sender, e);
     private void ModelHotswapClick(object sender, RoutedEventArgs e) => ModelRequested?.Invoke(sender, e);
@@ -44,4 +46,5 @@ public sealed partial class ComposerToolbarView : UserControl
     private void ImageStudioClick(object sender, RoutedEventArgs e) => ImageStudioRequested?.Invoke(sender, e);
     private void AdvancedClick(object sender, RoutedEventArgs e) => AdvancedRequested?.Invoke(sender, e);
     private void AttachLocalPathClick(object sender, RoutedEventArgs e) => AttachPathRequested?.Invoke(sender, e);
+    private void DocumentsOnlyClick(object sender, RoutedEventArgs e) => DocumentsOnlyRequested?.Invoke(sender, e);
 }

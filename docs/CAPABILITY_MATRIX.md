@@ -320,6 +320,12 @@ extension, reparse-point status, and bounded byte size before parsing; discovery
 remains read-only and execution-free. Authenticated retrieval and real tool
 authorization remain open.
 
+Recent slice note — Slice 183: Chat now has a reviewable documents-only mode.
+It disables web search, requires at least one attached document, and excludes
+project instructions, project files, memory injection, and stale web context
+from the provider prompt. A full persistent NotebookLM-style corpus remains
+open.
+
 Recent slice note — Slice 179: the Coding Workspace bar now includes a local
 session-state line for mode, message context, pending attachments, reviewed
 file changes, and queued agent plans. It is informational only; background-task

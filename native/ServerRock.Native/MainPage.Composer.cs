@@ -19,12 +19,33 @@ public sealed partial class MainPage
     private void WebSearchClick(object sender, RoutedEventArgs e)
     {
         if (_mode != WorkspaceModes.Chat) return;
+        if (_documentsOnlyMode)
+        {
+            RuntimeStatus.Text = "Documents-only mode keeps web search off until you turn documents-only mode off.";
+            return;
+        }
         _settings.WebSearchEnabled = !_settings.WebSearchEnabled;
         SaveSettings();
         UpdateWebSearchButton();
         RuntimeStatus.Text = _settings.WebSearchEnabled
             ? $"Web search on · query goes to DuckDuckGo; results{(_includeProjectFilesInChat ? ", prompt, and selected project excerpts" : " and prompt")} go to the selected model."
             : $"Web search off · prompt{(_includeProjectFilesInChat ? " and selected project excerpts" : "")} go to the selected model server.";
+    }
+
+    private void DocumentsOnlyClick(object sender, RoutedEventArgs e)
+    {
+        if (_mode != WorkspaceModes.Chat) return;
+        _documentsOnlyMode = !_documentsOnlyMode;
+        if (_documentsOnlyMode && _settings.WebSearchEnabled)
+        {
+            _settings.WebSearchEnabled = false;
+            SaveSettings();
+        }
+        UpdateDocumentsOnlyControls();
+        UpdateWebSearchButton();
+        RuntimeStatus.Text = _documentsOnlyMode
+            ? "Documents-only mode on · attach at least one document; web search is disabled and answers must stay grounded in those documents."
+            : "Documents-only mode off · normal Chat routing is available again.";
     }
 
     private async void TemporaryClick(object sender, RoutedEventArgs e)
@@ -187,6 +208,7 @@ public sealed partial class MainPage
             ? project?.FolderPaths.Count > 0 ? "Selected project files in context" : "Project instructions on"
             : _includeProjectFilesInChat ? "Project files on" : "Project instructions on";
         ProcessingLabel.Text = DescribeDataRoute();
+        UpdateDocumentsOnlyControls();
     }
 
     private async void SearchClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(SearchClickAsync); }
@@ -257,12 +279,21 @@ public sealed partial class MainPage
 
     private void UpdateWebSearchButton()
     {
+        WebSearchButton.IsEnabled = !_documentsOnlyMode;
         WebSearchButton.Content = _compactComposerToolbar
             ? _settings.WebSearchEnabled ? "Web on" : "Web off"
             : _settings.WebSearchEnabled ? "Web search on" : "Web search off";
         UiTheme.ApplyToggleState(WebSearchButton, _settings.WebSearchEnabled);
+        AutomationProperties.SetHelpText(WebSearchButton, _documentsOnlyMode
+            ? "Web search is locked off while documents-only mode is active."
+            : "Turn optional DuckDuckGo web search on or off. Search result excerpts and your prompt are sent to the selected model server.");
         var local = LocalEndpoint.IsLocal(_settings.Endpoint);
         var projectFiles = _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
+        if (_documentsOnlyMode)
+        {
+            PrivacyFootnote.Text = "Documents-only mode is on. Only attached documents are grounding context; web search, project files, memory, and outside context are excluded.";
+            return;
+        }
         if (_isTemporaryChat)
         {
             PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
@@ -280,6 +311,19 @@ public sealed partial class MainPage
                 ? $"Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model server."
                 : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
                     : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
+    }
+
+    private void UpdateDocumentsOnlyControls()
+    {
+        AutomationProperties.SetName(DocumentsOnlyButton, "Toggle documents-only mode");
+        DocumentsOnlyButton.Visibility = _mode == WorkspaceModes.Chat ? Visibility.Visible : Visibility.Collapsed;
+        DocumentsOnlyButton.Content = _compactComposerToolbar
+            ? _documentsOnlyMode ? "Docs only on" : "Docs only off"
+            : _documentsOnlyMode ? "Documents only on" : "Documents only off";
+        UiTheme.ApplyToggleState(DocumentsOnlyButton, _documentsOnlyMode);
+        AutomationProperties.SetHelpText(DocumentsOnlyButton, _documentsOnlyMode
+            ? "Ground the next Chat response only in attached documents. Web search is disabled and at least one attachment is required."
+            : "Ground the next Chat response only in attached documents. Turning this on disables web search and requires an attachment.");
     }
 
     private void UpdateSmartRewriteButton()

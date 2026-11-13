@@ -76,6 +76,7 @@ public sealed partial class MainPage : Page
     private bool _isTemporaryChat;
     private bool _temporaryTransitionInProgress;
     private bool _includeProjectFilesInChat;
+    private bool _documentsOnlyMode;
     private bool _compactNavigation;
     private bool _companionOverlayBlocked;
     private bool _compactComposerToolbar;
@@ -160,6 +161,7 @@ public sealed partial class MainPage : Page
     private Button ProjectFilesButton => ComposerToolbarControl.ProjectFilesButtonControl;
     private Button CancelEditButton => ComposerToolbarControl.CancelEditButtonControl;
     private Button SmartRewriteButton => ComposerToolbarControl.SmartRewriteButtonControl;
+    private Button DocumentsOnlyButton => ComposerToolbarControl.DocumentsOnlyButtonControl;
     private StackPanel AttachmentList => ComposerToolbarControl.AttachmentListControl;
     private Border RuntimeStatusBanner => ComposerToolbarControl.RuntimeStatusBannerControl;
     private TextBlock RuntimeStatus => ComposerToolbarControl.RuntimeStatusControl;

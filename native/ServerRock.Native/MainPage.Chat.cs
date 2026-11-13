@@ -111,6 +111,11 @@ public sealed partial class MainPage
             await ExecuteSlashCommandAsync(text);
             return;
         }
+        if (_documentsOnlyMode && _pendingAttachments.Count == 0)
+        {
+            RuntimeStatus.Text = "Documents-only mode needs at least one attached document before sending.";
+            return;
+        }
         var selection = ModelSelectionPolicy.Evaluate(_settings.Model, _advertisedModels);
         if (_advertisedModels.Length > 0 && !selection.IsAvailable)
         {
@@ -540,11 +545,12 @@ public sealed partial class MainPage
         var context = new List<string>();
         _lastContextFileCount = 0;
         context.Add(_mode == WorkspaceModes.CodingAgent ? ModelInstructions.CodingAgent : ModelInstructions.Chat);
+        if (_documentsOnlyMode) context.Add(ModelInstructions.DocumentsOnly);
         if (_messages.Any(message => message.Attachments is { Count: > 0 }))
             context.Add(ModelInstructions.UntrustedAttachments);
-        if (!string.IsNullOrWhiteSpace(_pendingWebContext)) context.Add(_pendingWebContext);
-        if (!string.IsNullOrWhiteSpace(_settings.ProjectInstructions)) context.Add(_settings.ProjectInstructions);
-        if (_settings.MemoryInjectionEnabled)
+        if (!_documentsOnlyMode && !string.IsNullOrWhiteSpace(_pendingWebContext)) context.Add(_pendingWebContext);
+        if (!_documentsOnlyMode && !string.IsNullOrWhiteSpace(_settings.ProjectInstructions)) context.Add(_settings.ProjectInstructions);
+        if (!_documentsOnlyMode && _settings.MemoryInjectionEnabled)
         {
             try
             {
@@ -559,7 +565,7 @@ public sealed partial class MainPage
             }
         }
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
-        var includeProjectFiles = _mode == WorkspaceModes.CodingAgent || _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
+        var includeProjectFiles = !_documentsOnlyMode && (_mode == WorkspaceModes.CodingAgent || _mode == WorkspaceModes.Chat && _includeProjectFilesInChat);
         if (includeProjectFiles && project is not null && project.FolderPaths.Count > 0)
         {
             for (var index = 0; index < project.FolderPaths.Count; index++)

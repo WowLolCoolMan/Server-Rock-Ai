@@ -42,7 +42,9 @@ internal static class ChatMessageTests
         Check(ModelInstructions.CodingAgent.StartsWith("You are the Coding Agent", StringComparison.Ordinal)
             && ModelInstructions.Chat.StartsWith("You are the Chat assistant", StringComparison.Ordinal)
             && ModelInstructions.UntrustedAttachments.Contains("untrusted", StringComparison.Ordinal)
-            && ModelInstructions.UntrustedProjectExcerpts.Contains("untrusted project file data", StringComparison.Ordinal),
+            && ModelInstructions.UntrustedProjectExcerpts.Contains("untrusted project file data", StringComparison.Ordinal)
+            && ModelInstructions.DocumentsOnly.Contains("attached documents", StringComparison.Ordinal)
+            && ModelInstructions.DocumentsOnly.Contains("outside knowledge", StringComparison.Ordinal),
             "model instructions keep the workspace prompts and untrusted-data warnings");
     }
 }
