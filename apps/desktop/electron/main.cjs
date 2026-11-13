@@ -9,6 +9,11 @@ let host;
 let hostReader;
 let nextRequestId = 1;
 const pending = new Map();
+const allowedMethods = new Set([
+  "runtime.health", "models.list", "projects.list", "project.save", "tasks.list",
+  "scheduled.list", "conversations.list", "conversation.save", "settings.get",
+  "settings.save", "image.generate", "chat.complete",
+]);
 
 function startAgentHost() {
   host = spawn("dotnet", ["run", "--project", hostProject, "--no-launch-profile", "--", "--stdio"], {
@@ -43,6 +48,12 @@ function startAgentHost() {
 }
 
 function requestAgent(method, params) {
+  if (typeof method !== "string" || !allowedMethods.has(method)) {
+    return Promise.resolve({ v: 1, ok: false, error: { code: "METHOD_NOT_ALLOWED", message: "That desktop operation is not exposed by the renderer bridge." } });
+  }
+  if (params !== undefined && (params === null || typeof params !== "object" || Array.isArray(params))) {
+    return Promise.resolve({ v: 1, ok: false, error: { code: "INVALID_PARAMS", message: "Agent parameters must be an object." } });
+  }
   if (!host || host.stdin.destroyed) {
     return Promise.resolve({ v: 1, ok: false, error: { code: "HOST_UNAVAILABLE", message: "Agent host is not running." } });
   }
