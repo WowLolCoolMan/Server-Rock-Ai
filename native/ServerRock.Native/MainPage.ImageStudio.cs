@@ -23,7 +23,7 @@ public sealed partial class MainPage
         var prompt = new TextBox { Header = "Image prompt", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 88, PlaceholderText = "Describe the image you want to create" };
         var endpoint = new TextBox { Header = "Local ComfyUI endpoint", Text = _settings.ComfyEndpoint, PlaceholderText = "http://127.0.0.1:8188" };
         var workflow = new TextBox { Header = "ComfyUI API workflow JSON", Text = _settings.ImageWorkflow, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 120, PlaceholderText = "Put {{prompt}} inside the workflow's prompt text value." };
-        var status = new TextBlock { Text = "Images run only through a local loopback ComfyUI server. Your workflow is saved only on this device.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = .8 };
+        var status = new TextBlock { Text = "Images run only through a local loopback ComfyUI server. Your workflow is saved only on this device.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var results = new StackPanel { Spacing = 8 };
         CancellationTokenSource? generationCancellation = null;
         var cancel = new Button { Content = "Cancel generation", IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left };
@@ -65,8 +65,8 @@ public sealed partial class MainPage
                     };
                     results.Children.Add(new Border
                     {
-                        Background = new SolidColorBrush(Colors.White),
-                        BorderBrush = new SolidColorBrush(Colors.LightGray),
+                        Background = UiTheme.Brush("SurfaceBrush"),
+                        BorderBrush = UiTheme.Brush("LineBrush"),
                         BorderThickness = new Thickness(1),
                         CornerRadius = new CornerRadius(10),
                         Padding = new Thickness(10),
@@ -76,7 +76,7 @@ public sealed partial class MainPage
                             Children =
                             {
                                 preview,
-                                new TextBlock { Text = image.FileName, FontSize = 12, Opacity = .8, TextTrimming = TextTrimming.CharacterEllipsis },
+                                new TextBlock { Text = image.FileName, FontSize = UiTheme.FontSize("SmallFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), TextTrimming = TextTrimming.CharacterEllipsis },
                                 open
                             }
                         }

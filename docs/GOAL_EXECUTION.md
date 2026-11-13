@@ -7643,6 +7643,46 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 221 — Tokenize remaining small code-built media/review surfaces
+
+Status: `implemented_native_ui_token_audit_verified`
+
+Requirement alignment: three compact native surfaces still carried raw font
+sizes or light-only brushes, which made them drift from the selected light,
+dark, Deep Sea, and Deep Space presentation. The Code Review note, Image
+Studio status/preview cards, and approved-memory disclosure now use shared
+semantic typography and surface/line brushes. Behavior, local-only routing,
+image generation controls, and memory consent semantics are unchanged.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.CodeReview.cs`
+- `native/ServerRock.Native/MainPage.ImageStudio.cs`
+- `native/ServerRock.Native/MainPage.Memory.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `node scripts/audit-native-ui.cjs` — passed with 306 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: visual token substitutions only. Image generation
+remains loopback-only and memory injection remains explicit, local, and
+reviewable. No new dependency, network path, or license surface is added.
+
+Risk and rollback: restore the previous local font/color assignments and
+remove the five focused audit contracts. No user data or provider behavior
+changes.
+
+Remaining: broader code-built legacy typography/color migration and live
+cross-preset visual acceptance remain open.
+
 ## Slice 220 — Add bounded project-folder disclosure
 
 Status: `implemented_native_ui_hierarchy_build_audit_verified`

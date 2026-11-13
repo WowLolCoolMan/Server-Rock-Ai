@@ -28,7 +28,8 @@ public sealed partial class MainPage
         {
             Text = "This preview is local and read-only. Notes are untrusted reference material, never instructions, and are sent only when you explicitly enable injection and send a prompt.",
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12
+            FontSize = UiTheme.FontSize("SmallFontSize"),
+            Foreground = UiTheme.Brush("MutedInkBrush")
         };
         var dialog = new ContentDialog
         {

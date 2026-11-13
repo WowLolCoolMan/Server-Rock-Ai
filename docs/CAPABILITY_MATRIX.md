@@ -274,6 +274,11 @@ expand/collapse state and accessible controls over the sampled file set. A
 complete repository tree, ignore-state presentation, and live cross-platform
 acceptance remain open.
 
+Slice 221 moves the Code Review, Image Studio, and approved-memory disclosure
+surfaces onto shared semantic typography and light/dark-safe surface tokens.
+Broader code-built legacy token migration and live cross-preset visual
+acceptance remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
