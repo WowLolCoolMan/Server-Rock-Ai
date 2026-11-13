@@ -90,7 +90,7 @@ files only get small hooks.
 | idle | Pass | Breathing from the feet with a 1–2 px rise. |
 | thinking | Pass | Head-tilt sway with a float; bubble "Thinking…" stays visible for the whole reply (recorded, Byte). |
 | coding | Pass (code) | Typing bounce. Same code path as thinking; not yet recorded in the rig. |
-| coding_malicious | Not triggered | Motion exists (jitter + pulse) but the app still never sets this state (bug 6, open). |
+| coding_malicious | Fixed (code) | Jitter + pulse. Now shown while a Coding Agent command waits for approval (it would run unsandboxed), when "ask for approval before risky actions" is on; back to idle when the dialog closes. Not exercised in the rig (needs a project folder from the native picker). |
 | stuck | Pass (code) | Slow droop. Stop now shows idle + "Stopped." instead. |
 | success | Pass | Hops with a landing squash; back to idle after 6 s (recorded, Rocky and Byte). |
 | error | Pass | Head-shake bursts; back to idle after 10 s (recorded, Rocky). |
@@ -147,7 +147,37 @@ Known limits:
 
 ### Full-desktop wandering (research only, not built)
 
-Not yet researched; next round.
+The idea: a second, borderless, transparent, always-on-top window that only contains the pet,
+moved around the screen instead of inside the app. What each piece needs, per platform:
+
+| Need | Windows (Uno Win32/WinUI) | macOS (Uno AppKit) | Linux X11 (Uno X11) | Linux Wayland |
+| --- | --- | --- | --- | --- |
+| Always on top | `OverlappedPresenter.IsAlwaysOnTop` (Windows App SDK API; Uno maps the overlapped presenter on desktop) | Same API; needs a check that Uno's AppKit host sets an `NSWindow` level above normal | Uno's X11 presenter already reads `_NET_WM_STATE`, so `_NET_WM_STATE_ABOVE` is plausible; not confirmed in Uno's source | Not possible for normal (xdg-shell) windows; needs the `wlr-layer-shell` protocol (KDE, wlroots compositors, GNOME 47+), which Uno doesn't speak |
+| Transparent background | Win32 layered window or DirectComposition; Uno only documents a window *background color* (`WindowHelper.SetBackground`), no per-pixel transparency | `NSWindow.isOpaque = false` plus a clear background; same Uno gap | 32-bit ARGB visual plus a compositing manager; same Uno gap | Alpha surfaces are normal, but only reachable through layer-shell here |
+| Click-through except the sprite | `WS_EX_TRANSPARENT` toggled while the pointer is off the sprite, or a window region | `ignoresMouseEvents` toggled by hit-testing | XShape input region shaped to the sprite | `wl_surface.set_input_region` on the layer surface |
+| Move freely on screen | `AppWindow.Move` | `AppWindow.Move` | `AppWindow.Move` (window manager may override) | Clients can't position windows at all; layer-shell anchors + margins only |
+
+Verdict:
+- **Windows** is feasible but needs native interop beside Uno (layered or composition window,
+  extended styles), because Uno has no transparent-window API. Medium effort.
+- **macOS** is feasible the same way through `NSWindow` interop. Medium effort, untested.
+- **X11** is feasible with an ARGB visual and XShape, also outside Uno's API, and only looks
+  right with a compositor running.
+- **Wayland** (including this machine's KDE session) is not feasible with Uno today: positioning
+  and always-on-top need layer-shell, which would mean a separate small GTK4/Qt helper process
+  (as wanderlay and KOverlay do). Running the app under XWayland would make it behave like X11 but
+  loses native Wayland input and scaling.
+- So full-desktop wandering would be a per-platform feature with native code in each shell plus a
+  helper on Wayland. The in-window wander covers the same "alive" feel without any of that.
+
+Sources: [Uno: Window and WindowHelper.SetBackground](https://platform.uno/docs/articles/features/windows-ui-xaml-window.html),
+[Uno: Skia desktop hosts](https://platform.uno/docs/articles/features/using-skia-desktop.html),
+[Uno 5.2.80 release notes (X11 overlapped presenter)](https://newreleases.io/project/github/unoplatform/uno/release/5.2.80),
+[OverlappedPresenter.IsAlwaysOnTop](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.windowing.overlappedpresenter),
+[wlr-layer-shell protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1),
+[Wayland issue: no always-on-top for normal windows](https://gitlab.freedesktop.org/wayland/wayland/-/issues/305),
+[wanderlay (GTK4 layer-shell overlay)](https://github.com/tilacog/wanderlay).
+KOverlay (a LayerShellQt overlay) is a second example of the helper approach.
 
 ## Push log
 
