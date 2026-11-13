@@ -256,6 +256,8 @@ internal static class LocalStorageAndWorkspaceTests
             var browserTextFiles = WorkspaceFileContext.EnumerateTextFiles([workspacePath]);
             Check(browserTextFiles.Any(item => item.RelativePath == Path.Combine("src", "Program.cs")) && browserTextFiles.Any(item => item.RelativePath == "README.md"), "project browser enumerates bounded text files without reading contents");
             Check(browserTextFiles.All(item => !item.RelativePath.Contains(".git", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.Contains("node_modules", StringComparison.OrdinalIgnoreCase) && !item.RelativePath.EndsWith(".env", StringComparison.OrdinalIgnoreCase)) && browserTextFiles.Count <= WorkspaceFileContext.MaxBrowserTextEntries, "project browser text enumeration preserves safety exclusions and its bound");
+            var browserSnapshot = WorkspaceFileContext.EnumerateTextFileBrowser([workspacePath]);
+            Check(browserSnapshot.Files.Count == browserTextFiles.Count && browserSnapshot.ProtectedFilesSkipped >= 1 && browserSnapshot.ExcludedDirectoriesSkipped >= 2, "project browser reports protected files and excluded dependency directories without reading contents");
             Check(WorkspaceFileContext.BrowserBoundaryDescription.Contains("128", StringComparison.Ordinal) && WorkspaceFileContext.BrowserBoundaryDescription.Contains("Protected", StringComparison.Ordinal), "project browser exposes its safety boundary description");
 
             var gitReviewPath = Path.Combine(settingsDirectory, "git-review");

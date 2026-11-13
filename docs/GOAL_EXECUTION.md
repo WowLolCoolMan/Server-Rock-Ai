@@ -3,6 +3,47 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 232 — Expose bounded project-browser safety summary
+
+Status: `implemented_core_tests_native_build_audit_verified`
+
+The native project browser now uses a content-free browser snapshot that keeps
+the existing 128 readable-text-file bound while reporting whether protected
+files, dependency/build directories, linked paths, or the entry limit affected
+the view. The sidebar header reports the number of shown files, and its
+accessible help text explains the observed exclusions without naming or
+disclosing protected paths. Provider context sampling remains on its original
+separate 16-file/48k-character path.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed after updating its source-contract check.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the browser still does not read file contents,
+protected names are counted but never surfaced, linked paths remain excluded,
+and no dependency or network behavior changed.
+
+Rollback: restore the prior `EnumerateTextFiles` call and header help text; no
+persistent data or provider payloads are affected.
+
+Remaining: full tree mutation, richer preview lifecycle, conflict review, and
+packaged/live acceptance remain open under the project workbench requirement.
+
 ## Gate 0 — live capability audit
 
 Completed at commit `3e34156` before the next implementation slice.

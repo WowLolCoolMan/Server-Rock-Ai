@@ -18,6 +18,12 @@ public static class WorkspaceFileContext
 
     public sealed record WorkspaceFileEntry(string RelativePath, string FullPath, string Kind);
     public sealed record WorkspaceTextFileEntry(string RelativePath, string FullPath, long Bytes);
+    public sealed record WorkspaceTextFileBrowserSnapshot(
+        IReadOnlyList<WorkspaceTextFileEntry> Files,
+        int ProtectedFilesSkipped,
+        int ExcludedDirectoriesSkipped,
+        int LinkedPathsSkipped,
+        bool HitEntryLimit);
 
     private static readonly HashSet<string> ExcludedDirectories = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -103,14 +109,36 @@ public static class WorkspaceFileContext
     /// sample so browsing does not change what is sent to a provider.
     /// </summary>
     public static IReadOnlyList<WorkspaceTextFileEntry> EnumerateTextFiles(IEnumerable<string> selectedFolders)
+        => EnumerateTextFileBrowser(selectedFolders).Files;
+
+    /// <summary>
+    /// Enumerates the bounded project browser and reports only structural skip
+    /// counts. It never opens file contents, and its summary is safe to show in
+    /// the UI without disclosing protected names or data.
+    /// </summary>
+    public static WorkspaceTextFileBrowserSnapshot EnumerateTextFileBrowser(IEnumerable<string> selectedFolders)
     {
         ArgumentNullException.ThrowIfNull(selectedFolders);
         var result = new List<WorkspaceTextFileEntry>();
+        var protectedFilesSkipped = 0;
+        var excludedDirectoriesSkipped = 0;
+        var linkedPathsSkipped = 0;
+        var hitEntryLimit = false;
         foreach (var selected in selectedFolders)
         {
-            if (result.Count >= MaxBrowserTextEntries || string.IsNullOrWhiteSpace(selected)) break;
+            if (result.Count >= MaxBrowserTextEntries)
+            {
+                hitEntryLimit = true;
+                break;
+            }
+            if (string.IsNullOrWhiteSpace(selected)) continue;
             var root = Path.GetFullPath(selected);
-            if (!Directory.Exists(root) || IsLink(root)) continue;
+            if (!Directory.Exists(root)) continue;
+            if (IsLink(root))
+            {
+                linkedPathsSkipped++;
+                continue;
+            }
             var pending = new Stack<string>();
             pending.Push(root);
             while (pending.Count > 0 && result.Count < MaxBrowserTextEntries)
@@ -122,9 +150,23 @@ public static class WorkspaceFileContext
                 catch (UnauthorizedAccessException) { continue; }
                 foreach (var file in files)
                 {
-                    if (result.Count >= MaxBrowserTextEntries || IsLink(file)) continue;
+                    if (result.Count >= MaxBrowserTextEntries)
+                    {
+                        hitEntryLimit = true;
+                        break;
+                    }
+                    if (IsLink(file))
+                    {
+                        linkedPathsSkipped++;
+                        continue;
+                    }
                     var name = Path.GetFileName(file);
-                    if (IsExcludedFile(name) || !TextExtensions.Contains(Path.GetExtension(file))) continue;
+                    if (IsExcludedFile(name))
+                    {
+                        protectedFilesSkipped++;
+                        continue;
+                    }
+                    if (!TextExtensions.Contains(Path.GetExtension(file))) continue;
                     try { result.Add(new WorkspaceTextFileEntry(Path.GetRelativePath(root, file), Path.GetFullPath(file), new FileInfo(file).Length)); }
                     catch (IOException) { }
                     catch (UnauthorizedAccessException) { }
@@ -133,14 +175,25 @@ public static class WorkspaceFileContext
                 {
                     foreach (var child in Directory.EnumerateDirectories(directory).OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
                     {
-                        if (!ExcludedDirectories.Contains(Path.GetFileName(child)) && !IsLink(child)) pending.Push(child);
+                        if (IsLink(child))
+                        {
+                            linkedPathsSkipped++;
+                            continue;
+                        }
+                        if (ExcludedDirectories.Contains(Path.GetFileName(child)))
+                        {
+                            excludedDirectoriesSkipped++;
+                            continue;
+                        }
+                        pending.Push(child);
                     }
                 }
                 catch (IOException) { }
                 catch (UnauthorizedAccessException) { }
             }
+            if (result.Count >= MaxBrowserTextEntries) hitEntryLimit = true;
         }
-        return result;
+        return new WorkspaceTextFileBrowserSnapshot(result, protectedFilesSkipped, excludedDirectoriesSkipped, linkedPathsSkipped, hitEntryLimit);
     }
 
     public static IReadOnlyList<WorkspaceFileEntry> EnumeratePreviewableFiles(IEnumerable<string> selectedFolders)

@@ -202,9 +202,10 @@ public sealed partial class MainPage
             return;
         }
         CodeFilesHeader.Visibility = Visibility.Visible;
-        CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))} · BOUNDED SAFE VIEW";
-        AutomationProperties.SetHelpText(CodeFilesHeader, WorkspaceFileContext.BrowserBoundaryDescription);
-        var files = WorkspaceFileContext.EnumerateTextFiles([project.FolderPaths[0]])
+        var browser = WorkspaceFileContext.EnumerateTextFileBrowser([project.FolderPaths[0]]);
+        CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))} · {browser.Files.Count} SHOWN · BOUNDED SAFE VIEW";
+        AutomationProperties.SetHelpText(CodeFilesHeader, BuildProjectBrowserHelp(browser));
+        var files = browser.Files
             .Select(item => (Path: item.RelativePath, Content: string.Empty))
             .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -258,6 +259,16 @@ public sealed partial class MainPage
         }
         if (files.Length == 0)
             ProjectFileList.Items.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
+    }
+
+    private static string BuildProjectBrowserHelp(WorkspaceFileContext.WorkspaceTextFileBrowserSnapshot browser)
+    {
+        var details = new List<string> { WorkspaceFileContext.BrowserBoundaryDescription };
+        if (browser.ProtectedFilesSkipped > 0) details.Add($"Protected files hidden: {browser.ProtectedFilesSkipped}.");
+        if (browser.ExcludedDirectoriesSkipped > 0) details.Add($"Dependency/build directories hidden: {browser.ExcludedDirectoriesSkipped}.");
+        if (browser.LinkedPathsSkipped > 0) details.Add($"Linked paths hidden: {browser.LinkedPathsSkipped}.");
+        if (browser.HitEntryLimit) details.Add($"The {WorkspaceFileContext.MaxBrowserTextEntries}-file browser limit was reached.");
+        return string.Join(" ", details);
     }
 
     private void ProjectFolderToggleClick(object sender, RoutedEventArgs e)
