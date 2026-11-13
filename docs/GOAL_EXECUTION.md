@@ -7643,6 +7643,42 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 228 — Verify the staged desktop-host migration checkpoint
+
+Status: `verified_agent_host_renderer_runtime_checkpoint_not_parity_complete`
+
+Requirement alignment: the live branch now contains the next staged desktop
+surface around the .NET agent host. The Electron/React renderer exposes Chat,
+Models, Settings, Projects, and Agent Workbench navigation; local endpoint/model
+preferences; model discovery through the host; and chat completion through the
+existing OpenAI-compatible Core provider. The host advertises `runtime.health`,
+`models.list`, and `chat.complete` over its versioned JSON-lines boundary.
+
+This verifies a migration seam, not a replacement of the native Uno product.
+The canonical handoff still requires native-first architecture and does not
+permit claiming replacement parity from these checks.
+
+Evidence for commit `b208026`:
+
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed; Vite production bundle generated.
+- Live stdio smoke request `runtime.health` — returned protocol v1, status
+  `ready`, and capabilities `runtime.health`, `models.list`, `chat.complete`.
+
+Privacy/security/licensing: this is verification of the existing local IPC
+seam and renderer changes. The host remains a local child process, the
+renderer uses the narrow bridge, and no new credentials or external service
+was exercised by the smoke request.
+
+Risk and rollback: revert `b208026` only with owner coordination; it is a
+separate concurrent developer commit. The native app remains the fallback and
+canonical product surface.
+
+Remaining: real renderer model/chat journeys, settings/project persistence
+acceptance, process failure/restart handling, accessibility, packaging, and
+full feature parity remain open.
+
 ## Slice 227 — Extract deterministic startup recovery
 
 Status: `implemented_core_startup_recovery_boundary_verified`

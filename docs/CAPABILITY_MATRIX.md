@@ -310,6 +310,12 @@ availability/warning results and focused malformed-history coverage. Settings,
 companion, legacy-project compatibility, and rendering remain native-shell
 responsibilities; no external effect is replayed during recovery.
 
+The concurrent migration checkpoint `b208026` now has fresh local evidence for
+the agent-host build, renderer typecheck/production build, and a live v1 health
+handshake advertising `models.list` and `chat.complete`. This remains a staged
+prototype seam; native Uno remains canonical and renderer feature parity is not
+claimed.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
