@@ -127,6 +127,8 @@ const requiredCode = [
   ['Agent task planning action', 'AutomationProperties.SetName(planAgentTask, "Plan agent task")'],
   ['Agent task planning initial focus', 'dialog.Opened += (_, _) => title.Focus(FocusState.Programmatic);'],
   ['Agent task planning disclosure', 'This saves a local plan only. It does not start an agent'],
+  ['Agent task queue action', 'AutomationProperties.SetName(queueAgentTask, "Queue agent task for future executor")'],
+  ['Agent task queue safety disclosure', 'Mark this plan queued for a future executor. Nothing starts automatically.'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],

@@ -1786,6 +1786,41 @@ actual sub-agent delegation, parallel execution limits, process/container/
 worktree isolation, background execution, cross-platform acceptance, and
 packaged release acceptance.
 
+## Slice 116 — queue proposed agent tasks for a future executor
+
+Status: `implemented_verified_build`
+
+Proposed task artifacts in Activity & Tasks now expose an explicit `Queue for
+future executor` action. The action transitions only the selected local record
+from `proposed` to `queued`, then closes the review dialog and reports that no
+agent or provider was started. It is disabled by absence for already queued or
+terminal tasks, preserving the store's lifecycle rules.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (159 contracts).`
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: queueing stores a bounded local status change
+only. It does not claim the task, call a provider, invoke a tool, access a
+workspace, or create background work.
+
+Rollback: remove the queue button/handler and its audit contracts; proposed
+tasks remain viewable and can still be created locally.
+
+Not yet verified: live packaged queue/review with seeded task artifacts, actual
+sub-agent delegation, parallel execution limits, process/container/worktree
+isolation, background execution, cross-platform acceptance, and packaged
+release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`

@@ -172,6 +172,23 @@ public sealed partial class MainPage
                     taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                 if (task.ArtifactLabels.Count > 0)
                     taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                if (task.Status == AgentTaskStatuses.Proposed)
+                {
+                    var queueAgentTask = new Button { Content = "Queue for future executor", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    AutomationProperties.SetName(queueAgentTask, "Queue agent task for future executor");
+                    AutomationProperties.SetHelpText(queueAgentTask, "Mark this plan queued for a future executor. Nothing starts automatically.");
+                    queueAgentTask.Click += (_, _) =>
+                    {
+                        try
+                        {
+                            _agentTaskStore.Queue(task.Id);
+                            RuntimeStatus.Text = "Agent task queued locally for a future executor. No agent or provider was started.";
+                            dialog?.Hide();
+                        }
+                        catch (Exception ex) { RuntimeStatus.Text = $"Agent task could not be queued: {ex.Message}"; }
+                    };
+                    taskPanel.Children.Add(queueAgentTask);
+                }
                 content.Children.Add(new Border
                 {
                     Background = ResourceBrush("SurfaceAltBrush"),
