@@ -140,6 +140,7 @@ public sealed partial class MainPage
             {
                 var rawPath = localOpenApiPath.Text.Trim();
                 if (rawPath.Length is 0 or > 1_024 || rawPath.Any(char.IsControl)) throw new InvalidOperationException("Enter a bounded local path.");
+                if (!Path.IsPathRooted(rawPath)) throw new InvalidOperationException("Enter a fully qualified local path.");
                 var path = Path.GetFullPath(rawPath);
                 if (!Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("The local OpenAPI file must use the .json extension.");
                 if (!File.Exists(path)) throw new FileNotFoundException("The local OpenAPI file does not exist.");
