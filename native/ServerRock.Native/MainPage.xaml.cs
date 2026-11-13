@@ -132,5 +132,14 @@ public sealed partial class MainPage : Page
     private Button GitHubActionsButton => CodingWorkspaceBarControl.GitHubActionsButtonControl;
     private Button TerminalButton => CodingWorkspaceBarControl.TerminalButtonControl;
     private Button UndoHistoryButton => CodingWorkspaceBarControl.UndoHistoryButtonControl;
+    private StackPanel WelcomePanel => ConversationSurfaceControl.WelcomePanelControl;
+    private TextBlock WelcomeTitle => ConversationSurfaceControl.WelcomeTitleControl;
+    private TextBlock WelcomeSubtitle => ConversationSurfaceControl.WelcomeSubtitleControl;
+    private Button ConnectionSetupButton => ConversationSurfaceControl.ConnectionSetupButtonControl;
+    private Button SuggestionOne => ConversationSurfaceControl.SuggestionOneControl;
+    private Button SuggestionTwo => ConversationSurfaceControl.SuggestionTwoControl;
+    private Button SuggestionThree => ConversationSurfaceControl.SuggestionThreeControl;
+    private ScrollViewer ConversationScroll => ConversationSurfaceControl.ConversationScrollControl;
+    private StackPanel ConversationMessages => ConversationSurfaceControl.ConversationMessagesControl;
 
 }

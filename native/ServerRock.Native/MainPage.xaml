@@ -12,21 +12,7 @@
       <local:CodingWorkspaceBar x:Name="CodingWorkspaceBarControl" Grid.Row="1" />
 
       <Grid Grid.Row="2" x:Name="ChatSurface" RowDefinitions="*,Auto" Background="{StaticResource SurfaceBrush}">
-        <Border Grid.Row="0" Margin="18,14,18,10" Style="{StaticResource WorkspaceFrameStyle}" />
-        <StackPanel x:Name="WelcomePanel" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Spacing="14" MaxWidth="660" Margin="28,28,28,20">
-          <TextBlock Text="◈" FontSize="29" Foreground="#20a9c0" HorizontalAlignment="Center" />
-          <TextBlock x:Name="WelcomeTitle" Text="What can I help you with?" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#26373d" />
-          <TextBlock x:Name="WelcomeSubtitle" Text="Chat with a model running on your computer, or turn on web search when you need current sources." FontSize="15" TextWrapping="Wrap" Foreground="#74858a" HorizontalAlignment="Center" TextAlignment="Center" />
-          <Button x:Name="ConnectionSetupButton" Content="Connect a model" Click="SettingsClick" Style="{StaticResource PrimaryActionButtonStyle}" HorizontalAlignment="Center" Visibility="Collapsed" AutomationProperties.Name="Connect a model" AutomationProperties.HelpText="Open connection settings to choose and check a local or hosted model endpoint." />
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,12,0,0">
-            <Button x:Name="SuggestionOne" Content="Help me write" Click="SuggestionClick" Tag="Help me write" Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use writing prompt suggestion" />
-            <Button x:Name="SuggestionTwo" Content="Plan a project" Click="SuggestionClick" Tag="Help me plan a project" Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use project planning prompt suggestion" />
-            <Button x:Name="SuggestionThree" Content="Search the web" Click="SuggestionClick" Tag="Search the web for " Style="{StaticResource SuggestionButtonStyle}" AutomationProperties.Name="Use web search prompt suggestion" />
-          </StackPanel>
-        </StackPanel>
-        <ScrollViewer Grid.Row="0" x:Name="ConversationScroll" Visibility="Collapsed" Padding="28,20" Margin="18,14,18,10">
-          <StackPanel x:Name="ConversationMessages" Spacing="18" MaxWidth="860" HorizontalAlignment="Center" />
-        </ScrollViewer>
+        <local:ConversationSurface x:Name="ConversationSurfaceControl" Grid.Row="0" AutomationProperties.Name="Connect a model" />
 
       <!-- Composer column: stretches to a fixed reading width (matches the message column) so it
            no longer shrinks to its content or jumps when the status banner or Tools row appear. -->

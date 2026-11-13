@@ -1608,6 +1608,43 @@ subscriptions and accessors.
 Not yet verified: live packaged-release interaction after this extraction,
 narrow-window visual QA, Linux parity, and the remaining handoff slices.
 
+## Slice 98 — extract the conversation surface from MainPage.xaml
+
+Status: `implemented_verified_build`
+
+The remaining conversation viewport above the composer is now a dedicated
+`ConversationSurface` UserControl. It owns the welcome state, connection setup
+action, prompt suggestions, and scrollable message host. MainPage retains the
+existing chat/message behavior through forwarded setup and suggestion events
+and bounded compatibility accessors for the scroll and message children. The
+composer and pet-owned companion overlay were not changed.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/ConversationSurface.xaml`
+- `native/ServerRock.Native/ConversationSurface.xaml.cs`
+- `docs/ARCHITECTURE.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts).`
+- `npm run check:syntax` — passed.
+
+Privacy/security/licensing: this is a local visual decomposition only. It
+changes no conversation persistence, provider request, credential handling,
+or third-party dependency.
+
+Rollback: restore the welcome/conversation Grid and its children in
+`MainPage.xaml`, remove `ConversationSurface.xaml` and `.xaml.cs`, and remove
+the lifecycle subscriptions and accessors.
+
+Not yet verified: live packaged-release interaction after this extraction,
+narrow-window visual QA, Linux parity, and the remaining handoff slices.
+
 ## Slice 81 — deterministic date/time variables in reviewed skill prompts
 
 Status: `implemented_verified_core`

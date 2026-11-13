@@ -34,6 +34,8 @@ public sealed partial class MainPage
         CodingWorkspaceBarControl.GitHubActionsRequested += GitHubActionsClick;
         CodingWorkspaceBarControl.TerminalRequested += OpenTerminalClick;
         CodingWorkspaceBarControl.UndoHistoryRequested += UndoHistoryClick;
+        ConversationSurfaceControl.SettingsRequested += SettingsClick;
+        ConversationSurfaceControl.SuggestionRequested += SuggestionClick;
         // Sidebar clicks arrive as SidebarView events (see MainPage.Sidebar.cs).
         SidebarView.ChatModeRequested += ChatModeClick;
         SidebarView.CodingModeRequested += CodingModeClick;
