@@ -25,7 +25,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `890e42d` — moved renderer state, persistence effects, backend commands, and feature callbacks into `useDesktopWorkspace`; `App.tsx` is now shell composition only.
 - `c3adcc7` — isolated chat conversations, queueing, attachments/PDF extraction, fork/export, metadata, and send/complete commands in `useChatWorkspace`.
 - `559f642` — isolated coding/project discovery, folder selection, guarded file editing/undo, and bounded terminal commands in `useCodingWorkspace`.
-- `PENDING` — added a local-only task brief composer, truthful Local/Worktree environment state, and a review-first `tasks.plan` Agent Host capability; Cloud is intentionally out of scope.
+- `db4b966` — added a local-only task brief composer, truthful Local/Worktree environment state, and a review-first `tasks.plan` Agent Host capability; Cloud is intentionally out of scope.
+- `2175eef` — added keyboard-first workspace navigation for command palette, new chat, Settings, sidebar, Chat, Coding, and Terminal shortcuts.
 
 ## Current evidence
 
@@ -55,6 +56,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Chat runtime regression: passed the existing FIFO queue smoke plus renderer interaction coverage for conversation loading, queued follow-up while the model is busy, indexed removal, completion response rendering, and 1280px overflow.
 - Coding runtime regression: passed project-browser, project-terminal, and project-editor smoke tests plus renderer coverage for project selection, file read, diff review, guarded save, docked terminal execution, output rendering, and 1280px overflow. Screenshot: `output/playwright/skai-coding-coordinator.png`.
 - Task composer interaction check: passed project selection, task brief entry, disabled Worktree state, local proposed-task creation, Agent Workbench handoff, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-coding-task-composer.png`.
+- Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
@@ -68,7 +70,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 1. Use the workflow reference to extend the truthful per-task environment selector and task-oriented composer into the chat flow; Local is functional today, while Worktree must remain visibly unavailable until supported. Cloud is not a Skai Desktop capability.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
-4. Extend the keyboard-focus pass from the shared modal surfaces to remaining overlay and menu surfaces, including real Electron capture when the provider can target the correct window.
+4. Extend the keyboard-focus pass from the shared modal surfaces and new workspace shortcuts to remaining overlay and menu surfaces, including more real Electron interaction capture.
 5. Extend the theme audit from Settings to every major route, including system appearance, density, reduced motion, and backdrop combinations.
 6. Connect the Marketplace catalog only when a real runtime capability exists; keep the current local discovery shell honest and do not fabricate integrations.
 

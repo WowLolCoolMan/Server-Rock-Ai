@@ -1,12 +1,18 @@
 const { spawn } = require("node:child_process");
+const path = require("node:path");
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-const child = spawn(npmCommand, ["--prefix", "apps/desktop", "run", "start"], {
-  cwd: process.cwd(),
+const desktopRoot = path.join(process.cwd(), "apps", "desktop");
+const electronBinary = process.platform === "win32"
+  ? path.join(desktopRoot, "node_modules", "electron", "dist", "electron.exe")
+  : path.join(desktopRoot, "node_modules", ".bin", "electron");
+const child = spawn(electronBinary, ["."], {
+  cwd: desktopRoot,
   env: process.env,
-  stdio: "inherit",
+  stdio: "ignore",
   windowsHide: true,
+  detached: true,
 });
+child.unref();
 
 child.on("error", (error) => {
   console.error(`Unable to open the Electron desktop: ${error.message}`);
@@ -14,7 +20,3 @@ child.on("error", (error) => {
   process.exitCode = 1;
 });
 
-child.on("exit", (code, signal) => {
-  if (signal) process.kill(process.pid, signal);
-  else process.exitCode = code ?? 1;
-});

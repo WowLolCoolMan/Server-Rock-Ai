@@ -20,6 +20,7 @@ expect(main.includes("nodeIntegration: false"), "Node integration must remain di
 expect(main.includes("sandbox: true"), "renderer sandbox must remain enabled");
 expect(preload.includes("contextBridge.exposeInMainWorld"), "renderer communication must use preload");
 expect(!preload.includes("require(\"node:fs\")"), "preload must not expose filesystem access");
+expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");
