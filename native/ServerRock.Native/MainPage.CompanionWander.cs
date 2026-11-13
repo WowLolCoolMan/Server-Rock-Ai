@@ -39,8 +39,9 @@ public sealed partial class MainPage
     private double _companionFacingTarget = 1;
     private (double, double, double, double) _companionWanderLayoutSize;
 
-    // Off by default while the feature is being built; see docs/PET_OVERHAUL.md.
-    private static bool CompanionWanderDefault => false;
+    // On by default now that wander passes the smoke test (docs/PET_OVERHAUL.md), except when
+    // the person asked for less motion in the app or in the system.
+    private bool CompanionWanderDefault => !CompanionReduceMotion;
 
     private bool CompanionWanderEnabled => _companionState.Wander ?? CompanionWanderDefault;
 

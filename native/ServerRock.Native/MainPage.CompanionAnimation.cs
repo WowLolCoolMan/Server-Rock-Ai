@@ -62,7 +62,20 @@ public sealed partial class MainPage
 
     private double CompanionNow => _companionClock.Elapsed.TotalSeconds;
 
-    private bool CompanionReduceMotion => _settings.ReduceMotion;
+    // The app's "Reduce decorative motion" setting, or the system's animation preference.
+    private bool CompanionReduceMotion => _settings.ReduceMotion || SystemPrefersReducedMotion();
+
+    private static bool? _systemPrefersReducedMotion;
+
+    // Windows reports "Show animations" here; platforms where Uno has no answer count as "no
+    // preference". Read once: the property is cheap but the platform lookup is not.
+    private static bool SystemPrefersReducedMotion()
+    {
+        if (_systemPrefersReducedMotion is { } known) return known;
+        try { _systemPrefersReducedMotion = !new Windows.UI.ViewManagement.UISettings().AnimationsEnabled; }
+        catch (Exception) { _systemPrefersReducedMotion = false; }
+        return _systemPrefersReducedMotion.Value;
+    }
 
     // Wires the transform and the visibility listeners once. Watching the overlay's Visibility
     // covers every way the pet is shown or hidden (sidebar button, ×, Settings, drawer).
