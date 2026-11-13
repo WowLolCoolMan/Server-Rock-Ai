@@ -33,14 +33,14 @@
       </Button.Resources>
     </Button>
     <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
-      <Border x:Name="CompanionCard" Width="230" Background="Transparent" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
+      <Border x:Name="CompanionCard" Width="230" Background="{x:Null}" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
         <StackPanel HorizontalAlignment="Center" Spacing="4">
-          <TextBlock x:Name="CompanionSpeech" Text="Ready for your next prompt." FontSize="11" Foreground="#28474e" TextWrapping="Wrap" MaxWidth="210" HorizontalAlignment="Center" AutomationProperties.Name="Pet completion summary" />
+          <TextBlock x:Name="CompanionSpeech" Text="Ready for your next prompt." FontSize="11" Foreground="#28474e" TextWrapping="Wrap" MaxWidth="210" HorizontalAlignment="Center" IsHitTestVisible="False" AutomationProperties.Name="Pet completion summary" />
           <Grid Width="84" Height="84" HorizontalAlignment="Center">
             <Image x:Name="CompanionImage" Width="72" Height="72" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion sprite" AutomationProperties.HelpText="Drag the sprite to move it, or focus it and use the arrow keys. Hold Shift to move farther." />
             <Button Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="#527177" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
           </Grid>
-          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="10" Foreground="#6f878c" HorizontalAlignment="Center" Opacity="0.85" />
+          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="10" Foreground="#6f878c" HorizontalAlignment="Center" Opacity="0.85" IsHitTestVisible="False" />
         </StackPanel>
       </Border>
     </Canvas>

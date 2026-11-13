@@ -78,7 +78,9 @@ internal sealed class CompanionStateStore
         var assets = (state.StateAssets ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
             .Where(item => AllowedStates.Contains(item.Key, StringComparer.OrdinalIgnoreCase)
                 && item.Value.Length <= 1024
-                && !item.Value.Any(char.IsControl))
+                && !item.Value.Any(char.IsControl)
+                && Path.IsPathFullyQualified(item.Value)
+                && new[] { ".svg", ".png", ".jpg", ".jpeg", ".webp" }.Contains(Path.GetExtension(item.Value), StringComparer.OrdinalIgnoreCase))
             .ToDictionary(item => item.Key.ToLowerInvariant(), item => item.Value, StringComparer.OrdinalIgnoreCase);
         var currentState = AllowedStates.Contains(state.CurrentState, StringComparer.OrdinalIgnoreCase)
             ? state.CurrentState.ToLowerInvariant()

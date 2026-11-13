@@ -6831,3 +6831,49 @@ Rollback: remove the Attach path control, event forwarding, and
 
 Remaining: full RAG/vector backends/reranking, OCR, image-model acceptance,
 cross-platform picker behavior, and app-preview coverage remain open.
+
+## Slice 175 — Pet companion safety and placement hardening
+
+Status: `implemented_build_tests_audit_live_verified_windows`
+
+The companion surface now has explicit safety boundaries for the skipped pet
+work. Persisted custom state sprites are accepted only as bounded fully
+qualified local paths with supported image extensions. The drawer blocks the
+companion overlay while open, decorative speech/name regions are noninteractive,
+and the positioner moves the card away from the composer when its visual bounds
+would overlap the prompt area. Existing drag and keyboard movement remain
+available on the sprite itself.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/CompanionStateStore.cs`
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `native/ServerRock.Native/MainPage.Layout.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened the sidebar, exposed the pet controls, selected
+  Byte from the accessible companion picker, dismissed the drawer, and
+  confirmed the Byte companion rendered at the top-right without covering the
+  composer. The drawer visibly suppressed the companion while open.
+
+Privacy/security/licensing: custom sprite persistence remains local-only and
+bounded; unsupported or non-local paths are ignored during normalization. The
+pet does not send telemetry or provider data, and no pets-unrelated feature,
+credential, or handoff file was changed.
+
+Rollback: remove the path normalization, overlay blocking, and composer
+avoidance guard to restore the previous companion behavior.
+
+Remaining: packaged cross-platform behavior, full breakpoint/scale collision
+matrix, modal focus restoration, and live custom-sprite picker acceptance.

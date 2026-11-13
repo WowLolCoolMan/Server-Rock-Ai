@@ -77,6 +77,7 @@ public sealed partial class MainPage : Page
     private bool _temporaryTransitionInProgress;
     private bool _includeProjectFilesInChat;
     private bool _compactNavigation;
+    private bool _companionOverlayBlocked;
     private bool _compactComposerToolbar;
     private bool _compactCodingWorkspaceToolbar;
     private bool _companionPersistenceAvailable = true;

@@ -41,7 +41,7 @@ public sealed partial class MainPage
         _companionState = _companionState with { PetId = choice.Id };
         CompanionImage.Source = ResolveCompanionAsset(choice);
         CompanionName.Text = choice.Name;
-        CompanionOverlay.Visibility = _companionState.IsVisible ? Visibility.Visible : Visibility.Collapsed;
+        CompanionOverlay.Visibility = _companionState.IsVisible && !_companionOverlayBlocked ? Visibility.Visible : Visibility.Collapsed;
         CompanionButtonLabel.Text = _companionState.IsVisible ? "Hide pet" : "Show pet";
         AutomationProperties.SetName(CompanionButton, _companionState.IsVisible ? "Hide pet companion" : "Show pet companion");
         if (_companionState.IsVisible) PositionCompanion(persistIfChanged: false);
@@ -144,6 +144,12 @@ public sealed partial class MainPage
 
         var left = _companionState.Left < 0 ? maxLeft : Math.Clamp(_companionState.Left, 8, maxLeft);
         var top = Math.Clamp(_companionState.Top, 8, maxTop);
+        if (TryGetVisualRect(PromptBox, out var composerRect)
+            && RectanglesOverlap(new Rect(left, top, width, cardHeight), composerRect))
+        {
+            left = maxLeft;
+            top = Math.Clamp(Header.ActualHeight + 12, 8, maxTop);
+        }
         Canvas.SetLeft(CompanionCard, left);
         Canvas.SetTop(CompanionCard, top);
         if (persistIfChanged && (Math.Abs(left - _companionState.Left) > 0.5 || Math.Abs(top - _companionState.Top) > 0.5))
@@ -155,6 +161,33 @@ public sealed partial class MainPage
         {
             _companionState = _companionState with { Left = left, Top = top };
         }
+    }
+
+    private bool TryGetVisualRect(FrameworkElement element, out Rect rect)
+    {
+        try
+        {
+            var origin = element.TransformToVisual(CompanionOverlay).TransformPoint(new Point(0, 0));
+            rect = new Rect(origin.X, origin.Y, element.ActualWidth, element.ActualHeight);
+            return element.ActualWidth > 0 && element.ActualHeight > 0;
+        }
+        catch
+        {
+            rect = default;
+            return false;
+        }
+    }
+
+    private static bool RectanglesOverlap(Rect first, Rect second) =>
+        first.Left < second.Right && first.Right > second.Left && first.Top < second.Bottom && first.Bottom > second.Top;
+
+    private void SetCompanionOverlayBlocked(bool blocked)
+    {
+        _companionOverlayBlocked = blocked;
+        CompanionOverlay.Visibility = !_companionOverlayBlocked && _companionState.IsVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        if (!_companionOverlayBlocked && _companionState.IsVisible) PositionCompanion(persistIfChanged: false);
     }
 
     private void SetCompanionPosition(double left, double top)

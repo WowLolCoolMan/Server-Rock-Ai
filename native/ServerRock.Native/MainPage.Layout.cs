@@ -131,6 +131,7 @@ public sealed partial class MainPage
         Sidebar.HorizontalAlignment = compact ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
         Sidebar.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
         SidebarBackdrop.Visibility = Visibility.Collapsed;
+        SetCompanionOverlayBlocked(false);
         ToggleSidebarButton.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -139,6 +140,7 @@ public sealed partial class MainPage
         if (!_compactNavigation) return;
         Sidebar.Visibility = Visibility.Visible;
         SidebarBackdrop.Visibility = Visibility.Visible;
+        SetCompanionOverlayBlocked(true);
         ChatModeButton.Focus(FocusState.Programmatic);
     }
 
@@ -149,6 +151,7 @@ public sealed partial class MainPage
         if (!_compactNavigation) return;
         Sidebar.Visibility = Visibility.Collapsed;
         SidebarBackdrop.Visibility = Visibility.Collapsed;
+        SetCompanionOverlayBlocked(false);
         ToggleSidebarButton.Focus(FocusState.Programmatic);
     }
 }
