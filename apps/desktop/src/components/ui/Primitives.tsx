@@ -16,6 +16,6 @@ export function StatusBadge({ children, tone = "neutral" }: { children: ReactNod
   return <span className={`status-badge status-badge-${tone}`}><span className="status-badge-dot" />{children}</span>;
 }
 
-export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
-  return <div className="ui-empty"><div className="ui-empty-icon">⌁</div><strong>{title}</strong><p>{description}</p>{action}</div>;
+export function EmptyState({ title, description, action, visual }: { title: string; description: string; action?: ReactNode; visual?: ReactNode }) {
+  return <div className="ui-empty">{visual ? <div className="ui-empty-visual" aria-hidden="true">{visual}</div> : <div className="ui-empty-icon">⌁</div>}<strong>{title}</strong><p>{description}</p>{action}</div>;
 }
