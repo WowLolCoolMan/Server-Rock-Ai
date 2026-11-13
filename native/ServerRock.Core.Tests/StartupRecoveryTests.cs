@@ -1,6 +1,7 @@
 // StartupRecoveryService loads local profile stores without starting external work.
 
 using ServerRock.Core.Infrastructure;
+using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 using static TestSupport;
 
@@ -16,6 +17,20 @@ internal static class StartupRecoveryTests
             Check(recovery.HistoryAvailable && recovery.ProjectsAvailable && recovery.UndoHistoryAvailable &&
                   recovery.QueuedMessages.Count == 0 && recovery.ReconciledOperations.Count == 0 && recovery.Warnings.Count == 0,
                 "startup recovery loads an empty local profile without external work");
+
+            var taskStore = new AgentTaskArtifactStore(Path.Combine(root, "agent-tasks.json"));
+            var interrupted = taskStore.Create("Interrupted local task", "Review recovery behavior.");
+            taskStore.Queue(interrupted.Id);
+            taskStore.TryClaimReady();
+            var reconciled = Create(root).Load();
+            var blocked = taskStore.Get(interrupted.Id);
+            Check(reconciled.ReconciledAgentTasks.Count == 1 && blocked.Status == AgentTaskStatuses.Blocked &&
+                  blocked.ResultSummary?.Contains("interrupted", StringComparison.OrdinalIgnoreCase) == true &&
+                  reconciled.Warnings.Any(message => message.Contains("agent task", StringComparison.OrdinalIgnoreCase)),
+                "startup recovery blocks interrupted agent tasks without dispatching or deleting their local metadata");
+            var secondRecovery = Create(root).Load();
+            Check(secondRecovery.ReconciledAgentTasks.Count == 0 && taskStore.Get(interrupted.Id).Status == AgentTaskStatuses.Blocked,
+                "agent task restart reconciliation is idempotent");
 
             File.WriteAllText(Path.Combine(root, "conversations.json"), "{ malformed");
             var damaged = Create(root).Load();
@@ -34,5 +49,6 @@ internal static class StartupRecoveryTests
         new OperationService(new OperationJournal(Path.Combine(root, "operations.json"))),
         new ConversationStore(Path.Combine(root, "conversations.json")),
         new ProjectStore(Path.Combine(root, "projects.json")),
-        new WorkspaceUndoStore(Path.Combine(root, "undo.json")));
+        new WorkspaceUndoStore(Path.Combine(root, "undo.json")),
+        new AgentTaskArtifactStore(Path.Combine(root, "agent-tasks.json")));
 }

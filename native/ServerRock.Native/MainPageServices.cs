@@ -126,7 +126,7 @@ internal sealed class MainPageServices
             scheduledTaskStore,
             agentTaskStore,
             new AgentTaskExecutor(agentTaskStore),
-            new StartupRecoveryService(messageQueueStore, operationService, conversationStore, projectStore, workspaceUndoStore),
+            new StartupRecoveryService(messageQueueStore, operationService, conversationStore, projectStore, workspaceUndoStore, agentTaskStore),
             new GitWorktreeCoordinator(),
             new SkillPackageInstaller(),
             new MemoryStore(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH")));

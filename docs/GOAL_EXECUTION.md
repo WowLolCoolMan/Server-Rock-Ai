@@ -3,6 +3,46 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 233 — Reconcile interrupted agent tasks at startup
+
+Status: `implemented_core_tests_native_build_audit_verified`
+
+Startup recovery now reconciles persisted agent tasks that were left in
+`running` state by an application stop. It durably marks them `blocked`, adds a
+bounded review reason, and surfaces an Activity & tasks warning. The operation
+never retries a handler, dispatches a provider/tool/process, deletes a retained
+worktree, or silently clears local task evidence. Repeated startup loads are
+idempotent.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core/Services/StartupRecoveryService.cs`
+- `native/ServerRock.Core.Tests/StartupRecoveryTests.cs`
+- `native/ServerRock.Native/MainPageServices.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including interrupted-task and idempotence checks.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 322 contracts.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded local task metadata is read and
+updated; no external work is started and retained worktrees are preserved for
+explicit review. No dependency or third-party code was added.
+
+Rollback: remove the startup reconciliation call and result field; existing
+task files remain readable and no external side effects need reversal.
+
+Remaining: explicit retry/approval UX, actual model/tool dispatch, parallel
+specialist isolation, and background task execution remain open.
+
 ## Slice 232 — Expose bounded project-browser safety summary
 
 Status: `implemented_core_tests_native_build_audit_verified`

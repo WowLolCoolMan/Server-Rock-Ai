@@ -118,6 +118,28 @@ public sealed class AgentTaskArtifactStore
             .FirstOrDefault();
     }
 
+    /// <summary>
+    /// Reconciles tasks that were running when the process stopped. This is a
+    /// local metadata transition only: it does not retry handlers, release
+    /// worktrees, or invoke tools. Retained worktrees remain attached for an
+    /// explicit review decision.
+    /// </summary>
+    public IReadOnlyList<AgentTaskArtifact> ReconcileAfterRestart()
+    {
+        var tasks = Load().ToList();
+        var interrupted = tasks.Where(task => task.Status == AgentTaskStatuses.Running).ToList();
+        if (interrupted.Count == 0) return [];
+        var now = DateTimeOffset.UtcNow;
+        foreach (var task in interrupted)
+        {
+            task.Status = AgentTaskStatuses.Blocked;
+            task.ResultSummary = "Execution was interrupted by an application restart; review the task before retrying.";
+            task.UpdatedAtUtc = now;
+        }
+        Save(tasks);
+        return interrupted.Select(Copy).ToArray();
+    }
+
     /// <summary>Claims one ready queued task for a future executor; this method performs no external work.</summary>
     public AgentTaskArtifact? TryClaimReady(DateTimeOffset? now = null)
     {
