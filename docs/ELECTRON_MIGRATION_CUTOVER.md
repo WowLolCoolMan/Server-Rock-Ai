@@ -56,6 +56,8 @@ validate parity.
   user turn and completed assistant response through the bounded Core store.
 - The replacement sidebar now exposes the first eight saved conversations and
   an explicit New chat action; selecting a history item restores its messages.
+- Conversation history now has host-backed bounded search across titles,
+  messages, project/folder labels, tags, attachment names, and source metadata.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the
   safe durable task states; every action refreshes from the host after the
   transition.
@@ -84,6 +86,8 @@ validate parity.
   reporting, and the metadata-only browser contract against disposable paths.
 - `npm run smoke:project-terminal` verifies the disposable project command
   round trip and bounded output result.
+- `npm run smoke:conversation-search` verifies persisted message matching and
+  bounded display results against disposable history.
 
 The replacement is not complete. The remaining work is tracked in
 `docs/HANDOFF_BACKLOG.md`, `docs/CAPABILITY_MATRIX.md`, and

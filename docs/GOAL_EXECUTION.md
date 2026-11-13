@@ -3,6 +3,45 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 248 — Add bounded Electron conversation search
+
+Status: `implemented_host_renderer_search_smoke_verified`
+
+The Electron replacement now exposes `conversations.search`, backed by the
+existing Core `ConversationSearchService`. Search is bounded and local-only;
+it matches conversation titles, messages, project/folder labels, tags,
+attachment names, and source metadata. The renderer adds a history search
+field and navigates matching saved conversations without exposing filesystem
+access or provider data.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-conversation-search.cjs`
+- `package.json`
+- `.github/workflows/electron-ci.yml`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:conversation-search` — passed persisted message matching
+  and bounded display assertions.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: search runs over the explicitly persisted local
+history through Core bounds; it adds no external search or cloud routing.
+
+Rollback: remove the search route, field, smoke command, and workflow step;
+existing conversation history navigation remains available.
+
+Remaining: folders/tags/pins/forks/export controls, queued messages,
+attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 247 — Port reviewed project-file editing to Electron
 
 Status: `implemented_host_renderer_write_undo_smoke_verified`
