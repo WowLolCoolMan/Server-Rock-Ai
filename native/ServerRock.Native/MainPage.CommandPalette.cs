@@ -32,6 +32,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("Prompt snippets", "saved prompts templates expand composer", OpenSnippetsAsync),
             new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync),
             new CommandPaletteItem("Quicklinks", "bookmarks frequent web links", OpenQuicklinksAsync),
+            new CommandPaletteItem("Developer diagnostics", "developer mode inspect runtime local diagnostics", OpenDeveloperDiagnosticsAsync),
         };
 
         var query = new TextBox { PlaceholderText = "Search actions", MinWidth = 420 };

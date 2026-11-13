@@ -243,3 +243,8 @@ Recent slice note — Slice 168: added bounded local Quicklinks reachable from
 Ctrl+K and More. A disposable bookmark was saved, selected, exposed through the
 explicit Open/Remove controls, and removed locally in a live Windows journey.
 Only credential-free http/https URLs are accepted; opening remains user-driven.
+
+Recent slice note — Slice 169: added a persisted Advanced → Developer mode
+toggle and a gated Ctrl+K/More diagnostics surface. Live Windows enabled the
+mode, saved it, and rendered bounded local runtime/model facts without exposing
+credentials, running commands, changing approvals, or sending provider data.

@@ -350,6 +350,9 @@ public sealed partial class MainPage
         var reduceMotion = new CheckBox { Content = "Reduce decorative motion", IsChecked = _settings.ReduceMotion };
         AutomationProperties.SetName(reduceMotion, "Reduce decorative motion");
         AutomationProperties.SetHelpText(reduceMotion, "Keep the selected backdrop visible but pause bubbles, stars, planets, and UFO movement.");
+        var developerMode = new CheckBox { Content = "Enable developer mode", IsChecked = _settings.DeveloperMode };
+        AutomationProperties.SetName(developerMode, "Enable developer mode");
+        AutomationProperties.SetHelpText(developerMode, "Expose local diagnostics and inspection surfaces. This does not grant external tools, bypass approvals, or send telemetry.");
         var density = new ComboBox { MinWidth = 220 };
         AutomationProperties.SetName(density, "Interface density");
         density.Items.Add("Comfortable"); density.Items.Add("Compact");
@@ -722,6 +725,7 @@ public sealed partial class MainPage
             pageBody.Children.Add(visionNote);
             pageBody.Children.Add(new TextBlock { Text = "DIAGNOSTICS", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 14, 0, 2) });
             pageBody.Children.Add(MakeSettingsCard("Support bundle", "Export a diagnostics archive with sensitive values redacted.", exportLogs));
+            pageBody.Children.Add(MakeSettingsCard("Developer mode", "Expose local-only diagnostics and inspection details. Provider requests and risky actions still require their existing approvals.", developerMode));
         }
 
         AddSection("General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
@@ -834,6 +838,7 @@ public sealed partial class MainPage
             _settings.ThemeMode = theme.SelectedIndex == 1 ? "dark" : "light";
             _settings.BackdropPreset = backdrop.SelectedIndex switch { 1 => "deep-sea", 2 => "deep-space", _ => "none" };
             _settings.ReduceMotion = reduceMotion.IsChecked == true;
+            _settings.DeveloperMode = developerMode.IsChecked == true;
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
             _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
             _settings.PromptUserName = promptUserName.Text.Trim();

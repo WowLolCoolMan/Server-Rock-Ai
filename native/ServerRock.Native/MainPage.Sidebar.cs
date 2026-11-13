@@ -737,6 +737,7 @@ public sealed partial class MainPage
         AddAction("Prompt snippets", "snippets", "Save reusable prompt text, insert it into the composer, or preview a model expansion.");
         AddAction("Translate text", "translator language", "Translate text with the selected model and review it before inserting it into the composer.");
         AddAction("Quicklinks", "bookmarks", "Save and explicitly open frequent-access web addresses.");
+        AddAction("Developer diagnostics", "developer", "Inspect bounded local runtime facts when developer mode is enabled.");
         AddAction("Connection & settings", "settings", "Configure model endpoints, privacy, voice, and local preferences.");
         dialog = new ContentDialog { Title = "More workspace options", Content = actions, CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         await dialog.ShowAsync();
@@ -750,6 +751,7 @@ public sealed partial class MainPage
             case "snippets": await OpenSnippetsAsync(); break;
             case "translator": await OpenTranslatorAsync(); break;
             case "bookmarks": await OpenQuicklinksAsync(); break;
+            case "developer": await OpenDeveloperDiagnosticsAsync(); break;
             case "settings": SettingsClick(this, new RoutedEventArgs()); break;
         }
     }

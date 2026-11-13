@@ -31,6 +31,8 @@ public sealed class AppSettings
     public string BackdropPreset { get; set; } = "none";
     /// <summary>Disables decorative backdrop motion while retaining the selected visual preset.</summary>
     public bool ReduceMotion { get; set; }
+    /// <summary>Enables local-only developer diagnostics and verbose inspection surfaces.</summary>
+    public bool DeveloperMode { get; set; }
     public string InterfaceDensity { get; set; } = "comfortable";
     public string HostLabel { get; set; } = "This device";
     /// <summary>Optional explicit value used only when a reviewed prompt contains {{USER_NAME}}.</summary>

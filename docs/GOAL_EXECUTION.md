@@ -6568,3 +6568,52 @@ from local settings; existing settings and conversation data remain intact.
 
 Remaining: folders/sync, richer metadata, browser-panel integration, and full
 cross-platform accessibility and packaged-runtime coverage remain open.
+
+## Slice 169 — Local developer mode diagnostics
+
+Status: `implemented_verified_windows_toggle_and_diagnostics`
+
+Added a persisted Advanced → Developer mode toggle and a gated Developer
+diagnostics action in Ctrl+K and More workspace options. When enabled, the
+surface reports bounded non-secret facts such as runtime platform, endpoint
+classification, selected provider/model, local feature toggles, and counts of
+saved chats, projects, and quicklinks. It does not grant tools, bypass review
+or approval gates, run commands, expose credentials, or send telemetry.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Native/MainPage.DeveloperMode.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including DeveloperMode settings persistence.
+- `npm run audit:native-ui` — passed with 230 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: opened Connection & settings from Ctrl+K, opened
+  Advanced, enabled and saved Enable developer mode, then opened Developer
+  diagnostics from Ctrl+K and observed the accessible `Developer diagnostics`
+  summary dialog. No message was sent and no provider request was made.
+
+Privacy/security/licensing: the mode is opt-in local preference data. The
+diagnostics summary deliberately omits API keys and secret values and keeps
+existing provider, command, file, and approval boundaries unchanged. No pets
+code or state was changed.
+
+Rollback: disable Developer mode in Advanced or remove the diagnostics command;
+normal chat, settings, provider, and approval behavior remain unchanged.
+
+Remaining: richer debugger integrations, trace viewers, cross-platform
+diagnostics, and packaged-runtime/accessibility coverage remain open. This
+slice does not claim an IDE or unrestricted developer console.

@@ -109,7 +109,7 @@ and acceptance evidence.
 - [ ] Window management.
 - [x] Quicklinks for frequent-access bookmarks. (Bounded local http/https bookmarks with explicit open and remove actions.)
 - [x] In-app documentation.
-- [ ] Developer mode.
+- [x] Developer mode. (Persisted local-only diagnostics toggle with bounded runtime inspection.)
 - [ ] Global quick-AI fallback for non-command input.
 - [ ] Native multi-session sidebar with drag-and-drop panes.
 
