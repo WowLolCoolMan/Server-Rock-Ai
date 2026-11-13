@@ -50,7 +50,9 @@ public sealed partial class MainPage : Page
     private readonly ScheduledTaskStore _scheduledTaskStore = new();
     private readonly AgentTaskArtifactStore _agentTaskStore = new();
     private readonly SkillPackageInstaller _skillPackageInstaller = new();
-    private readonly MemoryStore _memoryStore = new();
+    // Keep the normal profile as the default; an explicit path supports
+    // disposable live acceptance without reading or writing real memory.
+    private readonly MemoryStore _memoryStore = new(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH"));
     private bool _restoringWorkspaceDraft;
     private List<ChatSession> _sessions = [];
     private bool _archivedChatsExpanded;

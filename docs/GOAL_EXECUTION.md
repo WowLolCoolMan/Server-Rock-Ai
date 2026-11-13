@@ -1686,6 +1686,51 @@ Not yet verified: live memory setting save/send acceptance with an eligible note
 durable cross-restart context continuity, semantic compaction and 1M+ context,
 packaged interaction, Linux parity, and the remaining handoff requirements.
 
+## Slice 136 — disposable eligible-memory review and save
+
+Status: `verified_windows_disposable_review_and_save`
+
+`MemoryStore` now honors the explicit `SRAI_MEMORY_PATH` environment variable;
+the default remains the normal platform application-data memory file. A synthetic
+approved global note was loaded from a disposable profile. The live command palette
+opened `Review approved memory context`, which exposed the local/read-only and
+untrusted-reference disclosure, the injection checkbox, and the approved-memory
+preview. Enabling the checkbox and saving reported `Approved memory injection
+enabled. Review the local context before sending your next prompt.`; the disposable
+settings file independently recorded `memoryInjectionEnabled: true`.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `docs/ARCHITECTURE.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Disposable profile used `SRAI_SETTINGS_PATH`, `SRAI_CONVERSATIONS_PATH`, and
+  `SRAI_MEMORY_PATH`; temporary files were removed after the journey.
+- Live Windows accessibility inspection exposed the review dialog, safety
+  disclosure, eligible-note preview, injection control, and saved status.
+- The saved disposable settings file contained `memoryInjectionEnabled: true`;
+  the seeded memory note remained local and unchanged.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (181 contracts).`
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- No provider request or cloud route occurred because the seeded selected model
+  was unavailable; this slice does not claim live send acceptance.
+
+Privacy/security/licensing: synthetic memory and settings stayed in an isolated
+temporary profile; no real memory, credentials, provider, network, dependency, or
+third-party path was used.
+
+Rollback: remove the environment-variable constructor argument and restore
+`new MemoryStore()`; remove this evidence entry if the live result is invalidated.
+
+Not yet verified: live memory send acceptance with an eligible note and a healthy
+compatible model, durable cross-restart context continuity, semantic compaction and
+1M+ context, packaged interaction, Linux parity, and remaining handoff work.
+
 ## Slice 133 — add a disposable settings profile boundary
 
 Status: `implemented_verified_build`
