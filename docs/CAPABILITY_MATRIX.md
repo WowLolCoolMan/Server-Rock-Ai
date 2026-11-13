@@ -130,6 +130,27 @@ Linux parity, and keyboard acceptance for export/schedule actions remain open.
   before sending`; no conversation turn was created. The original model was
   restored afterward.
 
+## Matrix reconciliation — current through Slice 160
+
+The compact domain rows above predate the latest vertical slices. Their gaps
+must be read together with these newer verified results:
+
+- Conversations now include the live draggable split divider, persisted bounded
+  split ratio, per-conversation Markdown-folder export implementation, durable
+  workspace composer drafts, and separate durable attachment drafts. Remaining
+  gaps are the live picker/write-back journey, cross-device or encrypted draft
+  sync, multi-pane editing, and broader provider/cross-platform acceptance.
+- Activity and workflows now include live Schedule task form acceptance and a
+  safe cancel path. Scheduler persistence/run-now behavior has Core coverage,
+  while timezone/locale, full keyboard/screen-reader Popup focus, autonomous
+  execution, and packaged/Linux acceptance remain open.
+- Shell/workspace now includes bounded in-app documentation from More and Ctrl+K
+  with an accessible scroll region. Localization, richer searchable help, and
+  typed dialog routing remain open.
+- Slices 157–158 deliberately did not claim full dialog focus acceptance: the
+  Windows accessibility tree continues to expose the underlying composer after
+  Activity opens, despite loaded-content and low-priority focus retries.
+
 ## Backlog ordering
 
 1. Validate live approval accessibility/countdown and chat queue controls,
