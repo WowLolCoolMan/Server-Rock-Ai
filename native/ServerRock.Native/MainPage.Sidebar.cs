@@ -144,6 +144,11 @@ public sealed partial class MainPage
         };
         AutomationProperties.SetName(agentTaskHeader, "Agent task artifacts");
         content.Children.Add(agentTaskHeader);
+        var planAgentTask = new Button { Content = "Plan agent task", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+        AutomationProperties.SetName(planAgentTask, "Plan agent task");
+        AutomationProperties.SetHelpText(planAgentTask, "Save a local task plan for later review. This does not start an agent or send a provider request.");
+        planAgentTask.Click += async (_, _) => await CreateAgentTaskAsync(dialog);
+        content.Children.Add(planAgentTask);
         if (agentTasks.Count == 0)
         {
             content.Children.Add(new TextBlock { Text = "No agent task artifacts have been recorded. Task planning remains local and does not dispatch agents automatically.", TextWrapping = TextWrapping.Wrap });
@@ -379,6 +384,34 @@ public sealed partial class MainPage
             approvalTimer.Start();
         }
         await dialog.ShowAsync();
+    }
+
+    private async Task CreateAgentTaskAsync(ContentDialog? activityDialog)
+    {
+        var title = new TextBox { Header = "Task title", PlaceholderText = "A short specialist task name" };
+        var instruction = new TextBox { Header = "Instruction", PlaceholderText = "What should be reviewed or prepared?", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
+        var role = new TextBox { Header = "Role", Text = "specialist", PlaceholderText = "specialist, verifier, or researcher" };
+        AutomationProperties.SetName(title, "Agent task title");
+        AutomationProperties.SetName(instruction, "Agent task instruction");
+        AutomationProperties.SetName(role, "Agent task role");
+        var dialog = new ContentDialog
+        {
+            Title = "Plan agent task",
+            Content = new StackPanel { Spacing = 9, Children = { title, instruction, role, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
+            PrimaryButtonText = "Save task plan",
+            CloseButtonText = "Cancel",
+            XamlRoot = XamlRoot
+        };
+        AutomationProperties.SetName(dialog, "Plan agent task");
+        dialog.Opened += (_, _) => title.Focus(FocusState.Programmatic);
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        try
+        {
+            _agentTaskStore.Create(title.Text, instruction.Text, role.Text);
+            RuntimeStatus.Text = "Agent task plan saved locally for review. No agent or provider was started.";
+            activityDialog?.Hide();
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Agent task plan could not be saved: {ex.Message}"; }
     }
 
     private static string ApprovalDetails(WorkflowApprovalRequest approval, DateTimeOffset now) =>

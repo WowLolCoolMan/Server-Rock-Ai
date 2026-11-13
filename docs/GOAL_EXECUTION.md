@@ -1749,6 +1749,43 @@ actual sub-agent delegation, parallel execution limits, process/container/
 worktree isolation, background execution, cross-platform acceptance, and
 packaged release acceptance.
 
+## Slice 115 — add an explicit local agent-task planning journey
+
+Status: `implemented_verified_build`
+
+Activity & Tasks now offers a `Plan agent task` action. The dialog collects a
+bounded title, instruction, and role, clearly states that saving is local-only,
+and persists a proposed task artifact only after the user chooses `Save task
+plan`. It focuses the title field on open, exposes stable accessible labels,
+and closes the Activity dialog after a successful save so the user can reopen it
+and review the new record. It never starts an agent, calls a model, invokes a
+tool, or grants a capability.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (157 contracts).`
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the dialog writes only bounded local task metadata;
+it does not accept credentials or file contents and adds no network, provider,
+shell, Git, MCP, or background execution path.
+
+Rollback: remove the planning button/dialog and its audit contracts; the
+read-only task artifact section and Core store remain available.
+
+Not yet verified: live packaged creation/review with seeded task artifacts,
+actual sub-agent delegation, parallel execution limits, process/container/
+worktree isolation, background execution, cross-platform acceptance, and
+packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
