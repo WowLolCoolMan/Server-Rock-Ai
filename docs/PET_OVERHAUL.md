@@ -103,8 +103,11 @@ files only get small hooks.
 
 ## Wander (phase 2)
 
-Status: built, behind "Let the pet wander" (pet chooser dialog, saved as `wander` in
-`companion.json`; `null` means "not chosen", so the app default applies). Default is still OFF.
+Status: done and ON by default since round 4 of the smoke test. "Let the pet wander" (pet chooser
+dialog) is saved as `wander` in `companion.json`; `null` means "not chosen", so the default
+applies: on, unless the app's "Reduce decorative motion" or the system's animation setting
+(Windows "Show animations", via `UISettings.AnimationsEnabled`) asks for less motion. The same
+check also stops the state animations.
 
 - Grid and planning: `ServerRock.Core/Services/PetWanderPlanner.cs` (`PetWanderGrid`,
   `PetWanderPlanner`, `PetWalk`), tested in `PetWanderPlannerTests.cs` with seeded randoms.
@@ -155,3 +158,4 @@ Not yet researched; next round.
 | 00:04 | 0b6dfa6 | Wander planner + Core tests (not wired to the UI yet). |
 | 00:19 | 881c19d | Wander in the UI behind "Let the pet wander" (off by default); wander smoke results. |
 | 00:27 | 30a5248 | Pet drawn above the sidebar; round-3 smoke results. |
+| 00:29 | 251ccce | Wander default ON (OFF with app or system reduce motion). |
