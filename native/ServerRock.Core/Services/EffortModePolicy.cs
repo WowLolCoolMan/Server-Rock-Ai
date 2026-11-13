@@ -7,10 +7,11 @@ public static class EffortModePolicy
     public const string Standard = "standard";
     public const string High = "high";
     public const string Ultra = "ultra";
+    public const string Adaptive = "adaptive";
 
     public static string Normalize(string? mode) => mode?.Trim().ToLowerInvariant() switch
     {
-        Light or High or Ultra => mode!.Trim().ToLowerInvariant(),
+        Light or High or Ultra or Adaptive => mode!.Trim().ToLowerInvariant(),
         _ => Standard
     };
 
@@ -21,4 +22,15 @@ public static class EffortModePolicy
         Ultra => 4096,
         _ => 1024
     };
+
+    /// <summary>Chooses a bounded output budget from the request context size.</summary>
+    public static int MaxTokens(string? mode, int promptCharacters) => Normalize(mode) == Adaptive
+        ? promptCharacters switch
+        {
+            <= 1200 => 512,
+            <= 6000 => 1024,
+            <= 16000 => 2048,
+            _ => 4096
+        }
+        : MaxTokens(mode);
 }

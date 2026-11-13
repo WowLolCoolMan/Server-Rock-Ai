@@ -162,6 +162,8 @@ const requiredCode = [
   ['Persona instructions label', 'AutomationProperties.SetName(instructions, "Persona instructions")'],
   ['Percy six-frame runtime', 'var frame = ((int)Math.Floor(now / 0.12) % 6) + 1'],
   ['Effort mode setting', 'AutomationProperties.SetName(effort, "Effort mode")'],
+  ['Adaptive effort mode', 'var effortModes = new[] { "adaptive", "light", "standard", "high", "ultra" }'],
+  ['Full-text attachment setting', 'AutomationProperties.SetName(fullText, "Inject full text from text and PDF attachments")'],
   ['Side chat keyboard shortcut', 'e.Key == Windows.System.VirtualKey.S && _mode == WorkspaceModes.Chat'],
   ['Translate text command', 'new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync)'],
   ['Translation source label', 'AutomationProperties.SetName(source, "Translation source text")'],

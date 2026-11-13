@@ -514,7 +514,7 @@ public sealed partial class MainPage
                     firstTokenMilliseconds ??= Math.Max(1, timer.ElapsedMilliseconds);
                     answer.Append(text);
                 }
-            }, cancellationToken, maxTokens: EffortModePolicy.MaxTokens(_settings.EffortMode), apiKey: GetProviderApiKey());
+            }, cancellationToken, maxTokens: EffortModePolicy.MaxTokens(_settings.EffortMode, requestMessages.Sum(message => message.Content.Length)), apiKey: GetProviderApiKey());
         }
         finally
         {
@@ -589,7 +589,11 @@ public sealed partial class MainPage
         }
         if (context.Count > 0) messages.Add(new ChatMessage("system", string.Join("\n\n", context)));
         messages.AddRange(_messages.Select(message => message.ForModel(
-            message.Attachments is { Count: > 0 } ? ChatAttachmentPrompt.AppendWithBoundedRetrieval(message.Content, message.Attachments) : message.Content)));
+            message.Attachments is not { Count: > 0 }
+                ? message.Content
+                : _settings.FullTextContextInjectionEnabled
+                    ? ChatAttachmentPrompt.AppendTo(message.Content, message.Attachments)
+                    : ChatAttachmentPrompt.AppendWithBoundedRetrieval(message.Content, message.Attachments))));
         return messages;
     }
 

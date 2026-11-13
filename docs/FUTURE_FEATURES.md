@@ -71,7 +71,7 @@ and acceptance evidence.
 - [ ] Hybrid search with BM25, vector search, and reranking.
 - [ ] Multiple document-extraction engines.
 - [ ] Agentic retrieval that browses documentation.
-- [ ] Full-text context injection.
+- [x] Full-text context injection. (Explicit Advanced generation option for bounded text/PDF attachment content; query-ranked retrieval remains the default.)
 - [ ] Nested file browser with preview. (Bounded local project-folder browser with relative paths, filtering, text/image/PDF preview exists; full tree, mutation, and packaged acceptance remain open.)
 - [ ] Projects that group chats, shared knowledge, and context.
 - [ ] Saved environments for reusable folders, SSH hosts, and cloud contexts.
@@ -132,7 +132,7 @@ and acceptance evidence.
 - [ ] One-time purchase/no-subscription option.
 - [ ] Model Council that merges answers from multiple models.
 - [x] Effort modes: Light, Standard, High, and Ultra. (Persisted local choice maps to bounded compatible-provider output budgets; provider-specific reasoning controls remain open.)
-- [ ] Adaptive reasoning depth.
+- [x] Adaptive reasoning depth. (Adaptive effort selects a bounded 512/1,024/2,048/4,096 output budget from request size; provider-native reasoning controls remain open.)
 - [ ] Speculative decoding with DFlash, DSpark, or MTP drafters.
 - [ ] Tensor parallelism across GPUs.
 - [ ] Continuous batching and parallel requests.

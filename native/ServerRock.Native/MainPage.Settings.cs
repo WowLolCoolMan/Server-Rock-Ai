@@ -271,8 +271,11 @@ public sealed partial class MainPage
         temperature.ValueChanged += (_, args) => temperatureValue.Text = args.NewValue.ToString("0.0");
         var reset = new Button { Content = "Reset to default (0.7)", HorizontalAlignment = HorizontalAlignment.Left };
         reset.Click += (_, _) => temperature.Value = 0.7;
-        var effort = new ComboBox { Header = "Effort mode", ItemsSource = new[] { "Light", "Standard", "High", "Ultra" }, SelectedIndex = Array.IndexOf(new[] { "light", "standard", "high", "ultra" }, _settings.EffortMode), MinWidth = 220 };
+        var effortModes = new[] { "adaptive", "light", "standard", "high", "ultra" };
+        var effort = new ComboBox { Header = "Effort mode", ItemsSource = new[] { "Adaptive", "Light", "Standard", "High", "Ultra" }, SelectedIndex = Array.IndexOf(effortModes, _settings.EffortMode), MinWidth = 220 };
         AutomationProperties.SetName(effort, "Effort mode");
+        var fullText = new CheckBox { Content = "Inject full text from text/PDF attachments", IsChecked = _settings.FullTextContextInjectionEnabled };
+        AutomationProperties.SetName(fullText, "Inject full text from text and PDF attachments");
         var temperatureRow = new Grid
         {
             ColumnDefinitions =
@@ -290,13 +293,16 @@ public sealed partial class MainPage
         panel.Children.Add(temperatureRow);
         panel.Children.Add(reset);
         panel.Children.Add(new TextBlock { Text = "Effort mode", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        panel.Children.Add(new TextBlock { Text = "Controls the bounded response budget sent to compatible providers: 512, 1,024, 2,048, or 4,096 max tokens.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
+        panel.Children.Add(new TextBlock { Text = "Adaptive chooses a bounded response budget from request size; fixed modes send 512, 1,024, 2,048, or 4,096 max tokens.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
         panel.Children.Add(effort);
+        panel.Children.Add(fullText);
+        panel.Children.Add(new TextBlock { Text = "Full-text mode is explicit and still uses the existing per-file limits. It can use more model context than query-ranked retrieval.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 102, 120, 125)) });
         var dialog = new ContentDialog { Title = "Advanced generation", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             _settings.Temperature = temperature.Value;
             _settings.EffortMode = (effort.SelectedItem?.ToString() ?? "Standard").ToLowerInvariant();
+            _settings.FullTextContextInjectionEnabled = fullText.IsChecked == true;
             SaveSettings();
         }
     }
