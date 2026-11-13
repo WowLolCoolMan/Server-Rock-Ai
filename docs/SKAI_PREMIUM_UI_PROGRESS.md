@@ -36,6 +36,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `fb2d479` — replaced Chat's oversized page hero with a compact contextual bar and separated the conversation and composer into a stable two-row workspace.
 - `4a4d4bb` — made Agent Workbench list/detail the default task view while retaining the lifecycle board as an explicit alternate view.
 - `8fb1a13` — tightened the shared PageHeader typography and spacing so secondary workspaces use a compact desktop hierarchy instead of oversized hero treatment.
+- `fd9f3f1` — added backend-confirmed Memory save feedback and an explicit confirmation step before destructive removal.
 
 ## Current evidence
 
@@ -72,6 +73,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Chat visual refinement check: passed compact contextual hierarchy, removal of the oversized hero, separate conversation/composer geometry, local task composer visibility, no Cloud UI, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-chat-compact-header.png`.
 - Workbench list/detail check: passed list-first rendering, selected task detail with brief/status/result, Board view toggle, selection restoration, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-workbench-list-detail.png`.
 - Shared route geometry sweep: passed all nine routes at 1280px and 960px with no horizontal overflow and no Cloud UI. Models visual check: `output/playwright/skai-models-compact-header.png`.
+- Memory action-safety check: passed edit/save feedback, canceling removal, confirming removal, persistence refresh, no Cloud UI, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-memory-confirmation.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
