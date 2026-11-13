@@ -301,6 +301,11 @@ public sealed partial class MainPage
                 AutomationProperties.SetName(toggle, $"{(task.Status == ScheduledTaskStatuses.Paused ? "Resume" : "Pause")} scheduled task");
                 toggle.Click += async (_, _) => await ChangeScheduledTaskAsync(task, task.Status == ScheduledTaskStatuses.Paused, dialog);
                 taskPanel.Children.Add(toggle);
+                var cancel = new Button { Content = "Cancel", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(cancel, "Cancel scheduled task");
+                AutomationProperties.SetHelpText(cancel, "Cancel this scheduled prompt before execution. Nothing is sent automatically.");
+                cancel.Click += async (_, _) => await CancelScheduledTaskAsync(task, dialog);
+                taskPanel.Children.Add(cancel);
             }
             content.Children.Add(new Border { Background = ResourceBrush("SurfaceAltBrush"), BorderBrush = ResourceBrush("LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = taskPanel });
         }

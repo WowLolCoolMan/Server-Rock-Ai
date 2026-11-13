@@ -6325,3 +6325,50 @@ existing explicit close defaults and loaded-content retries remain separate.
 Remaining: resolve through a supported Uno/Win32 Popup accessibility bridge or
 dedicated harness, then verify Narrator, keyboard traversal, Linux/Skia, and
 packaged-runtime behavior.
+
+## Slice 164 — Scheduled-task cancellation
+
+Status: `implemented_verified_windows_cancel_before_execution`
+
+Scheduled tasks can now be cancelled from Activity & tasks while they are
+scheduled or paused. Cancellation is durable, records the bounded outcome
+`Cancelled before execution.`, prevents future claiming, and leaves completed,
+failed, or running tasks unchanged. The UI discloses that cancellation occurs
+before execution and does not send a prompt automatically.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/ScheduledTask.cs`
+- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
+- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including durable cancellation and non-claimability assertions.
+- `npm run audit:native-ui` — passed with 218 contracts.
+- `git diff --check` — passed.
+- Live Windows journey: created a disposable future scheduled prompt, opened
+  its Activity row, confirmed Run now/Pause/Cancel controls, activated Cancel,
+  and observed `Scheduled task cancelled locally before execution. No prompt
+  was sent and no provider was called.`
+
+Privacy/security/licensing: cancellation is local durable state only. It does
+not call a model, access credentials, send network traffic, modify files, or
+alter pets state.
+
+Rollback: restore the prior scheduled-task status model and remove the Cancel
+button; the Core store remains bounded and existing pause/run behavior is
+unchanged.
+
+Remaining: autonomous/background scheduling, automatic result logging,
+timezone/locale coverage, recurrence backoff, cross-platform packaging, and
+full Popup focus acceptance remain open. The broader “Scheduled automations”
+future feature remains unchecked because the current scheduler is review-first.

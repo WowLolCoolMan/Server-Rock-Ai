@@ -157,6 +157,8 @@ const requiredCode = [
   ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
   ['Scheduled task run-now control', 'AutomationProperties.SetName(runNow, "Run scheduled task now")'],
+  ['Scheduled task cancellation control', 'AutomationProperties.SetName(cancel, "Cancel scheduled task")'],
+  ['Scheduled task cancellation disclosure', 'Cancel this scheduled prompt before execution. Nothing is sent automatically.'],
   ['Agent task artifact section', 'AutomationProperties.SetName(agentTaskHeader, "Agent task artifacts")'],
   ['Agent task planning action', 'AutomationProperties.SetName(planAgentTask, "Plan agent task")'],
   ['Agent task readiness preview', 'AutomationProperties.SetName(previewReadyAgentTask, "Preview next ready agent task")'],

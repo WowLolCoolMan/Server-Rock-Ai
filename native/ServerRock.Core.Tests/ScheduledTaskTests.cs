@@ -37,7 +37,12 @@ internal static class ScheduledTaskTests
         Check(store.TryClaimDue(now.AddMinutes(9)) is null, "paused scheduled task is not claimed");
         store.Resume(paused.Id);
         Check(store.TryClaimDue(now.AddMinutes(9))?.Id == paused.Id, "paused task resumes explicitly");
-        Console.WriteLine("PASS scheduled task persistence, recurrence, claim, no-replay, outcome, run-now, pause, and resume");
+        var cancelled = store.Schedule("Cancel before execution", now.AddHours(2), WorkspaceModes.Chat, now);
+        store.Cancel(cancelled.Id);
+        var cancelledState = store.Load().Single(item => item.Id == cancelled.Id);
+        Check(cancelledState.Status == ScheduledTaskStatuses.Cancelled && cancelledState.Outcome == "Cancelled before execution.", "scheduled task cancellation is durable");
+        Check(store.TryClaimDue(now.AddDays(2))?.Id != cancelled.Id, "cancelled scheduled task is never claimed");
+        Console.WriteLine("PASS scheduled task persistence, recurrence, claim, no-replay, outcome, run-now, pause, resume, and cancellation");
     }
 
     private static void Check(bool condition, string message)

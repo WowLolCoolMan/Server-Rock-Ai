@@ -7,6 +7,7 @@ public static class ScheduledTaskStatuses
     public const string Completed = "completed";
     public const string Failed = "failed";
     public const string Paused = "paused";
+    public const string Cancelled = "cancelled";
 }
 
 /// <summary>A durable, one-shot task request. The scheduler never replays a claimed task after restart.</summary>

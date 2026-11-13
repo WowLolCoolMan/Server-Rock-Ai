@@ -102,6 +102,18 @@ public sealed partial class MainPage
         await Task.CompletedTask;
     }
 
+    private async Task CancelScheduledTaskAsync(ScheduledTask task, ContentDialog? activityDialog)
+    {
+        try
+        {
+            _scheduledTaskStore.Cancel(task.Id);
+            RuntimeStatus.Text = "Scheduled task cancelled locally before execution. No prompt was sent and no provider was called.";
+            activityDialog?.Hide();
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Scheduled task could not be cancelled: {ex.Message}"; }
+        await Task.CompletedTask;
+    }
+
     private async Task RunScheduledTaskNowAsync(ScheduledTask task, ContentDialog? activityDialog)
     {
         try

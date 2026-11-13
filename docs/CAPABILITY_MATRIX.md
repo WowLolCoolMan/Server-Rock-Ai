@@ -210,3 +210,9 @@ their ContentDialog containers as tab stops and retry container focus. The
 native audit passes 216 contracts, but live Windows accessibility still reports
 `PromptBox`; this confirms the remaining issue is the Popup accessibility
 bridge, not an omitted dialog focus target.
+
+Recent slice note — Slice 164: scheduled tasks now support durable Cancel from
+Activity while scheduled or paused. Core cancellation/non-claimability tests,
+218 native UI contracts, and a live Windows create → Activity → Cancel journey
+passed; the UI explicitly reported that no prompt or provider was called.
+Autonomous/background scheduling remains intentionally unresolved.

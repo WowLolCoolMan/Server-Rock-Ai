@@ -92,6 +92,18 @@ public sealed class ScheduledTaskStore
         UpdateStatus(id, ScheduledTaskStatuses.Paused, ScheduledTaskStatuses.Scheduled);
     }
 
+    public void Cancel(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("A scheduled task ID is required.", nameof(id));
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new InvalidOperationException("The scheduled task no longer exists.");
+        if (task.Status is not (ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Paused))
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be cancelled.");
+        task.Status = ScheduledTaskStatuses.Cancelled;
+        task.Outcome = "Cancelled before execution.";
+        Save(tasks);
+    }
+
     /// <summary>Marks a scheduled task due without executing its prompt.</summary>
     public ScheduledTask RunNow(string id, DateTimeOffset? now = null)
     {
@@ -143,7 +155,7 @@ public sealed class ScheduledTaskStore
             ValidateRepeat(task.RepeatEveryMinutes);
             if (task.RunCount < 0) throw new InvalidDataException("The scheduled task store contains an invalid run count.");
             if (task.WorkspaceMode is not (WorkspaceModes.Chat or WorkspaceModes.CodingAgent)) throw new InvalidDataException("The scheduled task store contains an invalid workspace mode.");
-            if (task.Status is not (ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Running or ScheduledTaskStatuses.Completed or ScheduledTaskStatuses.Failed or ScheduledTaskStatuses.Paused)) throw new InvalidDataException("The scheduled task store contains an invalid status.");
+            if (task.Status is not (ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Running or ScheduledTaskStatuses.Completed or ScheduledTaskStatuses.Failed or ScheduledTaskStatuses.Paused or ScheduledTaskStatuses.Cancelled)) throw new InvalidDataException("The scheduled task store contains an invalid status.");
             if (task.Outcome is { Length: > MaxOutcomeCharacters } || task.Outcome?.Any(char.IsControl) == true) throw new InvalidDataException("The scheduled task store contains an invalid outcome.");
         }
     }
