@@ -4,7 +4,7 @@ using static TestSupport;
 
 internal static class AgentTaskArtifactTests
 {
-    public static void Run()
+    public static async Task RunAsync()
     {
         var root = Path.Combine(Path.GetTempPath(), "server-rock-agent-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -34,6 +34,25 @@ internal static class AgentTaskArtifactTests
             Check(reloaded.Any(task => task.Id == first.Id && task.Status == AgentTaskStatuses.Completed && task.ArtifactLabels.Contains("local-review")), "completed agent task artifacts persist bounded result labels");
             Check(reloaded.Any(task => task.Id == second.Id && task.Status == AgentTaskStatuses.Failed), "failed agent task artifacts persist their terminal status");
             Check(store.Search("verifier").Count == 1, "agent task search matches role metadata");
+            var executor = new AgentTaskExecutor(store);
+            var completedPlan = store.Create("Execute bounded review", "Run an injected review handler.");
+            store.Queue(completedPlan.Id);
+            var completed = await executor.ExecuteNextAsync((task, _) => Task.FromResult(new AgentTaskExecutionResult($"Completed {task.Title}.", ["handler-result"])));
+            Check(completed?.Status == AgentTaskStatuses.Completed && completed.ArtifactLabels.Contains("handler-result"), "agent task executor durably completes an injected handler");
+            var failedPlan = store.Create("Fail bounded review", "Run a failing injected handler.");
+            store.Queue(failedPlan.Id);
+            var failed = await executor.ExecuteNextAsync((_, _) => throw new InvalidOperationException("handler failure"));
+            Check(failed?.Status == AgentTaskStatuses.Failed && failed.ResultSummary == "handler failure", "agent task executor durably records handler failure");
+            var cancelledExecutionPlan = store.Create("Cancel bounded review", "Run a cancelled injected handler.");
+            store.Queue(cancelledExecutionPlan.Id);
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+            var cancelledExecution = await executor.ExecuteNextAsync(async (_, token) =>
+            {
+                await Task.Delay(1, token);
+                return new AgentTaskExecutionResult("unreachable");
+            }, cancellation.Token);
+            Check(cancelledExecution?.Status == AgentTaskStatuses.Cancelled, "agent task executor durably records cancellation");
             try
             {
                 store.Create("bad", "missing dependency", dependsOn: ["missing"]);

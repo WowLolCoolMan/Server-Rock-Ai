@@ -7292,6 +7292,51 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 209 — Add durable injected agent-task execution lifecycle
+
+Status: `implemented_core_verified_executor_boundary`
+
+Requirement alignment: the handoff requires durable agent execution state,
+claiming, completion, failure, cancellation, and recovery visibility. The
+existing task store persisted plans and supported a claim transition, but had
+no reusable executor boundary. This slice adds `AgentTaskExecutor`, which
+claims one dependency-ready queued task, invokes an explicitly injected
+handler, and persists the handler's completed, failed, or cancelled outcome.
+
+The executor deliberately does not choose a model, invoke MCP/tools, run a
+shell, access files, or dispatch parallel work. Those effects remain explicit
+caller responsibilities with their own permission and approval surfaces.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/AgentTaskExecutor.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Full native Core suite — passed, including durable injected-handler
+  completion, failure, and cancellation checks.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run check:syntax`, `npm run check:hygiene`, and
+  `npm run check:release-config` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the executor adds no new side effects or
+dependencies. Handler summaries and bounded artifact labels go through the
+existing task-store validation and local atomic persistence.
+
+Risk and rollback: remove the executor and three focused test calls; the
+existing plan/claim store remains intact. A handler exception is converted to
+a durable failed state so a crashed caller cannot leave an ordinary failure
+silently looking queued.
+
+Remaining: real model/tool dispatch, parallel specialist isolation, background
+execution, worktree/container isolation, approval orchestration, and packaged
+runtime acceptance remain open.
+
 ## Slice 208 — Surface Git conflicts with safe recovery guidance
 
 Status: `implemented_build_and_audit_verified`
