@@ -11,6 +11,7 @@
 // command, and many places that refresh the composer labels.
 
 using System.Diagnostics;
+using System.Text;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -123,7 +124,7 @@ public sealed partial class MainPage
 
         RuntimeStatus.Text = $"Comparing {plan.Models.Count} pinned models…";
         var results = await Task.WhenAll(plan.Models.Select(model => CompareOneModelAsync(plan.Prompt, model)));
-        await ShowModelComparisonResultsAsync(results);
+        await ShowModelComparisonResultsAsync(plan.Prompt, results);
     }
 
     private async Task<ModelComparisonResult> CompareOneModelAsync(string prompt, PinnedModelConnection model)
@@ -148,7 +149,7 @@ public sealed partial class MainPage
         catch (Exception ex) { return new ModelComparisonResult(model, null, ex.Message); }
     }
 
-    private async Task ShowModelComparisonResultsAsync(IReadOnlyList<ModelComparisonResult> results)
+    private async Task ShowModelComparisonResultsAsync(string prompt, IReadOnlyList<ModelComparisonResult> results)
     {
         var columns = new Grid { ColumnSpacing = 10 };
         for (var index = 0; index < results.Count; index++) columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -162,9 +163,42 @@ public sealed partial class MainPage
             Grid.SetColumn(border, index);
             columns.Children.Add(border);
         }
-        var dialog = new ContentDialog { Title = "Model comparison results", Content = new ScrollViewer { Content = columns, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, MaxWidth = 1_100, MaxHeight = 620 }, CloseButtonText = "Done", XamlRoot = XamlRoot };
-        await dialog.ShowAsync();
+        var successful = results.Where(result => result.Error is null && !string.IsNullOrWhiteSpace(result.Response)).ToArray();
+        var dialog = new ContentDialog { Title = "Model comparison results", Content = new ScrollViewer { Content = columns, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, MaxWidth = 1_100, MaxHeight = 620 }, PrimaryButtonText = successful.Length >= ModelComparisonPolicy.MinModels ? "Merge responses…" : string.Empty, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            await MergeModelComparisonAsync(prompt, successful);
         RuntimeStatus.Text = results.Any(result => result.Error is not null) ? "Model comparison finished with one or more failures; partial results remain visible." : "Model comparison complete.";
+    }
+
+    private async Task MergeModelComparisonAsync(string originalPrompt, IReadOnlyList<ModelComparisonResult> results)
+    {
+        var councilPrompt = ModelCouncilPolicy.BuildPrompt(originalPrompt, results.Select(result => (result.Model, result.Response!)));
+        if (!LocalEndpoint.IsLocal(_settings.Endpoint))
+        {
+            var consent = new ContentDialog
+            {
+                Title = "Send model answers to the selected model?",
+                Content = new TextBlock { Text = $"The selected model endpoint is {_settings.Endpoint}. The bounded comparison answers will be sent there for synthesis. Review the result before inserting it.", TextWrapping = TextWrapping.Wrap },
+                PrimaryButtonText = "Synthesize",
+                CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot
+            };
+            if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
+        }
+        RuntimeStatus.Text = "Synthesizing a reviewable council answer…";
+        var output = new StringBuilder();
+        try
+        {
+            await _provider.StreamChatAsync(_settings, [new ChatMessage("user", councilPrompt)], chunk =>
+            {
+                if (output.Length < 24_000) output.Append(chunk[..Math.Min(chunk.Length, 24_000 - output.Length)]);
+            }, CancellationToken.None, maxTokens: 2048, apiKey: GetProviderApiKey());
+            var preview = new TextBox { Text = output.ToString().Trim(), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 180, MaxHeight = 400, IsSpellCheckEnabled = false };
+            AutomationProperties.SetName(preview, "Model council synthesis preview");
+            var review = new ContentDialog { Title = "Review model council synthesis", Content = preview, PrimaryButtonText = "Use in composer", CloseButtonText = "Discard", XamlRoot = XamlRoot };
+            if (await review.ShowAsync() == ContentDialogResult.Primary) { PromptBox.Text = preview.Text; PromptBox.Focus(FocusState.Programmatic); }
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Council synthesis failed: {ex.Message}"; }
     }
 
     private async Task OpenModelLibraryAndRestoreFocusAsync(bool returnToCompactSidebar, Control? trigger, bool confirmModelSwitch = false)

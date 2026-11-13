@@ -34,7 +34,7 @@ and acceptance evidence.
 - [ ] 1M+ token context support.
 - [ ] Omni-modal input for text, images, audio, and video.
 - [x] Chat export and split view.
-- [ ] NotebookLM-style mode grounded only in uploaded documents. (A bounded, session-only documents-only Chat guard exists; durable corpus management and full retrieval remain open.)
+- [x] NotebookLM-style mode grounded only in uploaded documents. (Bounded session-only mode is available from the composer, More actions, and command palette; durable corpus management remains open.)
 
 ## Agents and tools
 
@@ -130,7 +130,7 @@ and acceptance evidence.
 - [ ] React/TypeScript extension SDK.
 - [ ] Team-shared commands, snippets, and private extension store.
 - [ ] One-time purchase/no-subscription option.
-- [ ] Model Council that merges answers from multiple models.
+- [x] Model Council that merges answers from multiple models. (Bounded comparison answers can be sent to the selected model for review-first synthesis; automatic routing and durable council history remain open.)
 - [x] Effort modes: Light, Standard, High, and Ultra. (Persisted local choice maps to bounded compatible-provider output budgets; provider-specific reasoning controls remain open.)
 - [x] Adaptive reasoning depth. (Adaptive effort selects a bounded 512/1,024/2,048/4,096 output budget from request size; provider-native reasoning controls remain open.)
 - [ ] Speculative decoding with DFlash, DSpark, or MTP drafters.

@@ -756,6 +756,7 @@ public sealed partial class MainPage
             actions.Children.Add(button);
         }
         AddAction("Projects & folders", "projects", "Create a project, choose local folders, and manage project context.");
+        AddAction("Documents-only mode", "documents", "Ground Chat only in attached documents for the current session.");
         AddAction("Search conversations", "search", "Find saved chats and coding sessions.");
         AddAction("Code Review Agent", "review", "Review a folder, ZIP, or GitHub repository with your selected model.");
         AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
@@ -771,6 +772,7 @@ public sealed partial class MainPage
         switch (selected)
         {
             case "projects": NewProjectClick(this, new RoutedEventArgs()); break;
+            case "documents": DocumentsOnlyClick(this, new RoutedEventArgs()); break;
             case "search": SearchClick(this, new RoutedEventArgs()); break;
             case "review": await OpenCodeReviewAgentAsync(); break;
             case "health": await ShowLocalHealthAsync(includeMap: false); break;

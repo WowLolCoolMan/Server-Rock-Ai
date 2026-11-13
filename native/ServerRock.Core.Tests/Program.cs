@@ -34,6 +34,7 @@ ConversationSearchTests.Run();
 ScheduledTaskTests.Run();
 NavigationHistoryTests.Run();
 ModelComparisonPolicyTests.Run();
+ModelCouncilPolicyTests.Run();
 SkillPackageInstallerTests.Run();
 McpToolPermissionGateTests.Run();
 await McpStdioClientTests.RunAsync();
