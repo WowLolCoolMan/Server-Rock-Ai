@@ -39,7 +39,8 @@ public sealed partial class MainPage
     {
         var choice = CompanionChoices.FirstOrDefault(item => item.Id == _companionState.PetId) ?? CompanionChoices[0];
         _companionState = _companionState with { PetId = choice.Id };
-        CompanionImage.Source = ResolveCompanionAsset(choice);
+        // Cross-fades and animates the frame (MainPage.CompanionAnimation.cs).
+        ApplyCompanionFrame(ResolveCompanionAsset(choice));
         CompanionName.Text = choice.Name;
         CompanionOverlay.Visibility = _companionState.IsVisible && !_companionOverlayBlocked ? Visibility.Visible : Visibility.Collapsed;
         CompanionButtonLabel.Text = _companionState.IsVisible ? "Hide pet" : "Show pet";
@@ -88,6 +89,7 @@ public sealed partial class MainPage
         var safe = string.IsNullOrWhiteSpace(message) ? "Ready for your next prompt." : message.Trim();
         if (safe.Length > 240) safe = safe[..237].TrimEnd() + "…";
         CompanionSpeech.Text = safe;
+        ShowCompanionSpeech();
     }
 
     private void SetCompanionCompletionSummary(string response)

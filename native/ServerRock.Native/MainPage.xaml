@@ -35,12 +35,24 @@
     <Canvas x:Name="CompanionOverlay" Grid.ColumnSpan="2" Visibility="Collapsed" Loaded="CompanionOverlayLoaded" SizeChanged="CompanionOverlaySizeChanged">
       <Border x:Name="CompanionCard" Width="230" Background="{x:Null}" BorderThickness="0" Padding="0" AutomationProperties.Name="Pet companion">
         <StackPanel HorizontalAlignment="Center" Spacing="4">
-          <TextBlock x:Name="CompanionSpeech" Text="Ready for your next prompt." FontSize="11" Foreground="#28474e" TextWrapping="Wrap" MaxWidth="210" HorizontalAlignment="Center" IsHitTestVisible="False" AutomationProperties.Name="Pet completion summary" />
-          <Grid Width="84" Height="84" HorizontalAlignment="Center">
-            <Image x:Name="CompanionImage" Width="72" Height="72" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion sprite" AutomationProperties.HelpText="Drag the sprite to move it, or focus it and use the arrow keys. Hold Shift to move farther." />
-            <Button Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="#527177" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
+          <!-- Pet speech: a token-colored bubble in a fixed-height slot, so a longer message grows
+               the bubble upward instead of pushing the sprite down. Hidden with Opacity, not
+               Visibility, for the same reason. -->
+          <Grid Height="56" IsHitTestVisible="False">
+            <Border x:Name="CompanionSpeechBubble" VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="9,5">
+              <TextBlock x:Name="CompanionSpeech" Text="Ready for your next prompt." FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource InkBrush}" TextWrapping="Wrap" TextAlignment="Center" MaxLines="3" TextTrimming="CharacterEllipsis" MaxWidth="196" AutomationProperties.Name="Pet completion summary" />
+            </Border>
           </Grid>
-          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="10" Foreground="#6f878c" HorizontalAlignment="Center" Opacity="0.85" IsHitTestVisible="False" />
+          <Grid Width="84" Height="84" HorizontalAlignment="Center">
+            <!-- CompanionSprite carries the animation transform (MainPage.CompanionAnimation.cs);
+                 CompanionImageFade holds the previous frame during a cross-fade. -->
+            <Grid x:Name="CompanionSprite" Width="80" Height="80" VerticalAlignment="Center" HorizontalAlignment="Center">
+              <Image x:Name="CompanionImageFade" Stretch="Uniform" Opacity="0" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
+              <Image x:Name="CompanionImage" Stretch="Uniform" IsTabStop="True" ImageFailed="CompanionImageFailed" KeyDown="CompanionKeyDown" PointerPressed="CompanionPointerPressed" PointerMoved="CompanionPointerMoved" PointerReleased="CompanionPointerReleased" PointerCaptureLost="CompanionPointerCaptureLost" AutomationProperties.Name="Move companion sprite" AutomationProperties.HelpText="Drag the sprite to move it, or focus it and use the arrow keys. Hold Shift to move farther." />
+            </Grid>
+            <Button Content="×" Click="HideCompanionClick" Background="Transparent" Foreground="{StaticResource MutedInkBrush}" BorderThickness="0" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Hide pet companion" />
+          </Grid>
+          <TextBlock x:Name="CompanionName" Text="Rocky" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource MutedInkBrush}" HorizontalAlignment="Center" IsHitTestVisible="False" />
         </StackPanel>
       </Border>
     </Canvas>
