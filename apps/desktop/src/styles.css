@@ -7,7 +7,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .app-shell { display: grid; grid-template-columns: 276px minmax(0, 1fr); min-height: 100vh; background: radial-gradient(circle at 70% -20%, color-mix(in srgb, var(--skai-color-accent) 12%, transparent), transparent 34%), var(--skai-color-canvas); }
 .sidebar { display: flex; flex-direction: column; gap: var(--skai-space-6); min-height: 100vh; padding: 28px 18px 18px; color: #263044; background: #f2f0eb; border-right: 1px solid rgba(38,48,68,.12); }
 .brand-lockup { display: flex; align-items: center; gap: 12px; padding: 0 8px 10px; }
-.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: #f7f5ef; background: #222b3d; box-shadow: 0 8px 16px rgba(33,44,65,.2); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; overflow: hidden; border-radius: 10px; color: #f7f5ef; background: #222b3d; box-shadow: 0 8px 16px rgba(33,44,65,.2); font-size: 11px; font-weight: 800; letter-spacing: .08em; }.brand-mark img { display: block; width: 30px; height: 30px; object-fit: contain; }
 .brand-lockup h1 { margin: 2px 0 0; color: #1d2638; font-size: 15px; letter-spacing: -.02em; }
 .eyebrow, .section-kicker, .signal-label, .inspector-label { margin: 0; font-family: var(--skai-font-mono); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .eyebrow { color: #7e8798; }
