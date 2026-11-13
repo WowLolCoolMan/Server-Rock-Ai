@@ -312,8 +312,10 @@ public sealed partial class MainPage
                 RecordActiveProviderAttempt("failed", "provider timeout");
                 FailActiveOperation("provider timeout");
             }
-            SetCompanionState("stuck");
-            UpdateCompanionSpeech("Stuck · the response timed out.");
+            // Pet: Stop is the user's choice, not a stuck model; only a timeout shows "stuck".
+            var stoppedByUser = _requestCancellation?.IsCancellationRequested == true;
+            SetCompanionState(stoppedByUser ? "idle" : "stuck");
+            UpdateCompanionSpeech(stoppedByUser ? "Stopped." : "Stuck · the response timed out.");
         }
         catch (Exception ex)
         {
