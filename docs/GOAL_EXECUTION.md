@@ -6938,6 +6938,9 @@ Evidence:
 
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
   net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including agent-task lifecycle, dependency, result,
+  and search coverage.
 - `npm run audit:native-ui` — passed with 232 contracts.
 - `git diff --check` — passed.
 
