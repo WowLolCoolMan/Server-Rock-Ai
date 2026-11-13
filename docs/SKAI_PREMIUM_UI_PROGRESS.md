@@ -34,6 +34,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `3c5258e` — added a Chat task brief composer using the existing local-only planning contract and Workbench handoff.
 - `3824ada` — fixed Recent Chats to select conversations by persistent ID and restore the selected message set in place.
 - `fb2d479` — replaced Chat's oversized page hero with a compact contextual bar and separated the conversation and composer into a stable two-row workspace.
+- `4a4d4bb` — made Agent Workbench list/detail the default task view while retaining the lifecycle board as an explicit alternate view.
 
 ## Current evidence
 
@@ -68,6 +69,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Chat task composer check: passed local `tasks.plan` submission, proposed-task handoff to Workbench, explicit unavailable Worktree state, no Cloud UI, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-chat-task-composer-open.png` and `output/playwright/skai-chat-task-composer.png`.
 - Conversation selection check: passed selecting a saved chat by ID, restoring its messages without leaving Chat, hiding the prior conversation, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-conversation-selection.png`.
 - Chat visual refinement check: passed compact contextual hierarchy, removal of the oversized hero, separate conversation/composer geometry, local task composer visibility, no Cloud UI, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-chat-compact-header.png`.
+- Workbench list/detail check: passed list-first rendering, selected task detail with brief/status/result, Board view toggle, selection restoration, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-workbench-list-detail.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
