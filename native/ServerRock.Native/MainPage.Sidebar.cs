@@ -139,7 +139,7 @@ public sealed partial class MainPage
         var agentTaskHeader = new TextBlock
         {
             Text = "AGENT TASK ARTIFACTS",
-            FontSize = 11,
+            FontSize = UiTheme.FontSize("SectionLabelFontSize"),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Opacity = 0.75,
             Margin = new Thickness(0, 8, 0, 0)
@@ -181,7 +181,7 @@ public sealed partial class MainPage
                 try
                 {
                     var matches = _agentTaskStore.Search(query.Text).Take(20).ToArray();
-                    results.Children.Add(new TextBlock { Text = $"{matches.Length} local task plan{(matches.Length == 1 ? "" : "s")} matched.", FontSize = 11, Opacity = 0.72 });
+                    results.Children.Add(new TextBlock { Text = $"{matches.Length} local task plan{(matches.Length == 1 ? "" : "s")} matched.", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72 });
                     foreach (var match in matches)
                     {
                         var dependencies = match.DependsOn.Count == 0 ? "no dependencies" : $"{match.DependsOn.Count} dependencies";
@@ -229,13 +229,13 @@ public sealed partial class MainPage
                     {
                         new TextBlock { Text = $"{task.Status} · {task.Role} · {task.UpdatedAtUtc.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
                         new TextBlock { Text = task.Title, TextWrapping = TextWrapping.Wrap },
-                        new TextBlock { Text = $"{dependencyText} · task {task.Id[..Math.Min(8, task.Id.Length)]}", FontSize = 11, Opacity = 0.7 }
+                        new TextBlock { Text = $"{dependencyText} · task {task.Id[..Math.Min(8, task.Id.Length)]}", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.7 }
                     }
                 };
                 if (!string.IsNullOrWhiteSpace(task.ResultSummary))
-                    taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                    taskPanel.Children.Add(new TextBlock { Text = task.ResultSummary, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                 if (task.ArtifactLabels.Count > 0)
-                    taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                    taskPanel.Children.Add(new TextBlock { Text = "Artifacts: " + string.Join(", ", task.ArtifactLabels), FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                 if (task.WorktreePath is not null)
                     taskPanel.Children.Add(new TextBlock { Text = $"Worktree retained for review · {task.WorktreeBranch}", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("StatusInkBrush"), TextWrapping = TextWrapping.Wrap });
                 var inspectAgentTask = new Button { Content = "Inspect task details", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
@@ -245,8 +245,8 @@ public sealed partial class MainPage
                 {
                     var detailContent = new StackPanel { Spacing = 8 };
                     AutomationProperties.SetName(detailContent, "Agent task details");
-                    detailContent.Children.Add(new TextBlock { Text = task.Title, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
-                    detailContent.Children.Add(new TextBlock { Text = $"{task.Status} · {task.Role} · updated {task.UpdatedAtUtc.ToLocalTime():g}", FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = task.Title, FontSize = UiTheme.FontSize("SubtitleFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+                    detailContent.Children.Add(new TextBlock { Text = $"{task.Status} · {task.Role} · updated {task.UpdatedAtUtc.ToLocalTime():g}", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
                     detailContent.Children.Add(new TextBlock { Text = "Instruction", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
                     detailContent.Children.Add(new TextBlock { Text = task.Instruction, TextWrapping = TextWrapping.Wrap });
                     detailContent.Children.Add(new TextBlock { Text = "Result summary", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
@@ -334,7 +334,7 @@ public sealed partial class MainPage
             var recurrence = task.RepeatEveryMinutes is null ? "one-time" : $"every {task.RepeatEveryMinutes} min · run {task.RunCount}";
             taskPanel.Children.Add(new TextBlock { Text = $"{task.Status} · {task.DueAtUtc.ToLocalTime():g} · {task.WorkspaceMode} · {recurrence}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
             taskPanel.Children.Add(new TextBlock { Text = task.Prompt, TextWrapping = TextWrapping.Wrap });
-            if (task.Outcome is not null) taskPanel.Children.Add(new TextBlock { Text = task.Outcome, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
+            if (task.Outcome is not null) taskPanel.Children.Add(new TextBlock { Text = task.Outcome, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
             if (task.Status is ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Paused)
             {
                 if (task.Status == ScheduledTaskStatuses.Scheduled)
@@ -362,7 +362,7 @@ public sealed partial class MainPage
         var pendingApprovals = _workflowRunService.LoadPendingApprovals();
         if (pendingApprovals.Count > 0)
         {
-            content.Children.Add(new TextBlock { Text = $"PENDING APPROVALS · {pendingApprovals.Count}", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75 });
+            content.Children.Add(new TextBlock { Text = $"PENDING APPROVALS · {pendingApprovals.Count}", FontSize = UiTheme.FontSize("SectionLabelFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75 });
             foreach (var approval in pendingApprovals)
             {
                 var approvalPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
@@ -432,7 +432,7 @@ public sealed partial class MainPage
                     {
                         new TextBlock { Text = $"{OperationStatusLabel(run.Status)} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
                         new TextBlock { Text = preview, TextWrapping = TextWrapping.Wrap },
-                        new TextBlock { Text = $"{run.ModelProvider} · {run.Model} · {run.EndpointPrivacy} endpoint · Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = 11, Opacity = 0.7 }
+                        new TextBlock { Text = $"{run.ModelProvider} · {run.Model} · {run.EndpointPrivacy} endpoint · Run {run.RunId[..Math.Min(8, run.RunId.Length)]} · sequence {run.LastEventSequence}", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.7 }
                     }
                 };
                 if (run.Status == OperationRunStatuses.NeedsReconciliation)
@@ -462,12 +462,12 @@ public sealed partial class MainPage
 
         if (workflowSnapshot.Runs.Count > 0)
         {
-            content.Children.Add(new TextBlock { Text = "WORKFLOW RUNS", FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75, Margin = new Thickness(0, 8, 0, 0) });
+            content.Children.Add(new TextBlock { Text = "WORKFLOW RUNS", FontSize = UiTheme.FontSize("SectionLabelFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.75, Margin = new Thickness(0, 8, 0, 0) });
             foreach (var run in workflowSnapshot.Runs.OrderByDescending(item => item.UpdatedAt).Take(50))
             {
                 var runPanel = new StackPanel { Spacing = 3 };
                 runPanel.Children.Add(new TextBlock { Text = $"{WorkflowStatusLabel(run.Status)} · v{run.WorkflowVersion} · {run.UpdatedAt.ToLocalTime():g}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-                runPanel.Children.Add(new TextBlock { Text = $"Workflow {run.WorkflowId} · run {run.RunId[..Math.Min(8, run.RunId.Length)]}", FontSize = 11, Opacity = 0.7 });
+                runPanel.Children.Add(new TextBlock { Text = $"Workflow {run.WorkflowId} · run {run.RunId[..Math.Min(8, run.RunId.Length)]}", FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.7 });
                 var previewPlan = new Button { Content = "Preview plan", Style = (Style?)Application.Current.Resources["ContextButtonStyle"], HorizontalAlignment = HorizontalAlignment.Left };
                 AutomationProperties.SetName(previewPlan, $"Preview workflow plan for {run.WorkflowId}");
                 previewPlan.Click += async (_, _) =>
@@ -495,13 +495,13 @@ public sealed partial class MainPage
                 var events = workflowSnapshot.Events.Where(item => item.RunId == run.RunId).OrderBy(item => item.Sequence).ToArray();
                 if (events.Length > 0)
                 {
-                    runPanel.Children.Add(new TextBlock { Text = "EFFECT TIMELINE", FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.7, Margin = new Thickness(8, 6, 0, 0) });
+                    runPanel.Children.Add(new TextBlock { Text = "EFFECT TIMELINE", FontSize = UiTheme.FontSize("SectionLabelFontSize"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Opacity = 0.7, Margin = new Thickness(8, 6, 0, 0) });
                     foreach (var workflowEvent in events.TakeLast(12))
                     {
                         runPanel.Children.Add(new TextBlock
                         {
                             Text = $"#{workflowEvent.Sequence} · {WorkflowEventLabel(workflowEvent)}",
-                            FontSize = 11,
+                            FontSize = UiTheme.FontSize("CaptionFontSize"),
                             TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(8, 1, 0, 0)
                         });
@@ -576,13 +576,13 @@ public sealed partial class MainPage
             {
                 new TextBlock { Text = "Prerequisites (optional)" },
                 dependencyPicker,
-                new TextBlock { Text = existingTasks.Count == 0 ? "No existing local tasks to select." : "Select up to eight existing local tasks that must complete first.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.72 }
+                new TextBlock { Text = existingTasks.Count == 0 ? "No existing local tasks to select." : "Select up to eight existing local tasks that must complete first.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.72 }
             }
         };
         AutomationProperties.SetName(title, "Agent task title");
         AutomationProperties.SetName(instruction, "Agent task instruction");
         AutomationProperties.SetName(role, "Agent task role");
-        var content = new StackPanel { Spacing = 9, Children = { title, instruction, role, dependencyBlock, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } };
+        var content = new StackPanel { Spacing = 9, Children = { title, instruction, role, dependencyBlock, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Opacity = 0.78 } } };
         var dialog = new ContentDialog
         {
             Title = "Plan agent task",
@@ -766,7 +766,7 @@ public sealed partial class MainPage
                     Children =
                     {
                         new TextBlock { Text = label, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-                        new TextBlock { Text = description, FontSize = 11, TextWrapping = TextWrapping.Wrap, Opacity = 0.75 }
+                        new TextBlock { Text = description, FontSize = UiTheme.FontSize("CaptionFontSize"), TextWrapping = TextWrapping.Wrap, Opacity = 0.75 }
                     }
                 },
                 HorizontalContentAlignment = HorizontalAlignment.Left,

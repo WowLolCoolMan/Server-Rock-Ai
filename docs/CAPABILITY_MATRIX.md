@@ -289,6 +289,11 @@ onto shared semantic tokens while preserving the explicit enablement and
 Markdown-only safety boundary. Broader code-built legacy token migration and
 live cross-preset visual acceptance remain open.
 
+Slice 224 moves Activity & tasks and agent-task planning metadata onto shared
+section/subtitle/caption type-scale tokens. Approval, reconciliation, workflow,
+and worktree behavior are unchanged; broader code-built legacy migration and
+live cross-preset visual acceptance remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

@@ -1,6 +1,6 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 223, including the
+Snapshot: `main` at the current checkout through Slice 224, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
 durable project-file tabs/resume action, Git conflict recovery guidance, and
 the capability-neutral agent execution lifecycle, enforced release workflow
@@ -17,6 +17,7 @@ and approved-memory disclosure surfaces.
 It also includes semantic model-library comparison and status typography.
 It also includes semantic typography for the installed-skills details and
 status surface.
+It also includes semantic Activity & tasks and agent-task planning typography.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

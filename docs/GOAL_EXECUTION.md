@@ -7643,6 +7643,43 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 224 — Tokenize Activity and agent-task typography
+
+Status: `implemented_native_ui_token_audit_verified`
+
+Requirement alignment: the Activity & tasks surface still used raw sizes for
+agent-task headers/details, scheduled-task outcomes, pending approvals,
+operation metadata, workflow labels, effect timelines, and planning guidance.
+These now use the shared section, subtitle, and caption type-scale resources.
+Task planning, approval countdowns, reconciliation actions, worktree release,
+and workflow review behavior are unchanged.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `node scripts/audit-native-ui.cjs` — passed with 315 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: typography-only substitutions. Activity remains
+local and redacted, approval and execution boundaries are unchanged, and no
+new dependency or external data path is introduced.
+
+Risk and rollback: restore the previous raw font sizes and remove the three
+focused audit contracts. No task, workflow, approval, or user data changes.
+
+Remaining: broader code-built legacy typography/color migration and live
+cross-preset visual acceptance remain open.
+
 ## Slice 223 — Tokenize skills dialog surfaces
 
 Status: `implemented_native_ui_token_audit_verified`
