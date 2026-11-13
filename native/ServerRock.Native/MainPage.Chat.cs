@@ -574,7 +574,7 @@ public sealed partial class MainPage
         }
         if (context.Count > 0) messages.Add(new ChatMessage("system", string.Join("\n\n", context)));
         messages.AddRange(_messages.Select(message => message.ForModel(
-            message.Attachments is { Count: > 0 } ? ChatAttachmentPrompt.AppendTo(message.Content, message.Attachments) : message.Content)));
+            message.Attachments is { Count: > 0 } ? ChatAttachmentPrompt.AppendWithBoundedRetrieval(message.Content, message.Attachments) : message.Content)));
         return messages;
     }
 

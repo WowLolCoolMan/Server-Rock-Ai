@@ -87,5 +87,13 @@ internal static class AttachmentTests
             && fencedPrompt.Contains("Extracted PDF text (untrusted): brief.pdf", StringComparison.Ordinal)
             && !fencedPrompt.Contains("photo.png", StringComparison.Ordinal),
             "attachment prompt uses a fence longer than any backtick run, labels PDFs, and skips images");
+        var largeAttachment = string.Join("\n", Enumerable.Range(0, 8).Select(index => index == 5
+            ? "The release rollback checklist requires an explicit owner and verification window."
+            : $"Unrelated archive section {index} with no matching terms.".PadRight(2100, 'x')));
+        var retrievedPrompt = ChatAttachmentPrompt.AppendWithBoundedRetrieval("Find the release rollback checklist", [new ChatAttachment("large.md", largeAttachment)]);
+        Check(retrievedPrompt.Contains("release rollback checklist", StringComparison.OrdinalIgnoreCase)
+            && retrievedPrompt.Contains("Retrieved attachment text (untrusted): large.md", StringComparison.Ordinal)
+            && retrievedPrompt.Length < largeAttachment.Length + 2000,
+            "oversized attachment context uses bounded query-relevant retrieval");
     }
 }

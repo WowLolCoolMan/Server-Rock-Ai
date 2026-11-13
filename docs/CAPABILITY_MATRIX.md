@@ -248,3 +248,9 @@ Recent slice note — Slice 169: added a persisted Advanced → Developer mode
 toggle and a gated Ctrl+K/More diagnostics surface. Live Windows enabled the
 mode, saved it, and rendered bounded local runtime/model facts without exposing
 credentials, running commands, changing approvals, or sending provider data.
+
+Recent slice note — Slice 170: oversized text and PDF attachments now use a
+bounded lexical retrieval pass before prompt construction, while smaller files
+retain full-text injection and images retain the existing vision path. Core
+coverage proves query-relevant chunk selection and output bounding. Vector
+backends, reranking, OCR, and a full NotebookLM-style corpus remain open.

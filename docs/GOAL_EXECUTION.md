@@ -6617,3 +6617,47 @@ normal chat, settings, provider, and approval behavior remain unchanged.
 Remaining: richer debugger integrations, trace viewers, cross-platform
 diagnostics, and packaged-runtime/accessibility coverage remain open. This
 slice does not claim an IDE or unrestricted developer console.
+
+## Slice 170 — Bounded attachment retrieval
+
+Status: `implemented_core_verified_bounded_lexical_retrieval`
+
+Oversized text and PDF attachments now pass through a local lexical retrieval
+step before prompt construction. The query terms from the user turn score
+bounded 2,000-character chunks; the highest-scoring chunks are restored to
+document order and capped at 12,000 characters per attachment. Small files
+continue using the prior full-text path, and images remain image parts for the
+existing vision-capable provider path. Retrieved content remains labeled
+untrusted context and no new provider route is introduced.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ChatAttachmentPrompt.cs`
+- `native/ServerRock.Core.Tests/AttachmentTests.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including oversized attachment query-relevance and
+  output-bound assertions.
+- `npm run audit:native-ui` — passed with 230 contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: retrieval is local deterministic string matching;
+it adds no dependency, telemetry, vector store, credential access, or hidden
+network request. Attachment content remains explicitly marked untrusted so it
+cannot silently become instructions. Existing remote-attachment consent and
+local-only endpoint policy remain unchanged.
+
+Rollback: restore `ChatAttachmentPrompt.AppendTo` at the provider message
+construction call site; the existing attachment picker, bounds, and image path
+remain independently usable.
+
+Remaining: vector database backends, hybrid BM25/vector/rerank search, OCR and
+additional extraction engines, corpus management, agentic retrieval, and a
+full NotebookLM-style uploaded-document mode remain open.
