@@ -18,7 +18,7 @@ const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] ===
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
-  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract",
+  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop",
   "workspace.pickFolder",
 ]);
 
@@ -28,6 +28,7 @@ function startAgentHost() {
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
+  const startedHost = host;
 
   hostReader = readline.createInterface({ input: host.stdout });
   hostReader.on("line", (line) => {
@@ -51,7 +52,22 @@ function startAgentHost() {
     const error = { v: 1, ok: false, error: { code: "HOST_EXITED", message: `Agent host exited (${code ?? signal}).` } };
     for (const resolve of pending.values()) resolve(error);
     pending.clear();
+    if (host === startedHost) host = undefined;
   });
+}
+
+function stopAgentHost() {
+  if (!host) return;
+  const currentHost = host;
+  host = undefined;
+  const error = { v: 1, ok: false, error: { code: "HOST_STOPPED", message: "Agent host is shutting down." } };
+  for (const resolve of pending.values()) resolve(error);
+  pending.clear();
+  if (!currentHost.stdin.destroyed) currentHost.stdin.end();
+  const forceStop = setTimeout(() => {
+    if (!currentHost.killed) currentHost.kill();
+  }, 1500);
+  currentHost.once("exit", () => clearTimeout(forceStop));
 }
 
 function requestAgent(method, params) {
@@ -152,6 +168,8 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (host && !host.killed) host.kill();
+  if (process.platform !== "darwin") stopAgentHost();
   if (process.platform !== "darwin") app.quit();
 });
+
+app.on("before-quit", stopAgentHost);

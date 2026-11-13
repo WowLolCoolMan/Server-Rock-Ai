@@ -14,6 +14,7 @@ public static class AgentHostLoop
     {
         using var reader = new StreamReader(input);
         await using var writer = new StreamWriter(output) { AutoFlush = true };
+        using var voice = new OsNativeTtsService();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -28,7 +29,7 @@ public static class AgentHostLoop
                 parsedRequest = JsonSerializer.Deserialize<AgentRequest>(line, JsonOptions);
                 var request = parsedRequest
                     ?? throw new InvalidOperationException("Request body was empty.");
-                response = Handle(request);
+                response = Handle(request, voice);
             }
             catch (JsonException ex)
             {
@@ -43,7 +44,7 @@ public static class AgentHostLoop
         }
     }
 
-    private static AgentResponse Handle(AgentRequest request)
+    private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice)
     {
         if (request.V != ProtocolVersion)
             return new(ProtocolVersion, request.Id, false, Error: new("UNSUPPORTED_PROTOCOL", $"Protocol version {request.V} is not supported."));
@@ -54,7 +55,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -89,8 +90,40 @@ public static class AgentHostLoop
             "settings.save" => SaveSettings(request),
             "image.generate" => GenerateImageAsync(request).GetAwaiter().GetResult(),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
+            "voice.models" => ListVoiceModels(request),
+            "voice.speak" => SpeakVoice(request, voice),
+            "voice.stop" => StopVoice(request, voice),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
+    }
+
+    private static AgentResponse ListVoiceModels(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, new
+        {
+            models = VoiceModelCatalog.All.Select(model => new
+            {
+                id = model.Id,
+                name = model.Name,
+                detail = model.Description,
+                size = model.Size,
+                installed = model.IsInstalled,
+                lowResource = model.IsLowResource,
+            }).ToArray(),
+        });
+
+    private static AgentResponse SpeakVoice(AgentRequest request, OsNativeTtsService voice)
+    {
+        var text = RequiredSpeechText(request, "text", 4_000);
+        var rate = OptionalDouble(request, "rate") ?? 1;
+        if (rate is < 0.5 or > 2) throw new InvalidOperationException("rate must be between 0.5 and 2.");
+        var engine = voice.Speak(text, rate);
+        return new(ProtocolVersion, request.Id, true, new { spoken = true, engine, interruptible = true });
+    }
+
+    private static AgentResponse StopVoice(AgentRequest request, OsNativeTtsService voice)
+    {
+        voice.Stop();
+        return new(ProtocolVersion, request.Id, true, new { stopped = true });
     }
 
     private static AgentResponse ListModels(AgentRequest request)
@@ -695,6 +728,14 @@ public static class AgentHostLoop
         var value = RequiredString(request, name);
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
         return value.Trim();
+    }
+
+    private static string RequiredSpeechText(AgentRequest request, string name, int maxLength)
+    {
+        var value = RequiredString(request, name);
+        if (value.Length > maxLength || value.Any(character => char.IsControl(character) && character is not ('\r' or '\n' or '\t')))
+            throw new InvalidOperationException($"{name} exceeds its safety limit.");
+        return value.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
     }
 
     private static string? OptionalBoundedValue(string? value, int maxLength)

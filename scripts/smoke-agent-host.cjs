@@ -48,8 +48,15 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
+  const voices = await request("voice.models");
+  if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
+    throw new Error("voice.models did not advertise the installed OS-native voice engine.");
+  const invalidSpeech = await request("voice.speak", { text: "   " });
+  if (invalidSpeech.ok) throw new Error("voice.speak accepted empty text.");
+  const stoppedVoice = await request("voice.stop");
+  if (!stoppedVoice.ok || stoppedVoice.result?.stopped !== true) throw new Error("voice.stop did not acknowledge the idle interruption request.");
   const before = await request("conversations.list");
   if (!before.ok || !Array.isArray(before.result) || before.result.length !== 0)
     throw new Error("Disposable conversation history was not empty.");
@@ -67,15 +74,24 @@ async function run() {
   if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow.") throw new Error("tasks.plan persistence round-trip failed.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
   if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
-  console.log("Agent host replacement smoke passed: health, disposable conversation/settings persistence, and local task planning.");
+  console.log("Agent host replacement smoke passed: health, voice protocol, disposable conversation/settings persistence, and local task planning.");
 }
 
 run().catch(error => {
   console.error(error.message);
   if (stderr.trim()) console.error(stderr.trim());
   process.exitCode = 1;
-}).finally(() => {
-  child.kill();
+}).finally(async () => {
+  if (!child.stdin.destroyed) child.stdin.end();
+  if (child.exitCode !== null) {
+    reader.close();
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+    return;
+  }
+  await new Promise(resolve => {
+    const timeout = setTimeout(() => { if (!child.killed) child.kill(); }, 1500);
+    child.once("exit", () => { clearTimeout(timeout); resolve(); });
+  });
   reader.close();
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });

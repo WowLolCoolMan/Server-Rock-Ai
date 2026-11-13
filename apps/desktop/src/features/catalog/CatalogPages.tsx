@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Model } from "../../app/types";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
+import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
 
 function modelProvider(model: string) {
   const separator = model.indexOf("/");
@@ -53,6 +54,8 @@ export function MarketplacePage() {
     return matchesCategory && haystack.includes(query.trim().toLowerCase());
   }), [category, query]);
   const selected = filtered.find((card) => card.title === selectedTitle) ?? filtered[0] ?? null;
+  const [voiceSettings, setVoiceSettings] = useState(selectedVoiceSettings);
+  const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
 
   return <div className="feature-page">
     <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Find the models, voices, image packs, skills, and tools that power your workspace." />
@@ -80,7 +83,15 @@ export function MarketplacePage() {
           <div className="marketplace-detail-heading"><div><p className="section-kicker">SELECTED CATEGORY</p><h3>{selected.title}</h3></div><StatusBadge>Not connected</StatusBadge></div>
           <p>{selected.detail}</p>
           <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>Catalog connection not configured</dd></div><div><dt>Next step</dt><dd>Connect a catalog or local source in Settings.</dd></div></dl>
-          <p className="marketplace-honesty">Discovery is available as a local presentation. Installation and activation stay disabled until a real backend is connected.</p>
+          {selected.category === "Voices" ? <div className="marketplace-voice-controls">
+            <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
+            <label>Low-resource mode voice<select value={voiceSettings.lowResourceModelId} onChange={(event) => updateVoice("lowResourceModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
+            <label>Voice profile<select value={voiceSettings.profileId} onChange={(event) => updateVoice("profileId", event.target.value)}>{voiceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.description}</option>)}</select></label>
+            <label className="settings-toggle"><span><strong>Speak completed replies</strong><small>Voice output stays off until you turn it on.</small></span><input type="checkbox" checked={voiceSettings.voiceOutputEnabled} onChange={(event) => updateVoice("voiceOutputEnabled", event.target.checked)} /></label>
+            <label className="settings-toggle"><span><strong>Use low-resource mode</strong><small>Use the separately assigned voice model on constrained laptops.</small></span><input type="checkbox" checked={voiceSettings.lowResourceMode} onChange={(event) => updateVoice("lowResourceMode", event.target.checked)} /></label>
+            <div className="marketplace-voice-actions"><Button variant="secondary" onClick={() => void speakNativeResponse("Skai voice preview. This uses the operating system voice service.", true)}>Preview OS voice</Button><Button variant="ghost" onClick={stopNativeSpeech}>Stop preview</Button></div>
+            <p className="marketplace-honesty">OS-native speech is installed and active now. Kokoro and Pocket TTS are selectable profiles, but remain unavailable until their C# model-pack adapter is installed.</p>
+          </div> : <p className="marketplace-honesty">Discovery is available as a local presentation. Installation and activation stay disabled until a real backend is connected.</p>}
         </Card>}
       </div>
     </Card>

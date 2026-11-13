@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { AgentRequest } from "../../services/agentClient";
 import type { ChatAttachment, DesktopConversation, DesktopQueuedMessage } from "../../../shared/contracts";
 import type { Message } from "../../app/types";
+import { speakNativeResponse, stopNativeSpeech } from "../../services/nativeTts";
 
 type ChatWorkspaceOptions = {
   request: AgentRequest;
@@ -47,6 +48,7 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
   };
 
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
+    stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null);
     const savedId = await saveConversation(next);
@@ -55,6 +57,7 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
+    void speakNativeResponse(completed.at(-1)?.content ?? "");
   };
 
   const retryMessage = async (messageIndex: number) => {
@@ -62,12 +65,14 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
     const originalMessages = messages;
     const prefix = messages.slice(0, messageIndex);
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
+    stopNativeSpeech();
     setMessages(prefix); setBusy(true); onError(null);
     const response = await request("chat.complete", { endpoint, model, messages: prefix });
     setBusy(false);
     if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, conversationId);
+    void speakNativeResponse(completed.at(-1)?.content ?? "");
   };
 
   const pickAttachments = async () => {
