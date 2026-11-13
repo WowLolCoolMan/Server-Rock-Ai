@@ -101,4 +101,15 @@ public sealed partial class MainPage
         catch (Exception ex) { RuntimeStatus.Text = $"Scheduled task could not be changed: {ex.Message}"; }
         await Task.CompletedTask;
     }
+
+    private async Task RunScheduledTaskNowAsync(ScheduledTask task, ContentDialog? activityDialog)
+    {
+        try
+        {
+            _scheduledTaskStore.RunNow(task.Id);
+            activityDialog?.Hide();
+            await ProcessDueScheduledTaskAsync();
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Scheduled task could not be run now: {ex.Message}"; }
+    }
 }

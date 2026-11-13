@@ -115,6 +115,7 @@ const requiredCode = [
   ['Operation activity search results', 'AutomationProperties.SetName(results, "Operation activity search results")'],
   ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],
+  ['Scheduled task run-now control', 'AutomationProperties.SetName(runNow, "Run scheduled task now")'],
   ['Skill explicit enablement control', 'AutomationProperties.SetName(enable, "Enable or disable selected skill")'],
   ['Skill update preview before install', 'Review this preview before installing'],
   ['Skill prompt variables are expanded before review', 'PromptVariableExpander.Expand'],

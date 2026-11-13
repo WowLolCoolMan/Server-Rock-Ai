@@ -136,6 +136,14 @@ public sealed partial class MainPage
             if (task.Outcome is not null) taskPanel.Children.Add(new TextBlock { Text = task.Outcome, FontSize = 11, Opacity = 0.72, TextWrapping = TextWrapping.Wrap });
             if (task.Status is ScheduledTaskStatuses.Scheduled or ScheduledTaskStatuses.Paused)
             {
+                if (task.Status == ScheduledTaskStatuses.Scheduled)
+                {
+                    var runNow = new Button { Content = "Run now", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                    AutomationProperties.SetName(runNow, "Run scheduled task now");
+                    AutomationProperties.SetHelpText(runNow, "Make this task due and surface its prompt for review. It will not send a model request automatically.");
+                    runNow.Click += async (_, _) => await RunScheduledTaskNowAsync(task, dialog);
+                    taskPanel.Children.Add(runNow);
+                }
                 var toggle = new Button { Content = task.Status == ScheduledTaskStatuses.Paused ? "Resume" : "Pause", HorizontalAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
                 AutomationProperties.SetName(toggle, $"{(task.Status == ScheduledTaskStatuses.Paused ? "Resume" : "Pause")} scheduled task");
                 toggle.Click += async (_, _) => await ChangeScheduledTaskAsync(task, task.Status == ScheduledTaskStatuses.Paused, dialog);

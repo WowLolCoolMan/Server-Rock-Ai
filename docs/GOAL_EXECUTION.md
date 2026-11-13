@@ -1888,6 +1888,45 @@ Not yet verified: live Windows toggle/save/send acceptance, remote-endpoint
 consent wording during an actual injected request, cross-platform UI behavior,
 semantic retrieval, and larger-context support.
 
+## Slice 90 — reviewed scheduled-task run-now control
+
+Status: `implemented_verified_core_and_native_build`
+
+Activity & tasks now exposes a Run now action for scheduled tasks. The action
+only moves the durable task's due time to the current instant, claims it through
+the existing scheduler boundary, and surfaces the prompt in the composer for
+human review. It does not send a provider request, bypass model availability,
+remote-data consent, or the normal Send control. Paused, completed, failed, and
+already-running tasks remain ineligible for this action.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ScheduledTaskStore.cs`
+- `native/ServerRock.Core.Tests/ScheduledTaskTests.cs`
+- `native/ServerRock.Native/MainPage.ScheduledTasks.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including the durable run-now and claim path.
+- native build — passed with 0 warnings/errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (142 contracts)`, including the accessible run-now control.
+- `git diff --check` — passed after the final patch.
+
+Privacy/security/licensing: the action is local-only state manipulation and
+does not dispatch network, model, shell, file, or Git work. The existing review
+and send boundaries remain in force. No dependency or third-party code was
+added.
+
+Rollback: remove `ScheduledTaskStore.RunNow`, the activity control, and its
+tests/audit contract; scheduled creation, pause/resume, and automatic due
+processing remain available.
+
+Not yet verified: live Windows activation of the new control, cross-platform UI
+behavior, OS-level background execution, and durable task synchronization across
+multiple app instances.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

@@ -92,6 +92,18 @@ public sealed class ScheduledTaskStore
         UpdateStatus(id, ScheduledTaskStatuses.Paused, ScheduledTaskStatuses.Scheduled);
     }
 
+    /// <summary>Marks a scheduled task due without executing its prompt.</summary>
+    public ScheduledTask RunNow(string id, DateTimeOffset? now = null)
+    {
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("A scheduled task ID is required.", nameof(id));
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new InvalidOperationException("The scheduled task no longer exists.");
+        if (task.Status != ScheduledTaskStatuses.Scheduled) throw new InvalidOperationException($"A task in {task.Status} state cannot be run now.");
+        task.DueAtUtc = now ?? DateTimeOffset.UtcNow;
+        Save(tasks);
+        return task;
+    }
+
     private void UpdateStatus(string id, string expected, string next)
     {
         var tasks = Load().ToList();

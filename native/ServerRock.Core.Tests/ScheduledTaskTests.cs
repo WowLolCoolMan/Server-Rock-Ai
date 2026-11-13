@@ -27,12 +27,17 @@ internal static class ScheduledTaskTests
         Check(rescheduled.Status == ScheduledTaskStatuses.Scheduled && rescheduled.RunCount == 1 && rescheduled.DueAtUtc == now.AddMinutes(131), "successful recurring task is durably rescheduled");
         Check(store.TryClaimDue(now.AddMinutes(12)) is null, "rescheduled task is not replayed early");
 
+        var runNow = store.Schedule("Run this task now", now.AddHours(1), WorkspaceModes.Chat, now);
+        var madeDue = store.RunNow(runNow.Id, now.AddMinutes(12));
+        Check(madeDue.Status == ScheduledTaskStatuses.Scheduled && madeDue.DueAtUtc == now.AddMinutes(12), "run now marks a scheduled task due without executing it");
+        Check(store.TryClaimDue(now.AddMinutes(12))?.Id == runNow.Id, "run now makes the task claimable");
+
         var paused = store.Schedule("Paused task", now.AddMinutes(8), WorkspaceModes.CodingAgent, now);
         store.Pause(paused.Id);
         Check(store.TryClaimDue(now.AddMinutes(9)) is null, "paused scheduled task is not claimed");
         store.Resume(paused.Id);
         Check(store.TryClaimDue(now.AddMinutes(9))?.Id == paused.Id, "paused task resumes explicitly");
-        Console.WriteLine("PASS scheduled task persistence, recurrence, claim, no-replay, outcome, pause, and resume");
+        Console.WriteLine("PASS scheduled task persistence, recurrence, claim, no-replay, outcome, run-now, pause, and resume");
     }
 
     private static void Check(bool condition, string message)
