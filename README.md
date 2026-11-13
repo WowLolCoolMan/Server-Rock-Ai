@@ -1,12 +1,22 @@
 # Skai Desktop
 
-![Skai Desktop](assets/branding/skai-desktop-mark.png)
-
-**A local-first desktop workspace for chat, coding agents, models, projects, and media workflows.**
+<div align="center">
+  <img src="assets/branding/skaiwolficon.png" width="150" alt="Skai Desktop wolf icon" />
+  <h1>Skai Desktop</h1>
+  <p><strong>A local-first desktop workspace for chat, coding agents, models, projects, and media workflows.</strong></p>
+</div>
 
 Skai Desktop is being shaped into a serious desktop AI workspace: private by default, useful with local runtimes, and extensible enough to connect hosted providers, coding agents, image engines, and future real-time voice systems.
 
 > **Status:** active migration. The Uno/.NET desktop app is the current functional product. An Electron + React + TypeScript shell and persistent .NET agent-host seam are now checked in as the next product surface. The replacement UI is not yet feature-parity complete.
+
+### Meet Percy
+
+Percy is Skai Desktop’s official local companion: a small blue cyber-wolf that can live alongside your workspace without sending companion state or telemetry anywhere.
+
+<div align="center">
+  <img src="assets/pets/percy-idle.png" width="128" alt="Percy, the Skai Desktop mascot" />
+</div>
 
 ## What is here today
 
