@@ -7262,6 +7262,36 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 199 — Restore stable package identifiers after rebrand
+
+Status: `implemented_release_gate_verified`
+
+The display rebrand remains `Skai Desktop`, while the install folder and Linux
+launcher identifiers are restored to the existing lowercase `server-rock-ai`
+package identifiers. This preserves upgrade and launcher continuity across the
+rebrand and satisfies the fail-closed release metadata validator.
+
+Changed files:
+
+- `packaging/native/release-manifest.json`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run check:release-config` — passed with display/package identifier
+  consistency and lowercase package validation.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: package metadata only; no runtime routes,
+credentials, profile data, or external services changed.
+
+Rollback: restore the manifest identifiers only if the release channel has an
+explicit migration plan for a new package namespace. Existing profile data is
+not moved or deleted by this slice.
+
+Remaining: signed installers, clean-machine install/upgrade/uninstall,
+rollback, localization, and cross-platform release evidence remain open.
+
 ## Slice 190 — Local reusable Personas (Gems)
 
 Status: `implemented_core_ui_build_verified`
