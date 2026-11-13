@@ -9,6 +9,14 @@ namespace ServerRock.Core.Infrastructure;
 
 public static class ConversationMarkdownExporter
 {
+    public static string FileNameFor(ChatSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        var title = SanitizeFileName(session.Title, "conversation");
+        var id = SanitizeFileName(session.Id, "chat");
+        return $"{title}--{id}.md";
+    }
+
     public static string Serialize(IEnumerable<ChatSession> sessions)
     {
         ArgumentNullException.ThrowIfNull(sessions);
@@ -63,4 +71,15 @@ public static class ConversationMarkdownExporter
 
     private static string EscapeHeading(string value) => value.Replace("\r", " ", StringComparison.Ordinal).Replace("\n", " ", StringComparison.Ordinal).Trim();
     private static string EscapeLinkText(string value) => value.Replace("[", "\\[", StringComparison.Ordinal).Replace("]", "\\]", StringComparison.Ordinal);
+
+    private static string SanitizeFileName(string value, string fallback)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var builder = new StringBuilder(value.Length);
+        foreach (var character in value.Trim())
+            builder.Append(invalid.Contains(character) || char.IsControl(character) ? '_' : character);
+        var safe = builder.ToString().Trim().TrimEnd('.');
+        if (string.IsNullOrWhiteSpace(safe)) safe = fallback;
+        return safe.Length <= 80 ? safe : safe[..80].TrimEnd();
+    }
 }

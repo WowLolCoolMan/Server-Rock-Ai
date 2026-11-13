@@ -9,10 +9,12 @@ public sealed partial class ConversationNavigationView : UserControl
     public StackPanel RecentListControl => RecentList;
     public Button ImportChatsButtonControl => ImportChatsButton;
     public Button ExportChatsButtonControl => ExportChatsButton;
+    public Button ExportMarkdownFolderButtonControl => ExportMarkdownFolderButton;
 
     public event RoutedEventHandler? NewChatFolderRequested;
     public event RoutedEventHandler? ImportChatsRequested;
     public event RoutedEventHandler? ExportChatsRequested;
+    public event RoutedEventHandler? ExportMarkdownFolderRequested;
 
     public ConversationNavigationView()
     {
@@ -22,4 +24,5 @@ public sealed partial class ConversationNavigationView : UserControl
     private void NewChatFolderClick(object sender, RoutedEventArgs e) => NewChatFolderRequested?.Invoke(sender, e);
     private void ImportChatsClick(object sender, RoutedEventArgs e) => ImportChatsRequested?.Invoke(sender, e);
     private void ExportChatsClick(object sender, RoutedEventArgs e) => ExportChatsRequested?.Invoke(sender, e);
+    private void ExportMarkdownFolderClick(object sender, RoutedEventArgs e) => ExportMarkdownFolderRequested?.Invoke(sender, e);
 }

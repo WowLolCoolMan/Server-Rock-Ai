@@ -43,7 +43,8 @@
         <local:ConversationNavigationView x:Name="ConversationNavigationControl"
                                            NewChatFolderRequested="OnNewChatFolderRequested"
                                            ImportChatsRequested="OnImportChatsRequested"
-                                           ExportChatsRequested="OnExportChatsRequested" />
+                                           ExportChatsRequested="OnExportChatsRequested"
+                                           ExportMarkdownFolderRequested="OnExportMarkdownFolderRequested" />
       </StackPanel>
     </ScrollViewer>
     <Border Grid.Row="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="5,10,5,2">

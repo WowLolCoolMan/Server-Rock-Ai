@@ -8,6 +8,10 @@ const readText = (filePath) => fs.readFileSync(filePath, "utf8").replace(/\r\n/g
 const xaml = readText(xamlPath);
 const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
 const splitCode = readText(path.join(nativeDir, "SplitConversationView.xaml.cs"));
+const conversationXaml = readText(path.join(nativeDir, "ConversationNavigationView.xaml"));
+const conversationCode = readText(path.join(nativeDir, "ConversationNavigationView.xaml.cs"));
+const sidebarXaml = readText(path.join(nativeDir, "SidebarView.xaml"));
+const sidebarCode = readText(path.join(nativeDir, "SidebarView.xaml.cs"));
 
 // MainPage and the GitHub workspace UI are partial classes split across several
 // files (MainPage.xaml.cs, MainPage.Chat.cs, MainPage.GitHub.Changes.cs, …).
@@ -38,6 +42,10 @@ const requiredSplitXaml = [
   ['Comparison chat picker', 'AutomationProperties.Name="Choose comparison chat"'],
   ['Comparison chat empty state', 'AutomationProperties.Name="Comparison chat empty state"'],
   ['Split ratio control', 'AutomationProperties.Name="Split pane ratio"'],
+];
+const requiredExportXaml = [
+  ['Markdown folder export action', 'AutomationProperties.Name="Export chats as Markdown folder"'],
+  ['Markdown folder export event hookup', 'ExportMarkdownFolderRequested="OnExportMarkdownFolderRequested"'],
 ];
 const requiredCode = [
   ['Model source label', 'AutomationProperties.SetName(source, "Model source")'],
@@ -192,6 +200,8 @@ const requiredCode = [
   ['Split ratio persistence wiring', 'SplitConversationViewControl.RatioChanged += SplitRatioChanged'],
   ['Split divider pointer wiring', 'SplitRatioGutterPressed'],
   ['Split ratio bounded persistence', '_settings.SplitChatRatios[SplitLayoutKey] = Math.Clamp(ratio, 25, 75)'],
+  ['Markdown folder export action wiring', 'ExportMarkdownFolderRequested += ExportMarkdownFolderClick'],
+  ['Markdown folder export implementation', 'ConversationMarkdownExporter.FileNameFor(session)'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],
@@ -232,7 +242,9 @@ const requiredGitHubCode = [
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
+  ...requiredExportXaml.filter(([, text]) => !(conversationXaml + sidebarXaml).includes(text)),
   ...requiredCode.filter(([, text]) => !(code + composerCode + splitCode).includes(text)),
+  ...[['Markdown folder navigation event', 'ExportMarkdownFolderRequested']].filter(([, text]) => !(conversationCode + sidebarCode + code).includes(text)),
   ...requiredGitHubCode.filter(([, text]) => !githubCode.includes(text)),
 ];
 
@@ -242,4 +254,4 @@ if (missing.length) {
   process.exit(1);
 }
 
-console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredCode.length + requiredGitHubCode.length} contracts).`);
+console.log(`Native UI audit passed (${requiredXaml.length + requiredSplitXaml.length + requiredExportXaml.length + requiredCode.length + requiredGitHubCode.length + 1} contracts).`);

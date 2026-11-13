@@ -63,6 +63,7 @@ public sealed partial class MainPage
         SidebarView.NewChatFolderRequested += NewChatFolderClick;
         SidebarView.ImportChatsRequested += ImportChatsClick;
         SidebarView.ExportChatsRequested += ExportChatsClick;
+        SidebarView.ExportMarkdownFolderRequested += ExportMarkdownFolderClick;
         SidebarView.ToggleCompanionRequested += ToggleCompanionClick;
         SidebarView.CustomizeCompanionRequested += CustomizeCompanionClick;
         SidebarView.ScheduledTasksRequested += ScheduledTasksClick;

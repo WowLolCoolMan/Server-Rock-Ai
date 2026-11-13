@@ -17,6 +17,7 @@ namespace ServerRock.Native;
 public sealed partial class MainPage
 {
     private async void ExportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ExportChatsAsync); }
+    private async void ExportMarkdownFolderClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ExportMarkdownFolderAsync); }
     private async void ImportChatsClick(object sender, RoutedEventArgs e) { CloseCompactSidebar(); await RunUiActionAsync(ImportChatsAsync); }
 
     private async Task ExportChatsAsync()
@@ -64,6 +65,46 @@ public sealed partial class MainPage
             }
         }
         catch (Exception ex) { RuntimeStatus.Text = $"Could not export chats: {ex.Message}"; }
+    }
+
+    private async Task ExportMarkdownFolderAsync()
+    {
+        if (_requestCancellation is not null)
+        {
+            RuntimeStatus.Text = "Wait for the current response to finish before exporting chats.";
+            return;
+        }
+        if (!_historyAvailable)
+        {
+            RuntimeStatus.Text = "Conversation history is unavailable, so Markdown files cannot be created.";
+            return;
+        }
+        SaveCurrentSession();
+        if (!_historyAvailable) return;
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FolderPicker
+            {
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeFilter.Add("*");
+#if WINDOWS
+            var window = (Application.Current as App)?.MainWindow;
+            if (window is null) throw new InvalidOperationException("The app window is unavailable.");
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
+#endif
+            await Task.Delay(50);
+            var destination = await picker.PickSingleFolderAsync();
+            if (destination is null) return;
+            var exportFolder = await destination.CreateFolderAsync($"{ProductIdentity.FileNameStem}-markdown-{DateTime.Now:yyyy-MM-dd}", Windows.Storage.CreationCollisionOption.GenerateUniqueName);
+            foreach (var session in _sessions)
+            {
+                var file = await exportFolder.CreateFileAsync(ConversationMarkdownExporter.FileNameFor(session), Windows.Storage.CreationCollisionOption.ReplaceExisting);
+                await Windows.Storage.FileIO.WriteTextAsync(file, ConversationMarkdownExporter.Serialize([session]));
+            }
+            RuntimeStatus.Text = $"Exported {_sessions.Count} conversation(s) as individual Markdown files to {exportFolder.Name}.";
+        }
+        catch (Exception ex) { RuntimeStatus.Text = $"Could not export Markdown folder: {ex.Message}"; }
     }
 
     private async Task ImportChatsAsync()

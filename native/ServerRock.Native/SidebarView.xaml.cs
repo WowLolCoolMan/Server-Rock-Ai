@@ -27,6 +27,7 @@ public sealed partial class SidebarView : UserControl
     public Button CompanionButtonControl => CompanionButton;
     public Button ImportChatsButtonControl => ConversationNavigationControl.ImportChatsButtonControl;
     public Button ExportChatsButtonControl => ConversationNavigationControl.ExportChatsButtonControl;
+    public Button ExportMarkdownFolderButtonControl => ConversationNavigationControl.ExportMarkdownFolderButtonControl;
     public TextBlock NewConversationLabelControl => NewConversationLabel;
     public TextBlock CompanionButtonLabelControl => CompanionButtonLabel;
 
@@ -42,6 +43,7 @@ public sealed partial class SidebarView : UserControl
     public event RoutedEventHandler? NewChatFolderRequested;
     public event RoutedEventHandler? ImportChatsRequested;
     public event RoutedEventHandler? ExportChatsRequested;
+    public event RoutedEventHandler? ExportMarkdownFolderRequested;
     public event RoutedEventHandler? ToggleCompanionRequested;
     public event RoutedEventHandler? CustomizeCompanionRequested;
     public event RoutedEventHandler? ScheduledTasksRequested;
@@ -67,6 +69,7 @@ public sealed partial class SidebarView : UserControl
     private void OnNewChatFolderRequested(object sender, RoutedEventArgs e) => NewChatFolderRequested?.Invoke(sender, e);
     private void OnImportChatsRequested(object sender, RoutedEventArgs e) => ImportChatsRequested?.Invoke(sender, e);
     private void OnExportChatsRequested(object sender, RoutedEventArgs e) => ExportChatsRequested?.Invoke(sender, e);
+    private void OnExportMarkdownFolderRequested(object sender, RoutedEventArgs e) => ExportMarkdownFolderRequested?.Invoke(sender, e);
     private void ToggleCompanionClick(object sender, RoutedEventArgs e) => ToggleCompanionRequested?.Invoke(sender, e);
     private void CustomizeCompanionClick(object sender, RoutedEventArgs e) => CustomizeCompanionRequested?.Invoke(sender, e);
     private void ScheduledTasksClick(object sender, RoutedEventArgs e) => ScheduledTasksRequested?.Invoke(sender, e);

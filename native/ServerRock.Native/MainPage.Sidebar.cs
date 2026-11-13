@@ -36,6 +36,7 @@ public sealed partial class MainPage
     private Button CompanionButton => SidebarView.CompanionButtonControl;
     private Button ImportChatsButton => SidebarView.ImportChatsButtonControl;
     private Button ExportChatsButton => SidebarView.ExportChatsButtonControl;
+    private Button ExportMarkdownFolderButton => SidebarView.ExportMarkdownFolderButtonControl;
     private TextBlock NewConversationLabel => SidebarView.NewConversationLabelControl;
     private TextBlock CompanionButtonLabel => SidebarView.CompanionButtonLabelControl;
 

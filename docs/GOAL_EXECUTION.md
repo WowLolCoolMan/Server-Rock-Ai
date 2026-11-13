@@ -5860,3 +5860,50 @@ slider-based ratio control and fixed split view remain available.
 Not yet verified: drag-and-drop pane reordering/layouts, multiple independently
 editable/composing panes, cross-platform packaged rendering, and full
 workspace-wide geometry persistence.
+
+## Slice 153 — per-conversation Markdown directory export
+
+Status: `implemented_verified_core_and_native_build`
+
+Chat export now has a separate folder action that creates a generated export
+directory and writes one validated Markdown transcript per saved conversation.
+Each filename combines a sanitized title and conversation ID, caps component
+length, and falls back safely for empty or invalid names. The existing single
+file JSON and Markdown export choices remain unchanged.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/ConversationMarkdownExporter.cs`
+- `native/ServerRock.Core.Tests/ConversationArchiveTests.cs`
+- `native/ServerRock.Native/ConversationNavigationView.xaml`
+- `native/ServerRock.Native/ConversationNavigationView.xaml.cs`
+- `native/ServerRock.Native/SidebarView.xaml`
+- `native/ServerRock.Native/SidebarView.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.ImportExport.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including safe filename coverage for invalid title characters.
+- `npm run audit:native-ui` — passed with 202 contracts, including the folder
+  action, event forwarding, and per-session filename/write path.
+- `npm run audit:future-features` and `git diff --check` — passed.
+
+Privacy/security/licensing: folder selection and writes remain local. The
+exporter reuses canonical archive validation for every conversation, does not
+send content to a provider, and does not copy credentials, pets state, or
+handoff files.
+
+Rollback: remove the folder action and `FileNameFor` helper; the existing
+single-file exports and import path remain intact.
+
+Not yet verified: live Windows FolderPicker selection and write/readback, rich
+Markdown editing, cross-platform packaged picker behavior, and attachment
+binary export (the Markdown files retain attachment names and the JSON archive
+remains the content-preserving format).

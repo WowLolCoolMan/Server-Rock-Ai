@@ -86,6 +86,12 @@ Windows. The accessible `Drag split pane divider` gutter accepted a live drag,
 changed the bounded ratio slider from 50 to 55, and retained the existing
 settings-backed ratio event. Drag-and-drop pane reordering, independently
 editable panes, and cross-platform packaged rendering remain open requirements.
+
+Slice 153 added a separate local Markdown-folder export action. It creates one
+validated, sanitized per-conversation `.md` file while preserving the existing
+single-file JSON and Markdown exports. Core filename coverage, native build,
+and the 202-contract UI audit pass; live FolderPicker/write/readback evidence
+and rich Markdown editing remain open.
 - Live unavailable-selection evidence: Settings temporarily saved
   `missing-model`; the app reported `Connected · selected model missing-model is
   unavailable · choose a model in Model Library`, kept `missing-model` in the
