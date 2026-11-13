@@ -7294,7 +7294,7 @@ rollback, localization, and cross-platform release evidence remain open.
 
 ## Slice 200 — Quick open for bounded project files
 
-Status: `implemented_native_build_audit_verified_live_ui_pending`
+Status: `implemented_native_build_audit_verified_live_ui_blocked_by_picker_host`
 
 Coding Agent users can now press `Ctrl+P` or choose Quick open project file from
 the command palette. The dialog searches the existing bounded,
@@ -7316,6 +7316,11 @@ Evidence:
 - `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
 - `npm run audit:native-ui` — passed with 263 contracts after updating the
   focus-restoration contract for the shared editor helper.
+- Live Windows attempt: the native build launched and Coding Agent mode opened;
+  the first-project flow reached the Windows `Select Folder` picker, but its
+  `PickerHost.exe` window was not exposed as a targetable window by the
+  computer-use runtime, so keyboard/search/open acceptance could not be
+  completed without unsafe coordinate guessing.
 
 Privacy/security/licensing: the feature reuses `WorkspaceFileContext` bounds,
 secret exclusions and the existing local editor; no provider or external
@@ -7324,8 +7329,9 @@ service is contacted.
 Rollback: remove the command/shortcut and quick-open method; sidebar file
 opening and workspace permissions remain unchanged.
 
-Remaining: live Windows keyboard/search/open acceptance, Linux parity and a
-full virtualized project explorer remain open.
+Remaining: live Windows keyboard/search/open acceptance after a targetable
+folder-picker path is available, Linux parity and a full virtualized project
+explorer remain open.
 
 ## Slice 190 — Local reusable Personas (Gems)
 
