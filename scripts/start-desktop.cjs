@@ -5,7 +5,7 @@ const child = spawn(npmCommand, ["--prefix", "apps/desktop", "run", "dev"], {
   cwd: process.cwd(),
   env: process.env,
   stdio: "inherit",
-  windowsHide: false,
+  windowsHide: true,
 });
 
 const forwardSignal = (signal) => {
