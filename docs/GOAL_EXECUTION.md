@@ -1622,7 +1622,6 @@ Changed files:
 - `native/ServerRock.Native/MainPage.xaml.cs`
 - `docs/ARCHITECTURE.md`
 - `docs/CAPABILITY_MATRIX.md`
-- `docs/FUTURE_FEATURES.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
@@ -2180,6 +2179,7 @@ Changed files:
 - `native/ServerRock.Native/MainPage.Sidebar.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
+- `docs/FUTURE_FEATURES.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:
@@ -7169,6 +7169,7 @@ Changed files:
 - `native/ServerRock.Core.Tests/ChatMessageTests.cs`
 - `scripts/audit-native-ui.cjs`
 - `docs/CAPABILITY_MATRIX.md`
+- `docs/FUTURE_FEATURES.md`
 - `docs/GOAL_EXECUTION.md`
 
 Evidence:

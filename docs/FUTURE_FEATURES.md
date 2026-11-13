@@ -34,7 +34,7 @@ and acceptance evidence.
 - [ ] 1M+ token context support.
 - [ ] Omni-modal input for text, images, audio, and video.
 - [x] Chat export and split view.
-- [ ] NotebookLM-style mode grounded only in uploaded documents.
+- [ ] NotebookLM-style mode grounded only in uploaded documents. (A bounded, session-only documents-only Chat guard exists; durable corpus management and full retrieval remain open.)
 
 ## Agents and tools
 

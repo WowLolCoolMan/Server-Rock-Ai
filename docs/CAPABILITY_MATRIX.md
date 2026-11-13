@@ -309,6 +309,12 @@ selected folders, filters locally, and previews up to 16 safe text files using
 the existing 8,000-character per-file context budget. Mutating file editing,
 binary/PDF preview, and cross-platform acceptance remain open.
 
+Recent slice note — Slice 179: the Coding Workspace bar now includes a local
+session-state line for mode, message context, pending attachments, reviewed
+file changes, and queued agent plans. It is informational only; background-task
+execution, live cross-platform acceptance, and richer context/change details
+remain open.
+
 Recent slice note — Slice 180: the project browser now also enumerates bounded
 PNG/JPEG and PDF entries. Images are signature-checked and rendered locally;
 PDFs use bounded selectable-text extraction. OCR, app/executable previews,
@@ -325,9 +331,3 @@ It disables web search, requires at least one attached document, and excludes
 project instructions, project files, memory injection, and stale web context
 from the provider prompt. A full persistent NotebookLM-style corpus remains
 open.
-
-Recent slice note — Slice 179: the Coding Workspace bar now includes a local
-session-state line for mode, message context, pending attachments, reviewed
-file changes, and queued agent plans. It is informational only; background-task
-execution, live cross-platform acceptance, and richer context/change details
-remain open.
