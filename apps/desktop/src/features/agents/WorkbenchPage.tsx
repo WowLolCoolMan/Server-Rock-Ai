@@ -1,9 +1,68 @@
 import type { DesktopScheduledTask, DesktopTask } from "../../../shared/contracts";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition }: { tasks: DesktopTask[]; scheduled: DesktopScheduledTask[]; busyTask: string | null; loading: boolean; error: string | null; onRetry: () => void; onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void }) {
-  const groups = [{ key: "proposed", label: "Proposed" }, { key: "queued", label: "Queued" }, { key: "running", label: "Running" }, { key: "awaiting_approval", label: "Awaiting approval" }, { key: "blocked", label: "Blocked" }, { key: "completed", label: "Completed" }, { key: "failed", label: "Failed" }, { key: "cancelled", label: "Cancelled" }];
-  const toneFor = (status: string) => status === "failed" ? "danger" as const : status === "blocked" || status === "awaiting_approval" ? "warning" as const : status === "completed" ? "success" as const : "neutral" as const;
-  const timeLabel = (value: string) => { const date = new Date(value); return Number.isNaN(date.valueOf()) ? "Updated time unavailable" : `Updated ${date.toLocaleString()}`; };
-  return <div className="feature-page"><PageHeader eyebrow="AGENT WORKBENCH" title="Plan, execute, verify" description="A clear task lifecycle for work that needs progress, approvals, and recovery." />{error ? <div className="surface-error workbench-error" role="alert"><strong>Agent workbench is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="workbench-loading" aria-label="Loading agent workbench">{[1, 2, 3].map((item) => <Card className="loading-card" key={item}><span /><span /><span /></Card>)}</div> : <div className="workbench-board">{groups.map((group) => { const items = tasks.filter((task) => task.status === group.key); return <Card className="task-column" key={group.key}><div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}><strong>{task.title}</strong><span>{task.role}</span>{task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}{task.resultSummary && <p>{task.resultSummary}</p>}<small className="task-updated">{timeLabel(task.updatedAt)}</small><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge><div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div></article>)}</Card>; })}</div>}<Card className="scheduled-card"><p className="section-kicker">SCHEDULED RUNS</p>{scheduled.length === 0 ? <EmptyState title="No scheduled runs" description="Scheduled automations will appear here when they are configured." /> : scheduled.map((task) => <div className="scheduled-row" key={task.id}><strong>{task.prompt}</strong><span>{new Date(task.dueAt).toLocaleString()} · {task.status}</span></div>)}</Card></div>;
+const groups = [
+  { key: "proposed", label: "Proposed" },
+  { key: "queued", label: "Queued" },
+  { key: "running", label: "Running" },
+  { key: "awaiting_approval", label: "Awaiting approval" },
+  { key: "blocked", label: "Blocked" },
+  { key: "completed", label: "Completed" },
+  { key: "failed", label: "Failed" },
+  { key: "cancelled", label: "Cancelled" },
+];
+
+function toneFor(status: string) {
+  return status === "failed" ? "danger" as const : status === "blocked" || status === "awaiting_approval" ? "warning" as const : status === "completed" ? "success" as const : "neutral" as const;
+}
+
+function timeLabel(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? "Updated time unavailable" : `Updated ${date.toLocaleString()}`;
+}
+
+function TaskDetails({ task }: { task: DesktopTask }) {
+  return <details className="task-details">
+    <summary>View task details</summary>
+    <dl>
+      <div><dt>Task ID</dt><dd>{task.id}</dd></div>
+      <div><dt>Role</dt><dd>{task.role}</dd></div>
+      <div><dt>Dependencies</dt><dd>{task.dependsOn.length ? task.dependsOn.join(", ") : "None"}</dd></div>
+      <div><dt>Result</dt><dd>{task.resultSummary || "No result recorded yet."}</dd></div>
+    </dl>
+    {task.status === "awaiting_approval" && <p className="task-capability-note">Approval controls are not exposed by the current host, so this task remains informational.</p>}
+    {task.status === "failed" && <p className="task-capability-note">Retry is only supported for blocked tasks in the current host. Review the result and create a new plan if needed.</p>}
+  </details>;
+}
+
+type WorkbenchPageProps = {
+  tasks: DesktopTask[];
+  scheduled: DesktopScheduledTask[];
+  busyTask: string | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
+};
+
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition }: WorkbenchPageProps) {
+  return <div className="feature-page">
+    <PageHeader eyebrow="AGENT WORKBENCH" title="Plan, execute, verify" description="A clear task lifecycle for work that needs progress, approvals, and recovery." />
+    {error ? <div className="surface-error workbench-error" role="alert"><strong>Agent workbench is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="workbench-loading" aria-label="Loading agent workbench">{[1, 2, 3].map((item) => <Card className="loading-card" key={item}><span /><span /><span /></Card>)}</div> : <div className="workbench-board">{groups.map((group) => {
+      const items = tasks.filter((task) => task.status === group.key);
+      return <Card className="task-column" key={group.key}>
+        <div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>
+        {items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}>
+          <strong>{task.title}</strong><span>{task.role}</span>
+          {task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}
+          {task.resultSummary && <p>{task.resultSummary}</p>}
+          <small className="task-updated">{timeLabel(task.updatedAt)}</small>
+          <StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge>
+          <TaskDetails task={task} />
+          <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>
+        </article>)}
+      </Card>;
+    })}</div>}
+    <Card className="scheduled-card"><p className="section-kicker">SCHEDULED RUNS</p>{scheduled.length === 0 ? <EmptyState title="No scheduled runs" description="Scheduled automations will appear here when they are configured." /> : scheduled.map((task) => <div className="scheduled-row" key={task.id}><strong>{task.prompt}</strong><span>{new Date(task.dueAt).toLocaleString()} · {task.status}</span></div>)}</Card>
+  </div>;
 }
