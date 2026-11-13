@@ -71,6 +71,9 @@ validate parity.
   access.
 - Electron can fork the current conversation through the host into an
   independent persisted branch, with Core enforcing bounded message copying.
+- Electron chat can explicitly attach bounded text and PNG/JPEG files through
+  the isolated bridge; attachment policy and provider capability checks remain
+  in the host/Core path before dispatch.
 - While a response is active, the Electron composer can queue bounded follow-up
   messages, display them in FIFO order, and remove individual queued items.
 - Agent Workbench exposes reviewed Queue, Cancel, and Retry actions for the

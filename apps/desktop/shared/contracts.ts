@@ -39,7 +39,7 @@ export type DesktopProjectFile = {
 export type DesktopConversation = {
   id: string;
   title: string;
-  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string; attachments?: ChatAttachment[] }>;
   projectId?: string | null;
   projectName?: string | null;
   includeProjectFilesInChat?: boolean;
@@ -49,6 +49,8 @@ export type DesktopConversation = {
   tags: string[];
   folderName?: string | null;
 };
+
+export type ChatAttachment = { fileName: string; content: string; mediaType?: string | null };
 
 export type DesktopConversationSearchResult = DesktopConversation & {
   display: string;

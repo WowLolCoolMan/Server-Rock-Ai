@@ -3,6 +3,43 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 255 — Port bounded Electron chat text/image attachments
+
+Status: `implemented_renderer_bridge_host_provider_build_verified`
+
+Electron now exposes an explicit file picker for approved text and image
+attachments. The main process reads only selected files, caps selection at five
+files and two megabytes per file, and returns content through the isolated
+bridge; the host/provider path remains responsible for canonical extension,
+secret-name, byte, image-signature, and aggregate-content validation. User-turn
+attachments are passed into `chat.complete` and retained in local conversation
+history.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+
+Evidence:
+
+- `node --check apps/desktop/electron/main.cjs` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: selection is explicit, files are not uploaded by
+the picker itself, and existing provider consent/attachment policy remains the
+authority before a model request. No new dependency or web capability was
+introduced.
+
+Rollback: remove the picker branch, attachment state, and attachment contract;
+plain text chat remains unchanged.
+
+Remaining: PDF extraction, queued-message attachments, and a live provider
+acceptance test remain separate slices.
+
 ## Slice 254 — Port Electron conversation archive, export, and fork controls
 
 Status: `implemented_host_renderer_archive_export_fork_smoke_verified`

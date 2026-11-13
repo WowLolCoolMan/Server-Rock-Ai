@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { spawn } = require("node:child_process");
+const fs = require("node:fs/promises");
 const path = require("node:path");
 const readline = require("node:readline");
 
@@ -104,6 +105,21 @@ app.whenReady().then(() => {
       const window = BrowserWindow.fromWebContents(event.sender);
       const result = await dialog.showOpenDialog(window, { properties: ["openDirectory"] });
       return { v: 1, ok: true, result: { path: result.canceled ? null : result.filePaths[0] ?? null } };
+    }
+    if (method === "workspace.pickFiles") {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      const result = await dialog.showOpenDialog(window, { properties: ["openFile", "multiSelections"], filters: [{ name: "Chat files", extensions: ["txt", "md", "markdown", "csv", "json", "xml", "yaml", "yml", "toml", "html", "css", "js", "ts", "jsx", "tsx", "cs", "py", "java", "go", "rs", "c", "h", "cpp", "hpp", "sh", "sql", "log", "png", "jpg", "jpeg"] }] });
+      if (result.canceled) return { v: 1, ok: true, result: { attachments: [] } };
+      const attachments = [];
+      for (const filePath of result.filePaths.slice(0, 5)) {
+        const fileName = path.basename(filePath);
+        const extension = path.extname(fileName).toLowerCase();
+        const bytes = await fs.readFile(filePath);
+        if (bytes.length > 2 * 1024 * 1024) throw new Error(`The selected file is too large: ${fileName}`);
+        const imageType = extension === ".png" ? "image/png" : [".jpg", ".jpeg"].includes(extension) ? "image/jpeg" : null;
+        attachments.push({ fileName, mediaType: imageType, content: imageType ? bytes.toString("base64") : bytes.toString("utf8").slice(0, 16000) });
+      }
+      return { v: 1, ok: true, result: { attachments } };
     }
     return requestAgent(method, params);
   });
