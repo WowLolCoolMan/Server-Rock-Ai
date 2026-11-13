@@ -398,6 +398,23 @@ public sealed partial class MainPage
         }
     }
 
+    // coding_malicious: shown while the person reviews a Coding Agent command that would run
+    // unsandboxed, if "Let the pet ask for approval before risky actions" is on. Before this
+    // nothing in the app ever used the state.
+    private void CompanionEnterRiskReview()
+    {
+        if (!_companionState.AskBeforeActions) return;
+        SetCompanionState("coding_malicious");
+        UpdateCompanionSpeech("Careful · this command runs unsandboxed. Review it first.");
+    }
+
+    private void CompanionLeaveRiskReview(bool approved)
+    {
+        if (_companionState.CurrentState != "coding_malicious") return;
+        SetCompanionState("idle");
+        UpdateCompanionSpeech(approved ? "Running the approved command…" : "Okay · nothing ran.");
+    }
+
     private static double EaseInOut(double x)
     {
         x = Math.Clamp(x, 0, 1);

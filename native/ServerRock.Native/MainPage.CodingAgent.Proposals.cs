@@ -136,7 +136,10 @@ public sealed partial class MainPage
             XamlRoot = XamlRoot
         };
         dialog.Opened += (_, _) => commandText.Focus(FocusState.Programmatic);
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary || selectedFolder.SelectedIndex < 0) return;
+        CompanionEnterRiskReview(); // pet: an unsandboxed command is the "risky" moment
+        var approval = await dialog.ShowAsync();
+        CompanionLeaveRiskReview(approval == ContentDialogResult.Primary);
+        if (approval != ContentDialogResult.Primary || selectedFolder.SelectedIndex < 0) return;
         setFocusAfterReview(PromptBox);
         var root = availableFolders[selectedFolder.SelectedIndex];
         RuntimeStatus.Text = "Running approved project command…";
