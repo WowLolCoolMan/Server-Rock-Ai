@@ -7643,6 +7643,43 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 231 — Verify the current Windows Release artifact smoke
+
+Status: `verified_windows_release_artifact_startup_and_window_smoke`
+
+Requirement alignment: release readiness requires evidence from the exact
+published artifact, not only a Debug build. The current self-contained
+`net10.0-desktop` `win-x64` Release publish completed, and the actual
+`ServerRock.Native.exe` passed bounded startup smoke and top-level-window smoke
+for eight seconds. The initial helper invocation against `createdump.exe`
+exited immediately; it was a probe-selection error, not treated as product
+evidence. Generated `dist/` output remains ignored and was not committed.
+
+Evidence:
+
+- `npm run check:release-config` — passed.
+- `npm run audit:release-workflow` — passed.
+- `npm run audit:native-ui` — passed with 322 contracts.
+- `npm run check:hygiene` — passed with 754 tracked files.
+- `npm run build:native` — passed, producing the self-contained
+  `dist/native/win-x64/ServerRock.Native.exe` artifact.
+- `NATIVE_SMOKE_SECONDS=8 npm run smoke:native:artifact --
+  dist/native/win-x64/ServerRock.Native.exe` — passed startup smoke.
+- `NATIVE_SMOKE_SECONDS=8 NATIVE_SMOKE_REQUIRE_WINDOW=1 npm run
+  smoke:native:artifact -- dist/native/win-x64/ServerRock.Native.exe` — passed
+  startup and window smoke.
+
+Privacy/security/licensing: artifact startup only; no provider, credential,
+project, or user profile data was used. Release workflow remains fail-closed
+for missing signing/clean-machine evidence; this is not a signed-release claim.
+
+Risk and rollback: no tracked product files changed; remove this evidence note
+if the artifact path or smoke methodology changes.
+
+Remaining: signed installer/feed evidence, clean-machine install/upgrade/
+uninstall/rollback, full workflow acceptance, Linux distro artifacts, and
+cross-platform accessibility remain open.
+
 ## Slice 230 — Surface the project-browser safety boundary
 
 Status: `implemented_native_browser_boundary_accessibility_verified`

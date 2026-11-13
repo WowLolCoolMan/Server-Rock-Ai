@@ -325,6 +325,11 @@ header and accessible help text, including the entry limit and exclusion
 categories. This is explanatory UI only; full ignore-state and tree behavior
 remain open.
 
+Slice 231 adds fresh Windows evidence for the current self-contained `win-x64`
+Release artifact: build, eight-second startup smoke, and eight-second
+top-level-window smoke passed. Signing, clean-machine lifecycle, and full
+workflow acceptance remain unverified.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
