@@ -5190,3 +5190,50 @@ explicit Model Library selection path remains available.
 Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
+
+## Slice 138 — approved-memory injection after app restart
+
+Status: `verified_windows_disposable_memory_restart`
+
+The approved-memory injection path now has a bounded live restart check. A
+disposable profile supplied through `SRAI_SETTINGS_PATH`,
+`SRAI_CONVERSATIONS_PATH`, and `SRAI_MEMORY_PATH` was launched with the local
+Ollama model `wtwk-qwen35-4b:latest` and one synthetic approved global note.
+The first session returned the exact marker `MEMORY_RESTART_OK`; the app was
+closed and relaunched against the same files; the second fresh request
+returned `MEMORY_RESTART_OK_2`. The persisted settings still contained the
+local endpoint, selected model, `memoryInjectionEnabled: true`, and
+`requireLocalModelEndpoints: true`, while the conversation file contained
+both completed turns and the memory file retained the approved note.
+
+Changed files:
+
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- Live Windows session 1 — passed: the disposable profile injected the
+  approved synthetic note and the healthy local model returned exactly
+  `MEMORY_RESTART_OK`.
+- Live Windows session 2 after closing and relaunching the app — passed: the
+  same profile injected the retained note and returned exactly
+  `MEMORY_RESTART_OK_2`.
+- Terminal inspection — passed: `settings.json` retained the memory-enabled
+  local-only configuration; `memory.json` retained the approved note; and
+  `conversations.json` contained both request/response pairs.
+- The disposable files were removed after verification; the real profile was
+  not opened or modified.
+
+Privacy/security/licensing: the test used synthetic content and a disposable
+local profile only. The memory note remained marked approved but was still
+used as untrusted reference context; no credentials, remote endpoint, or
+user-profile data were involved.
+
+Rollback: revert this documentation entry and the corresponding capability
+matrix wording. The runtime behavior is unchanged by this evidence slice.
+
+Not yet verified: durable semantic conversation-context continuity and profile
+migration beyond approved-memory injection, semantic compaction under broad
+real-world histories, 1M+ token context, Linux parity, and packaged-release
+acceptance.
