@@ -2,7 +2,7 @@ import type { ChatAttachment, RuntimeHealth } from "../../shared/contracts";
 
 export type ConnectionState = "checking" | "ready" | "error";
 export type ThemeMode = "dark" | "light" | "system";
-export type Route = "chat" | "coding" | "settings" | "models" | "images" | "marketplace" | "workbench" | "terminal" | "memory";
+export type Route = "chat" | "coding" | "settings" | "models" | "images" | "workbench" | "terminal" | "memory";
 export type View = Route;
 export type Message = { role: "user" | "assistant"; content: string; attachments?: ChatAttachment[] };
 export type Model = { model: string; vision: string; capabilities: string[] };

@@ -8,7 +8,6 @@ const primary: Array<{ route: Route; icon: string; label: string }> = [
   { route: "workbench", icon: "◇", label: "Agent workbench" },
   { route: "models", icon: "◌", label: "Models" },
   { route: "images", icon: "▧", label: "Image Studio" },
-  { route: "marketplace", icon: "✦", label: "Marketplace" },
 ];
 
 export function Sidebar({ route, onNavigate, conversations, query, collapsed, onQueryChange, onToggleCollapsed, onNewChat }: { route: Route; onNavigate: (route: Route) => void; conversations: string[]; query: string; collapsed: boolean; onQueryChange: (query: string) => void; onToggleCollapsed: () => void; onNewChat: () => void }) {

@@ -2,7 +2,7 @@ import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedM
 import type { MemoryEntry, Message, Model, Route, ThemeMode } from "./types";
 import { ChatPage } from "../features/chat/ChatPage";
 import { CodingPage } from "../features/coding/CodingPage";
-import { ImagesPage, MarketplacePage, ModelsPage } from "../features/catalog/CatalogPages";
+import { ImagesPage, ModelsPage } from "../features/catalog/CatalogPages";
 import { MemoryPage } from "../features/memory/MemoryPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { TerminalPage } from "../features/terminal/TerminalPage";
@@ -98,7 +98,6 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "settings") return <SettingsPage themeMode={state.themeMode} accentColor={state.accentColor} density={state.density} backdrop={state.backdrop} reduceMotion={state.reduceMotion} onChange={actions.onSettingsChange} onSave={actions.onSaveSettings} />;
   if (route === "models") return <ModelsPage models={state.models} onDiscover={actions.onDiscoverModels} onSelect={actions.onSelectModel} />;
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;
-  if (route === "marketplace") return <MarketplacePage />;
   if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} />;
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} onRun={actions.onRunProjectCommand} />;
