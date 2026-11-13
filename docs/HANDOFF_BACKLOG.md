@@ -1,6 +1,6 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 225, including the
+Snapshot: `main` at the current checkout through Slice 226, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
 durable project-file tabs/resume action, Git conflict recovery guidance, and
 the capability-neutral agent execution lifecycle, enforced release workflow
@@ -20,6 +20,8 @@ status surface.
 It also includes semantic Activity & tasks and agent-task planning typography.
 It also includes a typed native MainPage composition root for existing Core
 services and stores, with preserved profile-path seams.
+It also includes a Core-owned command-palette catalog with native execution
+callbacks kept at the UI boundary.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

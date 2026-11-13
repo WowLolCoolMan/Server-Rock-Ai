@@ -2,41 +2,22 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
-    private sealed record CommandPaletteItem(string Title, string Keywords, Func<Task> Execute);
+    private sealed record CommandPaletteItem(CommandPaletteAction Action, Func<Task> Execute)
+    {
+        public string Title => Action.Title;
+    }
 
     private async Task OpenCommandPaletteAsync()
     {
-        var commands = new[]
-        {
-            new CommandPaletteItem("New chat", "new conversation", () => { NewChatClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Search conversations", "find chats coding sessions", () => { SearchClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Find in current chat", "search this conversation message", SearchCurrentConversationAsync),
-            new CommandPaletteItem("Review memory context", "approved local notes injection", ReviewMemoryContextAsync),
-            new CommandPaletteItem("Activity & tasks", "operations approvals history", () => { ScheduledTasksClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Model store", "models downloads benchmark", () => RunUiActionAsync(ModelClickAsync)),
-            new CommandPaletteItem("Projects & folders", "workspace project files", () => { NewProjectClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Chat workspace", "switch mode conversation", () => SwitchModeFromSidebarAsync(WorkspaceModes.Chat)),
-            new CommandPaletteItem("Coding Agent workspace", "switch mode code project", () => SwitchModeFromSidebarAsync(WorkspaceModes.CodingAgent)),
-            new CommandPaletteItem("Quick open project file", "search files coding agent ctrl p", OpenQuickFileAsync),
-            new CommandPaletteItem("Documents-only mode", "NotebookLM grounded uploaded files attachments", () => { DocumentsOnlyClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("GitHub & source control", "repository git push pull", () => { GitHubClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Images", "image studio generation", () => { ImageStudioClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Extensions & skills", "plugins skills marketplace", () => RunUiActionAsync(PluginStoreClickAsync)),
-            new CommandPaletteItem("Connection & settings", "preferences endpoint voice", () => { SettingsClick(this, new RoutedEventArgs()); return Task.CompletedTask; }),
-            new CommandPaletteItem("Code Review Agent", "review zip repository", OpenCodeReviewAgentAsync),
-            new CommandPaletteItem("Health scan", "architecture map diagnostics", () => ShowLocalHealthAsync(includeMap: false)),
-            new CommandPaletteItem("In-app documentation", "help guide privacy safety local workflow", ShowInAppDocumentationAsync),
-            new CommandPaletteItem("Prompt snippets", "saved prompts templates expand composer", OpenSnippetsAsync),
-            new CommandPaletteItem("Personas", "gems reusable roles instructions", OpenPersonasAsync),
-            new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync),
-            new CommandPaletteItem("Quicklinks", "bookmarks frequent web links", OpenQuicklinksAsync),
-            new CommandPaletteItem("Developer diagnostics", "developer mode inspect runtime local diagnostics", OpenDeveloperDiagnosticsAsync),
-        };
+        var commands = CommandPaletteCatalog.Actions
+            .Select(action => new CommandPaletteItem(action, ResolveCommandPaletteAction(action.Id)))
+            .ToArray();
 
         var query = new TextBox { PlaceholderText = "Search actions", MinWidth = 420 };
         var results = new ListView { MaxHeight = 360, SelectionMode = ListViewSelectionMode.Single };
@@ -49,9 +30,7 @@ public sealed partial class MainPage
         {
             var text = query.Text.Trim();
             results.Items.Clear();
-            foreach (var command in commands.Where(item => string.IsNullOrWhiteSpace(text)
-                || item.Title.Contains(text, StringComparison.OrdinalIgnoreCase)
-                || item.Keywords.Contains(text, StringComparison.OrdinalIgnoreCase)))
+            foreach (var command in commands.Where(item => CommandPaletteCatalog.Search(text).Any(action => action.Id == item.Action.Id)))
             {
                 var item = new ListViewItem { Content = command.Title, Tag = command };
                 AutomationProperties.SetName(item, command.Title);
@@ -77,4 +56,32 @@ public sealed partial class MainPage
         if (await dialog.ShowAsync() == ContentDialogResult.Primary && selected is not null)
             await selected.Execute();
     }
+
+    private Func<Task> ResolveCommandPaletteAction(string id) => id switch
+    {
+        "new-chat" => () => { NewChatClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "search-conversations" => () => { SearchClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "search-current-chat" => SearchCurrentConversationAsync,
+        "review-memory" => ReviewMemoryContextAsync,
+        "activity" => () => { ScheduledTasksClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "models" => () => RunUiActionAsync(ModelClickAsync),
+        "projects" => () => { NewProjectClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "chat-workspace" => () => SwitchModeFromSidebarAsync(WorkspaceModes.Chat),
+        "coding-workspace" => () => SwitchModeFromSidebarAsync(WorkspaceModes.CodingAgent),
+        "quick-open" => OpenQuickFileAsync,
+        "documents-only" => () => { DocumentsOnlyClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "github" => () => { GitHubClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "images" => () => { ImageStudioClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "skills" => () => RunUiActionAsync(PluginStoreClickAsync),
+        "settings" => () => { SettingsClick(this, new RoutedEventArgs()); return Task.CompletedTask; },
+        "code-review" => OpenCodeReviewAgentAsync,
+        "health" => () => ShowLocalHealthAsync(includeMap: false),
+        "documentation" => ShowInAppDocumentationAsync,
+        "snippets" => OpenSnippetsAsync,
+        "personas" => OpenPersonasAsync,
+        "translate" => OpenTranslatorAsync,
+        "quicklinks" => OpenQuicklinksAsync,
+        "developer-diagnostics" => OpenDeveloperDiagnosticsAsync,
+        _ => () => Task.CompletedTask
+    };
 }

@@ -301,6 +301,10 @@ architecture migration without promoting the Electron/agent-host prototype or
 changing the UI framework. View-model/application-service extraction and
 explicit lifetime scopes remain open.
 
+Slice 226 moves command-palette metadata and deterministic search into Core
+while retaining native execution callbacks and dialog lifecycle in the shell.
+This advances the UI/Core boundary without changing command behavior.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

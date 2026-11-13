@@ -49,5 +49,12 @@ internal static class CatalogTests
         Check(SlashCommandCatalog.Suggest("/mode", "c").Select(item => item.Name).SequenceEqual(["/mode chat", "/mode code"])
             && SlashCommandCatalog.Suggest("/web", "of").Single().Name == "/web off" && SlashCommandCatalog.Suggest("/help", "").Length == 0,
             "slash argument suggestions complete the full command text");
+        Check(CommandPaletteCatalog.Actions.Select(item => item.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() == CommandPaletteCatalog.Actions.Length
+            && CommandPaletteCatalog.Actions.All(item => item.Title.Length > 0 && item.Keywords.Length > 0),
+            "command palette catalog exposes unique searchable actions");
+        Check(CommandPaletteCatalog.Search("model").Any(item => item.Id == "models")
+            && CommandPaletteCatalog.Search("ctrl p").Single().Id == "quick-open"
+            && CommandPaletteCatalog.Search("missing action").Count == 0,
+            "command palette search is deterministic and keyword-aware");
     }
 }

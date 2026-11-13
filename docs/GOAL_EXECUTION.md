@@ -7643,6 +7643,50 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 226 — Move command-palette metadata into Core
+
+Status: `implemented_core_catalog_native_execution_boundary_verified`
+
+Requirement alignment: command-palette action metadata and filtering were
+embedded in `MainPage`, mixing UI-independent search data with dialog and page
+execution callbacks. `CommandPaletteCatalog` now owns stable action IDs, titles,
+keywords, and deterministic search in `ServerRock.Core`; the native shell owns
+only the ID-to-callback mapping and focus/dialog lifecycle. Core tests cover
+unique IDs, keyword matching, and empty-result behavior. Existing command
+labels, actions, keyboard behavior, and privacy boundaries are preserved.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/CommandPaletteCatalog.cs`
+- `native/ServerRock.Core.Tests/CatalogTests.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/ARCHITECTURE.md`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including command-palette catalog checks.
+- `node scripts/audit-native-ui.cjs` — passed with 319 contracts.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: metadata and local filtering moved to Core only;
+execution remains explicit native UI behavior. No network, credential,
+provider, or data-storage behavior changed.
+
+Risk and rollback: restore the inline command descriptors and remove the Core
+catalog/tests. No persisted user data changes.
+
+Remaining: application-service/view-model extraction, explicit DI lifetime
+scopes, host/session orchestration, and live cross-platform acceptance remain
+open.
+
 ## Slice 225 — Centralize the native page composition root
 
 Status: `implemented_native_architecture_composition_root_build_verified`
