@@ -7481,6 +7481,48 @@ remove the focused audit contracts. No conversations or settings are changed.
 Remaining: other code-built surfaces still need focused migration and visual
 review; full application-wide token coverage is not claimed.
 
+## Slice 215 — Add guarded Git worktree isolation boundary
+
+Status: `implemented_core_verified_boundary`
+
+Requirement alignment: `PROJECT-013` requires concurrent write agents not to
+share an unguarded repository target. This slice adds a reusable Core
+`GitWorktreeCoordinator` that validates the repository root, rejects the root
+and nested targets, checks branch names, creates a sibling worktree on a named
+branch, and releases only a registered clean worktree. Dirty release is
+refused, and no force-removal path is exposed by the production service.
+
+The coordinator deliberately does not dispatch models, tools, or processes and
+does not claim that parallel agent orchestration is complete. A future caller
+must acquire a lease before any write-capable agent session and retain the
+existing approval/command boundaries.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/GitWorktreeCoordinator.cs`
+- `native/ServerRock.Core.Tests/GitHubTests.cs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- Full `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including real temporary-repository worktree lifecycle checks.
+- Worktree tests prove sibling isolation, requested branch checkout, dirty-target refusal, clean registered release, and nested-target rejection.
+- No production force-delete or unbounded process output path was added.
+
+Privacy/security/licensing: local Git metadata and filesystem paths only; no
+network, credentials, model routing, or third-party code changed. Git output
+is bounded and branch/revision values are passed as argument-list entries.
+
+Risk and rollback: remove the coordinator and focused tests; existing GitHub
+review/commit behavior remains unchanged. A created lease should be released
+cleanly or recovered explicitly by its caller before rollback.
+
+Remaining: integrate lease acquisition into agent session creation, add process
+and parallel-session isolation, expose review/recovery state in the UI, and
+complete live Windows/Linux worktree acceptance.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

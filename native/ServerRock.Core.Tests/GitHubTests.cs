@@ -158,5 +158,56 @@ internal static class GitHubTests
         {
             Check(true, "GitHub API bounds repository branch identifiers");
         }
+
+        var worktreeFixture = Path.Combine(Path.GetTempPath(), "server-rock-worktree-" + Guid.NewGuid().ToString("N"));
+        var isolatedPath = Path.Combine(Path.GetDirectoryName(worktreeFixture)!, Path.GetFileName(worktreeFixture) + "-isolated");
+        try
+        {
+            Directory.CreateDirectory(worktreeFixture);
+            RunGit(worktreeFixture, "init", "-b", "main");
+            RunGit(worktreeFixture, "config", "user.email", "tests@example.invalid");
+            RunGit(worktreeFixture, "config", "user.name", "Native Tests");
+            File.WriteAllText(Path.Combine(worktreeFixture, "README.md"), "fixture\n");
+            RunGit(worktreeFixture, "add", "README.md");
+            RunGit(worktreeFixture, "commit", "-m", "initial fixture");
+
+            var coordinator = new GitWorktreeCoordinator();
+            var lease = await coordinator.CreateAsync(worktreeFixture, isolatedPath, "codex/isolated-fixture");
+            Check(Directory.Exists(lease.WorktreePath) && lease.Branch == "codex/isolated-fixture" && File.Exists(Path.Combine(lease.WorktreePath, "README.md")), "Git worktree coordinator creates a sibling isolated target");
+            Check(RunGitOutput(lease.WorktreePath, "branch", "--show-current").Trim() == lease.Branch, "Git worktree coordinator checks out the requested branch");
+
+            File.WriteAllText(Path.Combine(lease.WorktreePath, "pending.txt"), "review me\n");
+            try
+            {
+                await coordinator.ReleaseCleanAsync(worktreeFixture, isolatedPath);
+                throw new Exception("Expected dirty worktree release to be rejected.");
+            }
+            catch (InvalidOperationException exception) when (exception.Message.Contains("uncommitted changes", StringComparison.OrdinalIgnoreCase))
+            {
+                Check(true, "Git worktree coordinator refuses to release dirty targets");
+            }
+            File.Delete(Path.Combine(lease.WorktreePath, "pending.txt"));
+            await coordinator.ReleaseCleanAsync(worktreeFixture, isolatedPath);
+            Check(!Directory.Exists(isolatedPath), "Git worktree coordinator releases only a clean registered target");
+
+            try
+            {
+                await coordinator.CreateAsync(worktreeFixture, Path.Combine(worktreeFixture, "nested"), "codex/nested");
+                throw new Exception("Expected nested worktree target to be rejected.");
+            }
+            catch (ArgumentException)
+            {
+                Check(true, "Git worktree coordinator rejects repository-nested targets");
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(isolatedPath))
+            {
+                try { RunGit(worktreeFixture, "worktree", "remove", "--force", "--", isolatedPath); } catch { }
+            }
+            if (Directory.Exists(worktreeFixture)) DeleteDirectoryTree(worktreeFixture);
+            if (Directory.Exists(isolatedPath)) DeleteDirectoryTree(isolatedPath);
+        }
     }
 }
