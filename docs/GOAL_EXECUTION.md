@@ -1565,6 +1565,38 @@ Not yet verified: OS-level sandboxing, richer tool transport, cross-platform
 PTY acceptance, parallel-agent isolation, Linux parity, and packaged-release
 acceptance.
 
+## Slice 109 — live Activity & Tasks action surface rechecked
+
+Status: `verified_windows_accessibility_inspection`
+
+The current Windows desktop build was launched from the synchronized checkout
+and Activity & Tasks was opened through the command palette. The live
+accessibility tree exposed the bounded action surface and the existing local
+evidence records: Export activity evidence, Search activity evidence, Schedule
+task, completed scheduler work with the explicit no-provider-dispatch outcome,
+provider-attempt run IDs and sequence numbers, and the two interrupted-operation
+decisions (mark cancelled or failed).
+
+Evidence:
+
+- `npm run start:native` — launched the current `net10.0-desktop` build.
+- Live Windows accessibility inspection — passed for command-palette routing
+  and the Activity & Tasks action/evidence surface.
+- The inspection did not mutate tasks, export data, send a provider request, or
+  choose an interrupted-operation decision.
+
+Privacy/security/licensing: inspection read existing local activity records and
+bounded labels only. No prompt, credential, provider route, network request,
+or third-party dependency was added.
+
+Rollback: documentation-only; remove this evidence entry if a later live run
+contradicts the observed surface.
+
+Not yet verified: keyboard activation of every Activity action, seeded live
+workflow-event search matching, full status-history keyboard/screen-reader
+acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
+packaged acceptance.
+
 ## Slice 96 — extract the main page header into a dedicated visual control
 
 Status: `implemented_verified_build`
