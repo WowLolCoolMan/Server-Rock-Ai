@@ -22,6 +22,7 @@
   --skai-color-surface-raised: #1a1f3a;
   --skai-color-surface-soft: rgba(255, 255, 255, 0.06);
   --skai-color-border: rgba(255, 255, 255, 0.12);
+  --skai-color-border-strong: rgba(255, 255, 255, 0.2);
   --skai-color-text: #f4f6ff;
   --skai-color-text-muted: #a9b0ca;
   --skai-color-accent: #63d9e9;
@@ -37,6 +38,7 @@
   --skai-color-surface-raised: #eef2f8;
   --skai-color-surface-soft: rgba(24, 35, 60, 0.06);
   --skai-color-border: rgba(24, 35, 60, 0.14);
+  --skai-color-border-strong: rgba(24, 35, 60, 0.22);
   --skai-color-text: #18213a;
   --skai-color-text-muted: #5b6680;
   --skai-shadow-panel: 0 24px 80px rgba(28, 42, 72, 0.12);
