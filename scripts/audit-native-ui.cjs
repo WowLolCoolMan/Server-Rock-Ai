@@ -118,6 +118,8 @@ const requiredCode = [
   ['Scheduled task run-now control', 'AutomationProperties.SetName(runNow, "Run scheduled task now")'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
+  ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],
+  ['Model comparison prompt', 'AutomationProperties.SetName(prompt, "Model comparison prompt")'],
   ['Skill explicit enablement control', 'AutomationProperties.SetName(enable, "Enable or disable selected skill")'],
   ['Skill update preview before install', 'Review this preview before installing'],
   ['Skill prompt variables are expanded before review', 'PromptVariableExpander.Expand'],

@@ -40,6 +40,7 @@ public sealed partial class MainPage : Page
     private readonly CompanionStateStore _companionStore = new();
     private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _remoteModelComparisonConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private readonly ChatMessageQueue _messageQueue = new();
     private readonly ChatMessageQueueStore _messageQueueStore = new();

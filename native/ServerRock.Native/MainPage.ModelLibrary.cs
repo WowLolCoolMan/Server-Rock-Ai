@@ -28,6 +28,7 @@ public sealed partial class MainPage
     private sealed record InstalledModelChoice(string Provider, string Model, string Endpoint, string Display);
     private sealed record CatalogModelChoice(HubModel Model, string Display);
     private sealed record ModelScopeGgufPackageChoice(ModelScopeGgufPackage Package, string Display);
+    private sealed record ModelComparisonResult(PinnedModelConnection Model, string? Response, string? Error);
 
     private async void ModelClick(object sender, RoutedEventArgs e)
     {
@@ -71,7 +72,99 @@ public sealed partial class MainPage
         var manage = new MenuFlyoutItem { Text = "Manage models…" };
         manage.Click += async (_, _) => await OpenModelLibraryAndRestoreFocusAsync(false, ModelButton);
         menu.Items.Add(manage);
+        var compare = new MenuFlyoutItem { Text = quickSwitchModels.Count >= ModelComparisonPolicy.MinModels ? "Compare pinned models…" : "Compare pinned models (pin 2+ models)" };
+        compare.IsEnabled = quickSwitchModels.Count >= ModelComparisonPolicy.MinModels;
+        AutomationProperties.SetName(compare, "Compare pinned models");
+        AutomationProperties.SetHelpText(compare, "Send one plain prompt to two to four pinned models and review their responses side by side.");
+        compare.Click += async (_, _) => await ComparePinnedModelsAsync(quickSwitchModels);
+        menu.Items.Add(compare);
         menu.ShowAt(ModelButton);
+    }
+
+    private async Task ComparePinnedModelsAsync(IReadOnlyList<PinnedModelConnection> pinnedModels)
+    {
+        var prompt = new TextBox { Header = "Prompt", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 92, MaxLength = ModelComparisonPolicy.MaxPromptCharacters, PlaceholderText = "Ask the same plain-text question of each selected model" };
+        AutomationProperties.SetName(prompt, "Model comparison prompt");
+        var selections = new StackPanel { Spacing = 6 };
+        var checks = new List<(PinnedModelConnection Model, CheckBox Check)>();
+        foreach (var model in pinnedModels.Take(ModelComparisonPolicy.MaxModels))
+        {
+            var check = new CheckBox { Content = $"{model.Provider} · {model.Model}\n{model.Endpoint}", IsChecked = checks.Count < ModelComparisonPolicy.MaxModels, Tag = model };
+            AutomationProperties.SetName(check, $"Compare model {model.Model}");
+            selections.Children.Add(check);
+            checks.Add((model, check));
+        }
+        var note = new TextBlock { Text = "Only this plain-text prompt is compared. Attachments, saved memory, project files, and web results are not included. Remote endpoints require confirmation before sending.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 };
+        var dialog = new ContentDialog { Title = "Compare pinned models", Content = new StackPanel { Spacing = 10, Children = { prompt, selections, note } }, PrimaryButtonText = "Compare", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
+        dialog.Opened += (_, _) => prompt.Focus(FocusState.Programmatic);
+        ModelComparisonPlan? plan = null;
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            try { plan = ModelComparisonPolicy.Create(prompt.Text, checks.Where(item => item.Check.IsChecked == true).Select(item => item.Model), _settings.RequireLocalModelEndpoints); }
+            catch (ArgumentException ex) { RuntimeStatus.Text = ex.Message; args.Cancel = true; }
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary || plan is null) return;
+
+        var remote = plan.Models.Where(model => !LocalEndpoint.IsLocal(model.Endpoint)).ToArray();
+        var remoteConsentKey = string.Join("\n", remote.Select(model => model.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value, StringComparer.OrdinalIgnoreCase)) + "\n" + plan.Prompt;
+        if (remote.Length > 0 && !_remoteModelComparisonConsent.Contains(remoteConsentKey))
+        {
+            var consent = new ContentDialog
+            {
+                Title = "Send comparison prompt to remote models?",
+                Content = new TextBlock { Text = $"This prompt will be sent to {remote.Length} remote pinned model endpoint(s):\n\n{string.Join("\n", remote.Select(model => model.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase))}\n\nNo attachments, project files, memory, or web results will be included.", TextWrapping = TextWrapping.Wrap },
+                PrimaryButtonText = "Continue",
+                CloseButtonText = "Cancel",
+                XamlRoot = XamlRoot
+            };
+            if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
+            _remoteModelComparisonConsent.Add(remoteConsentKey);
+        }
+
+        RuntimeStatus.Text = $"Comparing {plan.Models.Count} pinned models…";
+        var results = await Task.WhenAll(plan.Models.Select(model => CompareOneModelAsync(plan.Prompt, model)));
+        await ShowModelComparisonResultsAsync(results);
+    }
+
+    private async Task<ModelComparisonResult> CompareOneModelAsync(string prompt, PinnedModelConnection model)
+    {
+        try
+        {
+            var settings = new AppSettings
+            {
+                Endpoint = model.Endpoint,
+                Model = model.Model,
+                ModelProvider = model.Provider,
+                Temperature = _settings.Temperature,
+                VisionApiFormat = _settings.VisionApiFormat
+            };
+            var output = new System.Text.StringBuilder();
+            await _provider.StreamChatAsync(settings, [new ChatMessage("user", prompt)], text =>
+            {
+                if (output.Length < 80_000) output.Append(text[..Math.Min(text.Length, 80_000 - output.Length)]);
+            }, CancellationToken.None, apiKey: _providerApiKey);
+            return new ModelComparisonResult(model, output.ToString(), null);
+        }
+        catch (Exception ex) { return new ModelComparisonResult(model, null, ex.Message); }
+    }
+
+    private async Task ShowModelComparisonResultsAsync(IReadOnlyList<ModelComparisonResult> results)
+    {
+        var columns = new Grid { ColumnSpacing = 10 };
+        for (var index = 0; index < results.Count; index++) columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        for (var index = 0; index < results.Count; index++)
+        {
+            var result = results[index];
+            var panel = new StackPanel { Spacing = 6 };
+            panel.Children.Add(new TextBlock { Text = $"{result.Model.Provider} · {result.Model.Model}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(new TextBlock { Text = result.Error is null ? result.Response : $"Comparison failed: {result.Error}", TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true });
+            var border = new Border { Background = ResourceBrush("SurfaceAltBrush"), BorderBrush = ResourceBrush("LineBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(10), Child = new ScrollViewer { Content = panel, MaxHeight = 520, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } };
+            Grid.SetColumn(border, index);
+            columns.Children.Add(border);
+        }
+        var dialog = new ContentDialog { Title = "Model comparison results", Content = new ScrollViewer { Content = columns, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, MaxWidth = 1_100, MaxHeight = 620 }, CloseButtonText = "Done", XamlRoot = XamlRoot };
+        await dialog.ShowAsync();
+        RuntimeStatus.Text = results.Any(result => result.Error is not null) ? "Model comparison finished with one or more failures; partial results remain visible." : "Model comparison complete.";
     }
 
     private async Task OpenModelLibraryAndRestoreFocusAsync(bool returnToCompactSidebar, Control? trigger, bool confirmModelSwitch = false)

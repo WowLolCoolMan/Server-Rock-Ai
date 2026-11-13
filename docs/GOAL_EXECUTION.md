@@ -2006,6 +2006,47 @@ Not yet verified: persistent tabs/layout geometry, dialog/overlay routes, live
 restart Back/Forward activation, Linux/Skia interaction, and narrow viewport
 focus acceptance.
 
+## Slice 93 — bounded side-by-side pinned-model comparison
+
+Status: `implemented_verified_core_and_native_build`
+
+The model quick-switch menu now offers a comparison journey when at least two
+pinned compatible models exist. The user selects two to four models and enters
+one plain-text prompt. The policy deduplicates selections, bounds the prompt,
+honors local-only endpoint policy, and rejects invalid model connections before
+dispatch. Comparison requests exclude attachments, saved memory, project files,
+and web results. Requests run in parallel, remote endpoints require explicit
+consent, and each model renders its own response or classified failure so one
+failure does not erase partial results. API keys remain session-only.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/ModelComparisonPolicy.cs`
+- `native/ServerRock.Core.Tests/ModelComparisonPolicyTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPage.ModelLibrary.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deduplication, minimum selection, local-only routing, and prompt bounds.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings/errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts)`.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: comparison is opt-in, plain-text only, and keeps
+remote routing visible. No cloud request is made silently; no credentials are
+written to settings. Output is bounded before rendering. No dependency or
+third-party code was added.
+
+Rollback: remove the comparison policy, menu action, consent set, result dialog,
+tests, and audit contracts; existing model switching remains unchanged.
+
+Not yet verified: live Windows comparison with two healthy pinned models, live
+remote-consent acceptance, provider-specific model capabilities, durable result
+history, and Linux/packaged accessibility behavior.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`
