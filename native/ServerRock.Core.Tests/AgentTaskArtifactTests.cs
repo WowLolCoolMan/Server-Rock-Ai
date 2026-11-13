@@ -53,6 +53,30 @@ internal static class AgentTaskArtifactTests
                 return new AgentTaskExecutionResult("unreachable");
             }, cancellation.Token);
             Check(cancelledExecution?.Status == AgentTaskStatuses.Cancelled, "agent task executor durably records cancellation");
+
+            var isolatedRepository = Path.Combine(root, "agent-repo");
+            Directory.CreateDirectory(isolatedRepository);
+            RunGit(isolatedRepository, "init", "-b", "main");
+            RunGit(isolatedRepository, "config", "user.email", "tests@example.invalid");
+            RunGit(isolatedRepository, "config", "user.name", "Native Tests");
+            File.WriteAllText(Path.Combine(isolatedRepository, "README.md"), "isolated fixture\n");
+            RunGit(isolatedRepository, "add", "README.md");
+            RunGit(isolatedRepository, "commit", "-m", "initial agent fixture");
+            var isolatedPlan = store.Create("Execute in isolated worktree", "Inspect the isolated project target.", "specialist");
+            store.Queue(isolatedPlan.Id);
+            var worktreeExecutor = new AgentTaskExecutor(store);
+            var coordinator = new GitWorktreeCoordinator();
+            var worktreeParent = Path.Combine(root, "worktrees");
+            var isolatedResult = await worktreeExecutor.ExecuteNextInWorktreeAsync(coordinator, isolatedRepository, worktreeParent, async (task, lease, _) =>
+            {
+                Check(task.WorktreePath == lease.WorktreePath && File.Exists(Path.Combine(lease.WorktreePath, "README.md")), "agent executor injects a real isolated worktree into the handler");
+                Check(RunGitOutput(lease.WorktreePath, "branch", "--show-current").Trim() == lease.Branch, "agent executor persists the isolated task branch");
+                await Task.CompletedTask;
+                return new AgentTaskExecutionResult("Isolated review completed.", ["isolated-review"]);
+            });
+            Check(isolatedResult?.Status == AgentTaskStatuses.Completed && isolatedResult.WorktreePath is not null && isolatedResult.WorktreeRepositoryRoot == isolatedRepository, "agent executor durably retains the worktree lease after handler completion");
+            var releasedResult = await worktreeExecutor.ReleaseTaskWorktreeAsync(isolatedResult!.Id, coordinator);
+            Check(releasedResult.WorktreePath is null && !Directory.Exists(Path.Combine(worktreeParent, $"agent-task-{isolatedResult.Id}")), "agent executor releases a retained clean worktree explicitly");
             try
             {
                 store.Create("bad", "missing dependency", dependsOn: ["missing"]);

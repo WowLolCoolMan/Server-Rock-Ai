@@ -23,6 +23,9 @@ public sealed class AgentTaskArtifact
     public List<string> DependsOn { get; set; } = [];
     public string? ResultSummary { get; set; }
     public List<string> ArtifactLabels { get; set; } = [];
+    public string? WorktreePath { get; set; }
+    public string? WorktreeBranch { get; set; }
+    public string? WorktreeRepositoryRoot { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 }

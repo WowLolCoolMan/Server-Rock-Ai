@@ -7523,6 +7523,51 @@ Remaining: integrate lease acquisition into agent session creation, add process
 and parallel-session isolation, expose review/recovery state in the UI, and
 complete live Windows/Linux worktree acceptance.
 
+## Slice 216 — Bind agent execution to durable worktree leases
+
+Status: `implemented_core_verified_executor_isolation`
+
+Requirement alignment: the isolated Git boundary is now used by the durable
+agent-task executor. `ExecuteNextInWorktreeAsync` claims one dependency-ready
+task, creates a sibling worktree on a task-specific branch, persists the
+repository/path/branch lease on the task artifact, and injects the lease into
+the caller-supplied handler. Completion, failure, and cancellation retain the
+worktree for review; `ReleaseTaskWorktreeAsync` is explicit and delegates to
+the clean-only coordinator release path.
+
+The executor still does not choose models, invoke tools, start processes, or
+dispatch parallel tasks. A retained worktree is visible in durable task state,
+so a caller can review or recover it instead of losing changes silently.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AgentTaskArtifact.cs`
+- `native/ServerRock.Core/Services/AgentTaskArtifactStore.cs`
+- `native/ServerRock.Core/Services/AgentTaskExecutor.cs`
+- `native/ServerRock.Core.Tests/AgentTaskArtifactTests.cs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- Full `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj --no-restore` — passed, including handler lease injection, branch persistence, retained lease state, and explicit clean release.
+- Task artifact validation accepts legacy no-lease records and rejects incomplete lease metadata.
+- Cancellation/failure paths retain the lease for review rather than force-removing it.
+
+Privacy/security/licensing: lease metadata is local bounded path/branch data;
+no credentials, network requests, model routing, or third-party dependencies
+were added. The handler remains explicitly injected and untrusted side effects
+are not authorized by the executor.
+
+Risk and rollback: remove the worktree fields, executor overload, release
+method, and focused tests; the prior injected-handler executor remains usable.
+Any retained worktree must be explicitly reviewed/released before rollback.
+
+Remaining: connect this lease flow to the native Coding Agent UI/session
+creation, add process and parallel-session isolation, and complete live
+Windows/Linux acceptance.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

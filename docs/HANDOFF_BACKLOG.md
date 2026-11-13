@@ -1,13 +1,13 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 215, including the
+Snapshot: `main` at the current checkout through Slice 216, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
 durable project-file tabs/resume action, Git conflict recovery guidance, and
 the capability-neutral agent execution lifecycle, enforced release workflow
 audit, the shared native UI token audit/refinement, GitHub workflow typography
 tokenization, Settings dialog typography/status tokenization, and chat-shell
-history/source-card tokenization, and the guarded Git worktree isolation
-boundary.
+history/source-card tokenization, the guarded Git worktree isolation boundary,
+and durable agent-executor lease integration.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

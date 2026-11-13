@@ -15,6 +15,8 @@ public sealed class AgentTaskArtifactStore
     public const int MaxArtifactLabelCharacters = 160;
     public const int MaxDependencies = 8;
     public const int MaxArtifactLabels = 8;
+    public const int MaxWorktreePathCharacters = 4_096;
+    public const int MaxWorktreeBranchCharacters = 256;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 12 };
     private readonly string _path;
 
@@ -62,6 +64,34 @@ public sealed class AgentTaskArtifactStore
     }
 
     public AgentTaskArtifact Queue(string id) => Transition(id, AgentTaskStatuses.Proposed, AgentTaskStatuses.Queued);
+
+    public AgentTaskArtifact Get(string id) => Copy(Load().SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist."));
+
+    public AgentTaskArtifact AttachWorktree(string id, string repositoryRoot, string path, string branch)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Running) throw new InvalidOperationException("A worktree can only be attached to a running task.");
+        task.WorktreeRepositoryRoot = Normalize(repositoryRoot, MaxWorktreePathCharacters, "worktree repository root");
+        task.WorktreePath = Normalize(path, MaxWorktreePathCharacters, "worktree path");
+        task.WorktreeBranch = Normalize(branch, MaxWorktreeBranchCharacters, "worktree branch");
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    public AgentTaskArtifact ClearWorktree(string id)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status == AgentTaskStatuses.Running) throw new InvalidOperationException("A running task cannot release its worktree.");
+        task.WorktreePath = null;
+        task.WorktreeBranch = null;
+        task.WorktreeRepositoryRoot = null;
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
 
     /// <summary>Cancels a proposed or queued plan before any future executor can claim it.</summary>
     public AgentTaskArtifact CancelPlanned(string id, string reason = "Cancelled before execution.")
@@ -167,6 +197,13 @@ public sealed class AgentTaskArtifactStore
             if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
             if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
             NormalizeLabels(task.ArtifactLabels);
+            NormalizeOptional(task.WorktreeRepositoryRoot, MaxWorktreePathCharacters, "worktree repository root");
+            NormalizeOptional(task.WorktreePath, MaxWorktreePathCharacters, "worktree path");
+            NormalizeOptional(task.WorktreeBranch, MaxWorktreeBranchCharacters, "worktree branch");
+            var hasRepositoryRoot = task.WorktreeRepositoryRoot is not null;
+            var hasWorktreePath = task.WorktreePath is not null;
+            var hasWorktreeBranch = task.WorktreeBranch is not null;
+            if (hasRepositoryRoot != hasWorktreePath || hasWorktreePath != hasWorktreeBranch) throw new InvalidDataException("The agent task store contains an incomplete worktree lease.");
         }
     }
 
@@ -207,6 +244,9 @@ public sealed class AgentTaskArtifactStore
         DependsOn = source.DependsOn.ToList(),
         ResultSummary = source.ResultSummary,
         ArtifactLabels = source.ArtifactLabels.ToList(),
+        WorktreePath = source.WorktreePath,
+        WorktreeBranch = source.WorktreeBranch,
+        WorktreeRepositoryRoot = source.WorktreeRepositoryRoot,
         CreatedAtUtc = source.CreatedAtUtc,
         UpdatedAtUtc = source.UpdatedAtUtc
     };
