@@ -42,6 +42,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `3e49a33` — clarified Model Library provider identity, vision/text capability, and discovered status while preserving the existing model-selection handoff.
 - `52808f6` — added the existing transparent Skai wolf icon to the shell brand lockup and wired the tracked asset pack through the renderer build without adding decorative artwork to dense workflows.
 - `f3c9601` — added a branded Chat first-run state and changed the wolf asset reference to a Vite-bundled resource so packaged Electron history routes do not depend on public-root URL resolution.
+- `b771eaa` — replaced sidebar Unicode glyphs with a reusable accessible SVG navigation icon set for workspace routes, utilities, and Settings.
 
 ## Current evidence
 
@@ -49,7 +50,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Renderer production build: passed.
 - Node syntax and repository hygiene checks: passed.
 - Agent Host build: passed with 0 warnings and 0 errors after a clean Electron restart.
-- Full ServerRock.Core test suite: passed.
+- Full SkaiDesktop.Core test suite: passed.
 - Agent Host replacement smoke: passed.
 - Chat queue smoke: passed.
 - Headless interaction checks: passed for Settings category search/navigation, model discovery/filtering, Image Studio history, Chat markdown/actions/queue, command palette, and responsive overflow at 1920, 1440, 1280, and 960 widths.
@@ -85,6 +86,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Models focused UI check: passed model discovery, provider/capability metadata rendering, discovered status, exact navigation selection, screenshot capture, and no Cloud UI. Screenshot: `output/playwright/skai-models-provider-status.png`.
 - Branded shell check: passed tracked wolf asset loading with preserved transparency, accessible decorative-image treatment, responsive shell rendering, and no Cloud UI. Screenshot: `output/playwright/skai-branded-shell.png`.
 - Chat first-run check: passed the branded empty state, hashed asset loading from `dist/assets`, visible composer, fresh Electron renderer launch, and no Cloud UI. Screenshot: `output/playwright/skai-chat-branded-empty.png`.
+- Sidebar navigation check: passed all nine route transitions, active-state styling, nine SVG icon instances, no horizontal overflow at 1280px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-svg-icons.png`. Fresh Electron process launch also passed; the Windows accessibility surface did not settle to the renderer content on the final restart, so this checkpoint does not claim a live Electron visual screenshot.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
@@ -106,11 +108,11 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 The following working-tree paths are intentionally not part of the premium UI checkpoints and must remain untouched unless explicitly requested:
 
-- `native/ServerRock.Core.Tests/Program.cs`
-- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/SkaiDesktop.Core.Tests/Program.cs`
+- `native/SkaiDesktop.Core/Models/AppSettings.cs`
 - `native/ServerRock.Native/**`
-- `native/ServerRock.Core.Tests/AirLlmProviderTests.cs`
-- `native/ServerRock.Core/Services/AirLlmProvider.cs`
+- `native/SkaiDesktop.Core.Tests/AirLlmProviderTests.cs`
+- `native/SkaiDesktop.Core/Services/AirLlmProvider.cs`
 - `services/airllm/**`
 - `ServerRock_AI_FINAL_COMPLETE_HANDOFF/**`
 - `output/**`
