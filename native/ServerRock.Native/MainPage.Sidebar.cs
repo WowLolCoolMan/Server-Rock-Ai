@@ -405,16 +405,38 @@ public sealed partial class MainPage
 
     private async Task CreateAgentTaskAsync(ContentDialog? activityDialog)
     {
+        IReadOnlyList<AgentTaskArtifact> existingTasks;
+        try { existingTasks = _agentTaskStore.Load(); }
+        catch { existingTasks = Array.Empty<AgentTaskArtifact>(); }
+
         var title = new TextBox { Header = "Task title", PlaceholderText = "A short specialist task name" };
         var instruction = new TextBox { Header = "Instruction", PlaceholderText = "What should be reviewed or prepared?", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 100 };
         var role = new TextBox { Header = "Role", Text = "specialist", PlaceholderText = "specialist, verifier, or researcher" };
+        var dependencyPicker = new ListView
+        {
+            ItemsSource = existingTasks,
+            DisplayMemberPath = nameof(AgentTaskArtifact.Title),
+            SelectionMode = ListViewSelectionMode.Multiple,
+            MaxHeight = 140
+        };
+        AutomationProperties.SetName(dependencyPicker, "Agent task prerequisites");
+        var dependencyBlock = new StackPanel
+        {
+            Spacing = 4,
+            Children =
+            {
+                new TextBlock { Text = "Prerequisites (optional)" },
+                dependencyPicker,
+                new TextBlock { Text = existingTasks.Count == 0 ? "No existing local tasks to select." : "Select existing local tasks that must complete first.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.72 }
+            }
+        };
         AutomationProperties.SetName(title, "Agent task title");
         AutomationProperties.SetName(instruction, "Agent task instruction");
         AutomationProperties.SetName(role, "Agent task role");
         var dialog = new ContentDialog
         {
             Title = "Plan agent task",
-            Content = new StackPanel { Spacing = 9, Children = { title, instruction, role, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
+            Content = new StackPanel { Spacing = 9, Children = { title, instruction, role, dependencyBlock, new TextBlock { Text = "This saves a local plan only. It does not start an agent, call a model, or run a tool.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Opacity = 0.78 } } },
             PrimaryButtonText = "Save task plan",
             CloseButtonText = "Cancel",
             XamlRoot = XamlRoot
@@ -424,7 +446,8 @@ public sealed partial class MainPage
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try
         {
-            _agentTaskStore.Create(title.Text, instruction.Text, role.Text);
+            var dependencies = dependencyPicker.SelectedItems.OfType<AgentTaskArtifact>().Select(task => task.Id).ToArray();
+            _agentTaskStore.Create(title.Text, instruction.Text, role.Text, dependsOn: dependencies);
             RuntimeStatus.Text = "Agent task plan saved locally for review. No agent or provider was started.";
             activityDialog?.Hide();
         }

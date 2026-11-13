@@ -1857,6 +1857,46 @@ actual sub-agent delegation, parallel execution limits, process/container/
 worktree isolation, background execution, cross-platform acceptance, and
 packaged release acceptance.
 
+## Slice 118 — author bounded agent-task prerequisites
+
+Status: `implemented_verified_build`
+
+The local `Plan agent task` dialog now includes an optional prerequisite picker.
+It is populated only from task artifacts already in the bounded local store and
+saves selected artifact IDs as dependencies. The picker does not dispatch an
+agent, claim work, call a provider, invoke a tool, or create background work;
+dependency-aware claiming remains an executor concern.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with the dependency-picker accessibility
+  contract.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: prerequisite selection reads only bounded local
+task metadata and writes only selected local task IDs. No task instruction,
+file content, credential, provider, or network state leaves the application.
+
+Rollback: remove the dependency picker and pass no `dependsOn` values when
+creating plans; the existing local task planning and queue lifecycle remains.
+
+Not yet verified: live multi-selection of prerequisites, packaged-artifact
+acceptance, actual sub-agent delegation, parallel execution limits,
+process/container/worktree isolation, background execution, cross-platform
+acceptance, and packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
