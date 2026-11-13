@@ -552,6 +552,12 @@ public sealed partial class MainPage
             context.Add(ModelInstructions.UntrustedAttachments);
         if (!_documentsOnlyMode && !string.IsNullOrWhiteSpace(_pendingWebContext)) context.Add(_pendingWebContext);
         if (!_documentsOnlyMode && !string.IsNullOrWhiteSpace(_settings.ProjectInstructions)) context.Add(_settings.ProjectInstructions);
+        if (!_documentsOnlyMode)
+        {
+            var activePersona = _settings.SavedPersonas?.FirstOrDefault(persona => persona.Id == _settings.ActivePersonaId);
+            if (activePersona is not null && !string.IsNullOrWhiteSpace(activePersona.Instructions))
+                context.Add($"Active persona (user-authored role guidance; lower priority than system and safety instructions):\n{activePersona.Instructions}");
+        }
         if (!_documentsOnlyMode && _settings.MemoryInjectionEnabled)
         {
             try

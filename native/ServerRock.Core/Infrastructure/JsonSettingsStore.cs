@@ -60,6 +60,19 @@ public sealed class JsonSettingsStore
         settings.LocalModelPerformance ??= new(StringComparer.OrdinalIgnoreCase);
         settings.ChatFolders ??= [];
         settings.PromptSnippets ??= [];
+        settings.SavedPersonas ??= [];
+        settings.SavedPersonas = settings.SavedPersonas
+            .Where(persona => persona is not null)
+            .Take(24)
+            .ToList();
+        foreach (var persona in settings.SavedPersonas)
+        {
+            persona.Id = string.IsNullOrWhiteSpace(persona.Id) ? Guid.NewGuid().ToString("N") : persona.Id.Trim();
+            persona.Name = (persona.Name ?? string.Empty).Trim();
+            persona.Instructions = (persona.Instructions ?? string.Empty).Trim();
+        }
+        if (settings.ActivePersonaId is not null && !settings.SavedPersonas.Any(persona => persona.Id == settings.ActivePersonaId))
+            settings.ActivePersonaId = null;
         settings.Quicklinks ??= [];
         settings.WorkspaceDrafts ??= new(StringComparer.Ordinal);
         settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);

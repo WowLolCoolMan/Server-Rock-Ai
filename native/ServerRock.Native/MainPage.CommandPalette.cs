@@ -30,6 +30,7 @@ public sealed partial class MainPage
             new CommandPaletteItem("Health scan", "architecture map diagnostics", () => ShowLocalHealthAsync(includeMap: false)),
             new CommandPaletteItem("In-app documentation", "help guide privacy safety local workflow", ShowInAppDocumentationAsync),
             new CommandPaletteItem("Prompt snippets", "saved prompts templates expand composer", OpenSnippetsAsync),
+            new CommandPaletteItem("Personas", "gems reusable roles instructions", OpenPersonasAsync),
             new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync),
             new CommandPaletteItem("Quicklinks", "bookmarks frequent web links", OpenQuicklinksAsync),
             new CommandPaletteItem("Developer diagnostics", "developer mode inspect runtime local diagnostics", OpenDeveloperDiagnosticsAsync),

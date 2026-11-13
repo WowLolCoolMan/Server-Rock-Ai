@@ -7262,6 +7262,52 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 190 — Local reusable Personas (Gems)
+
+Status: `implemented_core_ui_build_verified`
+
+Added the simplest useful slice of the backlog item for saved Gems/personas.
+Personas are local, bounded role instructions that users can create, edit,
+activate, deactivate, and delete from the command palette or More workspace
+options. An active persona is added to future non-documents-only provider
+context with an explicit user-authored priority label; existing conversations
+are not rewritten and documents-only mode excludes the persona by design.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/SavedPersona.cs`
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.Personas.cs`
+- `native/ServerRock.Native/MainPage.CommandPalette.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.Chat.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Core persistence tests passed, including persona round-trip and active-ID recovery.
+- UI audit contracts cover command discovery, saved-list labeling, and instructions labeling.
+- Persona input is bounded to 24 entries, 80-character names, and 4,000-character instructions.
+- Persona data is stored in the existing local settings file; no new network call,
+  credential, dependency, or automatic provider action was added.
+
+Privacy/security/licensing: persona text is user-authored local data. It is
+sent only when the user sends a future request while a persona is active, is
+excluded from documents-only requests, and is labeled as lower priority than
+system and safety instructions. No third-party content or package was added.
+
+Rollback: remove the Personas command/action and delete the saved-persona
+settings fields; existing chats, pets, provider credentials, and project data
+are unaffected.
+
+Remaining: bundled persona tools/knowledge, sharing, sync, import/export, and
+team administration remain open backlog work.
+
 ## Slice 187 — Validate release metadata consistency
 
 Status: `implemented_script_gate_verified`

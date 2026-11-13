@@ -174,7 +174,7 @@ and acceptance evidence.
 ## Content generation and meetings
 
 - [ ] Deep research with autonomous multi-step web research and a report.
-- [ ] Gems/personas saved as reusable AI configurations.
+- [x] Gems/personas saved as reusable AI configurations. (Bounded local persona save, activate/deactivate, delete, and future-chat prompt injection; bundled tools/knowledge and cloud sync remain open.)
 - [ ] Meeting notes with AI synthesis, including handwritten notes to structured summaries.
 - [ ] Real-time transcription without a bot joining the call.
 - [ ] AI-enhanced handwritten notes.

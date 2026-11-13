@@ -761,6 +761,7 @@ public sealed partial class MainPage
         AddAction("Health scan & architecture map", "health", "Run a bounded offline project scan without uploading repository contents.");
         AddAction("In-app documentation", "documentation", "Review local-first usage, privacy, safety, and workflow guidance.");
         AddAction("Prompt snippets", "snippets", "Save reusable prompt text, insert it into the composer, or preview a model expansion.");
+        AddAction("Personas", "personas", "Save reusable role instructions and explicitly activate one for chat context.");
         AddAction("Translate text", "translator language", "Translate text with the selected model and review it before inserting it into the composer.");
         AddAction("Quicklinks", "bookmarks", "Save and explicitly open frequent-access web addresses.");
         AddAction("Developer diagnostics", "developer", "Inspect bounded local runtime facts when developer mode is enabled.");
@@ -775,6 +776,7 @@ public sealed partial class MainPage
             case "health": await ShowLocalHealthAsync(includeMap: false); break;
             case "documentation": await ShowInAppDocumentationAsync(); break;
             case "snippets": await OpenSnippetsAsync(); break;
+            case "personas": await OpenPersonasAsync(); break;
             case "translator": await OpenTranslatorAsync(); break;
             case "bookmarks": await OpenQuicklinksAsync(); break;
             case "developer": await OpenDeveloperDiagnosticsAsync(); break;

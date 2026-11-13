@@ -220,6 +220,13 @@ save-and-insert acceptance passed. A compatible local model then returned an
 editable expansion preview, and the explicit Use expanded text action inserted
 the reviewed candidate into the composer.
 
+Recent slice note — Slice 190: added bounded local Personas (the first useful
+Gems/personas slice). Users can save up to 24 role instructions of up to 4,000
+characters, explicitly activate or deactivate one, and delete it. An active
+persona is included only in future non-documents-only model requests; system,
+safety, and documents-only boundaries remain unchanged. Bundled tools,
+knowledge, and cloud sync remain open.
+
 Recent slice note — Slice 164: scheduled tasks now support durable Cancel from
 Activity while scheduled or paused. Core cancellation/non-claimability tests,
 218 native UI contracts, and a live Windows create → Activity → Cancel journey
