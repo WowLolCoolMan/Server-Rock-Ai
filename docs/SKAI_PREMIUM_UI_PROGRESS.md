@@ -29,6 +29,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Coding workflow interaction checks: passed for project browser → Terminal handoff, selected-project propagation, Agent Workbench handoff, and responsive overflow at 1920, 1440, 1280, and 960 widths.
 - Coding diff interaction checks: passed for local removal/addition preview, guarded save, post-save clean state, and responsive overflow.
 - Coding editor tab interaction check: passed for opening two files, switching tabs, preserving the active buffer, blocking close while dirty, and responsive overflow at 960px. Screenshot: `output/playwright/skai-coding-tabs.png`.
+- Docked terminal interaction check: passed for opening the terminal inside the selected coding project, forwarding the bounded project command, rendering exit/output feedback, preserving editor tabs, and responsive overflow at 960px. Screenshot: `output/playwright/skai-coding-docked-terminal.png`.
 - Memory/Workbench interaction checks: passed for loading, empty state, Memory failure/retry, lifecycle columns, dependency context, and responsive overflow.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
@@ -40,7 +41,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 ## Outstanding priorities
 
-1. Integrate the coding workspace into a dockable project workflow with file tabs, terminal output, guarded diff review, and explicit approvals. File tabs are now present with dirty-close protection; dockable terminal panes, broader review, and explicit approval surfaces remain.
+1. Integrate the coding workspace into a dockable project workflow with file tabs, terminal output, guarded diff review, and explicit approvals. File tabs and a docked terminal panel now share the selected project; broader review and explicit approval surfaces remain.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with editing/detail views and richer recovery actions; loading, failure, and empty states are now covered.
 4. Add stronger keyboard-focus and dialog accessibility tests, including real Electron capture when the provider can target the correct window.
