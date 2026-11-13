@@ -1,6 +1,6 @@
 # Live Handoff Backlog
 
-Snapshot: `main` at the current checkout through Slice 229, including the
+Snapshot: `main` at the current checkout through Slice 230, including the
 bounded Quick Open slice, native UI tokenization, release workflow audit, and
 durable project-file tabs/resume action, Git conflict recovery guidance, and
 the capability-neutral agent execution lifecycle, enforced release workflow
@@ -28,6 +28,8 @@ It also records fresh verification of concurrent commit `b208026`'s staged
 agent-host/renderer migration seam without claiming native feature parity.
 It also includes a bounded content-free text-file enumeration for project
 navigation, separate from provider context sampling.
+It also exposes the project browser's bounded safety boundary and exclusions
+through accessible UI text.
 This is an evidence-backed planning ledger, not a claim that the handoff is
 complete.
 

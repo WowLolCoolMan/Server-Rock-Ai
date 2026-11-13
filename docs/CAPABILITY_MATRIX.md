@@ -320,6 +320,11 @@ Slice 229 separates project navigation from model-context sampling with a
 bounded content-free text-file enumeration used by the Coding Agent explorer.
 The stricter 16-file/48k-character provider-context sample is unchanged.
 
+Slice 230 exposes the project browser's bounded safety boundary through its
+header and accessible help text, including the entry limit and exclusion
+categories. This is explanatory UI only; full ignore-state and tree behavior
+remain open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

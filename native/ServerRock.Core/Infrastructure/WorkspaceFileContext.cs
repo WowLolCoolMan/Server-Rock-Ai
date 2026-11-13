@@ -14,6 +14,7 @@ public static class WorkspaceFileContext
     public const int MaxTotalCharacters = 48_000;
     public const int MaxPreviewEntries = 24;
     public const int MaxBrowserTextEntries = 128;
+    public const string BrowserBoundaryDescription = "Shows up to 128 readable text files. Protected names, dependency/build directories, and linked paths are hidden.";
 
     public sealed record WorkspaceFileEntry(string RelativePath, string FullPath, string Kind);
     public sealed record WorkspaceTextFileEntry(string RelativePath, string FullPath, long Bytes);

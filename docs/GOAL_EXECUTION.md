@@ -7643,6 +7643,49 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 230 — Surface the project-browser safety boundary
+
+Status: `implemented_native_browser_boundary_accessibility_verified`
+
+Requirement alignment: the new bounded project browser correctly excludes
+protected names, dependency/build directories, and linked paths, but the UI
+did not explain that boundary. The Coding Agent file header now identifies the
+surface as a bounded safe view and exposes an accessible help description with
+the 128-entry limit and exclusion categories. No file access is widened and
+provider context behavior is unchanged.
+
+Changed files:
+
+- `native/ServerRock.Core/Infrastructure/WorkspaceFileContext.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including the browser-boundary description assertion.
+- `node scripts/audit-native-ui.cjs` — passed with 322 contracts.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: accessible explanatory text only. Existing
+explicit folder selection, protected-path exclusions, bounded enumeration, and
+local-only behavior are unchanged. No dependency, network, or license surface
+was added.
+
+Risk and rollback: restore the prior header text and remove the boundary
+constant/test/audit contract. No project files or user data change.
+
+Remaining: full repository-tree loading, ignore-state presentation beyond the
+bounded explanation, richer folder actions, binary/PDF/image preview
+integration, and live cross-platform acceptance remain open.
+
 ## Slice 229 — Separate project browsing from model-context sampling
 
 Status: `implemented_core_bounded_browser_tree_build_test_verified`

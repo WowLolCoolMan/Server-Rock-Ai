@@ -202,7 +202,8 @@ public sealed partial class MainPage
             return;
         }
         CodeFilesHeader.Visibility = Visibility.Visible;
-        CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))}";
+        CodeFilesHeader.Text = $"FILES · {Path.GetFileName(project.FolderPaths[0].TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))} · BOUNDED SAFE VIEW";
+        AutomationProperties.SetHelpText(CodeFilesHeader, WorkspaceFileContext.BrowserBoundaryDescription);
         var files = WorkspaceFileContext.EnumerateTextFiles([project.FolderPaths[0]])
             .Select(item => (Path: item.RelativePath, Content: string.Empty))
             .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
