@@ -91,7 +91,7 @@ files only get small hooks.
 | idle | Pass | Breathing from the feet with a 1–2 px rise. |
 | thinking | Pass | Head-tilt sway with a float; bubble "Thinking…" stays visible for the whole reply (recorded, Byte). |
 | coding | Pass (code) | Typing bounce. Same code path as thinking; not yet recorded in the rig. |
-| coding_malicious | Not triggered | Motion exists (jitter + pulse) but the app still never sets this state (bug 6, open). |
+| coding_malicious | Fixed (code) | Jitter + pulse. Now shown while a Coding Agent command waits for approval (it would run unsandboxed), when "ask for approval before risky actions" is on; back to idle when the dialog closes. Not exercised in the rig (needs a project folder from the native picker). |
 | stuck | Pass (code) | Slow droop. Stop now shows idle + "Stopped." instead. |
 | success | Pass | Hops with a landing squash; back to idle after 6 s (recorded, Rocky and Byte). |
 | error | Pass | Head-shake bursts; back to idle after 10 s (recorded, Rocky). |
@@ -104,7 +104,81 @@ files only get small hooks.
 
 ## Wander (phase 2)
 
-Not started.
+Status: done and ON by default since round 4 of the smoke test. "Let the pet wander" (pet chooser
+dialog) is saved as `wander` in `companion.json`; `null` means "not chosen", so the default
+applies: on, unless the app's "Reduce decorative motion" or the system's animation setting
+(Windows "Show animations", via `UISettings.AnimationsEnabled`) asks for less motion. The same
+check also stops the state animations.
+
+- Grid and planning: `ServerRock.Core/Services/PetWanderPlanner.cs` (`PetWanderGrid`,
+  `PetWanderPlanner`, `PetWalk`), tested in `PetWanderPlannerTests.cs` with seeded randoms.
+- UI: `MainPage.CompanionWander.cs`, riding on the pet animation timer (60 fps while walking).
+- Blocked cells: every cell where the pet card (bubble included) would overlap the composer
+  control, Send or Stop, plus 8 px clearance.
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| Walks cell to cell, never jumps | Pass | Logged card position every second: 78–90 px/s, continuous. Core test proves every step is one neighboring cell and the glide never exceeds its speed. |
+| Render rate while walking | Pass | Uno reported 60 rendered frames/s and 60 timer ticks/s during walks (temporary counter, removed). |
+| Rests 2–6 s | Pass | Core test plus log. |
+| Never over the composer at 1440×900 | Pass | 0 overlapping ticks in 60 s. |
+| Never over the composer at 760×560 | Pass, after fix | The shrink itself can drop the pet onto the composer; it used to take ~3 s to leave, now it starts walking off within 0.2 s. |
+| Stop/resume around states | Pass (code) | Slides to a stop over 0.3 s when the state leaves idle; resumes 5 s after idle. |
+| Drag/keys pause 30 s | Pass (code) | Any outside move of the card cancels the walk and waits 30 s. |
+| Hidden / Reduce motion / wander off | Pass | Nothing ticks for wander; the shared timer is stopped while hidden or with Reduce motion. |
+
+Known limits:
+- While the pet is busy (thinking, coding…) it doesn't walk; if a resize drops it on the
+  composer in that moment, it walks off when it's idle again.
+- Rig limitation: on the headless display used here, screen captures only refresh 1–4 times a
+  second (the virtual output throttles presents), so recordings look choppy even though the app
+  renders at 60 fps. The smoothness evidence is the in-app frame counter and position log above,
+  not the videos.
+
+## Smoke test, round 3 (full re-run after wander)
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| All five pets load | Pass | Rocky, Byte, Sprout, Nova, Ember idle frames, bubble and name. |
+| Thinking → success → idle with wander on | Pass | The pet stops where it is for the prompt, thinks, hops, relaxes, and walks again ~5 s later. |
+| coding | Pass (code) | Coding Agent needs a project folder from the native folder picker before it sends, which the rig can't drive; it is the same call as thinking with "coding". |
+| Pet over the sidebar | Fail → fixed | The sidebar has ZIndex 2 for the compact drawer, so a pet dragged or walking over it disappeared and its bubble was cut at the sidebar edge. The pet overlay now sits above it (it is collapsed while the drawer is open). |
+| "Let the pet wander" toggle | Pass | In the pet chooser; saves `"wander": true/false` immediately. |
+| Window title | Note | The app's window title is now "Skai Desktop" (owner rename); the rig matches both names. |
+
+### Full-desktop wandering (research only, not built)
+
+The idea: a second, borderless, transparent, always-on-top window that only contains the pet,
+moved around the screen instead of inside the app. What each piece needs, per platform:
+
+| Need | Windows (Uno Win32/WinUI) | macOS (Uno AppKit) | Linux X11 (Uno X11) | Linux Wayland |
+| --- | --- | --- | --- | --- |
+| Always on top | `OverlappedPresenter.IsAlwaysOnTop` (Windows App SDK API; Uno maps the overlapped presenter on desktop) | Same API; needs a check that Uno's AppKit host sets an `NSWindow` level above normal | Uno's X11 presenter already reads `_NET_WM_STATE`, so `_NET_WM_STATE_ABOVE` is plausible; not confirmed in Uno's source | Not possible for normal (xdg-shell) windows; needs the `wlr-layer-shell` protocol (KDE, wlroots compositors, GNOME 47+), which Uno doesn't speak |
+| Transparent background | Win32 layered window or DirectComposition; Uno only documents a window *background color* (`WindowHelper.SetBackground`), no per-pixel transparency | `NSWindow.isOpaque = false` plus a clear background; same Uno gap | 32-bit ARGB visual plus a compositing manager; same Uno gap | Alpha surfaces are normal, but only reachable through layer-shell here |
+| Click-through except the sprite | `WS_EX_TRANSPARENT` toggled while the pointer is off the sprite, or a window region | `ignoresMouseEvents` toggled by hit-testing | XShape input region shaped to the sprite | `wl_surface.set_input_region` on the layer surface |
+| Move freely on screen | `AppWindow.Move` | `AppWindow.Move` | `AppWindow.Move` (window manager may override) | Clients can't position windows at all; layer-shell anchors + margins only |
+
+Verdict:
+- **Windows** is feasible but needs native interop beside Uno (layered or composition window,
+  extended styles), because Uno has no transparent-window API. Medium effort.
+- **macOS** is feasible the same way through `NSWindow` interop. Medium effort, untested.
+- **X11** is feasible with an ARGB visual and XShape, also outside Uno's API, and only looks
+  right with a compositor running.
+- **Wayland** (including this machine's KDE session) is not feasible with Uno today: positioning
+  and always-on-top need layer-shell, which would mean a separate small GTK4/Qt helper process
+  (as wanderlay and KOverlay do). Running the app under XWayland would make it behave like X11 but
+  loses native Wayland input and scaling.
+- So full-desktop wandering would be a per-platform feature with native code in each shell plus a
+  helper on Wayland. The in-window wander covers the same "alive" feel without any of that.
+
+Sources: [Uno: Window and WindowHelper.SetBackground](https://platform.uno/docs/articles/features/windows-ui-xaml-window.html),
+[Uno: Skia desktop hosts](https://platform.uno/docs/articles/features/using-skia-desktop.html),
+[Uno 5.2.80 release notes (X11 overlapped presenter)](https://newreleases.io/project/github/unoplatform/uno/release/5.2.80),
+[OverlappedPresenter.IsAlwaysOnTop](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.windowing.overlappedpresenter),
+[wlr-layer-shell protocol](https://wayland.app/protocols/wlr-layer-shell-unstable-v1),
+[Wayland issue: no always-on-top for normal windows](https://gitlab.freedesktop.org/wayland/wayland/-/issues/305),
+[wanderlay (GTK4 layer-shell overlay)](https://github.com/tilacog/wanderlay).
+KOverlay (a LayerShellQt overlay) is a second example of the helper approach.
 
 ## Push log
 
@@ -113,3 +187,7 @@ Not started.
 | 23:49 | 2582816, 32c4668 | Smoke test round 1, bug list and fix plan; one-line Linux fix for the Markdown export file-name test (owner's file, see commit). |
 | 00:01 | f338d8c 7ec2887 3be18c6 c2f2735 | Re-cut frames, state animations, cross-fades, bubble, Stop/idle fixes; round-2 smoke table. |
 | 00:04 | 0b6dfa6 | Wander planner + Core tests (not wired to the UI yet). |
+| 00:19 | 881c19d | Wander in the UI behind "Let the pet wander" (off by default); wander smoke results. |
+| 00:27 | 30a5248 | Pet drawn above the sidebar; round-3 smoke results. |
+| 00:29 | 251ccce | Wander default ON (OFF with app or system reduce motion). |
+| 00:31 | 5b79128 cafc825 | coding_malicious during command approval; full-desktop wander research. |

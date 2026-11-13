@@ -131,6 +131,7 @@ public sealed partial class MainPage
         var cardHeight = CompanionCard.ActualHeight > 0 ? CompanionCard.ActualHeight : 68;
         var maxLeft = Math.Max(8, CompanionOverlay.ActualWidth - width - 8);
         var maxTop = Math.Max(8, CompanionOverlay.ActualHeight - cardHeight - 8);
+        if (CompanionWanderActive) { ClampCompanionForWander(); return; } // wander owns the position (MainPage.CompanionWander.cs)
 
         // On compact windows the companion must not sit over the welcome prompt
         // or the message composer. Keep it in the otherwise-unused strip below
@@ -268,6 +269,7 @@ public sealed partial class MainPage
             choices.Children.Add(option);
         }
 
+        choices.Children.Add(CreateCompanionWanderToggle());
         var configure = new Button { Content = "Use your own pictures…", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0), Style = UiTheme.Style("ContextButtonStyle") };
         AutomationProperties.SetName(configure, "Configure custom state sprites");
         configure.Click += (_, _) => { configureRequested = true; dialog.Hide(); };

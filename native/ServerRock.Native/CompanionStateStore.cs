@@ -14,7 +14,9 @@ internal sealed record CompanionState(
     Dictionary<string, string>? StateAssets = null,
     bool NotifyOnCompletion = true,
     bool NotifyOnErrors = true,
-    bool AskBeforeActions = true);
+    bool AskBeforeActions = true,
+    // null = not chosen yet, so the app default applies (MainPage.CompanionWander.cs).
+    bool? Wander = null);
 
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web, WriteIndented = true)]
 [JsonSerializable(typeof(CompanionState))]

@@ -34,6 +34,7 @@ public sealed partial class MainPage
     }
 
     private const double CompanionFrameSeconds = 1.0 / 30;
+    private const double CompanionWalkFrameSeconds = 1.0 / 60;
     private const double CompanionFadeSeconds = 0.22;
     private const double CompanionBlendSeconds = 0.35;
     private const double CompanionSpeechFadeSeconds = 0.25;
@@ -57,10 +58,24 @@ public sealed partial class MainPage
     private double _companionSpeechFrom = 1;
     private double _companionSpeechFadeStartedAt = double.NegativeInfinity;
     private double _companionSpeechHideAt = double.PositiveInfinity;
+    private double _companionLastTickAt;
 
     private double CompanionNow => _companionClock.Elapsed.TotalSeconds;
 
-    private bool CompanionReduceMotion => _settings.ReduceMotion;
+    // The app's "Reduce decorative motion" setting, or the system's animation preference.
+    private bool CompanionReduceMotion => _settings.ReduceMotion || SystemPrefersReducedMotion();
+
+    private static bool? _systemPrefersReducedMotion;
+
+    // Windows reports "Show animations" here; platforms where Uno has no answer count as "no
+    // preference". Read once: the property is cheap but the platform lookup is not.
+    private static bool SystemPrefersReducedMotion()
+    {
+        if (_systemPrefersReducedMotion is { } known) return known;
+        try { _systemPrefersReducedMotion = !new Windows.UI.ViewManagement.UISettings().AnimationsEnabled; }
+        catch (Exception) { _systemPrefersReducedMotion = false; }
+        return _systemPrefersReducedMotion.Value;
+    }
 
     // Wires the transform and the visibility listeners once. Watching the overlay's Visibility
     // covers every way the pet is shown or hidden (sidebar button, ×, Settings, drawer).
@@ -68,6 +83,10 @@ public sealed partial class MainPage
     {
         if (_companionAnimationHooked) return;
         _companionAnimationHooked = true;
+        // The sidebar has ZIndex 2 (so the compact drawer covers its scrim), which hid the pet
+        // whenever it was dragged or walked over the sidebar. The overlay is collapsed while the
+        // drawer is open (SetCompanionOverlayBlocked), so above the sidebar is always right.
+        Canvas.SetZIndex(CompanionOverlay, 3);
         _companionTransform = new CompositeTransform { CenterX = 40, CenterY = 80 };
         CompanionSprite.RenderTransform = _companionTransform;
         _companionSpeechHideAt = CompanionNow + CompanionIdleSpeechSeconds;
@@ -268,7 +287,14 @@ public sealed partial class MainPage
         var blend = (now - _companionStateChangedAt) / CompanionBlendSeconds;
         if (blend < 1)
             pose = CompanionPose.Lerp(CompanionStatePose(_companionBlendFromState, now), pose, EaseInOut(Math.Max(0, blend)));
-        ApplyCompanionPose(pose);
+        // Wander (MainPage.CompanionWander.cs) moves the card and swaps in the walking motion.
+        var walkPose = CompanionWanderTick(now);
+        var tickSeconds = Math.Clamp(now - _companionLastTickAt, 0, 0.1);
+        _companionLastTickAt = now;
+        ApplyCompanionPose(ComposeCompanionPose(pose, walkPose, tickSeconds));
+        // 60 fps while walking so the glide is smooth, 30 fps otherwise.
+        var interval = TimeSpan.FromSeconds(CompanionIsWalking ? CompanionWalkFrameSeconds : CompanionFrameSeconds);
+        if (_companionTimer is { } timer && timer.Interval != interval) timer.Interval = interval;
 
         // Frame cross-fade.
         var fade = (now - _companionFadeStartedAt) / CompanionFadeSeconds;
@@ -370,6 +396,23 @@ public sealed partial class MainPage
                 return new(0, -1 - breath, 0, 1 - 0.02 * breath, 1 + 0.04 * breath);
             }
         }
+    }
+
+    // coding_malicious: shown while the person reviews a Coding Agent command that would run
+    // unsandboxed, if "Let the pet ask for approval before risky actions" is on. Before this
+    // nothing in the app ever used the state.
+    private void CompanionEnterRiskReview()
+    {
+        if (!_companionState.AskBeforeActions) return;
+        SetCompanionState("coding_malicious");
+        UpdateCompanionSpeech("Careful · this command runs unsandboxed. Review it first.");
+    }
+
+    private void CompanionLeaveRiskReview(bool approved)
+    {
+        if (_companionState.CurrentState != "coding_malicious") return;
+        SetCompanionState("idle");
+        UpdateCompanionSpeech(approved ? "Running the approved command…" : "Okay · nothing ran.");
     }
 
     private static double EaseInOut(double x)
