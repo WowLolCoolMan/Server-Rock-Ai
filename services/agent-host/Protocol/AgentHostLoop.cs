@@ -1,4 +1,6 @@
 using System.Text.Json;
+using ServerRock.Core.Models;
+using ServerRock.Core.Services;
 
 namespace ServerRock.AgentHost.Protocol;
 
@@ -49,8 +51,49 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health"])),
+                ["runtime.health", "models.list", "chat.complete"])),
+            "models.list" => ListModels(request),
+            "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
     }
+
+    private static AgentResponse ListModels(AgentRequest request)
+    {
+        var endpoint = RequiredString(request, "endpoint");
+        var provider = new OpenAiCompatibleProvider();
+        var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, OptionalString(request, "apiKey"))
+            .GetAwaiter().GetResult();
+        return new(ProtocolVersion, request.Id, true, models);
+    }
+
+    private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
+    {
+        var endpoint = RequiredString(request, "endpoint");
+        var model = RequiredString(request, "model");
+        var messages = request.Params?.GetProperty("messages").Deserialize<List<ChatMessage>>(JsonOptions)
+            ?? throw new InvalidOperationException("chat.complete requires a messages array.");
+        if (messages.Count == 0) throw new InvalidOperationException("chat.complete requires at least one message.");
+
+        var settings = new AppSettings { Endpoint = endpoint, Model = model, Temperature = OptionalDouble(request, "temperature") ?? 0.7 };
+        var text = new System.Text.StringBuilder();
+        await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+            OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+        return new(ProtocolVersion, request.Id, true, new { model, content = text.ToString() });
+    }
+
+    private static string RequiredString(AgentRequest request, string name)
+    {
+        var value = OptionalString(request, name);
+        return string.IsNullOrWhiteSpace(value) ? throw new InvalidOperationException($"{name} is required.") : value;
+    }
+
+    private static string? OptionalString(AgentRequest request, string name) =>
+        request.Params is { } parameters && parameters.TryGetProperty(name, out var value) ? value.GetString() : null;
+
+    private static double? OptionalDouble(AgentRequest request, string name) =>
+        request.Params is { } parameters && parameters.TryGetProperty(name, out var value) && value.TryGetDouble(out var result) ? result : null;
+
+    private static int? OptionalInt(AgentRequest request, string name) =>
+        request.Params is { } parameters && parameters.TryGetProperty(name, out var value) && value.TryGetInt32(out var result) ? result : null;
 }

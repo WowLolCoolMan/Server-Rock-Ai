@@ -50,3 +50,30 @@ h3 { max-width: 720px; margin-bottom: 18px; font-size: clamp(30px, 4.5vw, 62px);
 h4 { margin: 24px 0 8px; font-size: 17px; }
 .surface-card p { margin-bottom: 0; color: #91a3bc; font-size: 13px; line-height: 1.55; }
 @media (prefers-reduced-motion: reduce) { .surface-card:hover { transform: none; transition: none; } }
+.compact { padding: 30px; }
+.compact h3 { margin-bottom: 10px; font-size: clamp(28px, 4vw, 48px); }
+.compact .hero-copy p { margin-bottom: 0; }
+.chat-view, .page-card { max-width: 1120px; margin: 0 auto; }
+.conversation { display: grid; gap: 12px; min-height: 250px; max-height: 430px; overflow: auto; padding: 14px 2px; }
+.empty-state { display: grid; place-items: center; min-height: 120px; color: #71839d; font-size: 13px; }
+.message { max-width: 78%; border: 1px solid #2d3f5a; border-radius: 14px; padding: 13px 16px; background: #19263a; }
+.message.user { justify-self: end; border-color: #42628e; background: #223a5f; }
+.message-role { color: #8fb7ff; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.message p { margin: 7px 0 0; color: #d8e2f1; white-space: pre-wrap; line-height: 1.55; }
+.typing { color: #8ea1ba !important; }
+.composer { display: flex; gap: 10px; align-items: end; padding: 12px; border: 1px solid #344b70; border-radius: 14px; background: rgba(12, 18, 28, .7); }
+textarea, input { width: 100%; border: 1px solid #3a4d6b; border-radius: 9px; padding: 11px 12px; color: #eaf1fb; background: #121c2b; font: inherit; outline: none; }
+textarea { resize: vertical; min-height: 48px; }
+textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(132, 179, 255, .12); }
+.primary-button:disabled { opacity: .5; cursor: not-allowed; }
+.page-card { min-height: 360px; }
+.page-card h3 { font-size: clamp(30px, 4vw, 48px); }
+.page-card > p { color: #9aacc4; line-height: 1.6; }
+.form-row { display: flex; gap: 10px; margin: 28px 0; }
+.form-row input { flex: 1; }
+.page-card label { display: grid; gap: 8px; margin: 18px 0; color: #b4c3d8; font-size: 12px; font-weight: 700; }
+.model-list { display: grid; gap: 8px; }
+.model-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; border: 1px solid #30425d; border-radius: 10px; padding: 13px; color: #dbe5f4; background: #172337; text-align: left; cursor: pointer; }
+.model-row:hover, .model-row.selected { border-color: #78a9ff; background: #203554; }
+.model-row span { color: #91a3bc; font-size: 12px; }
+.inline-error { margin: 12px 0; color: #f49a9f; font-size: 13px; }
