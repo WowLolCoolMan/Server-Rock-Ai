@@ -302,3 +302,9 @@ explicit read-only `Inspect task details` action. It shows the bounded local
 instruction, status/role, result summary, and artifact labels without claiming,
 dispatching, or sending work. Parallel execution, isolation, background work,
 and cross-platform acceptance remain open.
+
+Recent slice note — Slice 178: project folder management now exposes a bounded
+read-only `Browse text files` surface. It lists relative paths from explicitly
+selected folders, filters locally, and previews up to 16 safe text files using
+the existing 8,000-character per-file context budget. Mutating file editing,
+binary/PDF preview, and cross-platform acceptance remain open.

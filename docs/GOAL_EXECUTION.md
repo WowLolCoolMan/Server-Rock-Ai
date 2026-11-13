@@ -6953,3 +6953,42 @@ planning, queue, cancellation, and persistence remain unchanged.
 
 Remaining: actual parallel dispatch, process/worktree isolation, task execution
 results beyond local review, background execution, and cross-platform acceptance.
+
+## Slice 178 — Bounded project text-file browser and preview
+
+Status: `implemented_build_audit_verified`
+
+Project folder management now offers a read-only `Browse text files` action.
+The browser uses the existing selected-folder context reader, displays relative
+paths across the selected folders, supports a local path filter, and opens a
+bounded text preview without writing or injecting content into a provider
+request. It inherits the existing 16-file and 8,000-character per-file limits,
+secret-name filtering, excluded-directory rules, UTF-8 validation, and symlink
+guards.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Projects.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — passed, including bounded workspace-context and protected-file
+  coverage.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the browser reads only explicitly selected local
+folders and keeps the result local. It excludes secrets, dependency/build
+directories, reparse points, unsupported binary files, and oversized/invalid
+text. No provider, network, credential, or telemetry path is involved.
+
+Rollback: remove the Browse text files button and `ShowProjectFileBrowserAsync`;
+folder selection and existing Coding Agent context behavior remain unchanged.
+
+Remaining: nested mutation-aware file editing, binary/PDF/image preview, full
+app previews, cross-platform packaged acceptance, and richer file connectors.

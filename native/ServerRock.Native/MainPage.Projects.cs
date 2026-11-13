@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Media;
+using ServerRock.Core.Infrastructure;
 using ServerRock.Core.Models;
 
 namespace ServerRock.Native;
@@ -445,7 +446,11 @@ public sealed partial class MainPage
             if (path is not null && !project.FolderPaths.Contains(path, StringComparer.OrdinalIgnoreCase)) project.FolderPaths.Add(path);
             Refresh();
         };
-        var panel = new StackPanel { Spacing = 10, Children = { count, list, add } };
+        var browse = new Button { Content = "Browse text files" };
+        AutomationProperties.SetName(browse, "Browse project text files");
+        AutomationProperties.SetHelpText(browse, "Open a read-only nested file list from the selected folders and preview a bounded text file.");
+        browse.Click += async (_, _) => await ShowProjectFileBrowserAsync(project);
+        var panel = new StackPanel { Spacing = 10, Children = { count, list, add, browse } };
         var dialog = new ContentDialog { Title = $"Folders · {project.Name}", Content = panel, PrimaryButtonText = "Save", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         var before = project.FolderPaths.ToArray();
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
@@ -462,6 +467,59 @@ public sealed partial class MainPage
             RuntimeStatus.Text = project.FolderPaths.Count == 0 ? "No workspace files selected" : $"{project.FolderPaths.Count} local folder(s) connected";
         }
         else project.FolderPaths = [.. before];
+    }
+
+    private async Task ShowProjectFileBrowserAsync(LocalProject project)
+    {
+        IReadOnlyList<(string Path, string Content)> files;
+        try { files = WorkspaceFileContext.ReadSelectedFiles(project.FolderPaths); }
+        catch (Exception ex)
+        {
+            RuntimeStatus.Text = $"Project file browser could not read the selected folders: {ex.Message}";
+            return;
+        }
+
+        var query = new TextBox { Header = "Filter files", PlaceholderText = "relative path" };
+        AutomationProperties.SetName(query, "Filter project files");
+        var results = new StackPanel { Spacing = 6 };
+        AutomationProperties.SetName(results, "Project file browser results");
+        void Refresh()
+        {
+            results.Children.Clear();
+            var matches = files.Where(item => string.IsNullOrWhiteSpace(query.Text) || item.Path.Contains(query.Text.Trim(), StringComparison.OrdinalIgnoreCase)).Take(16).ToArray();
+            results.Children.Add(new TextBlock { Text = $"{matches.Length} bounded text file{(matches.Length == 1 ? "" : "s")} shown; nothing was changed.", FontSize = 11, Opacity = 0.72 });
+            foreach (var file in matches)
+            {
+                var preview = new Button { Content = file.Path, HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, Style = (Style?)Application.Current.Resources["ContextButtonStyle"] };
+                AutomationProperties.SetName(preview, $"Preview project file {file.Path}");
+                preview.Click += async (_, _) =>
+                {
+                    var body = new TextBlock { Text = file.Content, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+                    var previewDialog = new ContentDialog
+                    {
+                        Title = $"Preview · {file.Path}",
+                        Content = new ScrollViewer { Content = body, MaxHeight = 560, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+                        CloseButtonText = "Done",
+                        XamlRoot = XamlRoot
+                    };
+                    AutomationProperties.SetName(previewDialog, $"Preview project file {file.Path}");
+                    await previewDialog.ShowAsync();
+                };
+                results.Children.Add(preview);
+            }
+        }
+        query.TextChanged += (_, _) => Refresh();
+        Refresh();
+        var dialog = new ContentDialog
+        {
+            Title = $"Project files · {project.Name}",
+            Content = new ScrollViewer { Content = new StackPanel { Spacing = 8, Children = { query, results } }, MaxHeight = 620, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+            CloseButtonText = "Done",
+            XamlRoot = XamlRoot
+        };
+        AutomationProperties.SetName(dialog, "Browse project text files");
+        dialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => query.Focus(FocusState.Programmatic));
+        await dialog.ShowAsync();
     }
 
     private bool SaveProjects()
