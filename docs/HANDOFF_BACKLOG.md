@@ -103,8 +103,9 @@ candidate or historical prompt overrides that source.
 - Signed release material and a clean-machine test environment are not present
   in the current workspace; signing and clean install evidence remain open.
 - `[ASK USER]` Choose the supported Linux distribution/desktop environment.
-- `[ASK USER]` Choose the migration cutover threshold for the Electron/agent-host
-  surface versus the existing native app.
+- Owner decision resolved: the user explicitly approved a full Electron/React
+  + .NET agent-host replacement of Uno. Uno remains only as a reversible legacy
+  compatibility surface until the documented parity and release gates pass.
 
 ## Evidence
 

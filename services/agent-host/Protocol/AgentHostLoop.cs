@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ServerRock.Core.Infrastructure;
 using ServerRock.Core.Models;
 using ServerRock.Core.Services;
 
@@ -51,8 +52,11 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "tasks.list", "scheduled.list", "chat.complete"])),
             "models.list" => ListModels(request),
+            "projects.list" => ListProjects(request),
+            "tasks.list" => ListTasks(request),
+            "scheduled.list" => ListScheduledTasks(request),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -65,6 +69,23 @@ public static class AgentHostLoop
         var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, OptionalString(request, "apiKey"))
             .GetAwaiter().GetResult();
         return new(ProtocolVersion, request.Id, true, models);
+    }
+
+    private static AgentResponse ListProjects(AgentRequest request)
+    {
+        var projects = new ProjectStore().Load()
+            .OrderByDescending(project => project.UpdatedAt)
+            .Select(project => new
+            {
+                id = project.Id,
+                name = project.Name,
+                instructions = project.Instructions,
+                folderPaths = project.FolderPaths,
+                gitHubRepository = project.GitHubRepository,
+                updatedAt = project.UpdatedAt,
+            })
+            .ToArray();
+        return new(ProtocolVersion, request.Id, true, projects);
     }
 
     private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
@@ -80,6 +101,42 @@ public static class AgentHostLoop
         await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
             OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
         return new(ProtocolVersion, request.Id, true, new { model, content = text.ToString() });
+    }
+
+    private static AgentResponse ListTasks(AgentRequest request)
+    {
+        var tasks = new AgentTaskArtifactStore().Load()
+            .OrderByDescending(task => task.UpdatedAtUtc)
+            .Select(task => new
+            {
+                id = task.Id,
+                title = task.Title,
+                role = task.Role,
+                status = task.Status,
+                resultSummary = task.ResultSummary,
+                dependsOn = task.DependsOn,
+                updatedAt = task.UpdatedAtUtc,
+            })
+            .ToArray();
+        return new(ProtocolVersion, request.Id, true, tasks);
+    }
+
+    private static AgentResponse ListScheduledTasks(AgentRequest request)
+    {
+        var tasks = new ScheduledTaskStore().Load()
+            .OrderBy(task => task.DueAtUtc)
+            .Select(task => new
+            {
+                id = task.Id,
+                prompt = task.Prompt,
+                workspaceMode = task.WorkspaceMode,
+                dueAt = task.DueAtUtc,
+                repeatEveryMinutes = task.RepeatEveryMinutes,
+                status = task.Status,
+                outcome = task.Outcome,
+            })
+            .ToArray();
+        return new(ProtocolVersion, request.Id, true, tasks);
     }
 
     private static string RequiredString(AgentRequest request, string name)

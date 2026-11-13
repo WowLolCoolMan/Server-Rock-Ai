@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AgentResponse, RuntimeHealth } from "../shared/contracts";
+import type { AgentResponse, DesktopProject, DesktopScheduledTask, DesktopTask, RuntimeHealth } from "../shared/contracts";
 import { PRODUCT_DISPLAY_NAME } from "../shared/productIdentity";
 
 type ConnectionState = "checking" | "ready" | "error";
@@ -17,12 +17,17 @@ export default function App() {
   const [endpoint, setEndpoint] = useState(defaultEndpoint);
   const [model, setModel] = useState(defaultModel);
   const [models, setModels] = useState<Model[]>([]);
+  const [projects, setProjects] = useState<DesktopProject[]>([]);
+  const [tasks, setTasks] = useState<DesktopTask[]>([]);
+  const [scheduledTasks, setScheduledTasks] = useState<DesktopScheduledTask[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const request = (method: string, params?: Record<string, unknown>) => window.serverRockAgent.request(method, params);
   const saveConnection = () => { localStorage.setItem("skai.endpoint", endpoint); localStorage.setItem("skai.model", model); };
   const discoverModels = async () => { saveConnection(); setError(null); const response = await request("models.list", { endpoint }); if (!response.ok) { setError(response.error?.message ?? "Model discovery failed."); return; } setModels((response.result as Model[]) ?? []); };
+  const loadProjects = async () => { setError(null); const response = await request("projects.list"); if (!response.ok) { setError(response.error?.message ?? "Project loading failed."); return; } setProjects((response.result as DesktopProject[]) ?? []); };
+  const loadWorkbench = async () => { setError(null); const [taskResponse, scheduleResponse] = await Promise.all([request("tasks.list"), request("scheduled.list")]); if (!taskResponse.ok || !scheduleResponse.ok) { setError(taskResponse.error?.message ?? scheduleResponse.error?.message ?? "Workbench loading failed."); return; } setTasks((taskResponse.result as DesktopTask[]) ?? []); setScheduledTasks((scheduleResponse.result as DesktopScheduledTask[]) ?? []); };
   const sendMessage = async () => {
     const content = draft.trim(); if (!content || busy) return;
     const next = [...messages, { role: "user" as const, content }]; setMessages(next); setDraft(""); setBusy(true); setError(null); saveConnection();
@@ -31,6 +36,8 @@ export default function App() {
     setMessages([...next, { role: "assistant", content: (response.result as { content: string }).content }]);
   };
   useEffect(() => { document.title = PRODUCT_DISPLAY_NAME; request("runtime.health").then((response: AgentResponse) => { if (!response.ok) { setConnection("error"); setError(response.error?.message ?? "Agent host unavailable."); return; } setHealth(response.result as RuntimeHealth); setConnection("ready"); }).catch((requestError: unknown) => { setConnection("error"); setError(requestError instanceof Error ? requestError.message : "Agent host unavailable."); }); }, []);
+  useEffect(() => { if (view === "projects" && connection === "ready") void loadProjects(); }, [view, connection]);
+  useEffect(() => { if (view === "workbench" && connection === "ready") void loadWorkbench(); }, [view, connection]);
   const title = useMemo(() => ({ chat: "Chat", projects: "Projects", workbench: "Agent workbench", models: "Models", settings: "Settings" }[view]), [view]);
   return <div className="app-shell">
     <aside className="sidebar" aria-label="Primary navigation">
@@ -46,7 +53,8 @@ export default function App() {
       </section>}
       {view === "models" && <section className="surface-card page-card"><h3>Model connections</h3><p>Discover models from any OpenAI-compatible endpoint.</p><div className="form-row"><input value={endpoint} onChange={(event) => setEndpoint(event.target.value)} placeholder="http://localhost:11434/v1" /><button className="secondary-button" onClick={() => void discoverModels()} type="button">Discover</button></div><div className="model-list">{models.length === 0 ? <div className="empty-state">No models discovered yet.</div> : models.map((item) => <button className={`model-row ${model === item.model ? "selected" : ""}`} key={item.model} onClick={() => { setModel(item.model); saveConnection(); setView("chat"); }} type="button"><strong>{item.model}</strong><span>{item.capabilities.join(" · ") || "text"}</span></button>)}</div>{error && <p className="inline-error">{error}</p>}</section>}
       {view === "settings" && <section className="surface-card page-card"><h3>Workspace settings</h3><p>These preferences stay on this device.</p><label>Model endpoint<input value={endpoint} onChange={(event) => setEndpoint(event.target.value)} onBlur={saveConnection} /></label><label>Default model<input value={model} onChange={(event) => setModel(event.target.value)} onBlur={saveConnection} /></label><button className="primary-button" onClick={() => { saveConnection(); setView("chat"); }} type="button">Save settings</button></section>}
-      {(view === "projects" || view === "workbench") && <section className="surface-card page-card"><span className="pill">Coming online</span><h3>{title}</h3><p>This surface is connected to the new desktop navigation and ready for its persistent project and task services.</p><div className="capability-list"><span>Persistent host</span><span>Typed IPC</span><span>Local-first state</span></div></section>}
+      {view === "projects" && <section className="surface-card page-card"><span className="pill">Persisted local projects</span><h3>{title}</h3><p>Projects are read from the local agent host. No folder contents are opened by this list view.</p><div className="project-list">{projects.length === 0 ? <div className="empty-state">No saved projects yet.</div> : projects.map((project) => <article className="project-row" key={project.id}><div><strong>{project.name}</strong><span>{project.folderPaths.length === 0 ? "No folders connected" : `${project.folderPaths.length} folder${project.folderPaths.length === 1 ? "" : "s"}`}</span></div><small>{project.gitHubRepository ?? "Local project"}</small></article>)}</div>{error && <p className="inline-error">{error}</p>}</section>}
+      {view === "workbench" && <section className="surface-card page-card"><span className="pill">Persistent execution</span><h3>{title}</h3><p>Review planned work and scheduled runs without leaving the desktop surface.</p><div className="workbench-grid"><div><div className="section-kicker">AGENT TASKS</div>{tasks.length === 0 ? <div className="empty-state compact-empty">No agent tasks yet.</div> : tasks.map((task) => <article className="task-row" key={task.id}><div><strong>{task.title}</strong><span>{task.role} · {task.status}</span></div><small>{task.resultSummary ?? "Awaiting execution"}</small></article>)}</div><div><div className="section-kicker">SCHEDULED</div>{scheduledTasks.length === 0 ? <div className="empty-state compact-empty">No scheduled runs yet.</div> : scheduledTasks.map((task) => <article className="task-row" key={task.id}><div><strong>{task.prompt}</strong><span>{task.workspaceMode} · {task.status}</span></div><small>{new Date(task.dueAt).toLocaleString()}</small></article>)}</div></div>{error && <p className="inline-error">{error}</p>}</section>}
     </main>
   </div>;
 }

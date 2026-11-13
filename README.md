@@ -33,21 +33,25 @@ Most AI apps are built around a chat box. Skai is built around the work around t
 
 ## Current status
 
-The Uno/.NET desktop app is the current functional product. The Electron + React + TypeScript desktop surface is being added incrementally around a persistent .NET agent host. The new shell already has typed IPC, runtime health, model discovery, chat completion, settings, and navigation; it is not yet a full replacement for the native app.
+The Electron + React + TypeScript desktop surface is now the approved replacement
+target for the Uno/.NET shell. Migration is staged behind a persistent .NET
+agent host and shared Core services; the Uno app remains a legacy compatibility
+surface until each required journey has equivalent host-backed acceptance. It
+must not be described as the finished replacement yet.
 
 ## Run it
 
 Prerequisites: .NET 10 SDK and Node.js.
 
 ```sh
-# Native app
+# Legacy Uno compatibility surface
 dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 dotnet run --project native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop
 
 # Tests
 dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
 
-# New desktop shell
+# Replacement desktop shell
 npm run desktop:install
 npm run desktop:dev
 ```
@@ -64,7 +68,9 @@ Electron + React + TypeScript
 Ollama · LM Studio · OpenAI-compatible APIs · ComfyUI · GitHub
 ```
 
-The native application remains available during the migration. See [`docs/ELECTRON_MIGRATION_STAGE1.md`](docs/ELECTRON_MIGRATION_STAGE1.md) for the current desktop boundary and [`docs/CAPABILITY_MATRIX.md`](docs/CAPABILITY_MATRIX.md) for support details.
+See [`docs/ELECTRON_MIGRATION_CUTOVER.md`](docs/ELECTRON_MIGRATION_CUTOVER.md)
+for the approved replacement boundary and [`docs/CAPABILITY_MATRIX.md`](docs/CAPABILITY_MATRIX.md)
+for support details. The Uno surface is retained only until parity gates pass.
 
 ## Privacy and guardrails
 
@@ -80,7 +86,7 @@ The native application remains available during the migration. See [`docs/ELECTR
 apps/desktop/             Electron + React desktop surface
 services/agent-host/      Persistent .NET host and protocol boundary
 native/ServerRock.Core    Provider, persistence, workflow, and safety logic
-native/ServerRock.Native  Current Uno/XAML desktop application
+native/ServerRock.Native  Legacy Uno/XAML compatibility application during cutover
 docs/                     Architecture, capability, release, and feature docs
 assets/                   Product visuals and Percy mascot assets
 ```
@@ -92,6 +98,7 @@ Useful docs:
 - [`docs/LOCAL_IMAGE_GENERATION.md`](docs/LOCAL_IMAGE_GENERATION.md) — ComfyUI setup.
 - [`docs/GITHUB_INTEGRATION.md`](docs/GITHUB_INTEGRATION.md) — project GitHub workflows.
 - [`services/agent-host/README.md`](services/agent-host/README.md) — host protocol.
+- [`docs/ELECTRON_MIGRATION_CUTOVER.md`](docs/ELECTRON_MIGRATION_CUTOVER.md) — replacement and retirement gates.
 
 ## Contributing
 

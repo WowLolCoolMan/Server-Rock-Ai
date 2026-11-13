@@ -3,6 +3,51 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 235 — Approve Electron replacement boundary and port persisted projects
+
+Status: `implemented_host_protocol_renderer_build_verified`
+
+The owner decision is now explicit: Electron/React plus the persistent .NET
+agent host will fully replace the Uno/XAML shell. This slice moves the first
+real persisted application journey across that boundary: `projects.list` reads
+the existing bounded Core `ProjectStore`, the renderer displays the actual local
+projects, and the host advertises the capability through protocol v1. The
+renderer remains sandboxed and receives no direct filesystem access.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `services/agent-host/README.md`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/ELECTRON_MIGRATION_CUTOVER.md`
+- `docs/HANDOFF_BACKLOG.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- Live stdio protocol smoke returned `runtime.health` with `projects.list` advertised and `projects.list` returned a valid empty array without modifying local data.
+
+Privacy/security/licensing: the project list is read locally through the
+existing Core store, no project file contents are opened, and the renderer has
+no Node.js or direct filesystem capability. No dependency or third-party code
+was added.
+
+Rollback: remove the `projects.list` host route and renderer view wiring; the
+existing Core store and Uno compatibility surface remain unchanged.
+
+Remaining: Electron parity is far from complete. Chat persistence, attachments,
+file/editor/terminal/Git workflows, agents, approvals, skills, MCP, settings,
+accessibility, packaging, and all Uno retirement gates remain open.
+
 ## Slice 234 — Persist project-tree expansion state
 
 Status: `implemented_core_tests_native_build_audit_verified`

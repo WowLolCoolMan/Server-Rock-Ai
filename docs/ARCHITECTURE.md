@@ -1,9 +1,11 @@
 # Architecture
 
-Skai Desktop is a single native desktop app written in C# with the
-[Uno Platform](https://platform.uno/) (WinUI/XAML API). Everything that ships
-lives under `native/`. The repository's Node.js scripts are only release and
-hygiene helpers; they are not part of the app.
+Skai Desktop is migrating to an Electron + React + TypeScript desktop shell
+with a persistent .NET 10 agent host and UI-independent Core services. The
+existing Uno/XAML application is now a legacy compatibility surface during the
+cutover; it is not the replacement target. Uno retirement is gated on
+host-backed feature parity and packaged acceptance, not on deleting the project
+prematurely.
 
 This page is a map for people reading the code. For product scope, limits, and
 release gates, see `docs/NATIVE_MIGRATION.md` and
@@ -11,17 +13,21 @@ release gates, see `docs/NATIVE_MIGRATION.md` and
 
 ## Projects
 
-`native/ServerRock.Native.sln` contains three projects:
+The repository currently contains the legacy native solution plus the approved
+replacement surface:
 
 | Project | Type | What it is |
 | --- | --- | --- |
-| `ServerRock.Native` | Uno single-project app (`Uno.Sdk`) | The desktop UI: window, XAML page, dialogs, rendering. |
+| `ServerRock.Native` | Legacy Uno single-project app (`Uno.Sdk`) | Compatibility UI retained until cutover gates pass. |
 | `ServerRock.Core` | Plain `net10.0` class library | Everything that does not need UI controls: models, provider HTTP clients, local stores, workspace tools, GitHub, archive import. |
 | `ServerRock.Core.Tests` | `net10.0` console app | A self-contained test runner for Core. No test framework: each check prints `PASS …` or throws. |
+| `services/agent-host` | .NET 10 local process | Versioned JSON-lines application boundary used by the replacement shell. |
+| `apps/desktop` | Electron + React + TypeScript | Replacement desktop UI with a sandboxed renderer and typed preload bridge. |
 
-Dependency direction is one way: `ServerRock.Native → ServerRock.Core`, and
-`ServerRock.Core.Tests → ServerRock.Core`. Core never references Uno or XAML,
-which is why it can be tested with a plain console app.
+Dependency direction is one way at each boundary: both `ServerRock.Native` and
+`services/agent-host` consume `ServerRock.Core`; `ServerRock.Core.Tests` also
+consumes Core; Electron talks only to the agent host through the preload bridge.
+Core never references Uno, XAML, Electron, or React.
 
 Shared build settings:
 
