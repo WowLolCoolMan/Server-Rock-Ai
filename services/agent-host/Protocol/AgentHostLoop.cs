@@ -164,6 +164,8 @@ public static class AgentHostLoop
     {
         var endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
         var model = RequiredString(request, "model");
+        var timeoutSeconds = OptionalInt(request, "timeoutSeconds") ?? 285;
+        if (timeoutSeconds is < 5 or > 285) throw new InvalidOperationException("timeoutSeconds must be between 5 and 285.");
         var messages = request.Params?.GetProperty("messages").Deserialize<List<ChatMessage>>(JsonOptions)
             ?? throw new InvalidOperationException("chat.complete requires a messages array.");
         if (messages.Count == 0) throw new InvalidOperationException("chat.complete requires at least one message.");
@@ -204,33 +206,45 @@ public static class AgentHostLoop
         var airLlm = new AirLlmProvider();
         var explicitAirLlm = AirLlmProvider.IsAirLlmProvider(settings.ModelProvider);
         var usedFallback = false;
-        if (explicitAirLlm)
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        try
         {
-            await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
-                OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
-        }
-        else
-        {
-            try
+            if (explicitAirLlm)
             {
-                await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+                await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
                     OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
             }
-            catch (Exception error) when (AirLlmProvider.ShouldAutoFallback(settings, endpoint, error, airLlm.IsRuntimeAvailable(settings)))
+            else
             {
-                usedFallback = true;
-                text.Clear();
-                settings.ModelProvider = "AirLLM";
                 try
                 {
-                    await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), CancellationToken.None,
+                    await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
                         OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
                 }
-                catch (Exception fallbackError)
+                catch (Exception error) when (AirLlmProvider.ShouldAutoFallback(settings, endpoint, error, airLlm.IsRuntimeAvailable(settings)))
                 {
-                    throw new InvalidOperationException($"The local provider exceeded capacity and the AirLLM fallback failed: {fallbackError.Message}", fallbackError);
+                    usedFallback = true;
+                    text.Clear();
+                    settings.ModelProvider = "AirLLM";
+                    try
+                    {
+                        await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
+                            OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+                    }
+                    catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception fallbackError)
+                    {
+                        throw new InvalidOperationException($"The local provider exceeded capacity and the AirLLM fallback failed: {fallbackError.Message}", fallbackError);
+                    }
                 }
             }
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            throw new TimeoutException($"The local model did not complete within {timeoutSeconds} seconds.");
         }
         return new(ProtocolVersion, request.Id, true, new
         {

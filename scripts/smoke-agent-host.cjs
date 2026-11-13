@@ -17,7 +17,10 @@ const env = {
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
 };
-const child = spawn("dotnet", ["run", "--project", path.join(root, "services", "agent-host", "ServerRock.AgentHost.csproj"), "--no-build", "--", "--stdio"], {
+const hostOutput = path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
+const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
+const hostArgs = process.platform === "win32" ? ["--stdio"] : [path.join(hostOutput, "ServerRock.AgentHost.dll"), "--stdio"];
+const child = spawn(hostProgram, hostArgs, {
   cwd: root,
   env,
   stdio: ["pipe", "pipe", "pipe"],
@@ -78,24 +81,42 @@ async function run() {
   if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow.") throw new Error("tasks.plan persistence round-trip failed.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
   if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
-  console.log("Agent host replacement smoke passed: health, voice protocol, disposable conversation/settings persistence, and local task planning.");
+  console.log("Agent host replacement smoke passed: health, voice protocol, disposable conversation/settings persistence, local task planning, and direct host lifecycle.");
 }
 
-run().catch(error => {
-  console.error(error.message);
-  if (stderr.trim()) console.error(stderr.trim());
-  process.exitCode = 1;
-}).finally(async () => {
+async function stopHost() {
   if (!child.stdin.destroyed) child.stdin.end();
-  if (child.exitCode !== null) {
-    reader.close();
-    fs.rmSync(tempRoot, { recursive: true, force: true });
-    return;
+  if (child.exitCode === null) {
+    await new Promise(resolve => {
+      const timeout = setTimeout(() => {
+        if (child.exitCode !== null) return;
+        if (process.platform === "win32" && child.pid) {
+          const killer = spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+          killer.once("error", () => { if (!child.killed) child.kill(); });
+        } else if (!child.killed) child.kill("SIGTERM");
+      }, 1500);
+      child.once("exit", () => { clearTimeout(timeout); resolve(); });
+    });
   }
-  await new Promise(resolve => {
-    const timeout = setTimeout(() => { if (!child.killed) child.kill(); }, 1500);
-    child.once("exit", () => { clearTimeout(timeout); resolve(); });
-  });
   reader.close();
   fs.rmSync(tempRoot, { recursive: true, force: true });
-});
+  if (child.exitCode !== 0) throw new Error("The direct Agent Host did not exit cleanly after the smoke test.");
+}
+
+async function main() {
+  try {
+    await run();
+  } catch (error) {
+    console.error(error.message);
+    if (stderr.trim()) console.error(stderr.trim());
+    process.exitCode = 1;
+  }
+  try {
+    await stopHost();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+}
+
+void main();

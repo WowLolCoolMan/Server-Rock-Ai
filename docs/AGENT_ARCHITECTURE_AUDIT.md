@@ -51,9 +51,9 @@ Reviewed:
 
 | ID | Decision | Source/status | Audit judgment | Required closure |
 | --- | --- | --- | --- | --- |
-| D-01 | Local-first desktop app with explicit hosted-provider use | User requirement; accepted | Sound product boundary | Every hosted route needs visible identity, consent, and no silent remote fallback |
+| D-01 | Local-first desktop app with no cloud or hosted model routes | Latest user override; accepted | Sound privacy boundary; older hosted-provider copy is stale | Every model route must be loopback-only and fail closed for remote endpoints |
 | D-02 | Use AirLLM whenever a local model exceeds the computer's practical limits | User requirement; needs refinement | Good outcome, unsafe as currently implemented | Route through the Electron/.NET host, gate by model/runtime capability, show the fallback, and keep it local-only |
-| D-03 | Provider choice should be understandable to non-experts | User requirement; partially implemented | Correct UX goal | Store provider identity separately from endpoint/model and expose an intent-based setup flow |
+| D-03 | Local provider choice should be understandable to non-experts | User requirement; partially implemented | Correct UX goal | Store local provider identity separately from endpoint/model and expose local intent-based setup flow |
 | D-04 | Use the existing visual assets with restrained decoration | User requirement; implemented in the UI slice | Sound; the wolf mark is appropriate as a compact brand anchor | Keep dense work surfaces content-first and continue visual acceptance checks |
 | D-05 | Parent agent owns future-feature implementation; UI chats receive completion handoffs | User requirement; accepted | Correct coordination boundary | One vertical slice, one owner, one evidence bundle; no parallel edits to the same seam |
 | D-06 | Electron + React with one persistent C#/.NET host | User decision and repository canon; accepted | Correct near-term architecture for this codebase | Remove Rust voice runtime references and keep all native capabilities behind the host |
@@ -83,8 +83,9 @@ Electron chat.complete
 ```
 
 The host now supports explicit AirLLM selection and a bounded local capacity
-fallback, and returns provider/fallback provenance. Real Electron inference,
-runtime health, cancellation, and trust/consent evidence are still missing.
+fallback, returns provider/fallback provenance, and is being restored to a
+strict loopback-only endpoint boundary. Real Electron inference, runtime health,
+cancellation, and trust/consent evidence are still missing.
 
 The voice work is now on the correct C# host boundary, with the Rust voice
 source, target output, and stale runtime wording removed. Host lifecycle and
@@ -163,8 +164,8 @@ switch would also make troubleshooting and quality comparison harder.
 **Minimal correction.** Define an explicit local fallback policy: preflight the
 selected model/provider, check AirLLM installation and disk budget, classify only
 known capacity errors, reserve a bounded retry, preserve the original error, and
-show the chosen local runtime and reason. Never fall back from a hosted endpoint
-to another route without explicit consent.
+show the chosen local runtime and reason. Remote endpoints must be rejected
+before any request is sent.
 
 **Closure check.** Tests cover normal success, known capacity failure, unrelated
 failure, unsupported model ID, missing runtime, cancellation, and fallback
@@ -218,15 +219,16 @@ Rust target, `dist`, or process-lock residue is present.
 
 ### Improvement: provider UX is not yet an intent-based provider system
 
-**Observation.** The Electron shell now persists and sends provider identity,
-and the host returns it with settings and discovered models. The replacement
-shell still does not explain local/large-model/hosted choices as user goals or
-provide the setup/consent flow.
+**Observation.** The Electron shell now persists and sends local provider
+identity, and the host returns it with settings and discovered models. The
+replacement shell still does not explain “models on this computer” versus
+“very large models locally through AirLLM” as user goals or provide the setup
+flow.
 
-**Correction.** Add a small provider setup flow after the host contract is stable:
-“Use models already on this computer,” “Use a very large model locally,” and
-“Connect a hosted service.” Each choice maps to a typed provider profile with
-health, capabilities, privacy, install state, and a clear next action.
+**Correction.** Add a small local provider setup flow after the host contract is
+stable: “Use models already on this computer” and “Use a very large model
+locally.” Each choice maps to a typed provider profile with health, capabilities,
+privacy, install state, and a clear next action. Do not expose a hosted option.
 
 ## Agent decision audit
 

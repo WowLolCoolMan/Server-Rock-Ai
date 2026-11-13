@@ -23,6 +23,8 @@ expect(!preload.includes("require(\"node:fs\")"), "preload must not expose files
 expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
 expect(main.includes("HOST_TIMEOUT"), "Electron bridge must bound pending host requests");
 expect(main.includes("taskkill") && main.includes("/T"), "Electron shutdown must terminate the full Windows host process tree");
+expect(main.includes("restartAgentHost"), "Electron must restart a timed-out host after resolving pending requests");
+expect(main.includes("timeoutSeconds: chatHostDeadlineSeconds"), "Electron must give chat requests a host-side deadline before the renderer deadline");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");

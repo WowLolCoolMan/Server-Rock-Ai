@@ -12,6 +12,8 @@ let nextRequestId = 1;
 const pending = new Map();
 const standardRequestTimeoutMs = 30_000;
 const chatRequestTimeoutMs = 5 * 60_000;
+const chatHostDeadlineSeconds = 285;
+let isQuitting = false;
 const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
 const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
 const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
@@ -63,8 +65,11 @@ function startAgentHost() {
   });
 }
 
-function stopAgentHost() {
-  if (!host) return;
+function stopAgentHost(onStopped) {
+  if (!host) {
+    onStopped?.();
+    return;
+  }
   const currentHost = host;
   host = undefined;
   const error = { v: 1, ok: false, error: { code: "HOST_STOPPED", message: "Agent host is shutting down." } };
@@ -81,7 +86,16 @@ function stopAgentHost() {
       killer.on("error", () => { if (!currentHost.killed) currentHost.kill(); });
     } else if (!currentHost.killed) currentHost.kill("SIGTERM");
   }, 1500);
-  currentHost.once("exit", () => clearTimeout(forceStop));
+  currentHost.once("exit", () => {
+    clearTimeout(forceStop);
+    onStopped?.();
+  });
+}
+
+function restartAgentHost() {
+  stopAgentHost(() => {
+    if (!isQuitting) startAgentHost();
+  });
 }
 
 function requestAgent(method, params) {
@@ -95,16 +109,20 @@ function requestAgent(method, params) {
     return Promise.resolve({ v: 1, ok: false, error: { code: "HOST_UNAVAILABLE", message: "Agent host is not running." } });
   }
   const id = `desktop-${nextRequestId++}`;
+  const requestParams = method === "chat.complete"
+    ? { ...params, timeoutSeconds: chatHostDeadlineSeconds }
+    : params;
   return new Promise((resolve) => {
     const timeoutMs = method === "chat.complete" ? chatRequestTimeoutMs : standardRequestTimeoutMs;
     const timer = setTimeout(() => {
       if (!pending.has(id)) return;
       pending.delete(id);
       resolve({ v: 1, ok: false, error: { code: "HOST_TIMEOUT", message: `The local agent host did not answer ${method} within the allowed time.` } });
+      restartAgentHost();
     }, timeoutMs);
     pending.set(id, { resolve, timer });
     try {
-      host.stdin.write(`${JSON.stringify({ v: 1, id, method, params })}\n`);
+      host.stdin.write(`${JSON.stringify({ v: 1, id, method, params: requestParams })}\n`);
     } catch {
       clearTimeout(timer);
       pending.delete(id);
@@ -200,4 +218,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("before-quit", stopAgentHost);
+app.on("before-quit", () => {
+  isQuitting = true;
+  stopAgentHost();
+});
