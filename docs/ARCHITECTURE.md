@@ -75,7 +75,8 @@ method name still finds it.
 | `MainPage.xaml` | Page layout: header, conversation area, composer, companion overlay; the sidebar is `<local:SidebarView>`. Owned by the UI/design work. |
 | `SidebarView.xaml` / `.xaml.cs` | The left sidebar as its own control (from main): mode switch, primary actions, projects, folders, recents, pet controls. Forwards clicks as events and exposes named elements as `*Control` properties. |
 | `MainPage.Sidebar.cs` | Connects MainPage to SidebarView (accessor properties such as `RecentList`, `ChatModeButton`) and the sidebar-only actions: Scheduled tasks, More, Update. |
-| `MainPage.xaml.cs` | Shared page state (fields and Core services), the constructor (loads settings, history, projects, undo history), the status banner, `RunUiActionAsync`, `SaveSettings`. |
+| `MainPage.xaml.cs` | Shared page state (fields and Core services) and the constructor (loads settings, history, projects, undo history). |
+| `MainPage.Infrastructure.cs` | Cross-cutting status classification/history dialog, guarded UI actions, and settings persistence shared by feature partials. |
 | `MainPage.Layout.cs` | Responsive layout: sidebar drawer on narrow windows, two-row toolbars. |
 | `MainPage.Navigation.cs` | Chat ⇄ Coding Agent switching, mode-dependent labels, keyboard shortcuts. |
 | `MainPage.Connection.cs` | Model server connection check and Local/Remote status. |

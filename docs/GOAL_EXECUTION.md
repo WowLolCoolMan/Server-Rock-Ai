@@ -2085,6 +2085,61 @@ Not yet verified: signed release publication, clean-machine install/upgrade/
 uninstall/rollback, exact Linux artifact interaction, and full accessibility or
 workflow acceptance from the packaged artifact.
 
+## Slice 95 — disposable installer journey and MainPage infrastructure split
+
+Status: `implemented_verified_windows_scripts_and_native_build`
+
+The versioned Windows packaging scripts were exercised against a disposable
+Release artifact and disposable application-data roots. `install.ps1 -WhatIf`
+showed the expected target without mutation; version `1.0.0` installed, version
+`1.0.1` upgraded it into `current` while retaining `previous`, rollback restored
+`1.0.0`, and uninstall removed only the install root. A profile file under the
+disposable `%LOCALAPPDATA%\\ServerRock\\AI` retained an identical hash after
+upgrade, rollback, and uninstall. This does not claim clean-machine or signed
+installer acceptance.
+
+As part of the same release-readiness slice, the cross-cutting status history,
+guarded UI action wrapper, and settings persistence were moved from the large
+`MainPage.xaml.cs` state/lifecycle file into `MainPage.Infrastructure.cs`.
+This is a partial-class decomposition only: event names, persistence behavior,
+status semantics, and feature APIs are unchanged. The pets partial remains
+untouched.
+
+Changed files:
+
+- `packaging/native/install.ps1` — exercised, no source change
+- `packaging/native/rollback.ps1` — exercised, no source change
+- `packaging/native/uninstall.ps1` — exercised, no source change
+- `native/ServerRock.Native/MainPage.Infrastructure.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `docs/ARCHITECTURE.md`
+- `docs/NATIVE_RELEASE_ACCEPTANCE.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- Exact Release artifact: 496 files, 320,042,070 bytes; startup and strict
+  startup/window smoke passed for 8 seconds.
+- Disposable installer journey: WhatIf preview, install, versioned upgrade,
+  rollback, profile hash retention, and uninstall all passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings/errors.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (146 contracts)`.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: all installer paths were disposable and did not
+target the real profile. Uninstall was run without `-RemoveUserData`; explicit
+data deletion remains confirmation-gated. The MainPage split adds no dependency
+or runtime behavior and does not move secrets or user data.
+
+Rollback: restore the moved methods to `MainPage.xaml.cs` and remove
+`MainPage.Infrastructure.cs`; packaging scripts remain unchanged. The temporary
+test roots were separate from the repository and user profile.
+
+Not yet verified: clean-machine installer behavior, shortcut launch acceptance,
+signing, interrupted replacement recovery, exact Linux packaging, and live
+keyboard/screen-reader interaction for the decomposed page.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

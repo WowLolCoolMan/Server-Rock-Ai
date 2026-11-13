@@ -242,49 +242,4 @@ public sealed partial class MainPage : Page
         RuntimeStatus.Text = string.Join(" · ", warnings);
     }
 
-    private void DismissRuntimeStatusClick(object sender, RoutedEventArgs e) => RuntimeStatus.Text = string.Empty;
-
-    private async void StatusHistoryClick(object sender, RoutedEventArgs e)
-    {
-        var results = new StackPanel { Spacing = 8 };
-        AutomationProperties.SetName(results, "Status history results");
-        foreach (var message in _statusHistory.Snapshot())
-            results.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
-        var dialog = new ContentDialog
-        {
-            Title = "Status history",
-            Content = new ScrollViewer { Content = results, MaxHeight = 420, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
-            CloseButtonText = "Done",
-            XamlRoot = XamlRoot
-        };
-        await dialog.ShowAsync();
-    }
-
-    private static bool IsActionableRuntimeStatus(string message) =>
-        new[] { "could not", "cannot", "failed", "error", "unknown", "unavailable", "wait for", "timed out", "timeout", "expired", "no readable", "no results", "not available", "not saved", "refused", "rejected", "requires", "enter ", "choose ", "add a project", "not connected", "check settings", "not enabled", "stopped", "preserve newer", "protected" }
-            .Any(marker => message.Contains(marker, StringComparison.OrdinalIgnoreCase));
-
-    private async Task RunUiActionAsync(Func<Task> action)
-    {
-        try { await action(); }
-        catch (Exception ex)
-        {
-            App.Log.Error("UI", ex, "UI action failed");
-            RuntimeStatus.Text = $"Action failed: {ex.Message}";
-        }
-    }
-
-    private bool SaveSettings()
-    {
-        try
-        {
-            _settingsStore.Save(_settings);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            RuntimeStatus.Text = $"Could not save settings: {ex.Message}";
-            return false;
-        }
-    }
 }
