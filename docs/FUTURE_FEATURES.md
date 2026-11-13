@@ -27,7 +27,7 @@ and acceptance evidence.
 - [x] Message queueing while the AI is responding.
 - [x] Folders, tags, and pinned chats.
 - [x] Search within the current chat and jump to a matching message.
-- [ ] Fork a chat from any message.
+- [x] Fork a chat from any message.
 - [ ] Voice input/output, hands-free calls, and advanced voice mode.
 - [ ] Image generation and editing.
 - [ ] Context compaction.

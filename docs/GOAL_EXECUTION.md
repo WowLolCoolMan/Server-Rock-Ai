@@ -1650,6 +1650,42 @@ Not yet verified: live per-message fork activation, live memory setting save/sen
 with an eligible note, semantic compaction and 1M+ context, packaged interaction,
 Linux parity, and the remaining handoff requirements.
 
+## Slice 135 — live per-message fork activation
+
+Status: `verified_windows_disposable_fork_journey`
+
+The per-message `Fork from here` action was exercised against a disposable seeded
+three-message conversation. The second user message was forked from the live
+conversation; the UI reported `Fork created from message 3; the original
+conversation is unchanged.` and opened the new fork titled with the fork marker.
+The disposable archive then contained the original conversation plus a new session
+with `forkedFrom` set to the original ID and the copied first three messages.
+
+Evidence:
+
+- Disposable Windows profile used `SRAI_SETTINGS_PATH` and
+  `SRAI_CONVERSATIONS_PATH`; temporary files were removed after inspection.
+- Live accessibility tree exposed a `Fork conversation from this message` action
+  on each rendered message.
+- Live screenshot and status text showed the fork result and unchanged-original
+  claim; the saved archive independently showed the new fork identity, source ID,
+  title marker, and copied prefix.
+- No provider request, cloud route, credential, real-profile mutation, or pet
+  action occurred.
+- `npm run audit:future-features` — passed after this documentation update.
+
+Privacy/security/licensing: the journey used only bounded synthetic local content
+and an isolated profile; no conversation data left the device and no dependency or
+third-party code was added.
+
+Rollback: documentation-only after the existing tested fork implementation; remove
+this evidence entry and restore the backlog checkbox only if the live result is
+invalidated.
+
+Not yet verified: live memory setting save/send acceptance with an eligible note,
+durable cross-restart context continuity, semantic compaction and 1M+ context,
+packaged interaction, Linux parity, and the remaining handoff requirements.
+
 ## Slice 133 — add a disposable settings profile boundary
 
 Status: `implemented_verified_build`
