@@ -24,7 +24,7 @@ and acceptance evidence.
 - [ ] File, image, and PDF upload with retrieval-augmented generation (RAG).
 - [ ] Web search with citations.
 - [ ] Persistent memory with a view/edit management UI.
-- [ ] Message queueing while the AI is responding.
+- [x] Message queueing while the AI is responding.
 - [ ] Folders, tags, and pinned chats.
 - [ ] Fork a chat from any message.
 - [ ] Voice input/output, hands-free calls, and advanced voice mode.

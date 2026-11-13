@@ -2089,6 +2089,35 @@ Not yet verified: live file-picker acceptance in a packaged Windows run and
 Linux picker parity. The repository has no Uno App MCP surface available for
 that UI automation path.
 
+## Slice 124 — close the active-response message-queue backlog item
+
+The future-features register now marks message queueing complete. This is
+limited to the requirement's actual scope: while a response is active, a
+bounded follow-up prompt can be accepted locally, reviewed through the Queue
+control, and dispatched after the active request reaches its cleanup path.
+
+Evidence already recorded in Slices 23, 24, 30–33, and 76:
+
+- Core tests cover bounded capacity, attachment preservation, FIFO/reorder,
+  remove/clear, persistence, restore, and drain behavior.
+- Windows accessibility evidence shows `Stop generating response`, accepts a
+  second prompt during the active request, exposes `Manage queued messages`,
+  and dispatches the queued follow-up after the first request fails.
+- The queue remains local and bounded; no provider request is made until the
+  existing send lifecycle reaches its dispatch path.
+
+Privacy/security/licensing: queued prompts and explicitly attached content
+remain in the existing local bounded queue and use the existing attachment
+consent/provider policy at dispatch. No new network, credential, shell, Git,
+or third-party behavior is introduced.
+
+Rollback: revert the checkbox and this evidence entry; the implemented queue
+code remains unchanged and can be re-audited if the acceptance scope changes.
+
+Limitations: successful live provider response, cross-device synchronization,
+and Linux/package parity remain separate gaps and are not implied by this
+backlog closure.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
