@@ -1575,6 +1575,36 @@ and handlers in `SidebarView.xaml.cs`.
 Not yet verified: live packaged interaction after this extraction, narrow-window
 visual QA, Linux parity, and the remaining handoff requirements.
 
+## Slice 132 — live acceptance of the decomposed sidebar
+
+Status: `verified_windows_accessibility_inspection`
+
+The current Windows desktop build was opened from the synchronized checkout and
+the navigation drawer was expanded with its keyboard shortcut. The accessibility
+tree visibly exposed the product identity, Chat/Coding Agent switch, new chat,
+Activity, Images, Extensions & skills, Model store, More, GitHub, project and
+project-file navigation containers, conversation-folder creation, chat import and
+export, recent-chat rows/actions, and the existing pet controls. The inspection
+was read-only; no chat, project, folder, import/export, or pet action was invoked.
+
+Evidence:
+
+- Native Windows app launched from the current `net10.0-desktop` build.
+- Accessibility inspection exposed `PROJECT CONTEXT`/project navigation, the
+  `CONVERSATIONS` block, `Create conversation folder`, `Import saved chats`,
+  `Export saved chats`, recent conversation rows, and companion controls.
+- No provider request, file picker, persistence mutation, or pet setting change
+  occurred; the process was stopped after inspection.
+
+Privacy/security/licensing: inspection read only existing local UI state and
+introduced no network, credential, provider, dependency, or third-party path.
+
+Rollback: documentation-only; remove this evidence entry if the live surface is
+later invalidated.
+
+Not yet verified: packaged-artifact interaction after the extraction, narrow-window
+visual QA, Linux parity, and full handoff completion.
+
 ## Slice 131 — extract project navigation from the sidebar
 
 Status: `implemented_verified_build`
