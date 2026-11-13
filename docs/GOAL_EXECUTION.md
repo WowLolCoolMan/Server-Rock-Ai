@@ -7292,6 +7292,41 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 204 — Extend native UI responsive regression contracts
+
+Status: `implemented_audit_verified_live_resize_unverified`
+
+Requirement alignment: the handoff requires usable narrow-window navigation,
+keyboard access, and a 560px acceptance pass. The native shell already has a
+compact drawer, stretch scrim, short-window composer sizing, Escape close, and
+focus restoration. This slice makes those seams explicit in the static UI
+audit so later XAML/C# edits cannot remove them silently.
+
+Changed files:
+
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 270 contracts, including the compact
+  drawer scrim, breakpoint, short-window sizing, and Escape-close contracts.
+- Native Windows accessibility inspection showed the initial composer focus,
+  named navigation controls, named drawer actions, and the compact-navigation
+  keyboard path in source. The available resize interaction did not produce a
+  reliable 560px window, so live 560px visual and modal focus acceptance is not
+  claimed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: static local UI inspection only; no network,
+credentials, provider routing, user data, or dependencies changed.
+
+Risk and rollback: remove the four responsive contracts and this ledger entry
+to roll back; the runtime UI is unchanged.
+
+Remaining: execute the 560px and Popup focus journey with a supported native
+resize/accessibility harness and record the packaged-artifact result.
+
 ## Slice 203 — Add fail-closed release workflow contract audit
 
 Status: `implemented_script_verified`
