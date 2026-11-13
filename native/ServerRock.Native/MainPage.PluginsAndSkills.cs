@@ -43,6 +43,11 @@ public sealed partial class MainPage
         var reviewOpenApi = new Button { Content = "Review local OpenAPI schema", MinWidth = 220 };
         AutomationProperties.SetName(reviewOpenApi, "Review local OpenAPI schema");
         AutomationProperties.SetHelpText(reviewOpenApi, "Choose a local JSON OpenAPI 3 document. The app only discovers and displays operations; it does not fetch, execute, or authorize them.");
+        var localOpenApiPath = new TextBox { Header = "Local JSON path", PlaceholderText = "C:\\path\\openapi.json" };
+        AutomationProperties.SetName(localOpenApiPath, "Local OpenAPI JSON path");
+        var reviewOpenApiPath = new Button { Content = "Use local path", MinWidth = 140 };
+        AutomationProperties.SetName(reviewOpenApiPath, "Review OpenAPI JSON from local path");
+        AutomationProperties.SetHelpText(reviewOpenApiPath, "Read and review a bounded local JSON schema when the native file picker is unavailable.");
         var dialog = new ContentDialog
         {
             Title = "Plugins",
@@ -57,6 +62,7 @@ public sealed partial class MainPage
                     new TextBlock { Text = "OPENAPI DISCOVERY", Style = UiTheme.Style("SectionLabelStyle"), Margin = new Thickness(0, 8, 0, 0) },
                     new TextBlock { Text = "Review a local OpenAPI 3 JSON schema without connecting to its server. Discovered operations remain untrusted until a future explicit permission and execution flow exists.", TextWrapping = TextWrapping.Wrap, Foreground = UiTheme.Brush("MutedInkBrush") },
                     reviewOpenApi,
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { localOpenApiPath, reviewOpenApiPath } },
                     new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { search, category } },
                     list,
                     details,
@@ -116,6 +122,34 @@ public sealed partial class MainPage
             UiTheme.Standardize(reviewDialog);
             await reviewDialog.ShowAsync();
         }
+        async Task ReviewOpenApiStreamAsync(Stream stream, string fileName, long size)
+        {
+            if (size > (long)OpenApiToolDiscovery.MaxDocumentCharacters * 4)
+            {
+                status.Text = $"OpenAPI schema {fileName} exceeds the bounded input limit.";
+                return;
+            }
+            var json = await BoundedFileReader.ReadTextAsync(stream, OpenApiToolDiscovery.MaxDocumentCharacters, "OpenAPI schema");
+            var operations = OpenApiToolDiscovery.Parse(json, Path.GetFileName(fileName));
+            status.Text = $"Discovered {operations.Count} OpenAPI operation(s) from {Path.GetFileName(fileName)}. Nothing was fetched, executed, or authorized.";
+            await ShowOpenApiReviewAsync(operations, Path.GetFileName(fileName));
+        }
+        reviewOpenApiPath.Click += async (_, _) =>
+        {
+            try
+            {
+                var rawPath = localOpenApiPath.Text.Trim();
+                if (rawPath.Length is 0 or > 1_024 || rawPath.Any(char.IsControl)) throw new InvalidOperationException("Enter a bounded local path.");
+                var path = Path.GetFullPath(rawPath);
+                if (!Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("The local OpenAPI file must use the .json extension.");
+                if (!File.Exists(path)) throw new FileNotFoundException("The local OpenAPI file does not exist.");
+                var attributes = File.GetAttributes(path);
+                if (attributes.HasFlag(System.IO.FileAttributes.ReparsePoint)) throw new InvalidOperationException("Reparse-point files are not reviewed.");
+                await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await ReviewOpenApiStreamAsync(stream, Path.GetFileName(path), stream.Length);
+            }
+            catch (Exception ex) { status.Text = $"OpenAPI schema could not be reviewed: {ex.Message}"; }
+        };
         reviewOpenApi.Click += async (_, _) =>
         {
             try
@@ -135,16 +169,8 @@ public sealed partial class MainPage
                 var file = await picker.PickSingleFileAsync();
                 if (file is null) return;
                 var properties = await file.GetBasicPropertiesAsync();
-                if (properties.Size > (ulong)OpenApiToolDiscovery.MaxDocumentCharacters * 4)
-                {
-                    status.Text = $"OpenAPI schema {file.Name} exceeds the bounded input limit.";
-                    return;
-                }
                 await using var stream = await file.OpenStreamForReadAsync();
-                var json = await BoundedFileReader.ReadTextAsync(stream, OpenApiToolDiscovery.MaxDocumentCharacters, "OpenAPI schema");
-                var operations = OpenApiToolDiscovery.Parse(json, Path.GetFileName(file.Name));
-                status.Text = $"Discovered {operations.Count} OpenAPI operation(s) from {file.Name}. Nothing was fetched, executed, or authorized.";
-                await ShowOpenApiReviewAsync(operations, file.Name);
+                await ReviewOpenApiStreamAsync(stream, file.Name, (long)properties.Size);
             }
             catch (Exception ex) { status.Text = $"OpenAPI schema could not be reviewed: {ex.Message}"; }
         };

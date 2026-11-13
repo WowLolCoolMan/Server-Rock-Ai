@@ -7074,3 +7074,43 @@ remain available.
 
 Remaining: OCR, app/executable previews, mutation-aware editing, full artifact
 previews, cross-platform packaged acceptance, and richer file connectors.
+
+## Slice 181 — OpenAPI local-path review fallback
+
+Status: `implemented_build_audit_verified`
+
+The Plugins OpenAPI review surface now provides an explicit `Use local path`
+fallback beside the native JSON picker. It accepts only a bounded fully
+qualified `.json` path, rejects control characters, missing files, reparse-point
+files, and oversized input, then parses the local OpenAPI 3 document through
+the existing untrusted, execution-free discovery flow. The fallback does not
+fetch a server, grant permissions, invoke tools, or send schema content to a
+provider.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 234 contracts.
+- Existing Core OpenAPI discovery tests passed in the full Core suite; this
+  slice changes only the native review entry point and audit contracts.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the fallback reads only the path explicitly
+provided by the user, applies the existing document byte/character bounds, and
+keeps all discovered operations untrusted. No network, credential, provider,
+or third-party execution path is introduced.
+
+Rollback: remove the local path controls and handler; native picker review and
+the existing schema discovery service remain unchanged.
+
+Remaining: authenticated retrieval, external references, tool authorization
+and execution, long-lived MCP resources/notifications, process supervision,
+cross-platform packaged acceptance, and full live picker/path acceptance.
