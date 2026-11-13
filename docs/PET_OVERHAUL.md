@@ -131,6 +131,17 @@ Known limits:
   renders at 60 fps. The smoothness evidence is the in-app frame counter and position log above,
   not the videos.
 
+## Smoke test, round 3 (full re-run after wander)
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| All five pets load | Pass | Rocky, Byte, Sprout, Nova, Ember idle frames, bubble and name. |
+| Thinking → success → idle with wander on | Pass | The pet stops where it is for the prompt, thinks, hops, relaxes, and walks again ~5 s later. |
+| coding | Pass (code) | Coding Agent needs a project folder from the native folder picker before it sends, which the rig can't drive; it is the same call as thinking with "coding". |
+| Pet over the sidebar | Fail → fixed | The sidebar has ZIndex 2 for the compact drawer, so a pet dragged or walking over it disappeared and its bubble was cut at the sidebar edge. The pet overlay now sits above it (it is collapsed while the drawer is open). |
+| "Let the pet wander" toggle | Pass | In the pet chooser; saves `"wander": true/false` immediately. |
+| Window title | Note | The app's window title is now "Skai Desktop" (owner rename); the rig matches both names. |
+
 ### Full-desktop wandering (research only, not built)
 
 Not yet researched; next round.
@@ -143,3 +154,4 @@ Not yet researched; next round.
 | 00:01 | f338d8c 7ec2887 3be18c6 c2f2735 | Re-cut frames, state animations, cross-fades, bubble, Stop/idle fixes; round-2 smoke table. |
 | 00:04 | 0b6dfa6 | Wander planner + Core tests (not wired to the UI yet). |
 | 00:19 | 881c19d | Wander in the UI behind "Let the pet wander" (off by default); wander smoke results. |
+| 00:27 | 30a5248 | Pet drawn above the sidebar; round-3 smoke results. |
