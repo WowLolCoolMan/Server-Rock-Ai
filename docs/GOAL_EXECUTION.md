@@ -6005,3 +6005,43 @@ independently persisted.
 Not yet verified: encrypted-at-rest attachment drafts, cross-device sync,
 cross-platform packaged restart behavior, and a picker-based add/remove live
 journey in the current desktop runtime.
+
+## Slice 156 — Activity search focus handoff
+
+Status: `implemented_verified_windows_keyboard_focus`
+
+Activity search and agent-task search now enqueue their initial query focus
+after the ContentDialog opens. This avoids the native dialog's focus request
+being overwritten by the underlying composer while preserving the existing
+accessible labels and result lists.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed.
+- `npm run audit:native-ui` — passed with 205 contracts, including both
+  dispatcher-backed search focus paths.
+- `npm run audit:future-features` and `git diff --check` — passed.
+- Live Windows journey: opened Activity & tasks, activated Search activity,
+  observed the query field focused visually, and typed `ratio` through native
+  keyboard input; the dialog document text reflected `ratio` while the
+  underlying composer remained unchanged.
+
+Privacy/security/licensing: the change only affects local focus routing and
+searches already-local activity data. No provider request, file write,
+credential access, pets state, or handoff file was involved.
+
+Rollback: revert the two dispatcher-backed focus handlers and their audit
+contracts; search remains functional with the previous immediate focus call.
+
+Not yet verified: Narrator-specific announcements, Linux/Skia focus parity,
+and full keyboard activation of every Activity action such as export and
+schedule.

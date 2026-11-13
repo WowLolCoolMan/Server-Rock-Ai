@@ -102,6 +102,10 @@ Slice 155 verified separate durable attachment drafts. A bounded atomic local
 store restored a seeded `notes.md` chip into the native composer on Windows;
 encrypted storage, cross-device synchronization, and picker-based add/remove
 acceptance remain open.
+
+Slice 156 repaired Activity and agent-task search focus handoff and verified a
+native keyboard query entry on Windows. Full screen-reader announcements,
+Linux parity, and keyboard acceptance for export/schedule actions remain open.
 - Live unavailable-selection evidence: Settings temporarily saved
   `missing-model`; the app reported `Connected · selected model missing-model is
   unavailable · choose a model in Model Library`, kept `missing-model` in the

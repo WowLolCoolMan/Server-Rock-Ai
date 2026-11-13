@@ -121,7 +121,7 @@ public sealed partial class MainPage
                 XamlRoot = XamlRoot
             };
             AutomationProperties.SetName(searchDialog, "Search activity evidence");
-            searchDialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+            searchDialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => query.Focus(FocusState.Programmatic));
             await searchDialog.ShowAsync();
         };
         content.Children.Add(searchActivity);
@@ -203,7 +203,7 @@ public sealed partial class MainPage
                 XamlRoot = XamlRoot
             };
             AutomationProperties.SetName(searchAgentTaskDialog, "Search agent tasks");
-            searchAgentTaskDialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+            searchAgentTaskDialog.Opened += (_, _) => DispatcherQueue.TryEnqueue(() => query.Focus(FocusState.Programmatic));
             await searchAgentTaskDialog.ShowAsync();
         };
         content.Children.Add(searchAgentTasks);
