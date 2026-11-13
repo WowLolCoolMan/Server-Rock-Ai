@@ -1531,6 +1531,40 @@ Not yet verified: proactive compatibility detection before a request,
 multi-route provider selection, durable provider identity across fallback
 attempts, Linux parity, and packaged-release acceptance.
 
+## Slice 108 — preserve cancellation for approved workspace commands
+
+Status: `implemented_verified_core`
+
+The approved workspace-command path now has a regression check for user
+cancellation in addition to its timeout check. Cancelling an in-flight command
+must terminate the process tree, wait for the process to exit, and propagate
+`OperationCanceledException` to the caller. This confirms the cancellation
+boundary does not leave a background command running or silently convert a
+user cancellation into a successful result.
+
+Changed files:
+
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including `project command cancellation kills the process tree and propagates cancellation`.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: this slice adds no provider request, credential,
+network route, dependency, or new execution capability. It verifies the
+existing explicit-approval command runner's local cancellation behavior only.
+The command runner still is not an OS sandbox; that limitation remains
+explicit in the capability matrix.
+
+Rollback: remove the focused cancellation test and the matrix wording; the
+existing timeout and process-tree cleanup implementation remains unchanged.
+
+Not yet verified: OS-level sandboxing, richer tool transport, cross-platform
+PTY acceptance, parallel-agent isolation, Linux parity, and packaged-release
+acceptance.
+
 ## Slice 96 — extract the main page header into a dedicated visual control
 
 Status: `implemented_verified_build`

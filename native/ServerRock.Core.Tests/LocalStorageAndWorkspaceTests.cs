@@ -322,6 +322,23 @@ internal static class LocalStorageAndWorkspaceTests
                 OperatingSystem.IsWindows() ? "Start-Sleep -Seconds 5" : "sleep 5",
                 TimeSpan.FromSeconds(1));
             Check(timedCommand.TimedOut, "project command timeout stops the process instead of leaving a task running");
+            using (var commandCancellation = new CancellationTokenSource())
+            {
+                var cancellableCommand = commandRunner.RunAsync(workspacePath, ".",
+                    OperatingSystem.IsWindows() ? "Start-Sleep -Seconds 5" : "sleep 5",
+                    TimeSpan.FromSeconds(30), commandCancellation.Token);
+                await Task.Delay(TimeSpan.FromMilliseconds(200));
+                commandCancellation.Cancel();
+                try
+                {
+                    await cancellableCommand;
+                    throw new Exception("Expected a cancelled project command to stop with OperationCanceledException.");
+                }
+                catch (OperationCanceledException)
+                {
+                    Check(true, "project command cancellation kills the process tree and propagates cancellation");
+                }
+            }
             await using (var terminalSession = new WorkspaceTerminalSession())
             {
                 await terminalSession.StartAsync(workspacePath, shell: OperatingSystem.IsWindows() ? "Command Prompt" : null);
