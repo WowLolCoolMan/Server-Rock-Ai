@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AgentResponse, RuntimeHealth } from "../shared/contracts";
+import { PRODUCT_DISPLAY_NAME } from "../shared/productIdentity";
 
 type ConnectionState = "checking" | "ready" | "error";
 
@@ -9,6 +10,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = PRODUCT_DISPLAY_NAME;
     window.serverRockAgent
       .request("runtime.health")
       .then((response: AgentResponse) => {
@@ -33,7 +35,7 @@ export default function App() {
           <div className="brand-mark" aria-hidden="true">SR</div>
           <div>
             <p className="eyebrow">WORKSPACE</p>
-            <h1>Server Rock AI</h1>
+            <h1>{PRODUCT_DISPLAY_NAME}</h1>
           </div>
         </div>
         <nav className="nav-stack">
