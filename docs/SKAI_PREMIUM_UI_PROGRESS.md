@@ -20,6 +20,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `325af1d` — preserved active theme contrast while adding restrained Deep Sea and Deep Space backdrop atmosphere.
 - `7313d5c` — added a reusable modal dialog primitive with focus trapping/restoration and migrated the Coding Workspace new-project flow.
 - `d635db8` — migrated the command palette onto the shared modal primitive and removed duplicate focus lifecycle logic.
+- `6e6eab9` — upgraded Marketplace from static cards to a searchable, filterable catalog shell with selectable detail context and honest unavailable states.
 
 ## Current evidence
 
@@ -43,13 +44,14 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Theme/backdrop visual audit: passed for light/dark × Deep Sea/Deep Space combinations, readable headings and surfaces, and no horizontal overflow at 1280px. Screenshots: `output/playwright/skai-theme-light-deep-sea.png`, `output/playwright/skai-theme-light-deep-space.png`, `output/playwright/skai-theme-dark-deep-sea.png`, and `output/playwright/skai-theme-dark-deep-space.png`.
 - Coding dialog accessibility check: passed for initial field focus, Shift+Tab/Tab wrapping, Escape close, submit close, focus restoration after both close paths, and responsive overflow at 1280px. Screenshot: `output/playwright/skai-coding-dialog-open.png`.
 - Unified overlay interaction check: passed for command-palette initial focus, boundary wrapping, Escape restoration, filtered keyboard navigation, Coding dialog initial focus, boundary wrapping, Escape restoration, and responsive overflow at 1280px. Screenshots: `output/playwright/skai-command-palette-unified.png` and `output/playwright/skai-coding-dialog-unified.png`.
+- Marketplace interaction check: passed for search, category filtering, selectable detail context, empty-state recovery, keyboard-visible focus, and responsive overflow at 1280px and 960px. Screenshots: `output/playwright/skai-marketplace-populated.png` and `output/playwright/skai-marketplace.png`.
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
 
 ## Current task
 
-Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. The command palette and Coding Workspace dialog now share one verified focus/escape/restoration contract, alongside the theme/backdrop contrast pass. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
+Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. The command palette and Coding Workspace dialog now share one verified focus/escape/restoration contract, alongside the theme/backdrop contrast pass and the first honest Marketplace discovery shell. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.
 
 ## Outstanding priorities
 
@@ -58,7 +60,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the shared modal surfaces to remaining overlay and menu surfaces, including real Electron capture when the provider can target the correct window.
 5. Extend the theme audit from Settings to every major route, including system appearance, density, reduced motion, and backdrop combinations.
-6. Add workflow/skills/integration surfaces only where the existing runtime has a real capability; do not fabricate integrations.
+6. Connect the Marketplace catalog only when a real runtime capability exists; keep the current local discovery shell honest and do not fabricate integrations.
 
 ## Scope guard
 
