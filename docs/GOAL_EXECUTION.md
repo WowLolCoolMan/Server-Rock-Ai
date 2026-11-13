@@ -3,6 +3,34 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 252 — Port Electron conversation archive controls
+
+Status: `implemented_host_renderer_archive_smoke_verified`
+
+The replacement host now accepts `includeArchived` for conversation listing and
+returns archive and folder metadata consistently. Electron exposes an explicit
+archived-chat view plus Archive/Restore actions, while active history continues
+to hide archived conversations by default.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/shared/contracts.ts`
+- `scripts/smoke-conversation-metadata.cjs`
+
+Evidence:
+
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:conversation-metadata` — passed disposable labels,
+  archive persistence, active filtering, and archived-view assertions.
+- `git diff --check` — passed.
+
+Remaining: archived search filtering, bulk archive actions, and full export
+parity remain separate slices.
+
 ## Slice 251 — Port the durable Electron chat message queue
 
 Status: `implemented_host_renderer_queue_smoke_verified`

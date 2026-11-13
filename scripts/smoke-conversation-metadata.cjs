@@ -44,7 +44,13 @@ async function run() {
   if (!updated.ok || updated.result?.pinned !== true || updated.result?.folderName !== "Research" || updated.result?.tags?.length !== 2) throw new Error("conversation.metadata.save did not persist bounded organization metadata.");
   const listed = await request("conversations.list");
   if (!listed.ok || listed.result.length !== 1 || listed.result[0].pinned !== true || listed.result[0].tags[0] !== "local") throw new Error("conversation metadata did not round-trip through conversations.list.");
-  console.log("Conversation metadata smoke passed: pin, folder, tag, and persistence round trip.");
+  const archived = await request("conversation.metadata.save", { id: saved.result.id, archived: true });
+  if (!archived.ok || archived.result?.archived !== true) throw new Error("conversation archive state did not persist.");
+  const hidden = await request("conversations.list");
+  if (!hidden.ok || hidden.result.length !== 0) throw new Error("archived conversations were not hidden from the active list.");
+  const restoredView = await request("conversations.list", { includeArchived: true });
+  if (!restoredView.ok || restoredView.result.length !== 1 || restoredView.result[0].archived !== true) throw new Error("archived conversation view did not return the archived item.");
+  console.log("Conversation metadata smoke passed: labels, archive, active filtering, and archive restore view.");
 }
 
 run().catch(error => {

@@ -307,8 +307,10 @@ public static class AgentHostLoop
 
     private static AgentResponse ListConversations(AgentRequest request)
     {
+        var includeArchived = request.Params?.TryGetProperty("includeArchived", out var archivedValue) == true
+            && archivedValue.ValueKind == JsonValueKind.True;
         var conversations = CreateConversationStore().Load()
-            .Where(session => !session.Archived)
+            .Where(session => includeArchived || !session.Archived)
             .OrderByDescending(session => session.Pinned)
             .ThenByDescending(session => session.UpdatedAt)
             .Select(session => new
@@ -321,7 +323,9 @@ public static class AgentHostLoop
                 includeProjectFilesInChat = session.IncludeProjectFilesInChat,
                 updatedAt = session.UpdatedAt,
                 pinned = session.Pinned,
+                archived = session.Archived,
                 tags = session.Tags,
+                folderName = session.FolderName,
             })
             .ToArray();
         return new(ProtocolVersion, request.Id, true, conversations);

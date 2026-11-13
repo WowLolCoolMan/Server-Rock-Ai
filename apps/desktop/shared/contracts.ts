@@ -45,6 +45,7 @@ export type DesktopConversation = {
   includeProjectFilesInChat?: boolean;
   updatedAt: string;
   pinned: boolean;
+  archived: boolean;
   tags: string[];
   folderName?: string | null;
 };
