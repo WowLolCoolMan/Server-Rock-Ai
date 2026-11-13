@@ -3,6 +3,43 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 239 — Add an isolated Electron host replacement smoke gate
+
+Status: `implemented_protocol_smoke_script_verified`
+
+The repository now has `npm run smoke:agent-host`, a bounded JSON-lines smoke
+that starts the built .NET host with disposable settings and conversation
+paths. It verifies the runtime capability advertisement, empty-history
+precondition, conversation save/list round trip, and settings get/save round
+trip, then removes only its own temporary directory. This makes the Electron
+replacement boundary executable in CI/local verification without reading or
+mutating the user's profile.
+
+Changed files:
+
+- `scripts/smoke-agent-host.cjs`
+- `package.json`
+- `docs/ELECTRON_MIGRATION_CUTOVER.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed, including the new script.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run smoke:agent-host` — passed health, disposable conversation
+  persistence, and disposable settings persistence.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the script sets explicit temporary profile paths,
+does not use credentials or providers, and removes only its own temporary
+directory. No dependency or third-party code was added.
+
+Rollback: remove the smoke script and package command; runtime behavior and
+user data are unaffected.
+
+Remaining: CI wiring, packaged Electron startup, full feature parity,
+accessibility, release signing, and Uno retirement gates remain open.
+
 ## Slice 238 — Add explicit retry for interrupted agent tasks
 
 Status: `implemented_core_tests_verified`

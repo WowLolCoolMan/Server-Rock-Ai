@@ -53,6 +53,8 @@ validate parity.
   user turn and completed assistant response through the bounded Core store.
 - The replacement sidebar now exposes the first eight saved conversations and
   an explicit New chat action; selecting a history item restores its messages.
+- `npm run smoke:agent-host` exercises the replacement protocol against
+  disposable settings and conversation files, including persistence round trips.
 - `apps/desktop` typecheck and production build pass.
 - The host builds and a live stdio request returns the new capability set.
 

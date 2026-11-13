@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+
+/* Isolated replacement-shell protocol smoke. It exercises only disposable
+ * settings/history files and never reads or writes the user's profile. */
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawn } = require("node:child_process");
+const readline = require("node:readline");
+
+const root = path.resolve(__dirname, "..");
+const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skai-agent-host-smoke-"));
+const env = {
+  ...process.env,
+  SRAI_SETTINGS_PATH: path.join(tempRoot, "settings.json"),
+  SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
+};
+const child = spawn("dotnet", ["run", "--project", path.join(root, "services", "agent-host", "ServerRock.AgentHost.csproj"), "--no-build", "--", "--stdio"], {
+  cwd: root,
+  env,
+  stdio: ["pipe", "pipe", "pipe"],
+  windowsHide: true,
+});
+const reader = readline.createInterface({ input: child.stdout });
+let nextId = 1;
+const pending = new Map();
+let stderr = "";
+
+child.stderr.on("data", chunk => { stderr += chunk.toString(); });
+reader.on("line", line => {
+  try {
+    const response = JSON.parse(line);
+    const resolve = pending.get(response.id);
+    if (resolve) { pending.delete(response.id); resolve(response); }
+  } catch { /* The host protocol response is validated by the request timeout. */ }
+});
+
+function request(method, params) {
+  const id = `smoke-${nextId++}`;
+  child.stdin.write(`${JSON.stringify({ v: 1, id, method, params })}\n`);
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Timed out waiting for ${method}.`)); }, 10_000);
+    pending.set(id, response => { clearTimeout(timer); resolve(response); });
+  });
+}
+
+async function run() {
+  const health = await request("runtime.health");
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save"))
+    throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
+  const before = await request("conversations.list");
+  if (!before.ok || !Array.isArray(before.result) || before.result.length !== 0)
+    throw new Error("Disposable conversation history was not empty.");
+  const saved = await request("conversation.save", { title: "Protocol smoke", messages: [{ role: "user", content: "hello" }, { role: "assistant", content: "world" }] });
+  if (!saved.ok || typeof saved.result?.id !== "string") throw new Error("conversation.save did not return a local identity.");
+  const after = await request("conversations.list");
+  if (!after.ok || after.result.length !== 1 || after.result[0].title !== "Protocol smoke") throw new Error("conversation persistence round-trip failed.");
+  const settings = await request("settings.get");
+  if (!settings.ok || typeof settings.result?.endpoint !== "string") throw new Error("settings.get did not return bounded settings.");
+  const savedSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model });
+  if (!savedSettings.ok) throw new Error("settings.save failed in the disposable profile.");
+  console.log("Agent host replacement smoke passed: health, disposable conversation persistence, and disposable settings persistence.");
+}
+
+run().catch(error => {
+  console.error(error.message);
+  if (stderr.trim()) console.error(stderr.trim());
+  process.exitCode = 1;
+}).finally(() => {
+  child.kill();
+  reader.close();
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+});
