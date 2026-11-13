@@ -1633,6 +1633,40 @@ live workflow-event search matching, full status-history keyboard/screen-reader
 acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
 packaged acceptance.
 
+## Slice 111 — make Activity search keyboard-ready
+
+Status: `implemented_verified_build`
+
+The Activity search dialog now has an explicit accessible name, its query field
+has a stable accessible label, and opening the dialog focuses the query field.
+Search remains read-only and refreshes bounded local operation and workflow
+event results as the query changes.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `scripts/audit-native-ui.cjs`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed: `Native UI audit passed (150 contracts).`
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed: `Native core checks passed.`
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: Activity search reads only bounded local evidence
+already present in the journal. Query text is not sent to a provider and no
+task, file, credential, or network state is changed.
+
+Rollback: remove the query/dialog labels and focus handler plus their audit
+contracts; the existing read-only search behavior remains.
+
+Not yet verified: live keyboard activation of every Activity action, seeded
+live workflow-event search matching, full status-history keyboard/screen-reader
+acceptance, OS session hosting, parallel-agent artifacts, Linux parity, and
+packaged acceptance.
+
 ## Slice 96 — extract the main page header into a dedicated visual control
 
 Status: `implemented_verified_build`

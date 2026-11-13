@@ -114,6 +114,8 @@ const requiredCode = [
   ['Activity evidence search action', 'AutomationProperties.SetName(searchActivity, "Search activity evidence")'],
   ['Activity dialog accessible name', 'AutomationProperties.SetName(dialog, "Activity and tasks")'],
   ['Activity dialog initial focus', 'dialog.Opened += (_, _) => exportActivity.Focus(FocusState.Programmatic);'],
+  ['Activity search query label', 'AutomationProperties.SetName(query, "Search activity evidence query")'],
+  ['Activity search dialog initial focus', 'searchDialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);'],
   ['Operation activity search results', 'AutomationProperties.SetName(results, "Operation activity search results")'],
   ['Workflow event search results', 'AutomationProperties.SetName(workflowResults, "Workflow event search results")'],
   ['Scheduled task recurrence control', 'AutomationProperties.SetName(repeat, "Scheduled task recurrence")'],

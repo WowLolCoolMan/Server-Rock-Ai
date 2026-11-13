@@ -90,6 +90,7 @@ public sealed partial class MainPage
         searchActivity.Click += async (_, _) =>
         {
             var query = new TextBox { PlaceholderText = "Instruction, status, model, provider, or workspace", MinWidth = 360 };
+            AutomationProperties.SetName(query, "Search activity evidence query");
             var results = new ListView { MinHeight = 160, MaxHeight = 360, DisplayMemberPath = nameof(OperationRun.UserInstruction) };
             AutomationProperties.SetName(results, "Operation activity search results");
             var workflowResults = new ListView { MinHeight = 120, MaxHeight = 280 };
@@ -111,13 +112,16 @@ public sealed partial class MainPage
             }
             query.TextChanged += (_, _) => RefreshResults();
             RefreshResults();
-            await new ContentDialog
+            var searchDialog = new ContentDialog
             {
                 Title = "Search activity",
                 Content = new StackPanel { Spacing = 8, Children = { query, results, workflowLabel, workflowResults, status } },
                 CloseButtonText = "Done",
                 XamlRoot = XamlRoot
-            }.ShowAsync();
+            };
+            AutomationProperties.SetName(searchDialog, "Search activity evidence");
+            searchDialog.Opened += (_, _) => query.Focus(FocusState.Programmatic);
+            await searchDialog.ShowAsync();
         };
         content.Children.Add(searchActivity);
         IReadOnlyList<ScheduledTask> scheduledTasks = [];
