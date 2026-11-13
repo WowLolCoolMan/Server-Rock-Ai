@@ -1644,6 +1644,37 @@ workflow-event matching, full status-history screen-reader acceptance, OS
 session hosting, parallel-agent artifacts, Linux parity, and packaged
 acceptance.
 
+## Slice 102 — verify scheduled work surfaces for review without dispatch
+
+Status: `verified_windows_accessibility_inspection`
+
+The live Windows Activity & Tasks surface contained the completed scheduler
+record `Review scheduler acceptance` with the explicit outcome `Surfaced in the
+composer for review; no provider request was sent.` This verifies the intended
+safe boundary between due scheduling and model dispatch: a due task can become
+reviewable work without silently sending a provider request. The evidence came
+from the existing local activity record; no new task was created and no task
+was edited or deleted.
+
+Evidence:
+
+- The Activity & Tasks accessibility tree exposed the completed scheduler row,
+  its one-time workspace metadata, and the no-dispatch outcome text.
+- The same surface exposed the separate `Schedule task` action for future
+  work, confirming scheduling remains an explicit UI path.
+
+Privacy/security/licensing: this was read-only inspection of local scheduler
+and activity data. No prompt was sent, no provider or cloud route was used,
+and no dependency or third-party code was added.
+
+Rollback: documentation-only; remove this evidence entry if a later live run
+contradicts the recorded scheduler outcome.
+
+Not yet verified: recurring-task creation and pause/resume in the current
+build, reviewed workflow execution adapters, OS session hosting, automatic
+result capture, timezone/backoff policy, parallel agents, Linux parity, and
+packaged acceptance.
+
 ## Slice 100 — extract the composer input surface from MainPage.xaml
 
 Status: `implemented_verified_build`
