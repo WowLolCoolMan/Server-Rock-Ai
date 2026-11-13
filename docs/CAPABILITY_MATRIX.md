@@ -266,3 +266,8 @@ local read-only Preview action. The implementation builds and the native audit
 passes, but the live Windows file-picker journey could not be completed because
 the picker did not appear from the running Uno/Win32 surface; the preview
 acceptance remains open.
+
+Recent slice note — Slice 173: the desktop target now defines an explicit
+`SRAI_DESKTOP` picker bridge so Win32 window-handle initialization is compiled
+for native picker surfaces. The desktop build passed, but the picker still did
+not appear during repeated live activation; preview acceptance remains open.

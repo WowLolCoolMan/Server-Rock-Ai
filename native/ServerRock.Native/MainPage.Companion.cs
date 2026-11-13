@@ -265,7 +265,7 @@ public sealed partial class MainPage
             {
                 var picker = new Windows.Storage.Pickers.FileOpenPicker { SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary, ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail };
                 foreach (var extension in new[] { ".svg", ".png", ".jpg", ".jpeg", ".webp" }) picker.FileTypeFilter.Add(extension);
-#if WINDOWS
+#if WINDOWS || SRAI_DESKTOP
                 var window = (Application.Current as App)?.MainWindow;
                 if (window is null) throw new InvalidOperationException("The app window is unavailable.");
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));

@@ -6742,3 +6742,47 @@ existing attach/remove/send flow remains unchanged.
 Remaining: resolve or provide a supported native picker harness, then live-test
 text, PDF, and image previews; full RAG, OCR, cross-platform, and packaged
 acceptance remain open.
+
+## Slice 173 — Desktop picker window-handle bridge
+
+Status: `implemented_build_verified_live_picker_gap_persists`
+
+The native desktop target now defines `SRAI_DESKTOP` and compiles the existing
+Win32 `InitializeWithWindow` bridge for desktop picker surfaces, not only the
+packaged Windows target. The bridge was applied consistently to attachment,
+project, import/export, plugin, settings, companion, and sidebar pickers. This
+is a platform plumbing correction only; it does not broaden picker file types
+or change attachment safety limits.
+
+Changed files:
+
+- `native/ServerRock.Native/ServerRock.Native.csproj`
+- `native/ServerRock.Native/MainPage.Attachments.cs`
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `native/ServerRock.Native/MainPage.ImportExport.cs`
+- `native/ServerRock.Native/MainPage.PluginsAndSkills.cs`
+- `native/ServerRock.Native/MainPage.Projects.cs`
+- `native/ServerRock.Native/MainPage.Settings.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- Live Windows retry: activated the attachment control twice after the bridge
+  change; no native picker window appeared and no attachment was selected.
+  The preview journey therefore remains unverified rather than being claimed.
+- Existing Core tests and the 232-contract native UI audit remain green from
+  Slice 172; the bridge changes are picker-target conditionals only.
+
+Privacy/security/licensing: this changes only native window ownership for local
+pickers. It adds no dependency, network request, credential access, file read,
+provider call, or pets state change.
+
+Rollback: remove `SRAI_DESKTOP` and restore the picker blocks to `#if WINDOWS`;
+the packaged Windows path and existing picker validation remain separate.
+
+Remaining: identify the Uno/Win32 picker-hosting requirement or use a supported
+desktop picker harness, then live-test text, PDF, and image previews.

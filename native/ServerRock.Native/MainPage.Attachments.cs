@@ -33,7 +33,7 @@ public sealed partial class MainPage
             };
             foreach (var extension in new[] { ".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log", ".pdf", ".png", ".jpg", ".jpeg" })
                 picker.FileTypeFilter.Add(extension);
-#if WINDOWS
+#if WINDOWS || SRAI_DESKTOP
             var window = (Application.Current as App)?.MainWindow;
             if (window is null) throw new InvalidOperationException("The app window is unavailable.");
             WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));

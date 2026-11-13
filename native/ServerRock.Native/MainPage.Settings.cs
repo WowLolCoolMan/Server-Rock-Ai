@@ -122,7 +122,7 @@ public sealed partial class MainPage
                     SuggestedFileName = $"{ProductIdentity.FileNameStem}-memory-{DateTime.Now:yyyy-MM-dd}"
                 };
                 picker.FileTypeChoices.Add($"{ProductIdentity.ShortName} memory backup", new List<string> { ".json" });
-#if WINDOWS
+#if WINDOWS || SRAI_DESKTOP
                 var window = (Application.Current as App)?.MainWindow;
                 if (window is null) throw new InvalidOperationException("The app window is unavailable.");
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
@@ -145,7 +145,7 @@ public sealed partial class MainPage
                     ViewMode = Windows.Storage.Pickers.PickerViewMode.List
                 };
                 picker.FileTypeFilter.Add(".json");
-#if WINDOWS
+#if WINDOWS || SRAI_DESKTOP
                 var window = (Application.Current as App)?.MainWindow;
                 if (window is null) throw new InvalidOperationException("The app window is unavailable.");
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(window));
