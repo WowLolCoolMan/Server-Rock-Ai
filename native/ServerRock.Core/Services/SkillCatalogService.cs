@@ -34,7 +34,7 @@ public static class SkillCatalogService
             "Review release readiness",
             "Check build, test, packaging, diagnostics, and release evidence before publishing.",
             "Delivery",
-            "Review this project for release readiness. Inspect build and test configuration, packaging, versioning, diagnostics, update/rollback behavior, and documented acceptance evidence. Return a fail-closed checklist with concrete gaps and the next safest actions. Do not modify files or publish artifacts.",
+            "Prepare this release-readiness review for {{USER_NAME}} on {{DATE}}. Inspect build and test configuration, packaging, versioning, diagnostics, update/rollback behavior, and documented acceptance evidence. Return a fail-closed checklist with concrete gaps and the next safest actions. Do not modify files or publish artifacts.",
             ["project.read"])
     ];
 

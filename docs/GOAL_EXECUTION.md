@@ -5367,3 +5367,50 @@ would regress, so rollback is only appropriate with an owner decision.
 Not yet verified: richer cross-device queue synchronization, durable semantic
 conversation-context continuity, 1M+ token context, Linux parity, and
 packaged-release acceptance.
+
+## Slice 142 — live dynamic variables in reviewed skill prompts
+
+Status: `implemented_verified_windows_dynamic_prompt_variables`
+
+The reviewed built-in skill path now visibly exercises the supported dynamic
+variables. The Release readiness skill prompt includes the explicit opt-in
+`{{USER_NAME}}` and automatic `{{DATE}}` variables. With the disposable local
+settings profile naming the reviewer `Ada`, choosing `/skills`, selecting
+`Review release readiness`, and activating `Use skill` populated the composer
+with `Prepare this release-readiness review for Ada on 2026-11-12...`; no
+placeholder remained unresolved and the prompt was left reviewable rather than
+sent automatically.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/SkillCatalogService.cs`
+- `native/ServerRock.Core.Tests/CatalogTests.cs`
+- `docs/FUTURE_FEATURES.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj` — passed, including deterministic expansion of the Release readiness skill prompt with an explicit name and fixed date.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- Live Windows disposable profile — passed: the Skills dialog exposed the
+  built-in skill; selecting and activating it populated the focused composer
+  with `Ada` and `2026-11-12`, while the dialog announced that the prompt was
+  loaded for review.
+- `npm run audit:native-ui` — passed: 183 contracts, including skill prompt
+  expansion and explicit user-name setting labels.
+- `npm run audit:future-features` and `git diff --check` — passed; the dynamic
+  variables item is now checked with this evidence.
+
+Privacy/security/licensing: the name is explicitly entered and stored locally;
+it is never read from the Windows account automatically. Expansion happens
+before review, no provider request is made by Use skill, and no project files,
+credentials, pet state, or third-party dependency are involved.
+
+Rollback: remove the two placeholders from the built-in prompt, its catalog
+assertion, the future-feature check, and this evidence entry. The generic
+expander remains available for reviewed local skill packages.
+
+Not yet verified: dynamic-variable use in installed third-party skills,
+cross-platform and packaged acceptance, and the remaining marketplace trust
+and remote-install gaps.

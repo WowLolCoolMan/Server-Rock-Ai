@@ -116,7 +116,7 @@ and acceptance evidence.
 ## Models, runtime, and extensibility
 
 - [ ] Presets bundling prompts, tools, and knowledge.
-- [ ] Dynamic variables such as `{{USER_NAME}}` and `{{DATE}}`.
+- [x] Dynamic variables such as `{{USER_NAME}}` and `{{DATE}}`.
 - [ ] Lazy-loaded Markdown instruction-pack skills with `$` mentions.
 - [ ] Local model runner support for Ollama and LM Studio.
 - [ ] Offline-capable operation.

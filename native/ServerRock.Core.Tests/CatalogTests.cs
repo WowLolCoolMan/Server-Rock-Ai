@@ -29,6 +29,16 @@ internal static class CatalogTests
             "built-in skills expose explicit read-only permissions");
         Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
             "skill catalog lookup is case-insensitive and rejects unknown skills");
+        var releasePrompt = SkillCatalogService.Find("release-readiness")!.Prompt;
+        var expandedReleasePrompt = PromptVariableExpander.Expand(
+            releasePrompt,
+            new DateTimeOffset(2026, 11, 12, 14, 35, 0, TimeSpan.FromHours(-5)),
+            "Ada");
+        Check(expandedReleasePrompt.Contains("Ada", StringComparison.Ordinal) &&
+              expandedReleasePrompt.Contains("2026-11-12", StringComparison.Ordinal) &&
+              !expandedReleasePrompt.Contains("{{USER_NAME}}", StringComparison.Ordinal) &&
+              !expandedReleasePrompt.Contains("{{DATE}}", StringComparison.Ordinal),
+            "release-readiness skill expands explicit user-name and date variables before review");
 
         // Slash command catalog and suggestion filter (moved from MainPage into Core).
         Check(SlashCommandCatalog.Commands.Select(item => item.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() == SlashCommandCatalog.Commands.Length
