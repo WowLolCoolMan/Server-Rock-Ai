@@ -6207,3 +6207,41 @@ backlog item; no persisted user state is created by opening the guide.
 
 Remaining: richer versioned help content, localization, searchable external
 handoff references, and full Popup focus/screen-reader acceptance remain open.
+
+## Slice 161 — Agent-task dependency selection journey
+
+Status: `implemented_verified_windows_dependency_plan_cancel`
+
+The Activity & tasks agent-plan workflow was verified live with a disposable
+local plan. The form accepted a title and instruction, exposed existing local
+tasks as accessible prerequisite checkboxes, and saved the selected dependency
+into the task artifact. Activity rendered the resulting relationship as
+`after Disposable final dependency task`. The plan was then cancelled before
+queueing or execution.
+
+Changed files:
+
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- Live Windows journey: opened Activity & tasks, opened Plan agent task,
+  entered bounded disposable text, selected one existing prerequisite, saved,
+  reopened Activity, inspected the persisted dependency label, and activated
+  Cancel plan.
+- The app announced `Agent task plan saved locally for review. No agent or
+  provider was started.` and then `Agent task plan cancelled locally before
+  execution. No agent or provider was started.`
+- No model, provider, shell, Git, file, or network action was started.
+
+Privacy/security/licensing: this was local task-artifact state only; the plan
+was cancelled before queueing and no external execution occurred. No
+credentials, cloud route, pets state, or third-party package was involved.
+
+Rollback: the disposable plan was cancelled through the product UI; no
+remaining task mutation requires cleanup.
+
+Remaining: parallel dispatch, worktree/process isolation, background execution,
+task-artifact result UI, cross-platform acceptance, and full Popup focus remain
+open.

@@ -191,3 +191,10 @@ More and Ctrl+K. Live Windows verification rendered five guide sections in an
 accessible scroll region; native audit now passes 212 contracts and the future
 feature inventory has 11 checked items. Localization, richer help content, and
 Popup focus acceptance remain open.
+
+Recent slice note — Slice 161: live Windows agent planning accepted an existing
+local prerequisite, persisted the relationship as `after Disposable final
+dependency task`, and exposed the saved plan with accessible queue/cancel
+controls. The disposable plan was cancelled before execution, so the Agent
+Workbench gap is now parallel dispatch/isolation/background execution rather
+than dependency selection.
