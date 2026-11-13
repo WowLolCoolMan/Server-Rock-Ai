@@ -4,9 +4,9 @@ Research date: 2026-11-03
 
 Reference: [open-webui/open-webui](https://github.com/open-webui/open-webui)
 
-The project is a large self-hosted assistant platform. Its README highlights a provider-agnostic Ollama/OpenAI-compatible interface, model and agent selection, plugins/tools, multi-model conversation, message queueing, rich Markdown/LaTeX, voice, image workflows, and continuing releases. These are product and architecture ideas for Server Rock: AI: keep providers replaceable, keep local models first-class, make the model picker discoverable, make chats pleasant to read, and surface capabilities without making the first screen busy.
+The project is a large self-hosted assistant platform. Its README highlights a provider-agnostic Ollama/OpenAI-compatible interface, model and agent selection, plugins/tools, multi-model conversation, message queueing, rich Markdown/LaTeX, voice, image workflows, and continuing releases. These are product and architecture ideas for Skai Desktop: keep providers replaceable, keep local models first-class, make the model picker discoverable, make chats pleasant to read, and surface capabilities without making the first screen busy.
 
-## What Server Rock: AI adopts
+## What Skai Desktop adopts
 
 - A unified model picker across local runtimes and compatible hosted endpoints, with searchable models and measured local performance.
 - Separate ChatBot and Coding Agent modes, with selected project folders as the code agent's workspace.
@@ -16,7 +16,7 @@ The project is a large self-hosted assistant platform. Its README highlights a p
 
 ## License boundary
 
-The upstream repository currently exposes a custom BSD-3-Clause-based license with an additional condition restricting removal or alteration of Open WebUI branding in broadly distributed deployments/distributions. Server Rock: AI has its own product identity and is intended for public downloads, so this repository does not copy Open WebUI source files, assets, logos, or branding. This note records research and inspiration only; upstream license terms remain with the upstream project. Re-check that license before any future code-level reuse.
+The upstream repository currently exposes a custom BSD-3-Clause-based license with an additional condition restricting removal or alteration of Open WebUI branding in broadly distributed deployments/distributions. Skai Desktop has its own product identity and is intended for public downloads, so this repository does not copy Open WebUI source files, assets, logos, or branding. This note records research and inspiration only; upstream license terms remain with the upstream project. Re-check that license before any future code-level reuse.
 
 Upstream references:
 

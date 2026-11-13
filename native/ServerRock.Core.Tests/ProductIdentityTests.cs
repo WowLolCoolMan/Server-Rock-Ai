@@ -7,7 +7,10 @@ internal static class ProductIdentityTests
 {
     public static void Run()
     {
-        Check(ProductIdentity.FileNameStem == "serverrock" &&
+        Check(ProductIdentity.DisplayName == "Skai Desktop" && ProductIdentity.ShortName == "Skai" &&
+              ProductIdentity.ClientName == "Skai Desktop",
+            "user-facing product identity uses the Skai Desktop rebrand");
+        Check(ProductIdentity.FileNameStem == "skai" &&
               ProductIdentity.FileNameStem.All(char.IsLetterOrDigit) &&
               ProductIdentity.FileNameStem == ProductIdentity.FileNameStem.ToLowerInvariant(),
             "export filename stem is derived from centralized product identity");

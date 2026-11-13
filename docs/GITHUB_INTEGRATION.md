@@ -2,7 +2,7 @@
 
 The native Uno/.NET app exposes GitHub sign-in, repository selection/manual resolution, clone-as-project, and guarded commit/push in its Coding Agent workspace. It requires a real GitHub App Client ID configured by the distributor or entered in Settings → GitHub; the app owner must enable Device Flow and grant the minimum required repository permissions. Windows stores credentials with DPAPI; Linux uses Secret Service and requires an available desktop keyring plus `secret-tool`.
 
-Server Rock: AI connects directly to GitHub from the desktop app. The GitHub access and refresh tokens are kept in the operating system credential store. Repository browsing, cloning, and pushing happen only when the user asks for them.
+Skai Desktop connects directly to GitHub from the desktop app. The GitHub access and refresh tokens are kept in the operating system credential store. Repository browsing, cloning, and pushing happen only when the user asks for them.
 
 ## Configure the app once
 

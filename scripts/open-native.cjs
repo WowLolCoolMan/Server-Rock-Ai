@@ -18,7 +18,7 @@ const child = packaged
   : spawn("dotnet", ["run", "--project", path.join(root, "native", "ServerRock.Native", "ServerRock.Native.csproj"), "--framework", process.env.SERVER_ROCK_NATIVE_FRAMEWORK || "net10.0-desktop", "--", ...process.argv.slice(2)], { cwd: root, env: process.env, stdio: "inherit", windowsHide: false });
 
 child.on("error", (error) => {
-  console.error(`Unable to open Server Rock AI: ${error.message}`);
+  console.error(`Unable to open Skai Desktop: ${error.message}`);
   console.error(packaged ? "Rebuild with npm run build:native, then try again." : "Install the .NET 10 SDK and confirm that dotnet is on PATH.");
   process.exitCode = 1;
 });

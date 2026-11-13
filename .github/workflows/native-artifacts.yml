@@ -47,7 +47,7 @@ jobs:
           $publish = Join-Path $root 'win-x64'
           Copy-Item 'docs/NATIVE_RELEASE_ACCEPTANCE.md' $publish
           @'
-          Server Rock: AI native Windows x64 build
+          Skai Desktop native Windows x64 build
 
           This is a self-contained portable build. Extract the archive and run packaging/setup.ps1 for a Start Menu install with rollback.
           Keep the user's app data outside this folder when replacing app files. Signing evidence is not included in this diagnostic workflow.
@@ -103,7 +103,7 @@ jobs:
           publish="$root/linux-x64"
           cp docs/NATIVE_RELEASE_ACCEPTANCE.md "$publish/"
           cat > "$publish/README-release.txt" <<'EOF'
-          Server Rock: AI native Linux x64 build
+          Skai Desktop native Linux x64 build
 
           This is a self-contained portable build. Extract the archive and run packaging/setup.sh for a desktop-menu install, or launch ServerRock.Native directly.
           The app still requires native desktop libraries from the host OS. See NATIVE_RELEASE_ACCEPTANCE.md in this archive for the current dependency list and limitations.
