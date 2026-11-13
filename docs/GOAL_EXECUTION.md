@@ -3,6 +3,45 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 247 — Port reviewed project-file editing to Electron
+
+Status: `implemented_host_renderer_write_undo_smoke_verified`
+
+The replacement project browser now supports a reviewed text-file editing
+journey. `project.file.read` returns the bounded content and current hash;
+`project.file.write` requires that hash and creates a durable local undo
+receipt; `project.file.undo` restores the approved prior content. The renderer
+shows an editor only for a selected safe file and keeps all filesystem access
+behind the allowlisted host bridge.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run smoke:project-editor` — passed hash-checked write, readback, and
+  undo assertions against disposable paths.
+- Full native Core checks — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: writes remain explicit and bounded by the Core
+workspace editor, which enforces path containment, protected-file rules,
+content limits, and optimistic concurrency hashes. No dependency or cloud
+route was added.
+
+Rollback: remove the two mutation routes and editor controls; metadata browser
+and read-only preview remain available.
+
+Remaining: multi-file tabs, richer conflict review, terminal history, Git
+review, attachments/RAG, and final replacement retirement gates remain open.
+
 ## Slice 245 — Add an isolated Electron project-terminal smoke gate
 
 Status: `implemented_disposable_terminal_smoke_verified`

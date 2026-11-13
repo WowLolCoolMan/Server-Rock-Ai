@@ -65,6 +65,8 @@ validate parity.
 - Selecting a listed text file opens a bounded, safety-checked preview through
   the host; the renderer still receives no filesystem handle or direct path
   access.
+- Electron file previews can be edited through a reviewed, hash-checked write
+  and explicitly undone through the host-backed undo store.
 - Electron Projects also exposes an explicit Terminal route. Commands run only
   after a user action inside a selected project root, with bounded command,
   output, working-directory, environment, and timeout controls.
