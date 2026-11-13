@@ -90,9 +90,9 @@ export function useChatWorkspace({ request, connection, endpoint, model, onError
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([result.markdown], { type: "text/markdown" })); link.download = result.fileName; link.click(); URL.revokeObjectURL(link.href);
   };
 
-  const updateConversationMetadata = async (patch: { pinned?: boolean; archived?: boolean; title?: string }) => {
-    if (!conversationId) return false;
-    const response = await request("conversation.metadata.save", { id: conversationId, ...patch });
+  const updateConversationMetadata = async (patch: { pinned?: boolean; archived?: boolean; title?: string }, targetId = conversationId) => {
+    if (!targetId) return false;
+    const response = await request("conversation.metadata.save", { id: targetId, ...patch });
     if (!response.ok) { onError(response.error?.message ?? "Conversation metadata could not be saved."); return false; }
     const refreshed = await request("conversations.list", { includeArchived: Boolean(patch.archived) });
     if (refreshed.ok) setConversations((refreshed.result as DesktopConversation[]) ?? []);
