@@ -81,6 +81,8 @@ public sealed partial class MainPage : Page
     private bool _companionOverlayBlocked;
     private bool _compactComposerToolbar;
     private bool _compactCodingWorkspaceToolbar;
+    private string? _openProjectFileProjectId;
+    private readonly List<string> _openProjectFilePaths = [];
     private bool _companionPersistenceAvailable = true;
     private bool _isCompanionDragging;
     private Point _companionDragOffset;
@@ -142,6 +144,8 @@ public sealed partial class MainPage : Page
     private Button GitHubActionsButton => CodingWorkspaceBarControl.GitHubActionsButtonControl;
     private Button TerminalButton => CodingWorkspaceBarControl.TerminalButtonControl;
     private Button ResumeFileButton => CodingWorkspaceBarControl.ResumeFileButtonControl;
+    private StackPanel OpenFileTabs => CodingWorkspaceBarControl.OpenFileTabsControl;
+    private ScrollViewer OpenFileTabsScroll => CodingWorkspaceBarControl.OpenFileTabsScrollControl;
     private Button UndoHistoryButton => CodingWorkspaceBarControl.UndoHistoryButtonControl;
     private StackPanel WelcomePanel => ConversationSurfaceControl.WelcomePanelControl;
     private TextBlock WelcomeTitle => ConversationSurfaceControl.WelcomeTitleControl;

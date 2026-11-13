@@ -59,6 +59,9 @@ public sealed class AppSettings
     /// <summary>Last reviewed project file that can be resumed without reopening the file browser.</summary>
     public string? LastProjectFileProjectId { get; set; }
     public string? LastProjectFilePath { get; set; }
+    /// <summary>Bounded relative project-file tabs for the active coding project.</summary>
+    public string? OpenProjectFileProjectId { get; set; }
+    public List<string> OpenProjectFiles { get; set; } = [];
 }
 
 /// <summary>Running average of measured local response speed for one endpoint + model.</summary>

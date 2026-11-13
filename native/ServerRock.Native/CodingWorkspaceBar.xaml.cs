@@ -28,6 +28,8 @@ public sealed partial class CodingWorkspaceBar : UserControl
     public TextBlock WorkspaceFolderCountControl => WorkspaceFolderCount;
     public TextBlock WorkspaceProjectPathControl => WorkspaceProjectPath;
     public TextBlock WorkspaceSessionStateControl => WorkspaceSessionState;
+    public StackPanel OpenFileTabsControl => OpenFileTabs;
+    public ScrollViewer OpenFileTabsScrollControl => OpenFileTabsScroll;
     public Button ProjectFoldersButtonControl => ProjectFoldersButton;
     public Button GitHubActionsButtonControl => GitHubActionsButton;
     public Button TerminalButtonControl => TerminalButton;

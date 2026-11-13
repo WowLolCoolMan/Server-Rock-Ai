@@ -7292,6 +7292,58 @@ not moved or deleted by this slice.
 Remaining: signed installers, clean-machine install/upgrade/uninstall,
 rollback, localization, and cross-platform release evidence remain open.
 
+## Slice 207 — Add bounded persistent project-file tabs
+
+Status: `implemented_build_and_visual_smoke_verified`
+
+Requirement alignment: the project workbench needs persistent tabs for files
+that are being reviewed. This slice adds an eight-entry, relative-path tab
+strip to the Coding Agent workspace bar. Tabs persist in local settings for
+the matching project, can be reopened in the existing guarded editor, and can
+be closed without touching the files. Stale or moved files are omitted after
+the existing workspace path/hash validation. The current editor remains a
+reviewable modal surface; simultaneous multi-pane editing and drag reorder are
+not claimed.
+
+Changed files:
+
+- `native/ServerRock.Core/Models/AppSettings.cs`
+- `native/ServerRock.Core/Infrastructure/JsonSettingsStore.cs`
+- `native/ServerRock.Core.Tests/LocalStorageAndWorkspaceTests.cs`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 276 contracts, including named tab,
+  close, persistence, and rendering contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore` — passed with 0 warnings and 0 errors.
+- Full native Core suite — passed, including `project file tabs survive settings save and reload`.
+- `npm run check:hygiene` and `npm run check:release-config` — passed.
+- Native Windows visual smoke rendered the updated shell without visible
+  layout regression; the tab strip is correctly hidden outside Coding Agent
+  mode. The compact 560px and live tab-click journey remain unverified.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: only bounded project IDs and relative file paths
+are stored locally. Tab metadata contains no file contents, credentials,
+network data, or new dependencies.
+
+Risk and rollback: remove the tab strip, tab event handlers, bounded settings
+fields, normalization, audit contracts, and focused test. Existing guarded
+file reads, editor saves, and undo history remain intact.
+
+Remaining: simultaneous multi-file editor panes, drag/reorder semantics,
+conflict recovery, worktree isolation, and packaged live workbench acceptance
+remain open.
+
 ## Slice 206 — Persist and resume the last reviewed project file
 
 Status: `implemented_build_and_audit_verified`

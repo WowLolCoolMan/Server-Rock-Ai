@@ -53,6 +53,14 @@ public sealed class JsonSettingsStore
         settings.PromptUserName ??= defaults.PromptUserName;
         settings.LastProjectFileProjectId = NormalizeOptional(settings.LastProjectFileProjectId, 128);
         settings.LastProjectFilePath = NormalizeOptional(settings.LastProjectFilePath, 512);
+        settings.OpenProjectFileProjectId = NormalizeOptional(settings.OpenProjectFileProjectId, 128);
+        settings.OpenProjectFiles ??= [];
+        settings.OpenProjectFiles = settings.OpenProjectFiles
+            .Where(path => !string.IsNullOrWhiteSpace(path) && path.Length <= 512 && !path.Any(char.IsControl))
+            .Select(path => path.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToList();
         settings.ThemeMode = settings.ThemeMode?.ToLowerInvariant() switch
         {
             "dark" => "dark",

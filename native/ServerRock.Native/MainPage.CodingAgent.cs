@@ -19,6 +19,81 @@ namespace ServerRock.Native;
 
 public sealed partial class MainPage
 {
+    private void RenderOpenFileTabs(LocalProject? project)
+    {
+        OpenFileTabs.Children.Clear();
+        if (project is null || !string.Equals(_openProjectFileProjectId, project.Id, StringComparison.Ordinal) || _openProjectFilePaths.Count == 0)
+        {
+            OpenFileTabsScroll.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        foreach (var relativePath in _openProjectFilePaths.ToArray())
+        {
+            if (!project.FolderPaths.Any(root => _workspaceEditor.GetCurrentHash(root, relativePath) is not null)) continue;
+            var tab = new Button
+            {
+                Content = relativePath,
+                Tag = relativePath,
+                Style = UiTheme.Style("ContextButtonStyle"),
+                Padding = new Thickness(9, 5, 9, 5),
+                MaxWidth = 240,
+                HorizontalContentAlignment = HorizontalAlignment.Left
+            };
+            AutomationProperties.SetName(tab, $"Open project file tab {relativePath}");
+            tab.Click += OpenFileTabClick;
+            OpenFileTabs.Children.Add(tab);
+
+            var close = new Button
+            {
+                Content = "×",
+                Tag = relativePath,
+                Style = UiTheme.Style("ContextButtonStyle"),
+                Padding = new Thickness(6, 4, 6, 4),
+            };
+            ToolTipService.SetToolTip(close, $"Close file tab {relativePath}");
+            AutomationProperties.SetName(close, $"Close project file tab {relativePath}");
+            close.Click += CloseFileTabClick;
+            OpenFileTabs.Children.Add(close);
+        }
+        OpenFileTabsScroll.Visibility = OpenFileTabs.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void OpenFileTabClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string relativePath }) return;
+        var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        var root = project?.FolderPaths.FirstOrDefault(folder => _workspaceEditor.GetCurrentHash(folder, relativePath) is not null);
+        if (root is null)
+        {
+            RuntimeStatus.Text = $"Project file is no longer available: {relativePath}";
+            RenderOpenFileTabs(project);
+            return;
+        }
+        await OpenProjectFileAsync(root, relativePath);
+    }
+
+    private void CloseFileTabClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string relativePath }) return;
+        _openProjectFilePaths.RemoveAll(path => path.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
+        if (string.Equals(_settings.LastProjectFilePath, relativePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _settings.LastProjectFilePath = _openProjectFilePaths.LastOrDefault();
+            _settings.LastProjectFileProjectId = _settings.LastProjectFilePath is null ? null : _openProjectFileProjectId;
+        }
+        PersistOpenProjectFiles();
+        RenderOpenFileTabs(_projects.FirstOrDefault(item => item.Id == _activeProjectId));
+        UpdateWorkspaceBar();
+    }
+
+    private void PersistOpenProjectFiles()
+    {
+        _settings.OpenProjectFileProjectId = _openProjectFileProjectId;
+        _settings.OpenProjectFiles = _openProjectFilePaths.Take(8).ToList();
+        SaveSettings();
+    }
+
     private async void ResumeFileClick(object sender, RoutedEventArgs e)
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
@@ -213,9 +288,13 @@ public sealed partial class MainPage
             var originalHash = _workspaceEditor.GetCurrentHash(root, relativePath)
                 ?? throw new FileNotFoundException("This file no longer exists in the selected project.");
             var originalText = _workspaceEditor.ReadText(root, relativePath);
-            _settings.LastProjectFileProjectId = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, root)))?.Id;
+            _openProjectFileProjectId = _projects.FirstOrDefault(item => item.FolderPaths.Any(folder => WorkspacePath.AreSame(folder, root)))?.Id;
+            _openProjectFilePaths.RemoveAll(path => path.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
+            _openProjectFilePaths.Add(relativePath);
+            while (_openProjectFilePaths.Count > 8) _openProjectFilePaths.RemoveAt(0);
+            _settings.LastProjectFileProjectId = _openProjectFileProjectId;
             _settings.LastProjectFilePath = relativePath;
-            SaveSettings();
+            PersistOpenProjectFiles();
             var editor = new TextBox
             {
                 Text = originalText,

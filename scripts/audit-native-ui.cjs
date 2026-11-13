@@ -108,6 +108,9 @@ const requiredCode = [
   ['Resume project file event wiring', 'CodingWorkspaceBarControl.ResumeFileRequested += ResumeFileClick;'],
   ['Resume project file availability guard', 'ResumeFileButton.Visibility = CanResumeLastProjectFile(project)'],
   ['Last project file persistence', '_settings.LastProjectFilePath = relativePath;'],
+  ['Open project tabs persistence', '_settings.OpenProjectFiles = _openProjectFilePaths.Take(8).ToList();'],
+  ['Open project tab render', 'RenderOpenFileTabs(project);'],
+  ['Open project tab close action', 'AutomationProperties.SetName(close, $"Close project file tab {relativePath}")'],
   ['Terminal input opening focus', 'dialog.Opened += (_, _) => input.Focus(FocusState.Programmatic);'],
   ['Terminal launcher focus restoration', 'finally { RestoreNavigationDialogFocus(false, sender as Control); }'],
   ['Terminal focused input accessible name', 'AutomationProperties.SetName(input, "Project terminal input")'],
@@ -340,6 +343,7 @@ const requiredAnimationFiles = animationPets.flatMap((pet) => [
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
   ...[['Resume last project file action', 'AutomationProperties.Name="Resume last project file"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
+  ...[['Open project file tabs', 'x:Name="OpenFileTabs"'], ['Open project file tabs scroll region', 'AutomationProperties.Name="Open project file tabs"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),
   ...requiredExportXaml.filter(([, text]) => !(conversationXaml + sidebarXaml).includes(text)),
   ...requiredCode.filter(([, text]) => !(code + composerCode + splitCode).includes(text)),

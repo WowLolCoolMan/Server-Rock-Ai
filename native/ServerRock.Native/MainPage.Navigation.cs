@@ -218,6 +218,14 @@ public sealed partial class MainPage
     private void UpdateWorkspaceBar()
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
+        if (_settings is not null && !string.Equals(_openProjectFileProjectId, project?.Id, StringComparison.Ordinal))
+        {
+            _openProjectFileProjectId = project?.Id;
+            _openProjectFilePaths.Clear();
+            if (project is not null && string.Equals(_settings.OpenProjectFileProjectId, project.Id, StringComparison.Ordinal))
+                _openProjectFilePaths.AddRange(_settings.OpenProjectFiles.Take(8));
+        }
+        RenderOpenFileTabs(project);
         ProjectFoldersButton.Visibility = Visibility.Visible;
         GitHubActionsButton.Visibility = !string.IsNullOrWhiteSpace(project?.GitHubRepository) ? Visibility.Visible : Visibility.Collapsed;
         TerminalButton.Visibility = project?.FolderPaths.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
