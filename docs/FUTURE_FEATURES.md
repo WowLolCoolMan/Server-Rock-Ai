@@ -105,7 +105,7 @@ and acceptance evidence.
 - [x] Custom themes. (Light/dark palettes plus persisted Deep Sea and Deep Space ambient presets with reduced-motion support.)
 - [ ] Cloud sync across devices.
 - [ ] Built-in translator.
-- [ ] Text snippets with AI expansion. (Local save/insert is implemented; live model-expansion acceptance remains.)
+- [x] Text snippets with AI expansion. (Bounded local save/insert plus review-first model expansion.)
 - [ ] Window management.
 - [ ] Quicklinks for frequent-access bookmarks.
 - [x] In-app documentation.

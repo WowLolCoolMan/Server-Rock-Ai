@@ -6423,7 +6423,7 @@ open.
 
 ## Slice 166 — Local prompt snippets with reviewable expansion
 
-Status: `implemented_verified_windows_save_insert_expansion_pending`
+Status: `implemented_verified_windows_save_insert_and_expansion`
 
 Added a bounded Prompt snippets surface reachable from the command palette and
 More workspace options. Users can save up to 24 local snippets, each capped at
@@ -6458,6 +6458,10 @@ Evidence:
 - Live Windows journey: opened Prompt snippets from Ctrl+K, saved disposable
   `Review checklist`, inserted it into the composer, and observed the saved
   snippet and exact composer text in the accessibility tree.
+- Live Windows expansion journey: selected the saved snippet, explicitly
+  requested expansion through the compatible local endpoint, observed the
+  editable `Review expanded snippet` dialog, and activated `Use expanded text`.
+  The resulting expanded text appeared in `PromptBox`; no message was sent.
 
 Privacy/security/licensing: snippets are bounded local JSON preferences. An
 expansion is a visible, user-triggered provider request using the selected route;
@@ -6468,6 +6472,5 @@ Rollback: delete the saved snippet from the local settings file or use the
 existing settings recovery path; removing the command and More entry leaves
 normal composer behavior unchanged.
 
-Remaining: run a live expansion against a compatible endpoint, verify provider
-failure and cancellation messaging, then check the future feature item. Full
-cross-platform accessibility and packaged-runtime coverage remain open.
+Remaining: verify provider failure and cancellation messaging for expansion.
+Full cross-platform accessibility and packaged-runtime coverage remain open.

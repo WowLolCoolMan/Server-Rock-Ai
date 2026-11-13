@@ -216,8 +216,9 @@ Recent slice note — Slice 166: added a bounded local Prompt snippets surface
 reachable from Ctrl+K and More. Users can save up to 24 snippets of up to 4,000
 characters, insert a selected snippet into the composer, or explicitly request
 a model expansion that opens a reviewable preview before insertion. Live Windows
-save-and-insert acceptance passed; model-expansion acceptance remains open until
-it is exercised against a compatible local endpoint.
+save-and-insert acceptance passed. A compatible local model then returned an
+editable expansion preview, and the explicit Use expanded text action inserted
+the reviewed candidate into the composer.
 
 Recent slice note — Slice 164: scheduled tasks now support durable Cancel from
 Activity while scheduled or paused. Core cancellation/non-claimability tests,
