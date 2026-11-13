@@ -75,6 +75,8 @@ h4 { margin: 24px 0 8px; font-size: 17px; }
 .composer-context label { display: grid; gap: 6px; color: #91a3bc; }
 .composer-context select { min-width: 180px; }
 .composer { display: flex; gap: 10px; align-items: end; padding: 12px; border: 1px solid #344b70; border-radius: 14px; background: rgba(12, 18, 28, .7); }
+.queued-messages { display: grid; gap: 6px; margin-top: 12px; }
+.queued-message { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #30425d; border-radius: 8px; padding: 8px 10px; color: #b9c9df; background: #172337; font-size: 12px; }
 textarea, input { width: 100%; border: 1px solid #3a4d6b; border-radius: 9px; padding: 11px 12px; color: #eaf1fb; background: #121c2b; font: inherit; outline: none; }
 textarea { resize: vertical; min-height: 48px; }
 textarea:focus, input:focus { border-color: #84b3ff; box-shadow: 0 0 0 3px rgba(132, 179, 255, .12); }

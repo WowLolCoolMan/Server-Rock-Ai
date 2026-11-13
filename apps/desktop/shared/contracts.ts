@@ -73,6 +73,11 @@ export type DesktopScheduledTask = {
   outcome?: string | null;
 };
 
+export type DesktopQueuedMessage = {
+  index: number;
+  text: string;
+};
+
 export interface AgentBridge {
   request(method: string, params?: Record<string, unknown>): Promise<AgentResponse>;
 }

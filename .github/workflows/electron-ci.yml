@@ -62,3 +62,6 @@ jobs:
 
       - name: Smoke conversation metadata
         run: npm run smoke:conversation-metadata
+
+      - name: Smoke durable chat queue
+        run: npm run smoke:chat-queue

@@ -52,7 +52,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "settings.get", "settings.save", "image.generate", "chat.complete"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -70,6 +70,9 @@ public static class AgentHostLoop
             "conversations.search" => SearchConversations(request),
             "conversation.save" => SaveConversation(request),
             "conversation.metadata.save" => SaveConversationMetadata(request),
+            "chat.queue.list" => ListQueuedMessages(request),
+            "chat.queue.enqueue" => EnqueueChatMessage(request),
+            "chat.queue.remove" => RemoveQueuedMessage(request),
             "settings.get" => GetSettings(request),
             "settings.save" => SaveSettings(request),
             "image.generate" => GenerateImageAsync(request).GetAwaiter().GetResult(),
@@ -414,8 +417,41 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, new { id = session.Id, pinned = session.Pinned, archived = session.Archived, folderName = session.FolderName, tags = session.Tags, updatedAt = session.UpdatedAt });
     }
 
+    private static AgentResponse ListQueuedMessages(AgentRequest request)
+    {
+        var queue = CreateChatQueueStore().Load();
+        return new(ProtocolVersion, request.Id, true, queue.Select((item, index) => new { index, text = item.Text }).ToArray());
+    }
+
+    private static AgentResponse EnqueueChatMessage(AgentRequest request)
+    {
+        var text = RequiredBoundedString(request, "text", 50_000);
+        var store = CreateChatQueueStore();
+        var queue = new ChatMessageQueue();
+        foreach (var item in store.Load()) queue.Enqueue(item.Text, item.Attachments);
+        queue.Enqueue(text);
+        store.Save(queue.Snapshot());
+        return new(ProtocolVersion, request.Id, true, queue.Snapshot().Select((item, index) => new { index, text = item.Text }).ToArray());
+    }
+
+    private static AgentResponse RemoveQueuedMessage(AgentRequest request)
+    {
+        var index = request.Params is { } parameters && parameters.TryGetProperty("index", out var value) && value.TryGetInt32(out var parsed)
+            ? parsed
+            : throw new InvalidOperationException("chat.queue.remove requires an index.");
+        var store = CreateChatQueueStore();
+        var queue = new ChatMessageQueue();
+        foreach (var item in store.Load()) queue.Enqueue(item.Text, item.Attachments);
+        queue.RemoveAt(index);
+        store.Save(queue.Snapshot());
+        return new(ProtocolVersion, request.Id, true, queue.Snapshot().Select((item, position) => new { index = position, text = item.Text }).ToArray());
+    }
+
     private static ConversationStore CreateConversationStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CONVERSATIONS_PATH"));
+
+    private static ChatMessageQueueStore CreateChatQueueStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_CHAT_QUEUE_PATH"));
 
     private static AgentResponse GetSettings(AgentRequest request)
     {
