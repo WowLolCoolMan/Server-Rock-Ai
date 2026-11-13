@@ -82,6 +82,25 @@ files only get small hooks.
 5. Stop → idle with "Stopped." instead of stuck.
 6. Speech bubble on `Surface` with a `Line` border, token text colors, and an auto-hide.
 
+## Smoke test, round 2 (after the animation fixes)
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| All five pets, all seven frames | Pass | Re-cut from the sheets (`assets/pets/cut-frames.sh`); every frame shows the right pose, same size and anchor. One 2-px speck on Byte's stuck frame. |
+| idle | Pass | Breathing from the feet with a 1–2 px rise. |
+| thinking | Pass | Head-tilt sway with a float; bubble "Thinking…" stays visible for the whole reply (recorded, Byte). |
+| coding | Pass (code) | Typing bounce. Same code path as thinking; not yet recorded in the rig. |
+| coding_malicious | Not triggered | Motion exists (jitter + pulse) but the app still never sets this state (bug 6, open). |
+| stuck | Pass (code) | Slow droop. Stop now shows idle + "Stopped." instead. |
+| success | Pass | Hops with a landing squash; back to idle after 6 s (recorded, Rocky and Byte). |
+| error | Pass | Head-shake bursts; back to idle after 10 s (recorded, Rocky). |
+| Transitions | Pass | 0.22 s cross-fade between frames and a 0.35 s blend between motions. All seven frames of the current pet are decoded up front. |
+| Animation while hidden | Pass | One 30 fps timer, stopped when the overlay is collapsed. App CPU: 2.1% with the pet visible and idle, 0.9% hidden (same as no pet). |
+| Animation while minimized | Pass (code) | Stops on `Window.VisibilityChanged`; the rig has no window manager, so minimizing could not be exercised. |
+| Reduce motion | Pass (code) | No timer, resting pose, instant frame swaps. |
+| Speech bubble | Pass | `Surface` bubble, `Line` border, `Ink` caption text, three lines max; grows upward so the sprite never moves; idle messages fade after 10 s. |
+| Restart | Pass | Always starts idle. |
+
 ## Wander (phase 2)
 
 Not started.
@@ -91,3 +110,4 @@ Not started.
 | Time (local) | Commit | What |
 | --- | --- | --- |
 | 23:49 | 2582816, 32c4668 | Smoke test round 1, bug list and fix plan; one-line Linux fix for the Markdown export file-name test (owner's file, see commit). |
+| 00:01 | f338d8c 7ec2887 3be18c6 c2f2735 | Re-cut frames, state animations, cross-fades, bubble, Stop/idle fixes; round-2 smoke table. |
