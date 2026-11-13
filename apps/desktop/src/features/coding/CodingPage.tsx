@@ -7,6 +7,10 @@ import { TerminalPanel } from "../terminal/TerminalPanel";
 
 type DiffRow = { kind: "removed" | "added" | "unchanged"; line: string };
 
+function terminalStorageKey(projectId: string | null) {
+  return `skai.coding.terminalOpen.${projectId ?? "none"}`;
+}
+
 function createDiff(before: string, after: string): DiffRow[] {
   const beforeLines = before.split("\n");
   const afterLines = after.split("\n");
@@ -68,7 +72,14 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
   const projectNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setPanelMode("editor"); }, [selectedFile, fileOriginal]);
-  useEffect(() => { setOpenTabs([]); setTerminalOpen(false); setFileQuery(""); }, [selectedProject?.id]);
+  useEffect(() => {
+    setOpenTabs([]);
+    setFileQuery("");
+    setTerminalOpen(selectedProject ? localStorage.getItem(terminalStorageKey(selectedProject.id)) === "true" : false);
+  }, [selectedProject?.id]);
+  useEffect(() => {
+    if (selectedProject) localStorage.setItem(terminalStorageKey(selectedProject.id), String(terminalOpen));
+  }, [selectedProject?.id, terminalOpen]);
   useEffect(() => { if (selectedFile) setOpenTabs((current) => current.includes(selectedFile) ? current : [...current, selectedFile]); }, [selectedFile]);
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
@@ -77,10 +88,14 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
         fileSearchRef.current?.focus();
         fileSearchRef.current?.select();
       }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "j" && selectedProject) {
+        event.preventDefault();
+        setTerminalOpen((open) => !open);
+      }
     };
     window.addEventListener("keydown", onShortcut);
     return () => window.removeEventListener("keydown", onShortcut);
-  }, []);
+  }, [selectedProject]);
 
   const createProject = async () => {
     if (!name.trim() || saving) return;
@@ -126,7 +141,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
       <Card className="workspace-side"><p className="section-kicker">CODING FLOW</p><div className="flow-step"><b>01</b><span><strong>Select a project</strong><small>Keep context explicit and bounded.</small></span></div><div className="flow-step"><b>02</b><span><strong>Choose a task</strong><small>Ask the agent to plan before it edits.</small></span></div><div className="flow-step"><b>03</b><span><strong>Review the diff</strong><small>Every change stays visible and reversible.</small></span></div></Card>
     </div>
     {selectedProject && <Card className="project-browser-card">
-      <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>{selectedProject.name}</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
+      <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>{selectedProject.name}</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
       <form className="task-composer" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>Write the outcome you want, then review it in Agent Workbench before anything runs.</p></div><span className="task-composer-badge">Local only</span></div>
