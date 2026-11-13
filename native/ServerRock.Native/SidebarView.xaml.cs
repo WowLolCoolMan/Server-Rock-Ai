@@ -19,7 +19,7 @@ public sealed partial class SidebarView : UserControl
     public StackPanel CodingNavigationSectionControl => ProjectNavigationControl.CodingNavigationSectionControl;
     public StackPanel ProjectListControl => ProjectNavigationControl.ProjectListControl;
     public TextBlock CodeFilesHeaderControl => ProjectNavigationControl.CodeFilesHeaderControl;
-    public StackPanel ProjectFileListControl => ProjectNavigationControl.ProjectFileListControl;
+    public ListView ProjectFileListControl => ProjectNavigationControl.ProjectFileListControl;
     public StackPanel ChatFolderListControl => ConversationNavigationControl.ChatFolderListControl;
     public StackPanel RecentListControl => ConversationNavigationControl.RecentListControl;
     public Ellipse ConnectionDotControl => ConnectionDot;

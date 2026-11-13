@@ -267,6 +267,10 @@ Slice 218 migrated project navigation rows, actions, empty state, and bounded
 file-browser status text to semantic brushes/type-scale resources. The explorer
 remains a flat bounded preview list; hierarchical virtualization is still open.
 
+Slice 219 replaces the project file `StackPanel` with a bounded accessible
+`ListView`, providing collection virtualization while preserving safe preview
+and focus behavior. Hierarchical folder disclosure remains open.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

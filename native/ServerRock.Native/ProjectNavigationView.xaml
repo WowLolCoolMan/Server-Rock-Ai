@@ -11,6 +11,6 @@
       <StackPanel x:Name="ProjectList" Spacing="3" />
     </StackPanel>
     <TextBlock x:Name="CodeFilesHeader" Text="PROJECT FILES" Style="{StaticResource SectionLabelStyle}" Margin="8,16,0,4" Visibility="Collapsed" />
-    <StackPanel x:Name="ProjectFileList" Spacing="2" />
+    <ListView x:Name="ProjectFileList" SelectionMode="None" MaxHeight="360" Padding="0" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Project file list" />
   </StackPanel>
 </UserControl>

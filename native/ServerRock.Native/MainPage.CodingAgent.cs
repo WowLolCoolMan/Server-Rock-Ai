@@ -194,7 +194,7 @@ public sealed partial class MainPage
     private void RenderProjectFiles()
     {
         UpdateWorkspaceBar();
-        ProjectFileList.Children.Clear();
+        ProjectFileList.Items.Clear();
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
         if (_mode != WorkspaceModes.CodingAgent || project is null || project.FolderPaths.Count == 0)
         {
@@ -218,10 +218,10 @@ public sealed partial class MainPage
                 FontSize = UiTheme.FontSize("CaptionFontSize")
             };
             button.Click += ProjectFileClick;
-            ProjectFileList.Children.Add(button);
+            ProjectFileList.Items.Add(button);
         }
-        if (ProjectFileList.Children.Count == 0)
-            ProjectFileList.Children.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
+        if (ProjectFileList.Items.Count == 0)
+            ProjectFileList.Items.Add(new TextBlock { Text = "No readable text files in this folder.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
     }
 
     private async Task OpenQuickFileAsync()
@@ -368,7 +368,7 @@ public sealed partial class MainPage
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            var fileButton = ProjectFileList.Children.OfType<Button>().FirstOrDefault(button =>
+            var fileButton = ProjectFileList.Items.OfType<Button>().FirstOrDefault(button =>
                 button.Tag is ValueTuple<string, string> path &&
                 WorkspacePath.AreSame(path.Item1, root) &&
                 path.Item2.Equals(relativePath, StringComparison.OrdinalIgnoreCase));

@@ -7643,6 +7643,48 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 219 — Virtualize the project file list
+
+Status: `implemented_native_ui_build_audit_verified`
+
+Requirement alignment: the project file surface previously used a `StackPanel`,
+which materialized every bounded preview row and had no explicit collection
+accessibility boundary. It now uses a bounded WinUI `ListView` with keyboard
+navigation, its own scroll boundary, and the existing safe preview buttons.
+The current path filtering, protected-file exclusions, and editor focus return
+are preserved. This is the virtualization portion of the explorer requirement;
+it does not claim a hierarchical folder disclosure tree yet.
+
+Changed files:
+
+- `native/ServerRock.Native/ProjectNavigationView.xaml`
+- `native/ServerRock.Native/ProjectNavigationView.xaml.cs`
+- `native/ServerRock.Native/SidebarView.xaml.cs`
+- `native/ServerRock.Native/MainPage.Sidebar.cs`
+- `native/ServerRock.Native/MainPage.CodingAgent.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 297 contracts, including the
+  virtualized list and accessible project-file boundary.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: collection-control and layout changes only; safe
+file enumeration, secret filtering, bounded previews, and project trust scopes
+are unchanged.
+
+Risk and rollback: restore the StackPanel property types and child collection
+calls. No project data or file contents change.
+
+Remaining: add hierarchical folder disclosure/ignore-state presentation,
+cross-platform acceptance, and live first-project journey evidence.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

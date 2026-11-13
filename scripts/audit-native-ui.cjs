@@ -9,6 +9,7 @@ const xaml = readText(xamlPath);
 const appXaml = readText(path.join(nativeDir, "App.xaml"));
 const splitXaml = readText(path.join(nativeDir, "SplitConversationView.xaml"));
 const codingWorkspaceXaml = readText(path.join(nativeDir, "CodingWorkspaceBar.xaml"));
+const projectNavigationXaml = readText(path.join(nativeDir, "ProjectNavigationView.xaml"));
 const splitCode = readText(path.join(nativeDir, "SplitConversationView.xaml.cs"));
 const conversationXaml = readText(path.join(nativeDir, "ConversationNavigationView.xaml"));
 const conversationCode = readText(path.join(nativeDir, "ConversationNavigationView.xaml.cs"));
@@ -252,6 +253,7 @@ const requiredCode = [
   ['Project rows use semantic active/inactive surfaces', 'Background = UiTheme.Brush(project.Id == _activeProjectId ? "AccentSoftBrush" : "SurfaceAltBrush")'],
   ['Project rows use semantic text tokens', 'Foreground = UiTheme.Brush("InkBrush")'],
   ['Project file browser status uses type scale', 'FontSize = UiTheme.FontSize("CaptionFontSize")'],
+  ['Project file list clears virtualized items', 'ProjectFileList.Items.Clear();'],
   ['Back navigation control', 'AutomationProperties.SetName(BackButton, "Navigate back")'],
   ['Forward navigation control', 'AutomationProperties.SetName(ForwardButton, "Navigate forward")'],
   ['Model comparison action', 'AutomationProperties.SetName(compare, "Compare pinned models")'],
@@ -366,6 +368,7 @@ const requiredAnimationFiles = animationPets.flatMap((pet) => [
 const missing = [
   ...requiredXaml.filter(([, text]) => !xaml.includes(text)),
   ...requiredAppTokens.filter(([, text]) => !appXaml.includes(text)),
+  ...[['Project file list uses virtualization control', '<ListView x:Name="ProjectFileList"'], ['Project file list has an accessible boundary', 'AutomationProperties.Name="Project file list"']].filter(([, text]) => !projectNavigationXaml.includes(text)),
   ...[['Resume last project file action', 'AutomationProperties.Name="Resume last project file"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...[['Open project file tabs', 'x:Name="OpenFileTabs"'], ['Open project file tabs scroll region', 'AutomationProperties.Name="Open project file tabs"']].filter(([, text]) => !codingWorkspaceXaml.includes(text)),
   ...requiredSplitXaml.filter(([, text]) => !splitXaml.includes(text)),

@@ -29,7 +29,7 @@ public sealed partial class MainPage
     private StackPanel CodingNavigationSection => SidebarView.CodingNavigationSectionControl;
     private StackPanel ProjectList => SidebarView.ProjectListControl;
     private TextBlock CodeFilesHeader => SidebarView.CodeFilesHeaderControl;
-    private StackPanel ProjectFileList => SidebarView.ProjectFileListControl;
+    private ListView ProjectFileList => SidebarView.ProjectFileListControl;
     private StackPanel ChatFolderList => SidebarView.ChatFolderListControl;
     private StackPanel RecentList => SidebarView.RecentListControl;
     private Ellipse ConnectionDot => SidebarView.ConnectionDotControl;
