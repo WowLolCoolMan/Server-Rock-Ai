@@ -1731,6 +1731,45 @@ Not yet verified: live memory send acceptance with an eligible note and a health
 compatible model, durable cross-restart context continuity, semantic compaction and
 1M+ context, packaged interaction, Linux parity, and remaining handoff work.
 
+## Slice 137 — live approved-memory injection with local response
+
+Status: `verified_windows_disposable_local_send`
+
+The approved-memory path was completed end to end in a disposable profile. The
+profile selected the locally advertised Ollama model `wtwk-qwen35-4b:latest`,
+enabled `memoryInjectionEnabled`, and loaded one synthetic approved global note
+whose content requested the unique response marker `MEMORY_CONTEXT_OK`. A single
+prompt was sent through the native app to `http://localhost:11434/v1`; after the
+model loaded, the live response was exactly `MEMORY_CONTEXT_OK`. The saved
+disposable conversation archive independently retained the prompt and assistant
+response, while no cloud route was used.
+
+Evidence:
+
+- Local runtime inventory reported `wtwk-qwen35-4b:latest` from Ollama.
+- Live Windows app exposed the compatible local model and completed response
+  `MEMORY_CONTEXT_OK`; the stop control disappeared after completion.
+- The disposable archive contained the prompt and assistant response, including
+  the marker; disposable settings retained the selected local model and
+  `memoryInjectionEnabled: true`.
+- Disposable settings, conversation, and memory files were removed after the
+  journey; the real profile and pet state were not used or changed.
+- No cloud endpoint, API key, external search, credential, or third-party
+  dependency was involved.
+
+Privacy/security/licensing: the synthetic note and prompt stayed on the local
+Ollama route and in the isolated profile. The memory content remained bounded,
+explicitly enabled, and treated as untrusted reference context by the prompt
+builder.
+
+Rollback: documentation-only after the existing tested memory injection path;
+remove this evidence entry if the local runtime or saved transcript is later
+invalidated. The `SRAI_MEMORY_PATH` boundary remains a safe disposable-test aid.
+
+Not yet verified: durable context continuity across restart and profile migration,
+semantic compaction and 1M+ context, packaged interaction, Linux parity, and the
+remaining handoff requirements.
+
 ## Slice 133 — add a disposable settings profile boundary
 
 Status: `implemented_verified_build`
