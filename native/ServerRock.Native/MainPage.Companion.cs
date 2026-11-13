@@ -61,6 +61,11 @@ public sealed partial class MainPage
             }
             catch { }
         }
+        if (choice.Id.Equals("percy", StringComparison.Ordinal) && _companionState.StateAssets?.ContainsKey(_companionState.CurrentState) != true)
+        {
+            try { return new BitmapImage { UriSource = new Uri($"ms-appx:///Assets/Svg/percy-{_companionState.CurrentState}-1.png") }; }
+            catch { }
+        }
         if (!_companionState.CurrentState.Equals("idle", StringComparison.OrdinalIgnoreCase))
         {
             try { return new BitmapImage { UriSource = new Uri($"ms-appx:///Assets/Svg/{choice.Id}-{_companionState.CurrentState}.png") }; }

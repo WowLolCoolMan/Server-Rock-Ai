@@ -160,6 +160,7 @@ const requiredCode = [
   ['Personas command', 'new CommandPaletteItem("Personas", "gems reusable roles instructions", OpenPersonasAsync)'],
   ['Personas saved list label', 'AutomationProperties.SetName(list, "Saved personas")'],
   ['Persona instructions label', 'AutomationProperties.SetName(instructions, "Persona instructions")'],
+  ['Percy six-frame runtime', 'var frame = ((int)Math.Floor(now / 0.12) % 6) + 1'],
   ['Translate text command', 'new CommandPaletteItem("Translate text", "language translation review composer", OpenTranslatorAsync)'],
   ['Translation source label', 'AutomationProperties.SetName(source, "Translation source text")'],
   ['Translation preview label', 'AutomationProperties.SetName(preview, "Translation preview")'],

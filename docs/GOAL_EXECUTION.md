@@ -7308,6 +7308,49 @@ are unaffected.
 Remaining: bundled persona tools/knowledge, sharing, sync, import/export, and
 team administration remain open backlog work.
 
+## Slice 191 — Six-frame Percy state animations
+
+Status: `implemented_asset_runtime_build_verified`
+
+Expanded Percy from one static image per state into six aligned frames for idle,
+thinking, coding, malicious-review, stuck, success, and error, plus a six-frame
+walk loop derived from the approved walk source. The native runtime preloads
+Percy's state frames and cycles them at 8 FPS while keeping the existing reduced-
+motion, cross-fade, wander, and transform safeguards. Other companions and local
+custom sprites retain their existing behavior.
+
+Changed files:
+
+- `assets/pets/make-percy-frames.ps1`
+- `assets/pets/percy-animation-sprite-sheet.png`
+- `assets/pets/percy-*-1.png` through `percy-*-6.png`
+- `assets/pets/percy-*-frames.png`
+- `assets/pets/percy-walk-1.png` through `percy-walk-6.png`
+- `assets/pets/percy-walk-frames.png`
+- `assets/pets/README.md`
+- `native/ServerRock.Native/MainPage.Companion.cs`
+- `native/ServerRock.Native/MainPage.CompanionAnimation.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The generated production atlas is 1,536×2,048 with eight rows of six 256×256 frames.
+- Every Percy state strip and walk strip is 1,536×256 and transparent.
+- `npm run audit:native-ui` includes the six-frame runtime contract.
+- Existing companions, custom sprite paths, reduced-motion behavior, and state transitions remain unchanged.
+
+Privacy/security/licensing: only locally packaged/generated artwork and local
+frame selection changed. No network, credential, provider, or user-data behavior
+changed. The generated artwork is original project content and does not copy
+Firefox/Mozilla assets.
+
+Rollback: remove the six-frame Percy assets and restore the previous single-frame
+Percy URI selection and preload loop. Existing companion preferences remain valid.
+
+Remaining: add richer hand-authored frame timing and an in-app animation preview
+when the broader pet customization backlog is revisited.
+
 ## Slice 187 — Validate release metadata consistency
 
 Status: `implemented_script_gate_verified`

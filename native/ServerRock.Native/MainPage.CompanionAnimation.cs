@@ -178,7 +178,8 @@ public sealed partial class MainPage
         RefreshCompanionAnimation();
     }
 
-    // Decodes all seven built-in frames of the current pet up front. Without this the first
+    // Decodes all built-in frames of the current pet up front. Percy has six frames per state;
+    // the other companions retain their one-frame-per-state contract. Without this the first
     // switch to a state waited 2–3 s for the picture, so "thinking" often showed only as the
     // reply finished. The images sit invisibly behind the sprite and share the cached sources.
     private void PreloadCompanionFrames(string pet)
@@ -194,9 +195,26 @@ public sealed partial class MainPage
         _companionPreloadLayer.Children.Clear();
         foreach (var state in CompanionStates)
         {
-            var frame = CachedCompanionFrame(new BitmapImage { UriSource = new Uri($"ms-appx:///Assets/Svg/{pet}-{state}.png") });
-            _companionPreloadLayer.Children.Add(new Image { Source = frame, Width = 8, Height = 8, Stretch = Stretch.Uniform });
+            var frameCount = pet.Equals("percy", StringComparison.Ordinal) ? 6 : 1;
+            for (var index = 1; index <= frameCount; index++)
+            {
+                var uri = pet.Equals("percy", StringComparison.Ordinal)
+                    ? $"ms-appx:///Assets/Svg/percy-{state}-{index}.png"
+                    : $"ms-appx:///Assets/Svg/{pet}-{state}.png";
+                var frame = CachedCompanionFrame(new BitmapImage { UriSource = new Uri(uri) });
+                _companionPreloadLayer.Children.Add(new Image { Source = frame, Width = 8, Height = 8, Stretch = Stretch.Uniform });
+            }
         }
+    }
+
+    private void RefreshPercyAnimationFrame(double now)
+    {
+        if (!_companionState.PetId.Equals("percy", StringComparison.Ordinal)
+            || _companionState.StateAssets?.ContainsKey(_companionState.CurrentState) == true)
+            return;
+        var frame = ((int)Math.Floor(now / 0.12) % 6) + 1;
+        var source = CachedCompanionFrame(new BitmapImage { UriSource = new Uri($"ms-appx:///Assets/Svg/percy-{_companionState.CurrentState}-{frame}.png") });
+        if (!ReferenceEquals(CompanionImage.Source, source)) CompanionImage.Source = source;
     }
 
     // Reuses one ImageSource per built-in file, so switching back to a state does not decode the
@@ -284,6 +302,7 @@ public sealed partial class MainPage
             return;
         }
         var now = CompanionNow;
+        RefreshPercyAnimationFrame(now);
 
         // Motion: blend from the previous state's loop into the new one so a change never snaps.
         var pose = CompanionStatePose(_companionShownState, now);
