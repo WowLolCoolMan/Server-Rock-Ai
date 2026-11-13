@@ -11,7 +11,7 @@ let nextRequestId = 1;
 const pending = new Map();
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
-  "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "settings.get",
+  "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "settings.get",
   "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete",
   "workspace.pickFolder",
 ]);
