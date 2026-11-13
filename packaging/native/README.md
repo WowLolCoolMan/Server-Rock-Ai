@@ -19,7 +19,10 @@ Windows PowerShell:
 .\packaging\native\setup.ps1 -PackageRoot . -Launch
 ```
 
-This installs under `%LOCALAPPDATA%\Programs\Server Rock AI`, creates a stable executable shim, and adds **Server Rock AI** to the Start Menu.
+The release manifest supplies the display name and install folder. Windows
+launches the executable inside the versioned `current` directory so its
+adjacent runtime files remain available; user data stays outside the install
+root.
 
 Linux:
 
@@ -28,4 +31,5 @@ chmod +x packaging/native/setup.sh
 packaging/native/setup.sh --package-root . --launch
 ```
 
-This installs under `~/.local/opt/server-rock-ai`, creates `~/.local/bin/server-rock-ai`, and adds a desktop-menu entry at `~/.local/share/applications/server-rock-ai.desktop`.
+The release manifest also supplies the Linux install folder and launcher name,
+which are used for the desktop-menu entry and command-line launcher.

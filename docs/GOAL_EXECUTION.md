@@ -1758,6 +1758,48 @@ Not yet verified: successful selection/rendering of a real user-provided file,
 authenticated retrieval, explicit per-operation grants, execution adapters,
 live integration acceptance, Linux parity, and packaged acceptance.
 
+## Slice 87 — manifest-driven release launchers
+
+Status: `implemented_verified_script_level`
+
+The native packaging layer now reads display and launcher metadata from
+`release-manifest.json`. Windows Start Menu shortcuts and optional launches
+target the executable inside the versioned `current` directory instead of a
+copied top-level EXE shim, preserving adjacent runtime files. Rollback no
+longer recreates a stale shim, and Linux uses the same manifest metadata for
+its install folder, command launcher, and desktop entry. The Windows setup
+default now resolves its manifest from the packaging script directory.
+
+Changed files:
+
+- `packaging/native/release-manifest.json`
+- `packaging/native/install.ps1`
+- `packaging/native/setup.ps1`
+- `packaging/native/rollback.ps1`
+- `packaging/native/uninstall.ps1`
+- `packaging/native/setup.sh`
+- `packaging/native/README.md`
+
+Evidence:
+
+- PowerShell parser validation — passed for all four `.ps1` scripts.
+- `npm run audit:native-ui` — passed: `Native UI audit passed (137 contracts).`
+- `git diff --check` — passed.
+- Linux shell syntax validation was not available on this Windows host because
+  WSL could not start; no Linux acceptance claim is made.
+
+Privacy/security/licensing: the change only affects installation paths,
+launcher targets, and display metadata. The existing user-data location is
+preserved, package contents are still copied into a versioned directory, and
+no credentials, network route, dependency, or third-party code was added.
+
+Rollback: restore the prior packaging scripts and release manifest. Existing
+explicit `-InstallRoot` overrides remain supported for recovery.
+
+Not yet verified: clean-machine Windows install/upgrade/rollback/uninstall,
+unsigned-package rejection, Linux packaging, signed artifacts, and packaged
+release acceptance.
+
 ## Slice 76 — live queued-follow-up journey
 
 Status: `implemented_verified_windows_failure_path`

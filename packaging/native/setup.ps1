@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$PackageRoot = (Split-Path -Parent $PSScriptRoot),
-    [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA 'Programs\Server Rock AI'),
+    [string]$PackageRoot = $PSScriptRoot,
+    [string]$InstallRoot,
     [switch]$Launch
 )
 

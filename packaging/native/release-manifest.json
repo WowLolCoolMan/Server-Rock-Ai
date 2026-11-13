@@ -1,5 +1,8 @@
 {
   "version": "0.0.0",
+  "displayName": "Server Rock: AI",
+  "installFolder": "server-rock-ai",
+  "launcherName": "server-rock-ai",
   "previousVersion": null,
   "artifact": "ServerRock.Native.exe",
   "profilePath": "%LOCALAPPDATA%\\ServerRock\\AI",
