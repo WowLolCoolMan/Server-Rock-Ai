@@ -222,5 +222,17 @@ public sealed partial class MainPage
             ? _projects.Count == 0 ? "Create a project to give the Coding Agent a local workspace." : "Choose a project from the sidebar or create a new one."
             : project.FolderPaths.Count == 0 ? "No local folders connected · add a folder before asking the agent to inspect files."
             : project.FolderPaths.Count == 1 ? project.FolderPaths[0] : $"{project.FolderPaths[0]}  + {project.FolderPaths.Count - 1} more folder(s)";
+        var modeLabel = _mode == WorkspaceModes.CodingAgent ? "Coding Agent" : "Chat";
+        var contextLabel = _messages.Count == 0 ? "no messages" : $"{_messages.Count} message{(_messages.Count == 1 ? "" : "s")}";
+        var attachmentLabel = _pendingAttachments.Count == 0 ? "no pending files" : $"{_pendingAttachments.Count} pending file{(_pendingAttachments.Count == 1 ? "" : "s")}";
+        var reviewLabel = _workspaceUndoEntries.Count == 0 ? "no reviewed changes" : $"{_workspaceUndoEntries.Count} reviewed change{(_workspaceUndoEntries.Count == 1 ? "" : "s")}";
+        var queuedLabel = "no queued agent plans";
+        try
+        {
+            var queued = _agentTaskStore.Load().Count(item => item.Status == AgentTaskStatuses.Queued);
+            queuedLabel = queued == 0 ? "no queued agent plans" : $"{queued} queued agent plan{(queued == 1 ? "" : "s")}";
+        }
+        catch { /* The session bar remains useful without task-artifact storage. */ }
+        WorkspaceSessionState.Text = $"{modeLabel} · {contextLabel} · {attachmentLabel} · {reviewLabel} · {queuedLabel}";
     }
 }

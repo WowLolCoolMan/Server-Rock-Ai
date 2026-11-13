@@ -342,6 +342,7 @@ public sealed partial class MainPage
             preview.Click += async (_, _) => await PreviewPendingAttachmentAsync(attachment);
             AttachmentList.Children.Add(preview);
         }
+        UpdateWorkspaceBar();
     }
 
     private async Task PreviewPendingAttachmentAsync(ChatAttachment attachment)

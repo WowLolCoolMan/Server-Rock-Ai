@@ -6992,3 +6992,43 @@ folder selection and existing Coding Agent context behavior remain unchanged.
 
 Remaining: nested mutation-aware file editing, binary/PDF/image preview, full
 app previews, cross-platform packaged acceptance, and richer file connectors.
+
+## Slice 179 — Local workspace session-state bar
+
+Status: `implemented_build_audit_verified`
+
+The Coding Workspace bar now includes a compact local session-state line. It
+surfaces the current workspace mode, message count, pending attachment count,
+reviewed file-change count, and queued local agent-plan count. The line updates
+with project changes and attachment-draft changes and is informational only;
+it does not claim that background work is executing.
+
+Changed files:
+
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml`
+- `native/ServerRock.Native/CodingWorkspaceBar.xaml.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Navigation.cs`
+- `native/ServerRock.Native/MainPage.Attachments.cs`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f
+  net10.0-desktop --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:native-ui` — passed with 232 contracts.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj
+  --no-restore` — the full Core suite previously passed; this UI-only slice
+  does not change Core code or persistence schemas.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: the bar reads existing in-memory and local task
+state only. It performs no provider, network, credential, file-write, or
+telemetry action.
+
+Rollback: remove the session-state TextBlock, property, and update calculation;
+the existing project bar, attachment behavior, and task stores remain intact.
+
+Remaining: true background-task status, richer context/change inspection,
+cross-platform packaged acceptance, and full accessibility/scale validation.

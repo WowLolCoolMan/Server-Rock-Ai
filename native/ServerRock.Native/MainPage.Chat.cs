@@ -215,6 +215,7 @@ public sealed partial class MainPage
         PromptBox.Text = string.Empty;
         SaveCurrentSession();
         _messages.Add(new ChatMessage("assistant", ""));
+        UpdateWorkspaceBar();
         var assistantIndex = _messages.Count - 1;
         var response = AddMessage(_mode == WorkspaceModes.CodingAgent ? "Coding Agent" : ProductIdentity.ShortName, "", false, messageIndex: assistantIndex);
         _requestCancellation = new CancellationTokenSource();

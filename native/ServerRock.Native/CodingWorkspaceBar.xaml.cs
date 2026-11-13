@@ -26,6 +26,7 @@ public sealed partial class CodingWorkspaceBar : UserControl
     public Border WorkspaceFolderBadgeControl => WorkspaceFolderBadge;
     public TextBlock WorkspaceFolderCountControl => WorkspaceFolderCount;
     public TextBlock WorkspaceProjectPathControl => WorkspaceProjectPath;
+    public TextBlock WorkspaceSessionStateControl => WorkspaceSessionState;
     public Button ProjectFoldersButtonControl => ProjectFoldersButton;
     public Button GitHubActionsButtonControl => GitHubActionsButton;
     public Button TerminalButtonControl => TerminalButton;

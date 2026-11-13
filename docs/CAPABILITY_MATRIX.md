@@ -308,3 +308,9 @@ read-only `Browse text files` surface. It lists relative paths from explicitly
 selected folders, filters locally, and previews up to 16 safe text files using
 the existing 8,000-character per-file context budget. Mutating file editing,
 binary/PDF preview, and cross-platform acceptance remain open.
+
+Recent slice note — Slice 179: the Coding Workspace bar now includes a local
+session-state line for mode, message context, pending attachments, reviewed
+file changes, and queued agent plans. It is informational only; background-task
+execution, live cross-platform acceptance, and richer context/change details
+remain open.

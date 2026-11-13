@@ -10,6 +10,7 @@
           <Border x:Name="WorkspaceFolderBadge" Grid.Column="2" Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="7,2" VerticalAlignment="Center"><TextBlock x:Name="WorkspaceFolderCount" Text="No folders" FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource AccentInkBrush}" /></Border>
         </Grid>
         <TextBlock x:Name="WorkspaceProjectPath" Text="Select a local folder to give the Coding Agent project context." FontSize="11" Foreground="#7b8b8d" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="WorkspaceSessionState" Text="Session state unavailable" FontSize="10" Foreground="#6f8184" TextTrimming="CharacterEllipsis" AutomationProperties.Name="Workspace session state" />
       </StackPanel>
       <Grid x:Name="CodingWorkspaceActions" Grid.Column="1" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
         <Grid x:Name="CodingWorkspaceProjectActions" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">

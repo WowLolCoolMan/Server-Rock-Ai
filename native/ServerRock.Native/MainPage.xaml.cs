@@ -136,6 +136,7 @@ public sealed partial class MainPage : Page
     private Border WorkspaceFolderBadge => CodingWorkspaceBarControl.WorkspaceFolderBadgeControl;
     private TextBlock WorkspaceFolderCount => CodingWorkspaceBarControl.WorkspaceFolderCountControl;
     private TextBlock WorkspaceProjectPath => CodingWorkspaceBarControl.WorkspaceProjectPathControl;
+    private TextBlock WorkspaceSessionState => CodingWorkspaceBarControl.WorkspaceSessionStateControl;
     private Button ProjectFoldersButton => CodingWorkspaceBarControl.ProjectFoldersButtonControl;
     private Button GitHubActionsButton => CodingWorkspaceBarControl.GitHubActionsButtonControl;
     private Button TerminalButton => CodingWorkspaceBarControl.TerminalButtonControl;
