@@ -1821,6 +1821,42 @@ sub-agent delegation, parallel execution limits, process/container/worktree
 isolation, background execution, cross-platform acceptance, and packaged
 release acceptance.
 
+## Slice 117 — live Windows agent-task planning and queue journey
+
+Status: `verified_windows_accessibility_inspection`
+
+The current `net10.0-desktop` build was launched and Activity & Tasks was opened
+through the command palette. The live accessibility tree exposed the Agent task
+artifacts section and `Plan agent task` action. A disposable task plan was saved
+with title `Disposable live agent task`, verifier role, and a local-only
+instruction. Reopening Activity showed the persisted task as `proposed` with
+the `Queue agent task for future executor` action. Activating it produced the
+visible status `Agent task queued locally for a future executor. No agent or
+provider was started.`
+
+Evidence:
+
+- `npm run start:native` — launched the current desktop build.
+- Live Windows accessibility inspection — passed for Activity routing, task
+  planning dialog fields/disclosure, proposed-task rendering, and explicit
+  queue status.
+- No model request, tool call, shell command, workspace edit, or background
+  task was started during the journey.
+
+Privacy/security/licensing: the journey wrote only the explicitly entered
+disposable task metadata to the app's local task store. No credential, file
+content, prompt attachment, provider response, or network destination was
+introduced.
+
+Rollback: remove the disposable live task from the local app profile if desired;
+the code change is already covered by slices 113–116 and the live evidence is
+documentation-only.
+
+Not yet verified: packaged-artifact task journey, live task dependency picker,
+actual sub-agent delegation, parallel execution limits, process/container/
+worktree isolation, background execution, cross-platform acceptance, and
+packaged release acceptance.
+
 ## Slice 111 — make Activity search keyboard-ready
 
 Status: `implemented_verified_build`
