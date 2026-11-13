@@ -289,6 +289,9 @@ const requiredCode = [
   ['Markdown folder export implementation', 'ConversationMarkdownExporter.WriteDirectoryAsync(_sessions, exportFolder.Path)'],
   ['Attachment draft restore wiring', 'RestorePendingAttachments();'],
   ['Attachment draft persistence wiring', 'PersistPendingAttachments();'],
+  ['Recent chat rows use semantic title tokens', 'Foreground = UiTheme.Brush("InkBrush"), FontSize = UiTheme.FontSize("SmallFontSize")'],
+  ['Recent folder headers use semantic accent tokens', 'Background = UiTheme.Brush("AccentSoftBrush"),\n                Foreground = UiTheme.Brush("AccentInkBrush")'],
+  ['Message source cards use semantic type scale', 'FontSize = UiTheme.FontSize("SectionLabelFontSize")'],
 ];
 const requiredGitHubCode = [
   ['GitHub review status accessible name', 'AutomationProperties.SetName(actionStatus, "GitHub changes status")'],

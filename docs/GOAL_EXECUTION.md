@@ -7444,6 +7444,43 @@ stored preferences or network behavior changes.
 Remaining: other code-built surfaces still require focused migration and visual
 review; this slice does not claim full application-wide token coverage.
 
+## Slice 214 — Tokenize chat history and source cards
+
+Status: `implemented_ui_audit_build_verified`
+
+Requirement alignment: Recents/folders and web-source cards are always-visible
+chat-shell surfaces. Their code-built rows still carried historical palette
+colors and numeric font sizes, which caused them to drift from the current
+light/dark/accent token system. This slice migrates folder headers, empty
+states, chat rows, archive controls, message source cards, and attachment
+labels to semantic resources and adds focused audit contracts.
+
+Changed files:
+
+- `native/ServerRock.Native/MainPage.Recents.cs`
+- `native/ServerRock.Native/MainPage.Messages.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `npm run audit:native-ui` — passed with 289 contracts.
+- `npm run check:syntax` — passed.
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore` — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- Recents and Messages contain no incidental numeric `FontSize` or historical
+  `ColorHelper` styling literals.
+
+Privacy/security/licensing: presentation-only token references; chat storage,
+source validation, external-link policy, and message actions are unchanged.
+
+Risk and rollback: restore the previous row/source presentation values and
+remove the focused audit contracts. No conversations or settings are changed.
+
+Remaining: other code-built surfaces still need focused migration and visual
+review; full application-wide token coverage is not claimed.
+
 ## Slice 209 — Add durable injected agent-task execution lifecycle
 
 Status: `implemented_core_verified_executor_boundary`

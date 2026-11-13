@@ -258,6 +258,10 @@ companion, host, archive, and local-model status copy to semantic typography
 and muted/status brushes. Accent preset definitions remain intentional data;
 application-wide code-built token coverage is still open.
 
+Slice 214 migrated the chat history/folder rows, archive controls, attachment
+labels, and web-source cards to semantic brushes and type-scale resources, with
+focused audit contracts and desktop/Windows build evidence.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 

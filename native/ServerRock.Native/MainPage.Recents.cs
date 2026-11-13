@@ -81,8 +81,8 @@ public sealed partial class MainPage
                 Content = $"{(collapsed ? "▸" : "▾")}　▱　{folder}　{folderSessions.Length}",
                 Tag = folder,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 231, 245, 247)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 45, 78, 86)),
+                Background = UiTheme.Brush("AccentSoftBrush"),
+                Foreground = UiTheme.Brush("AccentInkBrush"),
                 Padding = new Thickness(8, 7, 8, 7),
                 CornerRadius = new CornerRadius(8)
             };
@@ -97,8 +97,8 @@ public sealed partial class MainPage
             var more = new Button
             {
                 Content = "⋯", Tag = folder, Width = 30, Height = 32, Padding = new Thickness(0),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 231, 245, 247)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 82, 111, 119)),
+                Background = UiTheme.Brush("AccentSoftBrush"),
+                Foreground = UiTheme.Brush("StatusInkBrush"),
                 CornerRadius = new CornerRadius(8)
             };
             AutomationProperties.SetName(more, $"Actions for chat folder {folder}");
@@ -114,7 +114,7 @@ public sealed partial class MainPage
                 var contents = new StackPanel { Margin = new Thickness(12, 2, 0, 5), Spacing = 3 };
                 foreach (var session in folderSessions) contents.Children.Add(CreateRecentRow(session));
                 if (folderSessions.Length == 0)
-                    contents.Children.Add(new TextBlock { Text = "No chats in this folder yet.", FontSize = 10, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)), Margin = new Thickness(8, 4, 8, 4) });
+                    contents.Children.Add(new TextBlock { Text = "No chats in this folder yet.", FontSize = UiTheme.FontSize("SectionLabelFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(8, 4, 8, 4) });
                 ChatFolderList.Children.Add(contents);
             }
         }
@@ -129,8 +129,8 @@ public sealed partial class MainPage
                     ? _mode == WorkspaceModes.CodingAgent ? "Coding tasks will appear here." : "Your chats will appear here."
                     : "All chats are in folders.",
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)),
-                FontSize = 11,
+                Foreground = UiTheme.Brush("SubtleInkBrush"),
+                FontSize = UiTheme.FontSize("CaptionFontSize"),
                 Margin = new Thickness(8, 4, 8, 4)
             });
 
@@ -140,8 +140,8 @@ public sealed partial class MainPage
             {
                 Content = $"{(_archivedChatsExpanded ? "▾" : "▸")}　Archived　{archivedSessions.Length}",
                 HorizontalContentAlignment = HorizontalAlignment.Left,
-                Background = new SolidColorBrush(ColorHelper.FromArgb(255, 231, 245, 247)),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 82, 111, 119)),
+                Background = UiTheme.Brush("AccentSoftBrush"),
+                Foreground = UiTheme.Brush("StatusInkBrush"),
                 Padding = new Thickness(8, 7, 8, 7),
                 CornerRadius = new CornerRadius(8),
                 Margin = new Thickness(0, 10, 0, 0)
@@ -166,24 +166,24 @@ public sealed partial class MainPage
 
     private Grid CreateRecentRow(ChatSession session)
     {
-        var title = new TextBlock { Text = session.Pinned ? $"📌 {session.Title}" : session.Title, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 54, 74, 81)), FontSize = 12 };
+        var title = new TextBlock { Text = session.Pinned ? $"📌 {session.Title}" : session.Title, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = UiTheme.Brush("InkBrush"), FontSize = UiTheme.FontSize("SmallFontSize") };
         var updated = new TextBlock
         {
             Text = string.Join(" · ", new[] { session.ProjectName, session.Tags.Count == 0 ? null : $"Tags: {string.Join(", ", session.Tags)}", session.UpdatedAt.ToLocalTime().ToString("g") }.Where(value => !string.IsNullOrWhiteSpace(value))),
-            Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 113, 133, 140)), FontSize = 10
+            Foreground = UiTheme.Brush("SubtleInkBrush"), FontSize = UiTheme.FontSize("SectionLabelFontSize")
         };
         var button = new Button
         {
             Content = new StackPanel { Spacing = 3, Children = { title, updated } }, Tag = session.Id,
             HorizontalContentAlignment = HorizontalAlignment.Stretch, HorizontalAlignment = HorizontalAlignment.Stretch,
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 238, 248, 249)), Padding = new Thickness(9, 7, 9, 7), CornerRadius = new CornerRadius(8)
+            Background = UiTheme.Brush("SurfaceAltBrush"), Padding = new Thickness(9, 7, 9, 7), CornerRadius = new CornerRadius(8)
         };
         AutomationProperties.SetName(button, $"Open conversation: {session.Title}{(session.Pinned ? ", pinned" : string.Empty)}");
         button.Click += RecentClick;
         var actions = new Button
         {
             Content = "⋯", Tag = session.Id, Width = 32, Height = 34, Margin = new Thickness(3, 0, 0, 0), Padding = new Thickness(0),
-            Background = new SolidColorBrush(ColorHelper.FromArgb(255, 238, 248, 249)), Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 82, 111, 119)), CornerRadius = new CornerRadius(8)
+            Background = UiTheme.Brush("SurfaceAltBrush"), Foreground = UiTheme.Brush("StatusInkBrush"), CornerRadius = new CornerRadius(8)
         };
         AutomationProperties.SetName(actions, $"More actions for {session.Title}");
         actions.Click += RecentActionsClick;
@@ -444,7 +444,7 @@ public sealed partial class MainPage
         };
         AutomationProperties.SetName(tags, "Chat tags");
         AutomationProperties.SetHelpText(tags, "Enter up to eight comma-separated tags. Each tag can contain up to 32 characters.");
-        var hint = new TextBlock { Text = "Tags stay on this device and are shown under the chat title.", TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = UiTheme.Brush("MutedInkBrush") };
+        var hint = new TextBlock { Text = "Tags stay on this device and are shown under the chat title.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var panel = new StackPanel { Spacing = 8, Children = { tags, hint } };
         var dialog = new ContentDialog
         {

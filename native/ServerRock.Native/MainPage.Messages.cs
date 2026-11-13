@@ -37,7 +37,7 @@ public sealed partial class MainPage
             content.Children.Add(new TextBlock
             {
                 Text = string.Join(" · ", attachments.Select(item => (item.IsImage ? "▧ " : "▤ ") + item.FileName)),
-                FontSize = 11,
+                FontSize = UiTheme.FontSize("CaptionFontSize"),
                 Foreground = UiTheme.Brush("AccentInkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -201,7 +201,7 @@ public sealed partial class MainPage
         panel.Children.Add(new TextBlock
         {
             Text = $"Web search results · {validSources.Length}",
-            FontSize = 12,
+            FontSize = UiTheme.FontSize("SmallFontSize"),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = UiTheme.Brush("MutedInkBrush")
         });
@@ -212,7 +212,7 @@ public sealed partial class MainPage
             sourceContent.Children.Add(new TextBlock
             {
                 Text = source.Title,
-                FontSize = 13,
+                FontSize = UiTheme.FontSize("BodyFontSize"),
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = UiTheme.Brush("AccentInkBrush"),
                 TextWrapping = TextWrapping.Wrap
@@ -220,14 +220,14 @@ public sealed partial class MainPage
             sourceContent.Children.Add(new TextBlock
             {
                 Text = uri.Host,
-                FontSize = 10,
+                FontSize = UiTheme.FontSize("SectionLabelFontSize"),
                 Foreground = UiTheme.Brush("MutedInkBrush"),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
             sourceContent.Children.Add(new TextBlock
             {
                 Text = source.Snippet,
-                FontSize = 12,
+                FontSize = UiTheme.FontSize("SmallFontSize"),
                 Foreground = UiTheme.Brush("InkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -262,7 +262,7 @@ public sealed partial class MainPage
             panel.Children.Add(new TextBlock
             {
                 Text = "Search snippets can be incomplete. Open a source to check its full context.",
-                FontSize = 10,
+                FontSize = UiTheme.FontSize("SectionLabelFontSize"),
                 Foreground = UiTheme.Brush("MutedInkBrush"),
                 TextWrapping = TextWrapping.Wrap
             });
