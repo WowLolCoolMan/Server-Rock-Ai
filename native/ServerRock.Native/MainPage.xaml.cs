@@ -52,6 +52,7 @@ public sealed partial class MainPage : Page
     private readonly ScheduledTaskStore _scheduledTaskStore;
     private readonly AgentTaskArtifactStore _agentTaskStore;
     private readonly AgentTaskExecutor _agentTaskExecutor;
+    private readonly StartupRecoveryService _startupRecovery;
     private readonly GitWorktreeCoordinator _gitWorktreeCoordinator;
     private readonly SkillPackageInstaller _skillPackageInstaller;
     // Keep the normal profile as the default; an explicit path supports

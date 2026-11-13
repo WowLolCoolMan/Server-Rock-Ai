@@ -46,5 +46,6 @@ MemoryStoreTests.Run();
 StatusMessageHistoryTests.Run();
 MemoryPromptContextTests.Run();
 await AgentTaskArtifactTests.RunAsync();
+StartupRecoveryTests.Run();
 
 Console.WriteLine("Native core checks passed.");

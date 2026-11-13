@@ -7643,6 +7643,55 @@ Remaining: the project explorer is still a bounded flat preview list rather
 than a virtualized hierarchical tree; cross-platform and live first-project
 acceptance remain open.
 
+## Slice 227 — Extract deterministic startup recovery
+
+Status: `implemented_core_startup_recovery_boundary_verified`
+
+Requirement alignment: `MainPage.Lifecycle` directly loaded several local stores
+and reconciled operations, mixing persistence recovery, warning construction,
+and UI state assignment. `StartupRecoveryService` now owns the bounded queue,
+conversation, project, undo, and interrupted-operation recovery path and
+returns a typed result with availability flags and warnings. The page still
+owns settings/drafts, companion loading, legacy-project compatibility, and
+rendering. No provider, tool, shell, network, or UI work is started by the
+service.
+
+Changed files:
+
+- `native/ServerRock.Core/Services/StartupRecoveryService.cs`
+- `native/ServerRock.Core.Tests/StartupRecoveryTests.cs`
+- `native/ServerRock.Core.Tests/Program.cs`
+- `native/ServerRock.Native/MainPageServices.cs`
+- `native/ServerRock.Native/MainPage.xaml.cs`
+- `native/ServerRock.Native/MainPage.Lifecycle.cs`
+- `scripts/audit-native-ui.cjs`
+- `docs/ARCHITECTURE.md`
+- `docs/GOAL_EXECUTION.md`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/HANDOFF_BACKLOG.md`
+
+Evidence:
+
+- `dotnet build native/ServerRock.Native/ServerRock.Native.csproj --no-restore`
+  — passed with 0 warnings and 0 errors for desktop and Windows targets.
+- `dotnet run --project native/ServerRock.Core.Tests/ServerRock.Core.Tests.csproj`
+  — passed, including empty-profile and malformed-history recovery checks.
+- `node scripts/audit-native-ui.cjs` — passed with 320 contracts.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: local recovery only. Existing files remain in place
+on malformed input, queue/history/project/undo bounds remain enforced by their
+stores, and interrupted operations are reconciled without replaying effects.
+No new dependency, network path, credential, or license surface was added.
+
+Risk and rollback: restore the prior lifecycle `try` blocks and remove the
+recovery service/test. Existing JSON formats and profile paths are unchanged.
+
+Remaining: application-service/view-model extraction, explicit DI lifetime
+scopes, host/session orchestration, and live cross-platform acceptance remain
+open.
+
 ## Slice 226 — Move command-palette metadata into Core
 
 Status: `implemented_core_catalog_native_execution_boundary_verified`

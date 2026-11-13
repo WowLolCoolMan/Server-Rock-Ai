@@ -30,6 +30,7 @@ internal sealed class MainPageServices
     public ScheduledTaskStore ScheduledTaskStore { get; }
     public AgentTaskArtifactStore AgentTaskStore { get; }
     public AgentTaskExecutor AgentTaskExecutor { get; }
+    public StartupRecoveryService StartupRecovery { get; }
     public GitWorktreeCoordinator GitWorktreeCoordinator { get; }
     public SkillPackageInstaller SkillPackageInstaller { get; }
     public MemoryStore MemoryStore { get; }
@@ -55,6 +56,7 @@ internal sealed class MainPageServices
         ScheduledTaskStore scheduledTaskStore,
         AgentTaskArtifactStore agentTaskStore,
         AgentTaskExecutor agentTaskExecutor,
+        StartupRecoveryService startupRecovery,
         GitWorktreeCoordinator gitWorktreeCoordinator,
         SkillPackageInstaller skillPackageInstaller,
         MemoryStore memoryStore)
@@ -79,6 +81,7 @@ internal sealed class MainPageServices
         ScheduledTaskStore = scheduledTaskStore;
         AgentTaskStore = agentTaskStore;
         AgentTaskExecutor = agentTaskExecutor;
+        StartupRecovery = startupRecovery;
         GitWorktreeCoordinator = gitWorktreeCoordinator;
         SkillPackageInstaller = skillPackageInstaller;
         MemoryStore = memoryStore;
@@ -98,6 +101,7 @@ internal sealed class MainPageServices
         var commandRunner = new WorkspaceCommandRunner();
         var operationService = new OperationService();
         var workflowService = new WorkflowService();
+        var messageQueueStore = new ChatMessageQueueStore();
         var scheduledTaskStore = new ScheduledTaskStore();
         var agentTaskStore = new AgentTaskArtifactStore();
 
@@ -118,10 +122,11 @@ internal sealed class MainPageServices
             new LocalProjectHealthAnalyzer(),
             new CompanionStateStore(),
             new WorkspaceAttachmentDraftStore(Environment.GetEnvironmentVariable("SRAI_ATTACHMENT_DRAFTS_PATH")),
-            new ChatMessageQueueStore(),
+            messageQueueStore,
             scheduledTaskStore,
             agentTaskStore,
             new AgentTaskExecutor(agentTaskStore),
+            new StartupRecoveryService(messageQueueStore, operationService, conversationStore, projectStore, workspaceUndoStore),
             new GitWorktreeCoordinator(),
             new SkillPackageInstaller(),
             new MemoryStore(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH")));

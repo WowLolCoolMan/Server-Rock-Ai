@@ -36,6 +36,7 @@ public sealed partial class MainPage
         _scheduledTaskStore = _services.ScheduledTaskStore;
         _agentTaskStore = _services.AgentTaskStore;
         _agentTaskExecutor = _services.AgentTaskExecutor;
+        _startupRecovery = _services.StartupRecovery;
         _gitWorktreeCoordinator = _services.GitWorktreeCoordinator;
         _skillPackageInstaller = _services.SkillPackageInstaller;
         _memoryStore = _services.MemoryStore;
@@ -141,60 +142,24 @@ public sealed partial class MainPage
         {
             warnings.Add($"Pending attachment drafts could not be restored; the saved draft file was left untouched: {ex.Message}");
         }
-        try
-        {
-            foreach (var queued in _messageQueueStore.Load()) _messageQueue.Enqueue(queued.Text, queued.Attachments);
-            if (_messageQueue.Count > 0) warnings.Add($"Restored {_messageQueue.Count} queued message{(_messageQueue.Count == 1 ? "" : "s")}; review the Queue control before sending.");
-        }
-        catch (Exception ex)
-        {
-            warnings.Add($"Queued messages could not be restored; the saved queue was left untouched: {ex.Message}");
-        }
-        try
-        {
-            var reconciled = _operationService.ReconcileAfterRestart();
-            if (reconciled.Count > 0)
-                warnings.Add($"{reconciled.Count} interrupted operation{(reconciled.Count == 1 ? "" : "s")} need review in Activity & tasks.");
-        }
-        catch (Exception ex)
-        {
-            warnings.Add($"Operation history could not be reconciled: {ex.Message}");
-        }
+        var recovery = _startupRecovery.Load();
+        foreach (var queued in recovery.QueuedMessages) _messageQueue.Enqueue(queued.Text, queued.Attachments);
+        if (_messageQueue.Count > 0) warnings.Add($"Restored {_messageQueue.Count} queued message{(_messageQueue.Count == 1 ? "" : "s")}; review the Queue control before sending.");
+        warnings.AddRange(recovery.Warnings);
+        _historyAvailable = recovery.HistoryAvailable;
+        _projectsAvailable = recovery.ProjectsAvailable;
+        _undoHistoryAvailable = recovery.UndoHistoryAvailable;
         try { _companionState = _companionStore.Load(); }
         catch (Exception ex)
         {
             _companionPersistenceAvailable = false;
             warnings.Add($"Pet preferences could not be read and were left untouched: {ex.Message}");
         }
-        try
-        {
-            App.Log.Info("Startup", $"Loading local history mode={_mode} model={_settings.Model} endpoint={_settings.Endpoint}");
-            _sessions = _conversationStore.Load();
-        }
-        catch (Exception ex)
-        {
-            _historyAvailable = false;
-            warnings.Add($"Could not load local conversation history: {ex.Message}");
-        }
-        try
-        {
-            _projects = _projectStore.Load();
-        }
-        catch (Exception ex)
-        {
-            _projectsAvailable = false;
-            warnings.Add($"Could not load local projects: {ex.Message}");
-        }
-        try
-        {
-            _workspaceUndoEntries = _workspaceUndoStore.Load();
-            foreach (var entry in _workspaceUndoEntries) _persistedUndoIds.Add(entry.Id);
-        }
-        catch (Exception ex)
-        {
-            _undoHistoryAvailable = false;
-            warnings.Add($"Could not load project undo history: {ex.Message}");
-        }
+        App.Log.Info("Startup", $"Loading local history mode={_mode} model={_settings.Model} endpoint={_settings.Endpoint}");
+        _sessions = recovery.Sessions.ToList();
+        _projects = recovery.Projects.ToList();
+        _workspaceUndoEntries = recovery.UndoEntries.ToList();
+        foreach (var entry in _workspaceUndoEntries) _persistedUndoIds.Add(entry.Id);
         if (_projectsAvailable && _projects.Count == 0 && !string.IsNullOrWhiteSpace(legacyProjectInstructions))
         {
             var previousName = string.IsNullOrWhiteSpace(_settings.ProjectPath)

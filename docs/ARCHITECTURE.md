@@ -190,6 +190,7 @@ Namespaces: `ServerRock.Core.Models`, `ServerRock.Core.Services`,
 | `Services/OpenAiCompatibleProvider.cs` | Streams `/chat/completions` (SSE) and lists `/models` for any OpenAI-compatible server (Ollama, LM Studio, OpenRouter, …). Handles image content formats. |
 | `Services/ModelLibraryService.cs` | Finds installed models across known local runtimes, searches Hugging Face and ModelScope, downloads/imports GGUF files into Ollama/LM Studio, pulls/deletes Ollama models. |
 | `Services/CommandPaletteCatalog.cs` | UI-independent command-palette metadata and deterministic keyword search; native execution callbacks remain in the shell. |
+| `Services/StartupRecoveryService.cs` | Bounded local queue/history/project/undo loading and interrupted-operation reconciliation for native startup; never starts external work. |
 | `Services/WebSearchProvider.cs` | Opt-in DuckDuckGo HTML search; returns up to a handful of title/URL/snippet results. |
 | `Services/ComfyImageProvider.cs` | Queues a user-supplied ComfyUI workflow on a **loopback-only** endpoint and polls for images. |
 | `Services/GitHubDeviceFlow.cs` | GitHub App OAuth device flow (begin, poll with back-off, refresh). Also `GitHubHttpClientFactory` (no redirects, no cookies). |

@@ -305,6 +305,11 @@ Slice 226 moves command-palette metadata and deterministic search into Core
 while retaining native execution callbacks and dialog lifecycle in the shell.
 This advances the UI/Core boundary without changing command behavior.
 
+Slice 227 extracts bounded startup recovery into a Core service with typed
+availability/warning results and focused malformed-history coverage. Settings,
+companion, legacy-project compatibility, and rendering remain native-shell
+responsibilities; no external effect is replayed during recovery.
+
 The live checkout has advanced beyond the older matrix snapshot. The following
 new evidence is authoritative for the current `main` branch:
 
