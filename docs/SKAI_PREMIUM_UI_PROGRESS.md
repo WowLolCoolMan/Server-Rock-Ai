@@ -14,6 +14,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `f8e90c3` — upgraded Chat with safe markdown/code rendering, message copy/fork actions, contextual conversation actions, persistent drafts, and a bounded follow-up queue.
 - `a106d84` — connected the selected coding project to Terminal and Agent Workbench handoffs, preserving project context when opening Terminal.
 - `7cfcd82` — added a local, bounded coding diff-review mode tied to the existing guarded file save and undo flow.
+- `e95ed81` — deepened Memory and Agent Workbench with loading/error recovery, full task lifecycle columns, dependency context, timestamps, and responsive reflow.
 
 ## Current evidence
 
@@ -27,6 +28,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Headless interaction checks: passed for Settings category search/navigation, model discovery/filtering, Image Studio history, Chat markdown/actions/queue, command palette, and responsive overflow at 1920, 1440, 1280, and 960 widths.
 - Coding workflow interaction checks: passed for project browser → Terminal handoff, selected-project propagation, Agent Workbench handoff, and responsive overflow at 1920, 1440, 1280, and 960 widths.
 - Coding diff interaction checks: passed for local removal/addition preview, guarded save, post-save clean state, and responsive overflow.
+- Memory/Workbench interaction checks: passed for loading, empty state, Memory failure/retry, lifecycle columns, dependency context, and responsive overflow.
+- Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
 
@@ -38,7 +41,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 1. Integrate the coding workspace into a dockable project workflow with file tabs, terminal output, guarded diff review, and explicit approvals. The current diff preview is local and single-file; dockable tabs and broader review remain.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
-3. Improve Memory and Agent Workbench interaction depth, including loading, failure, and empty states.
+3. Continue improving Memory and Agent Workbench interaction depth with editing/detail views and richer recovery actions; loading, failure, and empty states are now covered.
 4. Add stronger keyboard-focus and dialog accessibility tests, including real Electron capture when the provider can target the correct window.
 5. Audit dark/light/system themes and density/backdrop combinations across every major route.
 6. Add workflow/skills/integration surfaces only where the existing runtime has a real capability; do not fabricate integrations.
