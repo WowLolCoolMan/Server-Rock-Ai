@@ -11446,3 +11446,29 @@ Evidence:
 
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
+
+## Slice 307 — Show local model discovery failure state
+
+Status: `implemented_renderer_typechecked`
+
+The Models route now distinguishes discovery in progress, a ready inventory,
+and a failed refresh. A failed request keeps the last successful local model
+inventory visible, marks the registry `Needs attention`, and explains that the
+previous inventory is being shown instead of silently presenting stale data as
+ready.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The local discovery action records both explicit `false` results and thrown
+  request failures without leaving the button stuck in its loading state.
+- Renderer typecheck and production build are the acceptance gate for this
+  renderer-only interaction slice.
+
+Remaining: continue the shared utility and overlay interaction slices; the
+overall premium rebuild remains active.

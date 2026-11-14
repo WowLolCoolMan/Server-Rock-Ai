@@ -54,6 +54,10 @@ workspace action. The Models surface disables duplicate requests and reports
 Settings uses the same guard and progress label for its model-provider panel,
 so both entry points behave consistently.
 
+The Models surface now keeps the last known inventory visible after a failed
+refresh, marks the registry `Needs attention`, and explains that the previous
+inventory is being shown instead of presenting stale data as ready.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to
