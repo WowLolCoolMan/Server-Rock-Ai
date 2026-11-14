@@ -18,8 +18,9 @@ Status: **not ready to publish as the first major release**.
 
 ## Hosted evidence
 
-- [Electron replacement CI run 43550157254](https://github.com/WowLolCoolMan/skai-desktop/actions/runs/43550157254) passed the packaged Linux Electron smoke under Xvfb.
-- [Native app CI run 43550157272](https://github.com/WowLolCoolMan/skai-desktop/actions/runs/43550157272) passed on both Ubuntu and Windows.
+- [Electron replacement CI run 43554766139](https://github.com/WowLolCoolMan/skai-desktop/actions/runs/43554766139) passed for the preceding capability-surface commit.
+- [Native app CI run 43554766053](https://github.com/WowLolCoolMan/skai-desktop/actions/runs/43554766053) completed with the Windows `Run core checks` job failing; its detailed logs require GitHub sign-in. The same Core suite passes locally on this checkout.
+- A hosted run for the current cloud-voice commit is not visible in the public Actions run list yet, so hosted verification is not being represented as complete.
 
 ## Release blockers
 
