@@ -2,6 +2,15 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Scheduled work state clarity
+
+Scheduled local tasks now present semantic status badges, readable due times,
+recurrence labels, and the workspace that will receive the task. Completed,
+failed, paused, running, cancelled, and unknown states remain distinguishable
+without exposing raw backend status tokens. Existing pause, resume, cancel, and
+explicit “Mark due” behavior is unchanged; the UI still explains that
+background execution is not enabled.
+
 ## Current slice — Desktop-wide Percy drag reliability
 
 Percy remains a separate transparent Electron window rather than an element

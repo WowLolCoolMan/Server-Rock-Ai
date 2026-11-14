@@ -3,6 +3,37 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 292 — Clarify scheduled task state
+
+Status: `implemented_scheduled_state_presentation_packaged_verified`
+
+The Workbench schedule list now translates durable scheduler states into
+semantic badges and readable metadata. Each row shows its localized due time,
+recurrence, and local workspace, while outcomes receive an explicit label.
+Unknown states fall back to a neutral badge instead of being rendered as raw
+backend tokens. Existing local-only scheduling semantics and explicit “Mark
+due” wording remain unchanged.
+
+Changed files:
+
+- `apps/desktop/src/features/agents/ScheduledRunsPanel.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; the packaged main and separate
+  Percy companion surfaces still rendered.
+- `git diff --check` — passed.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 291 — Keep Percy draggable across the desktop
 
 Status: `implemented_companion_drag_packaged_smoke_verified`
