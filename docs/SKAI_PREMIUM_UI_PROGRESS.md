@@ -2,6 +2,14 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Bounded recent-chat navigation
+
+The desktop sidebar now gives recent conversations their own bounded scroll
+region. The header, workspace links, utility links, search field, and Settings
+action stay stable while longer histories scroll inside the sidebar instead of
+overflowing the window. The packaged Electron build was visually inspected at
+desktop size after the change.
+
 ## Current slice — Marketplace catalog density
 
 Marketplace category cards now fit in the normal desktop view beside their

@@ -3,6 +3,39 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 289 — Bound recent-chat navigation
+
+Status: `implemented_sidebar_history_scroll_packaged_live_verified`
+
+The app sidebar now keeps its brand, workspace navigation, utilities, recent
+chat search, and Settings control inside the viewport. Recent conversations
+render in a dedicated scroll region with stable sizing, so longer histories no
+longer push rows through the bottom edge or hide the Settings action. Existing
+conversation selection, context-menu actions, keyboard focus behavior, and
+responsive sidebar rules remain unchanged.
+
+Changed files:
+
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed.
+- Live packaged Electron inspection — passed; recent chats were visible in
+  their bounded scroll region and Settings remained reachable.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 288 — Keep Marketplace categories discoverable
 
 Status: `implemented_marketplace_catalog_density_packaged_live_verified`
