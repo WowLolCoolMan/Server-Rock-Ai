@@ -41,6 +41,8 @@ expect(main.includes("taskkill") && main.includes("/T"), "Electron shutdown must
 expect(main.includes("restartAgentHost"), "Electron must restart a timed-out host after resolving pending requests");
 expect(main.includes("timeoutSeconds: chatHostDeadlineSeconds"), "Electron must give chat requests a host-side deadline before the renderer deadline");
 expect(main.includes("function clampPetPosition") && main.includes("petWindow.setPosition(position.x, position.y)"), "Percy drag movement must remain inside the active monitor work area");
+expect(main.includes("function movePetWithCursor") && main.includes("setInterval(movePetWithCursor, 16)"), "Percy desktop dragging must continue while the pointer leaves the companion window");
+expect(main.includes("setVisibleOnAllWorkspaces(true") && main.includes("transparent: true") && main.includes("alwaysOnTop: true"), "Percy must remain a transparent always-on-top desktop companion across workspaces");
 expect(main.includes('"tasks.retry": "Retried the local task."'), "Percy must summarize successful task retries");
 expect(main.includes('kind = "success"') && main.includes('kind: "error"'), "Percy completion events must distinguish successful and failed local work");
 expect(main.includes("if (!task) return null"), "Percy completion bubbles must stay scoped to tracked agent work");

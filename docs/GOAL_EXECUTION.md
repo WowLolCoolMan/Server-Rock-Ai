@@ -3,6 +3,37 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 291 — Keep Percy draggable across the desktop
+
+Status: `implemented_companion_drag_packaged_smoke_verified`
+
+Percy is a separate transparent Electron companion window, not a panel inside
+the Skai app. The renderer still starts and ends pointer capture, while the
+Electron main process now follows the screen cursor at 16 ms intervals during
+an active drag. This keeps the drag alive after the pointer leaves the small
+companion window, clamps placement to the monitor under the cursor, and saves
+the final position. The companion is also requested on all available
+workspaces where Electron supports that behavior.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `scripts/audit-electron-runtime.cjs`
+- `scripts/smoke-electron-artifact.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- Electron runtime audit requires the native cursor-follow drag path,
+  transparent always-on-top window, and all-workspace request.
+- Packaged Electron smoke verifies distinct main/Percy DevTools targets,
+  `?pet=1`, transparent body rendering, and an active sprite animation.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 290 — Carry failed task context into local replanning
 
 Status: `implemented_task_replan_handoff_packaged_smoke_verified`

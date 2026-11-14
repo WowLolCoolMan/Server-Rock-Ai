@@ -2,6 +2,17 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Desktop-wide Percy drag reliability
+
+Percy remains a separate transparent Electron window rather than an element
+inside the Skai workspace. During a drag, Electron now follows the desktop
+cursor from the main process while the renderer is outside the companion
+window, then clamps the window to the active monitor work area and persists the
+final position. The companion is also marked visible on all workspaces when
+the platform supports that Electron capability. Packaged smoke now verifies
+that the Percy page is a distinct transparent animated surface from the main
+renderer.
+
 ## Current slice — Failed-task replanning handoff
 
 Workbench’s failed-task recovery now carries the bounded task brief and prior

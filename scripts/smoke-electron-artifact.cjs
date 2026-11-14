@@ -66,14 +66,14 @@ async function main() {
   console.log(`Packaged main target: ${JSON.stringify({ title: mainTarget.title, url: mainTarget.url, type: mainTarget.type, websocket: Boolean(mainTarget.webSocketDebuggerUrl) })}`);
   console.log(`Packaged Percy target: ${JSON.stringify({ title: petTarget.title, url: petTarget.url, type: petTarget.type, websocket: Boolean(petTarget.webSocketDebuggerUrl) })}`);
   const mainResult = await evaluate(mainTarget, "JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), navigation: Boolean(document.querySelector('[aria-label=\\\"Primary navigation\\\"]')) })");
-  const petResult = await evaluate(petTarget, "JSON.stringify({ title: document.title, companion: Boolean(document.querySelector('[aria-label=\\\"Percy desktop companion. Drag to move.\\\"]')), sprite: Boolean(document.querySelector('.pet-window-sprite')) })");
+  const petResult = await evaluate(petTarget, "JSON.stringify((() => { const root = document.querySelector('[aria-label=\\\"Percy desktop companion. Drag to move.\\\"]'); const sprite = document.querySelector('.pet-window-sprite'); const style = sprite ? getComputedStyle(sprite) : null; return { title: document.title, companion: Boolean(root), sprite: Boolean(sprite), transparent: getComputedStyle(document.body).backgroundColor === 'rgba(0, 0, 0, 0)', animated: Boolean(style?.animationName && style.animationName !== 'none') }; })())");
   if (typeof mainResult !== "string" || typeof petResult !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify({ mainResult, petResult })}`);
   const mainState = JSON.parse(mainResult);
   const petState = JSON.parse(petResult);
-  if (!mainState.title.includes("Skai Desktop") || !mainState.settings || !mainState.navigation || !petState.title.includes("Percy") || !petState.companion || !petState.sprite) {
+  if (mainTarget.id === petTarget.id || !petTarget.url?.includes("pet=1") || !mainState.title.includes("Skai Desktop") || !mainState.settings || !mainState.navigation || !petState.title.includes("Percy") || !petState.companion || !petState.sprite || !petState.transparent || !petState.animated) {
     throw new Error(`Packaged Electron rendered incomplete surfaces: ${JSON.stringify({ mainState, petState })}`);
   }
-  console.log(`Packaged Electron smoke passed: ${mainState.title}; main navigation, Settings, and Percy companion surfaces rendered.`);
+  console.log(`Packaged Electron smoke passed: ${mainState.title}; main and separate transparent Percy surfaces rendered with animated sprite.`);
 }
 
 main().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => {
