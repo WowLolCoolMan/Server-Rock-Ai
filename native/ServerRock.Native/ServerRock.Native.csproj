@@ -9,8 +9,8 @@
     <!-- Display name -->
     <ApplicationTitle>$(ProductDisplayName)</ApplicationTitle>
     <!-- Use the official Percy/Skai wolf artwork for every generated platform icon. -->
-    <UnoIconBackgroundFile>Assets\Icons\skaiwolficon.png</UnoIconBackgroundFile>
-    <UnoIconForegroundFile>Assets\Icons\skaiwolficon.png</UnoIconForegroundFile>
+    <UnoIconBackgroundFile>Assets/Icons/skaiwolficon.png</UnoIconBackgroundFile>
+    <UnoIconForegroundFile>Assets/Icons/skaiwolficon.png</UnoIconForegroundFile>
     <UnoIconBackgroundColor>#00000000</UnoIconBackgroundColor>
     <UnoIconForegroundScale>1.00</UnoIconForegroundScale>
     <!-- App Identifier -->
