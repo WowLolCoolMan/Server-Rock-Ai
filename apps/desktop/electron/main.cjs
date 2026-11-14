@@ -111,7 +111,7 @@ function petCompletionText(method, response) {
     "scheduled.pause": "Paused the local scheduled task.",
     "scheduled.resume": "Resumed the local scheduled task.",
     "scheduled.cancel": "Canceled the scheduled local task.",
-    "scheduled.runNow": "Ran the local scheduled task now.",
+    "scheduled.runNow": "Marked the local scheduled task due.",
     "memory.save": "Saved the approved memory note.",
     "image.generate": "Finished the local image workflow.",
   };
