@@ -62,7 +62,11 @@ function readStoredBoolean(key: string, fallback: boolean) {
 }
 
 export function useDesktopWorkspace(): DesktopWorkspace {
-  const agent = useMemo(() => createAgentClient((method, params) => window.serverRockAgent.request(method, params)), []);
+  const agent = useMemo(() => createAgentClient((method, params) => {
+    const bridge = window.serverRockAgent;
+    if (!bridge) return Promise.resolve({ v: 1, id: `bridge-unavailable-${method}`, ok: false, error: { code: "BRIDGE_UNAVAILABLE", message: "The Electron agent bridge is unavailable." } });
+    return bridge.request(method, params);
+  }), []);
   const request = agent.request;
   const [route, setRoute] = useState<Route>(routeFromLocation);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -117,7 +121,7 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   useEffect(() => { localStorage.setItem("skai.pet.visible", String(petVisible)); }, [petVisible]);
   useEffect(() => { localStorage.setItem("skai.pet.wander", String(petWander)); }, [petWander]);
   useEffect(() => {
-    const pet = window.serverRockAgent.pet;
+    const pet = window.serverRockAgent?.pet;
     if (!pet) return;
     pet.setVisible(petVisible);
     pet.setMotion({ wander: petWander, reduceMotion });
