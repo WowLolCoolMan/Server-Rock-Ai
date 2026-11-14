@@ -11576,6 +11576,26 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 318 — Connect the local corpus to Memory workspace
+
+Status: `implemented_renderer_and_packaged_verified`
+
+The Memory workspace now exposes the durable corpus through explicit local
+controls: add text with title/source/tags, search by terms, inspect bounded
+previews, and remove documents. Corpus loading and failure state are separate
+from approved memory notes, and the UI states that it does not crawl files or
+perform OCR implicitly.
+
+Evidence:
+
+- Renderer typecheck and production build passed.
+- Agent Host smoke passed corpus persistence and retrieval.
+- Packaged Electron overflow acceptance passed 9 routes × 5 viewport widths.
+- Local-only transport audit and diff validation passed.
+
+Remaining: add file/PDF ingestion into the corpus, then continue vector-ready
+retrieval, model/voice recovery, Git remote workflows, and release gates.
+
 ## Slice 317 — Add a durable local document corpus
 
 Status: `implemented_and_smoke_verified`

@@ -24,6 +24,16 @@ Evidence: Agent Host build and disposable protocol smoke passed, including
 corpus capability discovery, round-trip persistence, matching search results,
 and removal.
 
+## Slice 318 — Corpus management in Memory workspace
+
+Memory now includes a separate local document-corpus panel for explicit text
+ingestion, term search, bounded previews, and removal. Corpus loading and
+failure messaging are independent from approved memory notes. The copy clearly
+states that the current workflow does not crawl files or claim OCR support.
+
+Evidence: renderer typecheck/build, Agent Host smoke, local-only audit, and
+packaged Electron overflow acceptance all passed.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution
