@@ -43,7 +43,7 @@ async function evaluate(target, expression) {
       else resolve(message.result.result.value);
       socket.close();
     });
-    socket.send(JSON.stringify({ id, method: "Runtime.evaluate", params: { expression, returnByValue: true } }));
+      socket.send(JSON.stringify({ id, method: "Runtime.evaluate", params: { expression, returnByValue: true, awaitPromise: true } }));
   });
   return result;
 }
@@ -61,11 +61,11 @@ async function main() {
   }
   if (!target) throw new Error(`Packaged Electron did not expose a page before timeout. Output: ${output.slice(-2_000)}`);
   console.log(`Packaged target: ${JSON.stringify({ title: target.title, url: target.url, type: target.type, websocket: Boolean(target.webSocketDebuggerUrl) })}`);
-  const result = await evaluate(target, "JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), pet: Boolean(document.querySelector('[aria-label=\\\"Skai pet. Drag to move, or use arrow keys.\\\"]')) })");
+  const result = await evaluate(target, "(async () => { const health = await window.serverRockAgent.request('runtime.health'); return JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), pet: Boolean(document.querySelector('[aria-label=\\\"Skai pet. Drag to move, or use arrow keys.\\\"]')), credentialsBridge: health.ok && health.result.capabilities.includes('credentials.status') }); })()");
   if (typeof result !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify(result)} for ${target.url}`);
   const state = JSON.parse(result);
-  if (!state.title.includes("Skai Desktop") || !state.settings || !state.pet) throw new Error(`Packaged Electron rendered an incomplete shell: ${result}`);
-  console.log(`Packaged Electron smoke passed: ${state.title}; settings and pet surfaces rendered.`);
+  if (!state.title.includes("Skai Desktop") || !state.settings || !state.pet || !state.credentialsBridge) throw new Error(`Packaged Electron rendered an incomplete shell or bridge: ${result}`);
+  console.log(`Packaged Electron smoke passed: ${state.title}; settings, pet, and credential bridge rendered.`);
 }
 
 main().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => {
