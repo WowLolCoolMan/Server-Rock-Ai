@@ -11,14 +11,15 @@ const readline = require("node:readline");
 
 const root = path.resolve(__dirname, "..");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skai-agent-host-smoke-"));
+const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skai-agent-host-profile-"));
 const env = {
   ...process.env,
-  SRAI_SETTINGS_PATH: path.join(tempRoot, "settings.json"),
-  SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
-  SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
-  SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
-  SRAI_PROJECTS_PATH: path.join(tempRoot, "projects.json"),
-  SRAI_CORPUS_PATH: path.join(tempRoot, "document-corpus.json"),
+  SRAI_SETTINGS_PATH: path.join(profileRoot, "settings.json"),
+  SRAI_CONVERSATIONS_PATH: path.join(profileRoot, "conversations.json"),
+  SRAI_TASKS_PATH: path.join(profileRoot, "agent-tasks.json"),
+  SRAI_SCHEDULED_TASKS_PATH: path.join(profileRoot, "scheduled-tasks.json"),
+  SRAI_PROJECTS_PATH: path.join(profileRoot, "projects.json"),
+  SRAI_CORPUS_PATH: path.join(profileRoot, "document-corpus.json"),
 };
 spawnSync("git", ["init", "--quiet", tempRoot], { cwd: tempRoot, windowsHide: true });
 spawnSync("git", ["config", "user.email", "smoke@example.invalid"], { cwd: tempRoot, windowsHide: true });
@@ -26,6 +27,7 @@ spawnSync("git", ["config", "user.name", "Skai smoke"], { cwd: tempRoot, windows
 fs.writeFileSync(path.join(tempRoot, ".gitkeep"), "smoke\n");
 spawnSync("git", ["add", ".gitkeep"], { cwd: tempRoot, windowsHide: true });
 spawnSync("git", ["commit", "--quiet", "-m", "Initial smoke state"], { cwd: tempRoot, windowsHide: true });
+fs.writeFileSync(path.join(tempRoot, "status-smoke.txt"), "status\n");
 const interruptedTaskId = "interrupted-smoke-task";
 fs.writeFileSync(env.SRAI_TASKS_PATH, JSON.stringify([{
   id: interruptedTaskId,
@@ -93,6 +95,21 @@ async function run() {
   if (!diff.ok || typeof diff.result?.text !== "string" || diff.result.includedFiles !== 1) throw new Error("project.git.diff did not return the selected local diff.");
   const committed = await request("project.git.commit", { id: project.result.id, paths: [reviewPath], message: "Review local Git smoke" });
   if (!committed.ok || committed.result?.committed !== true) throw new Error("project.git.commit did not create the reviewed local commit.");
+  spawnSync("git", ["reset", "--hard", "--quiet", "HEAD"], { cwd: tempRoot, windowsHide: true });
+  const remoteRoot = path.join(tempRoot, "..", `${path.basename(tempRoot)}-remote.git`);
+  spawnSync("git", ["init", "--bare", "--quiet", remoteRoot], { cwd: tempRoot, windowsHide: true });
+  spawnSync("git", ["remote", "add", "origin", remoteRoot], { cwd: tempRoot, windowsHide: true });
+  spawnSync("git", ["push", "--quiet", "--set-upstream", "origin", "HEAD"], { cwd: tempRoot, windowsHide: true });
+  fs.writeFileSync(path.join(tempRoot, "push-smoke.txt"), "push through configured credential helper\n");
+  const pushStatus = await request("project.git.status", { id: project.result.id });
+  const pushPath = pushStatus.result?.changes?.find(change => change.path === "push-smoke.txt")?.path;
+  if (!pushStatus.ok || !pushPath) throw new Error("project.git.status did not expose the disposable push change.");
+  const pushCommit = await request("project.git.commit", { id: project.result.id, paths: [pushPath], message: "Prepare local push smoke" });
+  if (!pushCommit.ok || pushCommit.result?.committed !== true) throw new Error("project.git.commit did not prepare the disposable push.");
+  spawnSync("git", ["reset", "--hard", "--quiet", "HEAD"], { cwd: tempRoot, windowsHide: true });
+  const cleanPushStatus = await request("project.git.status", { id: project.result.id });
+  const pushed = await request("project.git.push", { id: project.result.id });
+  if (!pushed.ok || pushed.result?.pushed !== true) throw new Error(`project.git.push did not push to the disposable local remote: ${JSON.stringify({ pushed, cleanPushStatus })}`);
   const corpusDocument = await request("corpus.upsert", { title: "Local retrieval smoke", source: "smoke://document", content: "Skai retrieves explicit local documents with bounded snippets.", tags: ["local", "retrieval"] });
   if (!corpusDocument.ok || typeof corpusDocument.result?.id !== "string") throw new Error("corpus.upsert did not persist a local document.");
   const corpusSearch = await request("corpus.search", { query: "bounded snippets" });

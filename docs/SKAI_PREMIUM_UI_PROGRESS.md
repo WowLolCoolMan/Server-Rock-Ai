@@ -75,8 +75,8 @@ commits ahead. The host rechecks conflicts, dirty state, and remote divergence
 before pushing through the configured local Git credential helper. Renderer
 credentials are never accepted or embedded.
 
-Evidence: Agent Host build, renderer typecheck/build, syntax checks, and diff
-validation passed.
+Evidence: Agent Host build, disposable local-remote push smoke, renderer
+typecheck/build, syntax checks, and diff validation passed.
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 

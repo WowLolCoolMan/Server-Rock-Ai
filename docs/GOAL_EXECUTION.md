@@ -11590,6 +11590,8 @@ separate authenticated GitHub workflow is connected.
 Evidence:
 
 - Agent Host build passed with zero warnings and zero errors.
+- Disposable Agent Host smoke passed local remote setup, clean-branch
+  preflight, commit, and `project.git.push` round-trip.
 - Renderer typecheck/build and syntax checks passed.
 - The local-only boundary is preserved; the push path never embeds credentials
   in arguments or remote URLs.
