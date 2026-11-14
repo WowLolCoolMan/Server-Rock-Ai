@@ -27,6 +27,9 @@ through the Agent Host task-list response and appear in the Workbench detail
 disclosure. Tasks without recorded artifacts say so explicitly; no artifact is
 invented by the renderer.
 
+The same labels are now echoed in the compact Coding Workspace activity rail,
+so a user can see completed outputs without leaving the project session.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

@@ -11259,3 +11259,28 @@ added.
 
 Remaining: continue the local task execution/recovery and keyboard-focus
 slices; the broader premium rebuild remains incomplete.
+
+## Slice 300 — Surface artifacts in the coding activity rail
+
+Status: `implemented_renderer_verified`
+
+The compact Coding Workspace activity rail now includes recorded artifact
+labels for tasks that have them. This keeps the project session useful while
+the user is editing files, while tasks with no artifacts retain the existing
+quiet state and no fabricated output is shown.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingActivityPanel.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The renderer consumes the same optional `artifactLabels` contract used by
+  Workbench details.
+- Renderer typecheck and packaged Electron acceptance remain green after the
+  Workbench artifact contract change.
+
+Remaining: continue the local project workflow and remaining overlay focus
+checks; the overall goal is still active.
