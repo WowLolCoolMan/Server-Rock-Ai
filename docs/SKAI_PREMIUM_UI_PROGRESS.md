@@ -472,3 +472,29 @@ Evidence:
 Remaining: provider result counts and image/voice generation availability still
 depend on network health and configured local runtimes. Those states remain
 explicit in the UI and are not represented as completed capability.
+
+## Slice — Refine chat canvas and workspace launcher continuity
+
+Status: `implemented_build_visual_verified`
+
+The chat route now renders its conversation history on an open canvas instead
+of an oversized bordered conversation card. History owns the scrolling region,
+the composer remains visible and centered, and empty conversations retain a
+quiet centered start state. The workspace selector is now grouped by Build,
+Explore, and Manage intent, supports ArrowUp/ArrowDown navigation, closes with
+Escape, and returns focus to its trigger.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- Live Electron inspection at the rebuilt 1440×900 desktop window verified the
+  open chat canvas, visible composer, grouped launcher, and populated
+  marketplace. The supplied `chat.png` remains the before/reference frame;
+  the live Electron capture is the after state.
+
+Remaining: the broader migration gates in `docs/ELECTRON_MIGRATION_CUTOVER.md`
+remain open for full host-backed feature parity, narrow-window screenshots,
+and release packaging validation.

@@ -391,3 +391,40 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .chat-project-context, .chat-agent-activity { display: grid; gap: 8px; }.chat-project-context > strong, .chat-agent-activity strong { color: var(--skai-color-text); font-size: 13px; }.chat-project-context > span, .chat-agent-activity button span { color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.4; }.chat-project-context > button, .chat-agent-activity button { padding: 9px 0; border: 0; border-top: 1px solid var(--skai-color-border); color: var(--skai-color-accent); background: transparent; text-align: left; }.chat-activity-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }.chat-agent-activity > button { display: grid; gap: 3px; }.chat-agent-activity .chat-activity-link { color: var(--skai-color-text); }.chat-agent-activity .chat-activity-link:hover, .chat-project-context > button:hover { color: var(--skai-color-accent); }
 .workbench-context-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 16px; padding: 13px 16px; }.workbench-context-strip > div { display: grid; gap: 4px; min-width: 0; }.workbench-context-strip strong { overflow: hidden; color: var(--skai-color-text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }.workbench-context-strip small { color: var(--skai-color-text-muted); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .image-studio-header-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+/* Chat continuity: the conversation is an open canvas, while the composer
+   remains a compact, always-visible control surface. */
+.chat-page { display: flex; flex-direction: column; min-height: calc(100vh - 150px); }
+.chat-page .chat-context-bar { flex: 0 0 auto; }
+.chat-page .chat-layout { flex: 1 1 auto; min-height: 0; height: auto; }
+.chat-page .chat-column { min-height: 0; height: 100%; }
+.conversation-canvas { min-height: 0; overflow: hidden; background: transparent; border: 0; box-shadow: none; }
+.conversation-canvas.is-empty { display: grid; place-items: center; }
+.conversation-canvas .ui-empty-state { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
+.conversation-canvas .message-list { width: min(100%, 900px); height: 100%; margin: 0 auto; padding: 24px 18px 28px; overflow-y: auto; scrollbar-color: #4b4658 transparent; }
+.conversation-canvas .message-bubble { max-width: min(760px, 88%); border-radius: 14px; }
+.conversation-canvas .message-bubble.assistant { border-color: transparent; background: transparent; }
+.conversation-canvas .message-bubble.user { border-color: rgba(182,165,245,.28); background: rgba(182,165,245,.10); }
+.composer-card { position: sticky; bottom: 10px; z-index: 3; width: min(900px, 100%); margin: 0 auto; border-radius: 16px; background: #222326; box-shadow: 0 -14px 32px rgba(0,0,0,.28); }
+.composer-card textarea { min-height: 52px; max-height: 180px; }
+
+/* Workspace launcher: group destinations by intent without turning the
+   persistent thread sidebar into a second rail. */
+.sidebar-tools-menu { gap: 7px; }
+.sidebar-tools-search { display: block; padding: 0 2px 3px; }
+.sidebar-tools-search input { width: 100%; padding: 8px 9px; border: 1px solid #34363a; border-radius: 7px; color: #f0efef; background: #191a1c; font-size: 11px; }
+.sidebar-tools-search input:focus { border-color: #b6a5f5; outline: 2px solid rgba(182,165,245,.18); outline-offset: 1px; }
+.sidebar-tools-group { display: grid; gap: 3px; }
+.sidebar-tools-group-label { margin: 3px 7px 1px; color: #777a82; font-family: var(--skai-font-mono); font-size: 8px; letter-spacing: .13em; text-transform: uppercase; }
+.sidebar-tools-group button:focus-visible, .sidebar-workspace-switcher:focus-visible { outline: 2px solid #b6a5f5; outline-offset: 1px; }
+
+@media (max-width: 900px) {
+  .chat-page .chat-layout { height: auto; min-height: calc(100vh - 198px); }
+  .conversation-canvas .message-list { max-height: none; }
+}
+@media (max-width: 760px) {
+  .chat-page { min-height: 0; }
+  .conversation-canvas { min-height: 42vh; }
+  .conversation-canvas .message-list { padding-inline: 8px; }
+  .composer-card { position: sticky; bottom: 8px; border-radius: 12px; }
+}

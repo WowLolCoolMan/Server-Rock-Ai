@@ -11,7 +11,6 @@ import {
   Button,
   Card,
   EmptyState,
-  PageHeader,
 } from "../../components/ui/Primitives";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { ModalDialog } from "../../components/ui/ModalDialog";
@@ -279,7 +278,10 @@ export function ChatPage({
         className={`chat-layout ${contextRelevant ? "has-context" : "is-focused"}`}
       >
         <main className="chat-column">
-          <Card className="conversation-card">
+          <section
+            className={`conversation-canvas ${messages.length === 0 ? "is-empty" : ""}`}
+            aria-label="Conversation"
+          >
             {messages.length === 0 ? (
               <EmptyState
                 visual={<img src={SKAI_WOLF_ICON} alt="" />}
@@ -343,7 +345,7 @@ export function ChatPage({
                 <div ref={messageEndRef} />
               </div>
             )}
-          </Card>
+          </section>
           <Card className="composer-card">
             {queuedMessages.length > 0 && (
               <div className="queued-messages" aria-label="Queued messages">

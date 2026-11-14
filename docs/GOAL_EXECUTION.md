@@ -8201,6 +8201,44 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 187 — Refine chat canvas and workspace launcher
+
+Status: `implemented_build_visual_verified`
+
+The Electron shell now presents chat as an open, independently scrolling
+conversation canvas with a centered persistent composer rather than a second
+large bordered card. The workspace launcher is grouped by Build, Explore, and
+Manage, has ArrowUp/ArrowDown navigation, closes on Escape, and restores focus
+to its trigger. This keeps the reference-pack workflow visible without
+introducing a second navigation rail.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- Rebuilt Electron visual inspection verified Chat and the grouped workspace
+  launcher at the desktop reference size; Marketplace remained populated with
+  live Hugging Face/model-provider results.
+
+Privacy/security/licensing: this slice changes renderer layout, focus
+management, and CSS only. It does not add IPC methods, filesystem access,
+network permissions, or provider credentials.
+
+Rollback: restore the previous conversation card, flat launcher rendering, and
+remove the final continuity CSS block; no persisted host data is affected.
+
+Remaining: complete the broader Electron parity and narrow-window gates listed
+in `docs/ELECTRON_MIGRATION_CUTOVER.md`.
+
 ## Slice 223 — Finish premium shell continuity and visual verification
 
 Status: `implemented_build_tests_visual_verified`

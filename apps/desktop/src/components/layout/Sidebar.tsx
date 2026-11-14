@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { Route } from "../../app/types";
@@ -29,60 +30,70 @@ const toolRoutes: Array<{
   label: string;
   detail: string;
   icon: NavIconName;
+  group: "Build" | "Explore" | "Manage";
 }> = [
   {
     route: "coding",
     label: "Coding workspace",
     detail: "Files, editor, terminal, and review",
     icon: "code",
+    group: "Build",
   },
   {
     route: "workbench",
     label: "Agent workbench",
     detail: "Tasks, approvals, and recovery",
     icon: "activity",
+    group: "Build",
   },
   {
     route: "models",
     label: "Models",
     detail: "Local runtimes and model selection",
     icon: "model",
+    group: "Explore",
   },
   {
     route: "marketplace",
     label: "Marketplace",
     detail: "Skills, tools, voices, and models",
     icon: "sparkle",
+    group: "Explore",
   },
   {
     route: "terminal",
     label: "Terminal",
     detail: "Project-scoped command session",
     icon: "terminal",
+    group: "Build",
   },
   {
     route: "memory",
     label: "Memory",
     detail: "Approved local notes and documents",
     icon: "memory",
+    group: "Manage",
   },
   {
     route: "voice",
     label: "Voice Studio",
     detail: "Local speech profiles and preview",
     icon: "activity",
+    group: "Explore",
   },
   {
     route: "permissions",
     label: "Permissions",
     detail: "Review local approval boundaries",
     icon: "settings",
+    group: "Manage",
   },
   {
     route: "onboarding",
     label: "First-run setup",
     detail: "Connect a runtime and choose a model",
     icon: "sparkle",
+    group: "Manage",
   },
 ];
 
@@ -147,6 +158,9 @@ export function Sidebar({
   const [renameBusy, setRenameBusy] = useState(false);
   const menuFirstActionRef = useRef<HTMLButtonElement>(null);
   const toolsSearchRef = useRef<HTMLInputElement>(null);
+  const workspaceButtonRef = useRef<HTMLButtonElement>(null);
+  const toolItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const toolsWasOpenRef = useRef(false);
   useEffect(() => {
     setExpandedProjectIds((current) =>
       Array.from(
@@ -195,6 +209,12 @@ export function Sidebar({
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [toolsOpen]);
+  useEffect(() => {
+    if (toolsWasOpenRef.current && !toolsOpen) {
+      workspaceButtonRef.current?.focus();
+    }
+    toolsWasOpenRef.current = toolsOpen;
+  }, [toolsOpen]);
   const filteredConversations = conversations.filter((conversation) =>
     conversation.title.toLowerCase().includes(query.trim().toLowerCase()),
   );
@@ -218,6 +238,39 @@ export function Sidebar({
       .toLowerCase()
       .includes(toolsQuery.trim().toLowerCase()),
   );
+  const toolGroups = (["Build", "Explore", "Manage"] as const)
+    .map((group) => ({
+      group,
+      items: filteredToolRoutes.filter((item) => item.group === group),
+    }))
+    .filter(({ items }) => items.length > 0);
+  const moveToolFocus = (direction: 1 | -1) => {
+    const currentIndex = toolItemRefs.current.findIndex(
+      (item) => item === document.activeElement,
+    );
+    const nextIndex =
+      currentIndex < 0
+        ? direction === 1
+          ? 0
+          : filteredToolRoutes.length - 1
+        : (currentIndex + direction + filteredToolRoutes.length) %
+          filteredToolRoutes.length;
+    toolItemRefs.current[nextIndex]?.focus();
+  };
+  const handleToolMenuKeyDown = (event: ReactKeyboardEvent) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveToolFocus(1);
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveToolFocus(-1);
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setToolsOpen(false);
+    }
+  };
   const resizeSidebar = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (collapsed) return;
     event.preventDefault();
@@ -402,10 +455,15 @@ export function Sidebar({
         </div>
         <div className="sidebar-workspace-row">
           <button
+            ref={workspaceButtonRef}
             type="button"
             className="sidebar-workspace-switcher"
-            onClick={() => setToolsOpen((open) => !open)}
+            onClick={() => {
+              setToolsOpen((open) => !open);
+              setToolsQuery("");
+            }}
             aria-expanded={toolsOpen}
+            aria-controls="workspace-tools-menu"
           >
             <span>
               <small>WORKSPACE</small>
@@ -424,9 +482,11 @@ export function Sidebar({
         </div>
         {toolsOpen && (
           <div
+            id="workspace-tools-menu"
             className="sidebar-tools-menu"
             role="menu"
             aria-label="Workspace tools"
+            onKeyDown={handleToolMenuKeyDown}
           >
             <p className="sidebar-menu-kicker">OPEN IN WORKSPACE</p>
             <label className="sidebar-tools-search">
@@ -439,25 +499,40 @@ export function Sidebar({
                 aria-label="Filter workspaces"
               />
             </label>
-            {filteredToolRoutes.map((item) => (
-              <button
-                type="button"
-                role="menuitem"
-                className={route === item.route ? "is-active" : ""}
-                key={item.route}
-                onClick={() => {
-                  onNavigate(item.route);
-                  setToolsOpen(false);
-                }}
-              >
-                <NavIcon name={item.icon} />
-                <span>
-                  <strong>{item.label}</strong>
-                  <small>{item.detail}</small>
-                </span>
-              </button>
+            {toolGroups.map(({ group, items }) => (
+              <div className="sidebar-tools-group" key={group}>
+                <p className="sidebar-tools-group-label">{group}</p>
+                {items.map((item) => {
+                  const itemIndex = filteredToolRoutes.findIndex(
+                    (candidate) => candidate.route === item.route,
+                  );
+                  return (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={route === item.route ? "is-active" : ""}
+                      key={item.route}
+                      ref={(element) => {
+                        toolItemRefs.current[itemIndex] = element;
+                      }}
+                      onClick={() => {
+                        onNavigate(item.route);
+                        setToolsOpen(false);
+                      }}
+                    >
+                      <NavIcon name={item.icon} />
+                      <span>
+                        <strong>{item.label}</strong>
+                        <small>{item.detail}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             ))}
-            {filteredToolRoutes.length === 0 && <p className="sidebar-menu-empty">No matching workspace.</p>}
+            {filteredToolRoutes.length === 0 && (
+              <p className="sidebar-menu-empty">No matching workspace.</p>
+            )}
           </div>
         )}
         <div className="sidebar-top-actions">
