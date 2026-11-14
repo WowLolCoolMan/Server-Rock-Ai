@@ -17,6 +17,11 @@ failure summary when the local provider is unavailable. This turns the task
 record from a planning-only surface into an honest executable local workflow
 while leaving tool/file mutation for a separately verified approval slice.
 
+Agent Host startup now reconciles tasks left in `running` state after a
+process interruption into an explicit blocked state. It never silently retries
+the model or releases a retained worktree; the user must review and make a
+new retry decision.
+
 ## Current slice — Packaged appearance acceptance
 
 The packaged Electron acceptance harness now drives the real Appearance

@@ -11513,6 +11513,25 @@ Evidence:
 Remaining: add verified tool/file execution and recovery boundaries, then
 continue through the remaining product gaps and overflow acceptance matrix.
 
+## Slice 313 — Reconcile interrupted local tasks on host restart
+
+Status: `implemented_and_smoke_verified`
+
+The Agent Host now reconciles durable task artifacts before entering its ready
+loop. Any task left in `running` state by an interrupted process becomes
+`blocked` with an actionable explanation. The host does not silently retry
+model work, run tools, or release a retained worktree. The smoke harness seeds
+an interrupted task and verifies the recovery state after startup.
+
+Evidence:
+
+- Agent Host build and protocol smoke passed.
+- Restart recovery is explicit and reviewable through the existing Workbench
+  blocked-task state.
+
+Remaining: add verified tool/file execution and recovery boundaries, then
+continue through the remaining product gaps and overflow acceptance matrix.
+
 ## Slice 309 — Isolate task environment radio groups
 
 Status: `implemented_renderer_typechecked`

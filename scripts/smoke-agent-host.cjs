@@ -18,6 +18,22 @@ const env = {
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
   SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
 };
+const interruptedTaskId = "interrupted-smoke-task";
+fs.writeFileSync(env.SRAI_TASKS_PATH, JSON.stringify([{
+  id: interruptedTaskId,
+  title: "Interrupted smoke task",
+  instruction: "Verify restart recovery.",
+  role: "specialist",
+  status: "running",
+  dependsOn: [],
+  resultSummary: null,
+  artifactLabels: [],
+  worktreePath: null,
+  worktreeBranch: null,
+  worktreeRepositoryRoot: null,
+  createdAtUtc: new Date().toISOString(),
+  updatedAtUtc: new Date().toISOString(),
+}], null, 2));
 const hostOutput = path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
 const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
 const hostArgs = process.platform === "win32" ? ["--stdio"] : [path.join(hostOutput, "ServerRock.AgentHost.dll"), "--stdio"];
@@ -54,6 +70,10 @@ async function run() {
   const health = await request("runtime.health");
   if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
+  const recovered = await request("tasks.list");
+  const interrupted = recovered.result?.find(task => task.id === interruptedTaskId);
+  if (!recovered.ok || interrupted?.status !== "blocked" || !interrupted.resultSummary?.includes("interrupted"))
+    throw new Error("Agent Host did not reconcile an interrupted task after restart.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");
@@ -79,7 +99,8 @@ async function run() {
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
   if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
   const tasks = await request("tasks.list");
-  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow." || !Array.isArray(tasks.result[0].artifactLabels)) throw new Error("tasks.plan persistence round-trip failed.");
+  const plannedTask = tasks.result?.find(task => task.id === planned.result.id);
+  if (!tasks.ok || plannedTask?.title !== "Protocol smoke task" || plannedTask.instruction !== "Review the local task workflow." || !Array.isArray(plannedTask.artifactLabels)) throw new Error("tasks.plan persistence round-trip failed.");
   const queued = await request("tasks.queue", { id: planned.result.id });
   if (!queued.ok || queued.result?.status !== "queued") throw new Error("tasks.queue did not queue the local task.");
   const isolatedModelSettings = await request("settings.save", { endpoint: "http://127.0.0.1:1/v1", model: "protocol-smoke-model", provider: "Ollama" });

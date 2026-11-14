@@ -17,6 +17,10 @@ public static class AgentHostLoop
         using var reader = new StreamReader(input);
         await using var writer = new StreamWriter(output) { AutoFlush = true };
         using var voice = new OsNativeTtsService();
+        // A process can exit after a task has been claimed but before its
+        // durable result is written. Reconcile that state before advertising
+        // the host as ready; never silently resume or re-run local work.
+        CreateTaskStore().ReconcileAfterRestart();
 
         while (!cancellationToken.IsCancellationRequested)
         {
