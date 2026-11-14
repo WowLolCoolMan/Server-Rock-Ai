@@ -190,9 +190,9 @@ function flushPetMessages() {
   for (const event of pendingPetMessages.splice(0)) petWindow.webContents.send("pet:message", event);
 }
 
-function sendPetMessage(text) {
+function sendPetMessage(text, kind = "success") {
   if (!petWindow || petWindow.isDestroyed()) return;
-  const event = { text, at: Date.now() };
+  const event = { text, kind, at: Date.now() };
   if (!petReady) {
     pendingPetMessages.push(event);
     while (pendingPetMessages.length > 3) pendingPetMessages.shift();
@@ -206,8 +206,31 @@ function sendPetMessage(text) {
   petWindow.webContents.send("pet:message", event);
 }
 
+function petTaskLabel(method) {
+  const labels = {
+    "chat.complete": "The local reply",
+    "project.save": "The local project save",
+    "project.file.write": "The reviewed file save",
+    "project.file.undo": "The file restore",
+    "project.command.run": "The local project command",
+    "tasks.plan": "The local task plan",
+    "tasks.queue": "The local task queue",
+    "tasks.retry": "The local task retry",
+    "tasks.cancel": "The local task stop",
+    "scheduled.create": "The local schedule",
+    "scheduled.pause": "The scheduled task pause",
+    "scheduled.resume": "The scheduled task resume",
+    "scheduled.cancel": "The scheduled task cancellation",
+    "scheduled.runNow": "The scheduled task run",
+    "memory.save": "The approved memory note",
+    "image.generate": "The local image workflow",
+  };
+  return labels[method] ?? "The local agent task";
+}
+
 function petCompletionText(method, response) {
-  if (!response?.ok) return null;
+  const task = petTaskLabel(method);
+  if (!response?.ok) return { text: `${task} needs attention. Open Skai for details.`, kind: "error" };
   const messages = {
     "chat.complete": "Finished your local reply.",
     "project.save": "Saved the local project.",
@@ -226,7 +249,8 @@ function petCompletionText(method, response) {
     "memory.save": "Saved the approved memory note.",
     "image.generate": "Finished the local image workflow.",
   };
-  return messages[method] ?? null;
+  const text = messages[method];
+  return text ? { text, kind: "success" } : null;
 }
 
 function createPetWindow() {
@@ -307,7 +331,7 @@ function startAgentHost() {
     pending.delete(message.id);
     clearTimeout(entry.timer);
     const completion = petCompletionText(entry.method, message);
-    if (completion) sendPetMessage(completion);
+    if (completion) sendPetMessage(completion.text, completion.kind);
     entry.resolve(message);
   });
 

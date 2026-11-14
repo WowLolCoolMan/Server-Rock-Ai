@@ -4,6 +4,12 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Percy’s standalone desktop companion now reports both
+  successful and failed local work with short bubbles and matching six-frame
+  success/error sprite states. The transparent always-on-top window remains
+  independently draggable across monitor work areas and preserves its position;
+  packaged smoke and live Electron inspection confirmed the separate surface.
+
 - Current checkpoint — Models, Image Studio, and Marketplace now have
   independent local-catalog feature modules. Their search/filter/readiness
   states remain aligned with the shared shell while each route can evolve

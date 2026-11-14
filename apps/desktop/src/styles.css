@@ -215,9 +215,10 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .pet-window-sprite { width: 128px; height: 128px; background-position: 0 0; background-repeat: no-repeat; background-size: 768px 128px; image-rendering: auto; filter: drop-shadow(0 8px 9px rgba(1, 7, 22, .34)); -webkit-app-region: no-drag; }
 .pet-window-sprite-walk { animation: pet-window-walk 720ms steps(6) infinite; }
 .pet-window-sprite-idle { animation: pet-window-idle 1400ms steps(6) infinite; }
-.pet-window-sprite-success { animation: pet-window-success 900ms steps(6) infinite; }
+.pet-window-sprite-success, .pet-window-sprite-error { animation: pet-window-success 900ms steps(6) infinite; }
 .pet-window-sprite.is-paused { animation-play-state: paused; }
 .pet-window-bubble { position: absolute; right: 10px; bottom: 146px; width: max-content; max-width: 196px; padding: 9px 11px; border: 1px solid rgba(99,217,233,.32); border-radius: 12px 12px 4px 12px; color: #eafcff; background: rgba(12,18,34,.94); box-shadow: 0 10px 24px rgba(0,0,0,.25); font-size: 11px; line-height: 1.35; pointer-events: none; -webkit-app-region: no-drag; }
+.pet-window-bubble-error { border-color: rgba(255,139,139,.48); color: #fff0f0; }
 .pet-window-hide { position: absolute; top: 8px; right: 8px; z-index: 2; width: 20px; height: 20px; padding: 0; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; color: #dce8f6; background: rgba(12,18,34,.78); font-size: 14px; line-height: 1; opacity: 0; -webkit-app-region: no-drag; }
 .pet-window-hide:hover, .pet-window-hide:focus-visible { color: #fff; background: rgba(99,217,233,.24); }
 .pet-window-root:hover .pet-window-hide, .pet-window-hide:focus-visible { opacity: 1; }

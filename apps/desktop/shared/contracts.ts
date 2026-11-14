@@ -100,6 +100,7 @@ export type PetMotionSettings = {
 export type PetCompletionEvent = {
   text: string;
   at: number;
+  kind: "success" | "error";
 };
 
 export interface PetBridge {

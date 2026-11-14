@@ -3,6 +3,47 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 282 — Make Percy completion feedback truthful
+
+Status: `implemented_companion_feedback_packaged_verified`
+
+Percy remains a standalone transparent, always-on-top Electron companion with
+six-frame walk, idle, success, and error strips. Completion events now carry a
+success/error kind: successful local work keeps the celebration strip, while a
+failed local request shows the matching error strip and a short instruction to
+open Skai for details. The bubble remains local-only, position persistence and
+cross-display drag bounds remain native, and no cloud transport was added.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/src/styles.css`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed; walk, idle, success, and error strips were
+  bundled as transparent sprite assets.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed (1115 tracked files).
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; main and Percy targets rendered
+  as separate packaged Electron pages.
+- Live Electron inspection — passed; the separate `Percy · Skai companion`
+  window exposed its draggable companion surface and animated sprite without
+  an opaque page background.
+
+Remaining: continue the active goal's broader UI, routing, and workflow slices;
+the full handoff remains incomplete.
+
 ## Slice 281 — Split the local catalog routes
 
 Status: `implemented_renderer_refactor_live_and_packaged_verified`
