@@ -6,6 +6,8 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), 
 const desktopPackage = JSON.parse(fs.readFileSync(path.join(root, "apps", "desktop", "package.json"), "utf8"));
 const main = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "main.cjs"), "utf8");
 const preload = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "preload.cjs"), "utf8");
+const packageScript = fs.readFileSync(path.join(root, "scripts", "package-electron.cjs"), "utf8");
+const smokeScript = fs.readFileSync(path.join(root, "scripts", "smoke-electron-artifact.cjs"), "utf8");
 
 const failures = [];
 const expect = (condition, message) => { if (!condition) failures.push(message); };
@@ -25,6 +27,11 @@ expect(main.includes("HOST_TIMEOUT"), "Electron bridge must bound pending host r
 expect(main.includes("taskkill") && main.includes("/T"), "Electron shutdown must terminate the full Windows host process tree");
 expect(main.includes("restartAgentHost"), "Electron must restart a timed-out host after resolving pending requests");
 expect(main.includes("timeoutSeconds: chatHostDeadlineSeconds"), "Electron must give chat requests a host-side deadline before the renderer deadline");
+expect(main.includes("packagedRuntime") && main.includes("process.resourcesPath"), "Electron must resolve packaged runtime paths");
+expect(main.includes("packagedHost") && main.includes("ServerRock.AgentHost"), "Electron must launch a bundled Agent Host when packaged");
+expect(packageScript.includes("dotnet\", [\"publish\"") && packageScript.includes("PublishSingleFile=true"), "Electron packaging must publish a self-contained Agent Host");
+expect(packageScript.includes("electronDist") && packageScript.includes("const appRoot = path.join(outputRoot, \"resources\", \"app\")"), "Electron packaging must stage the renderer and runtime files");
+expect(smokeScript.includes("remote-debugging-port") && smokeScript.includes("Settings") && smokeScript.includes("Skai pet"), "Electron packaged smoke must inspect the rendered settings and pet surfaces");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");

@@ -42,6 +42,12 @@ jobs:
       - name: Build Electron renderer
         run: npm run desktop:build
 
+      - name: Stage packaged Electron artifact
+        run: npm run package:electron
+
+      - name: Smoke packaged Electron artifact
+        run: npm run smoke:electron:artifact
+
       - name: Build persistent agent host
         run: npm run agent-host:build
 
