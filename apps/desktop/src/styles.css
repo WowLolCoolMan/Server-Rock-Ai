@@ -290,6 +290,10 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .memory-entry-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: start; justify-content: flex-end; }
 .memory-provenance { display: block; color: var(--skai-color-text-muted); font-size: 10px; }
 @media (max-width: 640px) { .memory-entry-actions { justify-content: flex-start; } }
+.workbench-recovery { display: grid; gap: 6px; padding: 11px 12px; border: 1px solid color-mix(in srgb, var(--skai-color-warning) 28%, var(--skai-color-border)); border-radius: 8px; background: color-mix(in srgb, var(--skai-color-warning) 5%, var(--skai-color-surface-soft)); }
+.workbench-recovery p { margin: 0; color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.45; }
+.workbench-recovery-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.workbench-recovery-actions .ui-button { padding: 7px 9px; font-size: 10px; }
 .ui-empty-icon .nav-icon { width: 18px; height: 18px; }
 .coding-page .page-header-coding-session h2 { font-size: 24px; letter-spacing: -.035em; }
 .coding-page .page-header-coding-session .page-description { max-width: 620px; font-size: 11px; }
