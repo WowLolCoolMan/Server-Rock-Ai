@@ -2,6 +2,21 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Explicit local task execution
+
+The Workbench now exposes a real `Run locally` action for queued tasks. The
+Electron bridge forwards the request through the isolated IPC allowlist to the
+Agent Host, which claims the durable task, sends the task instruction to the
+configured local model endpoint, and persists a completed or failed result.
+The first execution boundary is intentionally narrow: this slice performs
+local model reasoning only and does not claim file edits, shell commands,
+external tools, cloud execution, or approval-gated actions.
+
+The UI reports the queued state as ready for local execution and retains the
+failure summary when the local provider is unavailable. This turns the task
+record from a planning-only surface into an honest executable local workflow
+while leaving tool/file mutation for a separately verified approval slice.
+
 ## Current slice — Packaged appearance acceptance
 
 The packaged Electron acceptance harness now drives the real Appearance

@@ -9,6 +9,8 @@ public static class AgentHostLoop
 {
     private const int ProtocolVersion = 1;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly Dictionary<string, Task> ActiveTaskExecutions = new(StringComparer.Ordinal);
+    private static readonly object ActiveTaskExecutionsGate = new();
 
     public static async Task RunAsync(Stream input, Stream output, CancellationToken cancellationToken = default)
     {
@@ -55,7 +57,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -67,6 +69,7 @@ public static class AgentHostLoop
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
+            "tasks.execute" => StartTaskExecution(request),
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
             "scheduled.list" => ListScheduledTasks(request),
@@ -421,6 +424,60 @@ public static class AgentHostLoop
             status = task.Status,
             updatedAt = task.UpdatedAtUtc,
         });
+    }
+
+    private static AgentResponse StartTaskExecution(AgentRequest request)
+    {
+        var taskId = RequiredBoundedString(request, "id", 128);
+        var task = CreateTaskStore().Get(taskId);
+        if (task.Status != AgentTaskStatuses.Queued)
+            throw new InvalidOperationException($"A task in {task.Status} state must be queued before execution.");
+
+        lock (ActiveTaskExecutionsGate)
+        {
+            if (ActiveTaskExecutions.ContainsKey(taskId))
+                throw new InvalidOperationException("The task is already executing.");
+
+            var execution = Task.Run(() => ExecuteLocalModelTaskAsync(taskId));
+            ActiveTaskExecutions[taskId] = execution;
+            _ = execution.ContinueWith(_ =>
+            {
+                lock (ActiveTaskExecutionsGate) ActiveTaskExecutions.Remove(taskId);
+            }, TaskScheduler.Default);
+        }
+
+        return new(ProtocolVersion, request.Id, true, new { id = taskId, status = AgentTaskStatuses.Running, execution = "local-model" });
+    }
+
+    private static async Task ExecuteLocalModelTaskAsync(string taskId)
+    {
+        var settings = CreateSettingsStore().Load();
+        var executor = new AgentTaskExecutor(CreateTaskStore());
+        await executor.ExecuteAsync(taskId, async (task, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var messages = new[]
+            {
+                new ChatMessage("system", "You are executing a local task for Skai Desktop. Return a concise, truthful result. Do not claim to edit files, run tools, or complete external actions; this execution path currently provides model reasoning only."),
+                new ChatMessage("user", task.Instruction),
+            };
+            var parameters = JsonSerializer.SerializeToElement(new
+            {
+                endpoint = settings.Endpoint,
+                provider = settings.ModelProvider,
+                model = settings.Model,
+                timeoutSeconds = 5,
+                messages,
+            }, JsonOptions);
+            var response = await CompleteChatAsync(new AgentRequest(ProtocolVersion, $"task-{task.Id}", "chat.complete", parameters));
+            if (!response.Ok)
+                throw new InvalidOperationException(response.Error?.Message ?? "The local model could not complete the task.");
+
+            var result = JsonSerializer.SerializeToElement(response.Result, JsonOptions);
+            var content = result.TryGetProperty("content", out var contentValue) ? contentValue.GetString() : null;
+            if (string.IsNullOrWhiteSpace(content)) throw new InvalidOperationException("The local model returned an empty task result.");
+            return new AgentTaskExecutionResult(content.Trim(), ["local-model-response"]);
+        }).ConfigureAwait(false);
     }
 
     private static AgentResponse TransitionTask(AgentRequest request, string operation)

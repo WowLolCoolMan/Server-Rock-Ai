@@ -34,15 +34,16 @@ export function TaskDetails({ task, openByDefault = false }: { task: DesktopTask
   </details>;
 }
 
-export function TaskActions({ task, busyTask, onTransition }: { task: DesktopTask; busyTask: string | null; onTransition: WorkbenchTaskTransition }) {
+export function TaskActions({ task, busyTask, onTransition, onExecute }: { task: DesktopTask; busyTask: string | null; onTransition: WorkbenchTaskTransition; onExecute?: (id: string) => void }) {
   return <div className="task-card-actions">
     {task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}
+    {task.status === "queued" && onExecute && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>Run locally</Button>}
     {(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}
     {task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}
   </div>;
 }
 
-export function WorkbenchTaskDetail({ task, busyTask, onTransition, onNavigate }: { task: DesktopTask; busyTask: string | null; onTransition: WorkbenchTaskTransition; onNavigate: (route: "chat" | "coding") => void }) {
+export function WorkbenchTaskDetail({ task, busyTask, onTransition, onExecute, onNavigate }: { task: DesktopTask; busyTask: string | null; onTransition: WorkbenchTaskTransition; onExecute?: (id: string) => void; onNavigate: (route: "chat" | "coding") => void }) {
   const nextStep = nextStepFor(task.status);
   return <>
     <div className="workbench-detail-heading"><div><p className="section-kicker">SELECTED TASK</p><h3>{task.title}</h3><p>{task.role} · {timeLabel(task.updatedAt)}</p></div><StatusBadge tone={toneFor(task.status)}>{labelFor(task.status)}</StatusBadge></div>
@@ -51,6 +52,6 @@ export function WorkbenchTaskDetail({ task, busyTask, onTransition, onNavigate }
     <div className={`workbench-next-step workbench-next-step-${toneFor(task.status)}`} aria-label="Next task step"><span className="section-kicker">NEXT STEP</span><strong>{nextStep.label}</strong><p>{nextStep.description}</p></div>
     <TaskDetails task={task} openByDefault />
     {task.status === "failed" && <div className="workbench-recovery"><span className="section-kicker">CONTINUE LOCALLY</span><p>Start a fresh local plan with this brief and the previous result already included. The host does not expose failed-task retry.</p><div className="workbench-recovery-actions"><Button variant="secondary" onClick={() => { stageTaskForChat(task); onNavigate("chat"); }}>Re-plan in Chat</Button><Button variant="ghost" onClick={() => onNavigate("coding")}>Open Coding</Button></div></div>}
-    <TaskActions task={task} busyTask={busyTask} onTransition={onTransition} />
+    <TaskActions task={task} busyTask={busyTask} onTransition={onTransition} onExecute={onExecute} />
   </>;
 }

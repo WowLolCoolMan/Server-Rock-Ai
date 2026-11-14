@@ -11472,6 +11472,47 @@ Evidence:
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
 
+## Slice 312 — Execute queued tasks through the local model boundary
+
+Status: `implemented_and_smoke_verified`
+
+Queued Workbench tasks now have an explicit `Run locally` action. The isolated
+Electron bridge exposes `tasks.execute`, and the Agent Host claims the durable
+task before running a background local-model request. Success and failure are
+persisted back to the task artifact store, so a provider outage is visible as a
+failed task rather than an untruthful success state.
+
+This slice deliberately executes local model reasoning only. It does not
+pretend that a model response performed file edits, shell commands, external
+tools, or cloud work; those actions require their own approval and verification
+boundary.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskExecutor.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/features/agents/WorkbenchTaskDetails.tsx`
+- `apps/desktop/src/features/agents/WorkbenchTaskViews.tsx`
+- `apps/desktop/src/features/agents/workbenchPresentation.ts`
+- `scripts/smoke-agent-host.cjs`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Agent Host build passed.
+- Agent Host smoke verified the request, background execution, and durable
+  failure result against an intentionally unavailable local endpoint.
+- Renderer typecheck passed.
+
+Remaining: add verified tool/file execution and recovery boundaries, then
+continue through the remaining product gaps and overflow acceptance matrix.
+
 ## Slice 309 — Isolate task environment radio groups
 
 Status: `implemented_renderer_typechecked`

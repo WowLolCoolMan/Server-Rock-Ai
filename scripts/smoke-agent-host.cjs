@@ -52,7 +52,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
@@ -80,6 +80,21 @@ async function run() {
   if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
   const tasks = await request("tasks.list");
   if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow." || !Array.isArray(tasks.result[0].artifactLabels)) throw new Error("tasks.plan persistence round-trip failed.");
+  const queued = await request("tasks.queue", { id: planned.result.id });
+  if (!queued.ok || queued.result?.status !== "queued") throw new Error("tasks.queue did not queue the local task.");
+  const isolatedModelSettings = await request("settings.save", { endpoint: "http://127.0.0.1:1/v1", model: "protocol-smoke-model", provider: "Ollama" });
+  if (!isolatedModelSettings.ok) throw new Error("settings.save could not prepare the isolated task execution endpoint.");
+  const execution = await request("tasks.execute", { id: planned.result.id });
+  if (!execution.ok || execution.result?.status !== "running") throw new Error("tasks.execute did not start a background local execution.");
+  let terminalTask = null;
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const snapshot = await request("tasks.list");
+    if (!snapshot.ok) throw new Error("tasks.list failed while observing local execution.");
+    terminalTask = snapshot.result.find(item => item.id === planned.result.id) ?? null;
+    if (terminalTask && ["completed", "failed", "cancelled", "blocked"].includes(terminalTask.status)) break;
+  }
+  if (!terminalTask || terminalTask.status !== "failed" || !terminalTask.resultSummary) throw new Error("tasks.execute did not persist a terminal local-model failure.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
   if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
   const scheduled = await request("scheduled.create", { prompt: "Run the local review", dueAt: new Date(Date.now() + 60_000).toISOString(), repeatEveryMinutes: 60 });

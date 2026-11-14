@@ -24,9 +24,9 @@ export function WorkbenchTaskList({ tasks, totalTasks, title, selectedTaskId, or
   </Card>;
 }
 
-export function WorkbenchTaskBoard({ tasks, busyTask, onTransition }: { tasks: DesktopTask[]; busyTask: string | null; onTransition: WorkbenchTaskTransition }) {
+export function WorkbenchTaskBoard({ tasks, busyTask, onTransition, onExecute }: { tasks: DesktopTask[]; busyTask: string | null; onTransition: WorkbenchTaskTransition; onExecute?: (id: string) => void }) {
   return <div className="workbench-board">{workbenchGroups.map((group) => {
     const items = tasks.filter((task) => task.status === group.key);
-    return <Card className="task-column" key={group.key}><div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}><strong>{task.title}</strong><span>{task.role}</span>{task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}{task.resultSummary && <p>{task.resultSummary}</p>}<small className="task-updated">{timeLabel(task.updatedAt)}</small><StatusBadge tone={toneFor(task.status)}>{labelFor(task.status)}</StatusBadge><TaskDetails task={task} /><TaskActions task={task} busyTask={busyTask} onTransition={onTransition} /></article>)}</Card>;
+    return <Card className="task-column" key={group.key}><div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}><strong>{task.title}</strong><span>{task.role}</span>{task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}{task.resultSummary && <p>{task.resultSummary}</p>}<small className="task-updated">{timeLabel(task.updatedAt)}</small><StatusBadge tone={toneFor(task.status)}>{labelFor(task.status)}</StatusBadge><TaskDetails task={task} /><TaskActions task={task} busyTask={busyTask} onTransition={onTransition} onExecute={onExecute} /></article>)}</Card>;
   })}</div>;
 }

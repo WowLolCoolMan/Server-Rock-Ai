@@ -168,8 +168,27 @@ public sealed class AgentTaskArtifactStore
         var task = tasks.Where(item => IsReady(item, tasks))
             .OrderBy(item => item.CreatedAtUtc).FirstOrDefault();
         if (task is null) return null;
+        return Claim(tasks, task, current);
+    }
+
+    /// <summary>Claims one specific dependency-ready queued task for explicit execution.</summary>
+    public AgentTaskArtifact TryClaim(string id, DateTimeOffset? now = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Queued)
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be executed.");
+        if (!IsReady(task, tasks))
+            throw new InvalidOperationException("The task is waiting for a dependency to complete.");
+        return Claim(tasks, task, now ?? DateTimeOffset.UtcNow);
+    }
+
+    private AgentTaskArtifact Claim(List<AgentTaskArtifact> tasks, AgentTaskArtifact task, DateTimeOffset now)
+    {
         task.Status = AgentTaskStatuses.Running;
-        task.UpdatedAtUtc = current;
+        task.UpdatedAtUtc = now;
         Save(tasks);
         return Copy(task);
     }

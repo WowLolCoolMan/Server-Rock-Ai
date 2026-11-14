@@ -230,6 +230,7 @@ function petTaskLabel(method) {
     "project.command.run": "The local project command",
     "tasks.plan": "The local task plan",
     "tasks.queue": "The local task queue",
+    "tasks.execute": "The local task execution",
     "tasks.retry": "The local task retry",
     "tasks.cancel": "The local task stop",
     "scheduled.create": "The local schedule",
@@ -255,6 +256,7 @@ function petCompletionText(method, response) {
     "project.command.run": "Finished the local project command.",
     "tasks.plan": "Created a local task plan.",
     "tasks.queue": "Queued the local task.",
+    "tasks.execute": "Started the local task execution.",
     "tasks.retry": "Retried the local task.",
     "tasks.cancel": "Stopped the local task.",
     "scheduled.create": "Scheduled the local task for review.",
@@ -322,7 +324,7 @@ function createPetWindow() {
 }
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
-  "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
+  "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
   "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop",
   "workspace.pickFolder",
 ]);

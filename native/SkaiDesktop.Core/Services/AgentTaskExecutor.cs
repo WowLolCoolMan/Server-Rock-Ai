@@ -20,6 +20,25 @@ public sealed class AgentTaskExecutor
         ArgumentNullException.ThrowIfNull(handler);
         var task = _store.TryClaimReady();
         if (task is null) return null;
+        return await ExecuteClaimedAsync(task, handler, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AgentTaskArtifact> ExecuteAsync(
+        string taskId,
+        Func<AgentTaskArtifact, CancellationToken, Task<AgentTaskExecutionResult>> handler,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+        ArgumentNullException.ThrowIfNull(handler);
+        var task = _store.TryClaim(taskId);
+        return await ExecuteClaimedAsync(task, handler, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<AgentTaskArtifact> ExecuteClaimedAsync(
+        AgentTaskArtifact task,
+        Func<AgentTaskArtifact, CancellationToken, Task<AgentTaskExecutionResult>> handler,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var result = await handler(task, cancellationToken).ConfigureAwait(false);
