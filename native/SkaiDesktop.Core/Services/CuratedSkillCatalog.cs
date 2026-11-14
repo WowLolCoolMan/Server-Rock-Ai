@@ -9,7 +9,7 @@ public sealed record CuratedSkillLane(string Id, string Label, string Query, str
 
 public static class CuratedSkillCatalog
 {
-    public const int MaxResults = 150;
+    public const int MaxResults = 250;
 
     public static IReadOnlyList<CuratedSkillLane> Lanes { get; } =
     [

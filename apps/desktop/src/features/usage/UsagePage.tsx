@@ -4,7 +4,7 @@ import { Button, Card, PageHeader, StatusBadge } from "../../components/ui/Primi
 export function UsagePage({ tasks, scheduled, onNavigate }: { tasks: DesktopTask[]; scheduled: DesktopScheduledTask[]; onNavigate: (route: "workbench") => void }) {
   const completedTasks = tasks.filter((task) => task.status === "completed").length;
   const activeSchedules = scheduled.filter((task) => task.status === "scheduled").length;
-  return <div className="feature-page usage-page">
+  return <div className="feature-page usage-page usage-v4">
     <PageHeader eyebrow="USAGE / ACTIVITY" title="See what Skai knows" description="Local activity records are available here. Provider billing, token counts, and GPU telemetry stay unavailable until a runtime reports them explicitly." actions={<StatusBadge tone="warning">Telemetry partial</StatusBadge>} />
     <div className="usage-hero"><div><p className="section-kicker">LOCAL WORKSPACE</p><h3>Useful signals, no invented numbers</h3><p>Skai only displays measurements returned by the connected runtime or durable local stores. Missing measurements remain visible as unavailable.</p></div><span className="usage-hero-mark">◌</span></div>
     <div className="usage-grid">

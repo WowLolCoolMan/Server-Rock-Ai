@@ -8222,6 +8222,14 @@ live surface was tightened for compact widths and the featured treatment was
 neutralized to match the graphite reference palette. Percy is initialized with
 a safe sidebar-docked position and clamped away from the active workspace.
 
+The host now also ships the reviewed 250-entry authored GitHub inventory from
+`source_material/skill_marketplace_250/catalog_250.json`. Marketplace skill
+search merges those local authored entries with live GitHub lane results and
+keeps remote packages inspect-first; the detail path normalizes authored
+repository/path identifiers before reading the pinned revision and manifest.
+Usage, Settings, Memory, and Terminal received matching neutral graphite
+surface treatment so the reference palette is not limited to the newest routes.
+
 Changed files in this slice:
 
 - `apps/desktop/electron/main.cjs`
@@ -8229,6 +8237,15 @@ Changed files in this slice:
 - `apps/desktop/src/features/catalog/CatalogPages.tsx`
 - `apps/desktop/src/features/chat/ChatPage.tsx`
 - `apps/desktop/src/styles.css`
+- `apps/desktop/src/features/memory/MemoryPage.tsx`
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `apps/desktop/src/features/terminal/TerminalPage.tsx`
+- `apps/desktop/src/features/usage/UsagePage.tsx`
+- `native/SkaiDesktop.Core/Services/AuthoredSkillCatalog.cs`
+- `native/SkaiDesktop.Core/Services/authored-skill-catalog.json`
+- `native/SkaiDesktop.Core/Services/CuratedSkillCatalog.cs`
+- `native/SkaiDesktop.Core/SkaiDesktop.Core.csproj`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
 - `docs/SKAI_PREMIUM_UI_PROGRESS.md`
 - `docs/GOAL_EXECUTION.md`
 

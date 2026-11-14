@@ -442,6 +442,13 @@ marketplace detail column was also tightened for compact workspace widths and
 the featured surface was moved to a neutral graphite treatment instead of a
 purple gradient.
 
+The authored GitHub catalog is now part of the host assembly as a reviewed
+250-entry inventory from the existing marketplace source material. Search
+combines that local authored inventory with live GitHub lane polling, and each
+entry remains inspect-first with immutable revision and manifest checks before
+any local package can be enabled. Usage, Settings, Memory, and Terminal also
+now use the same graphite surface contract as the newer workspaces.
+
 Evidence:
 
 - `npm test` — passed (native core checks).
@@ -453,6 +460,7 @@ Evidence:
 - `npm run audit:future-features` — passed (161 items, 12 sections, 27 checked).
 - `npm run audit:electron-runtime` — passed.
 - `npm run audit:local-only` — passed.
+- Packaged Electron visual evidence: `C:\Users\basic\AppData\Local\Temp\codex-shot-2026-11-14_10-44-34.png` (Usage) and the live Settings route were inspected after restart.
 - `git diff --check` — passed.
 - Reopened the production Electron build and inspected live screenshots and
   accessibility trees for Marketplace and Chat. The marketplace exposed live

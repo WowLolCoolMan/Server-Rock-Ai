@@ -79,7 +79,7 @@ export function SettingsPage(props: SettingsProps) {
   const localRoute = localProviders.has(props.provider);
   const cloudCredentialReady = props.credentialStorageAvailable && props.credentialConfigured;
 
-  return <div className="feature-page settings-page">
+  return <div className="feature-page settings-page settings-v4">
     <PageHeader eyebrow="CONTROL CENTER" title="Settings" description="Everything important is grouped here, with clear labels for what runs on this computer and what needs an online connection." />
     <Card className="settings-window">
       <aside className="settings-nav"><p className="section-kicker">SETTINGS</p><input className="settings-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search settings…" aria-label="Search settings" />{visibleCategories.map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} onClick={() => setActiveCategory(category)} type="button">{category}</button>)}{visibleCategories.length === 0 && <p className="settings-no-results">No categories match.</p>}</aside>

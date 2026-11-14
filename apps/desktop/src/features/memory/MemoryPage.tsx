@@ -53,7 +53,7 @@ export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, o
     if (removed) setPendingRemoveId(null);
   };
 
-  return <div className="feature-page">
+  return <div className="feature-page memory-v4">
     <PageHeader eyebrow="LOCAL MEMORY" title="Review what Skai remembers" description="Only explicitly saved notes are stored. Search, edit, disable, remove, or export them at any time." actions={<Button variant="ghost" onClick={onExport}>Export backup</Button>} />
     <div className="memory-layout">
       <Card className="memory-editor">

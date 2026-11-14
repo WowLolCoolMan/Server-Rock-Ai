@@ -29,6 +29,12 @@ internal static class CatalogTests
             "built-in skills expose explicit read-only permissions");
         Check(SkillCatalogService.Find("missing-skill") is null && SkillCatalogService.Find("RELEASE-READINESS")?.Category == "Delivery",
             "skill catalog lookup is case-insensitive and rejects unknown skills");
+        Check(AuthoredSkillCatalog.Entries.Count >= 250 &&
+              AuthoredSkillCatalog.Entries.Select(item => item.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() == AuthoredSkillCatalog.Entries.Count &&
+              AuthoredSkillCatalog.Entries.All(item => item.Url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)),
+            "authored GitHub skill catalog ships 250 unique reviewed entries");
+        Check(AuthoredSkillCatalog.LaneFor(AuthoredSkillCatalog.Entries.First(item => item.Name.Contains("Security", StringComparison.OrdinalIgnoreCase))) == "Security",
+            "authored skill catalog assigns a visible workflow lane");
         var releasePrompt = SkillCatalogService.Find("release-readiness")!.Prompt;
         var expandedReleasePrompt = PromptVariableExpander.Expand(
             releasePrompt,

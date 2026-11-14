@@ -315,6 +315,23 @@ public static class AgentHostLoop
         var lanes = string.IsNullOrWhiteSpace(requestedLane)
             ? CuratedSkillCatalog.Select(query)
             : CuratedSkillCatalog.Lanes.Where(lane => lane.Id.Equals(requestedLane, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (lanes.Count == 0 && query.Length > 0) lanes = CuratedSkillCatalog.Lanes;
+        var authored = AuthoredSkillCatalog.Entries
+            .Where(entry => (string.IsNullOrWhiteSpace(requestedLane) || AuthoredSkillCatalog.LaneFor(entry).Equals(requestedLane, StringComparison.OrdinalIgnoreCase)) &&
+                            (query.Length == 0 || $"{entry.Name} {entry.Description} {entry.Repository} {entry.Path}".Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .Select(entry => new
+            {
+                id = $"{entry.Repository}#{entry.Path}",
+                name = entry.Name,
+                description = entry.Description,
+                stars = 0,
+                url = entry.Url,
+                defaultBranch = "main",
+                lane = AuthoredSkillCatalog.LaneFor(entry),
+                laneDescription = "Authored GitHub catalog entry; inspect before installing.",
+            })
+            .Cast<object>()
+            .ToArray();
         var results = new List<object>();
         using var parallel = new SemaphoreSlim(4, 4);
         var laneResults = await Task.WhenAll(lanes.Select(async lane =>
@@ -344,13 +361,16 @@ public static class AgentHostLoop
             }
             finally { parallel.Release(); }
         }));
-        var unique = laneResults.SelectMany(items => items).GroupBy(item => item.GetType().GetProperty("id")?.GetValue(item)?.ToString(), StringComparer.OrdinalIgnoreCase).Select(group => group.First()).Take(CuratedSkillCatalog.MaxResults).ToArray();
+        var unique = authored.Concat(laneResults.SelectMany(items => items))
+            .GroupBy(item => item.GetType().GetProperty("id")?.GetValue(item)?.ToString(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First()).Take(CuratedSkillCatalog.MaxResults).ToArray();
         return new(ProtocolVersion, request.Id, true, unique);
     }
 
     private static async Task<AgentResponse> InspectMarketplaceSkillAsync(AgentRequest request)
     {
-        var repository = RequiredBoundedString(request, "repository", 200);
+        var requestedRepository = RequiredBoundedString(request, "repository", 220);
+        var repository = requestedRepository.Split('#', 2)[0];
         if (!Regex.IsMatch(repository, "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))
             throw new InvalidOperationException("repository must be an owner/name GitHub repository identifier.");
 
