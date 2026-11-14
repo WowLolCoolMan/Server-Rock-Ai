@@ -8201,6 +8201,28 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 221 — Replace duplicate destination sidebar with project/thread shell
+
+Status: `implemented_build_verified`
+
+The React shell now follows the reference workflow structurally instead of
+keeping the former stacked destination menus. The persistent rail owns Home,
+Image Gen, Usage, Settings, command palette, and profile access. The adjacent
+sidebar owns the local workspace identity, New chat, conversation search,
+expandable projects, project-linked conversations, pinned/recent threads, and
+live background task status. Less-frequent workspaces remain functional from
+the workspace-tools menu and command palette.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Remaining: perform a fresh Electron visual pass at desktop and narrow widths,
+then continue connecting chat, coding, agent activity, Image Gen, and
+Marketplace state through durable host-backed context.
+
 ## Latest UI checkpoint — auxiliary reference routes
 
 Added reachable, production-rendered routes for First-run setup, Permissions,

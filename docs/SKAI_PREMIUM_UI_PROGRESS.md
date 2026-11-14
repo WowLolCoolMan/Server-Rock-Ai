@@ -305,6 +305,30 @@ Evidence:
 - `npm run desktop:typecheck` — passed.
 - `npm run desktop:build` — passed.
 - `git diff --check` — passed.
+
+## Slice — Replace duplicate destination sidebar with project/thread shell
+
+Status: `implemented_build_verified`
+
+The desktop shell now separates navigation responsibilities. The far-left rail
+is reserved for Home, Image Gen, Usage, Settings, command palette, and profile
+access. The adjacent sidebar is project/conversation focused: it contains the
+workspace selector, New chat, conversation search, expandable projects,
+project-linked conversations, pinned/recent sections, and a live background
+task status affordance. Coding, Agent Workbench, Models, Marketplace, Terminal,
+Memory, Voice Studio, Permissions, and First-run setup remain reachable from a
+workspace-tools menu and the command palette without returning to a second
+full-size destination menu.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Remaining: reopen the dev Electron process for a fresh visual pass at desktop
+and narrow widths; the previous live window closed before the rebuilt shell
+could be inspected after HMR.
 - Reopened the production Electron build and inspected the live Image Studio
   accessibility tree and foreground screenshot. The tree exposed the prompt,
   recipe buttons, model/workflow selector, aspect ratio selector, output
