@@ -18,6 +18,7 @@ Skai Desktop brings conversations, local models, project files, guarded terminal
 - **Local chat** with Ollama, LM Studio, LocalAI, llama.cpp, vLLM, and other OpenAI-compatible servers running on this computer.
 - **AirLLM support** for running very large models locally when ordinary local capacity is not enough.
 - **Coding Workspace** with project-scoped folders, file preview and editing, reviewable diffs, guarded terminal commands, undo, and task planning.
+- **Local scheduled automations** with durable prompts, one-time or repeating schedules, pause/resume/cancel controls, and run-now actions; execution remains explicit until the local executor is enabled.
 - **Conversation workspace** with persistent history, attachments, queued follow-ups, Markdown/code rendering, retry, fork, pin, archive, and rename actions.
 - **Local media workflows** through ComfyUI-compatible image generation and supported native voice features.
 - **GitHub project workflows** for repository context and guarded review/commit/push actions. GitHub is a project integration, not a model runtime.
@@ -111,7 +112,7 @@ Useful docs:
 
 ## Current status
 
-The Electron + React + TypeScript surface is the active replacement target and is being advanced through verified UI and runtime slices. The Uno application is retained only as a compatibility surface until the remaining migration gates pass. The project is actively under development; unsupported capabilities should not be assumed to be shipped.
+The Electron + React + TypeScript surface is the active product and is being advanced through verified UI and runtime slices. The current workbench includes local task planning and durable scheduled-automation controls, while the Uno application is retained only as a compatibility surface during migration. The project is actively under development; unsupported capabilities should not be assumed to be shipped.
 
 ## Contributing
 
