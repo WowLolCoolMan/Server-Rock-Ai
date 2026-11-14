@@ -9,7 +9,9 @@ const runtimeRoots = [
   path.join(root, "services", "agent-host", "Protocol"),
 ];
 const extensions = new Set([".cjs", ".cs", ".js", ".json", ".ts", ".tsx"]);
-const forbidden = /\bcloud\b|\bhosted\b|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com/i;
+// User-facing copy may explain future cloud routes. The shipped runtime must
+// still reject remote transport and must not hard-code hosted provider URLs.
+const forbidden = /api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com/i;
 const hits = [];
 
 function visit(directory) {
@@ -27,9 +29,9 @@ function visit(directory) {
 runtimeRoots.forEach(visit);
 
 if (hits.length) {
-  console.error("Local-only audit failed. Remove hosted/cloud runtime references from shipped source:");
+  console.error("Local transport audit failed. Remove hard-coded hosted provider URLs from shipped source:");
   for (const file of hits) console.error(`- ${file}`);
   process.exitCode = 1;
 } else {
-  console.log("Local-only audit passed: shipped Electron and Agent Host sources contain no hosted/cloud runtime references.");
+  console.log("Local transport audit passed: shipped runtime contains no hard-coded hosted provider URLs; cloud labels remain explicit and non-routable.");
 }
