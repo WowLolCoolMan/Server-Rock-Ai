@@ -4,6 +4,11 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Models, Image Studio, and Marketplace now have
+  independent local-catalog feature modules. Their search/filter/readiness
+  states remain aligned with the shared shell while each route can evolve
+  without a cross-page monolith.
+
 - Current checkpoint — Coding Workspace now separates its page shell from the
   active local session. Project switching, file search/tabs, editor/diff review,
   task planning, terminal docking, local persistence, and activity handoff are

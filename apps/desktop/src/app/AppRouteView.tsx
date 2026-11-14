@@ -2,7 +2,9 @@ import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedM
 import type { MemoryEntry, Message, Model, Route, ThemeMode } from "./types";
 import { ChatPage } from "../features/chat/ChatPage";
 import { CodingPage } from "../features/coding/CodingPage";
-import { ImagesPage, MarketplacePage, ModelsPage } from "../features/catalog/CatalogPages";
+import { ImagesPage } from "../features/catalog/ImagesPage";
+import { MarketplacePage } from "../features/catalog/MarketplacePage";
+import { ModelsPage } from "../features/catalog/ModelsPage";
 import { MemoryPage } from "../features/memory/MemoryPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { TerminalPage } from "../features/terminal/TerminalPage";

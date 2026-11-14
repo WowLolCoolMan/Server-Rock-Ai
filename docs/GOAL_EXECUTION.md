@@ -3,6 +3,51 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 281 — Split the local catalog routes
+
+Status: `implemented_renderer_refactor_live_and_packaged_verified`
+
+Models, Image Studio, and Marketplace now have separate feature modules instead
+of sharing one `CatalogPages.tsx` file. Their existing local-only discovery,
+readiness, recipe, voice-preview, filter, and honest unavailable-state behavior
+is unchanged; the route map now imports each workspace directly. A live
+Marketplace inspection confirmed the local catalog hierarchy, filters, selected
+category details, and no-hosted-catalog boundary render together in the rebuilt
+Electron shell.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `apps/desktop/src/features/catalog/ImagesPage.tsx`
+- `apps/desktop/src/features/catalog/MarketplacePage.tsx`
+- `apps/desktop/src/features/catalog/CatalogPages.tsx` (removed)
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm test` — passed the full native Core suite.
+- `npm run package:electron` — passed after installing the Electron binary.
+- `npm run smoke:electron:artifact` — passed; packaged Chat, Settings
+  navigation, and Percy companion surfaces rendered.
+- Live Electron inspection — passed; Marketplace rendered its local catalog,
+  category filters, selected-category detail panel, and bounded status labels.
+- `git diff --check` — passed.
+
+Architecture/UX note: each catalog route now owns its own layout and state
+without introducing a new dependency, remote catalog, or cloud path.
+
+Rollback: restore `CatalogPages.tsx` and its single route import; no persisted
+data or host contracts changed.
+
 ## Slice 279 — Decompose the Agent Workbench into focused views
 
 Status: `implemented_renderer_refactor_build_and_audit_verified`
