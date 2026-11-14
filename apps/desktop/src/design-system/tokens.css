@@ -28,6 +28,17 @@
   --skai-color-accent: #63d9e9;
   --skai-color-accent-strong: #26b8d1;
   --skai-color-danger: #ff8d9c;
+  --skai-color-sidebar: #111629;
+  --skai-color-sidebar-text: #c5ccdc;
+  --skai-color-sidebar-strong: #f1f4fb;
+  --skai-color-sidebar-muted: #74809c;
+  --skai-color-sidebar-subtle: #8692ad;
+  --skai-color-sidebar-icon: #8290ae;
+  --skai-color-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --skai-color-sidebar-history-hover: rgba(255, 255, 255, 0.05);
+  --skai-color-sidebar-active: rgba(99, 217, 233, 0.12);
+  --skai-color-sidebar-active-border: rgba(113, 217, 223, 0.25);
+  --skai-color-sidebar-border: rgba(255, 255, 255, 0.09);
   --skai-shadow-panel: 0 24px 80px rgba(0, 0, 0, 0.24);
 }
 
@@ -41,6 +52,17 @@
   --skai-color-border-strong: rgba(24, 35, 60, 0.22);
   --skai-color-text: #18213a;
   --skai-color-text-muted: #5b6680;
+  --skai-color-sidebar: #eef1f6;
+  --skai-color-sidebar-text: #263044;
+  --skai-color-sidebar-strong: #18213a;
+  --skai-color-sidebar-muted: #66748b;
+  --skai-color-sidebar-subtle: #61708a;
+  --skai-color-sidebar-icon: #61718b;
+  --skai-color-sidebar-hover: rgba(24, 33, 58, 0.06);
+  --skai-color-sidebar-history-hover: rgba(24, 33, 58, 0.05);
+  --skai-color-sidebar-active: rgba(39, 145, 154, 0.12);
+  --skai-color-sidebar-active-border: rgba(39, 145, 154, 0.28);
+  --skai-color-sidebar-border: rgba(24, 33, 58, 0.12);
   --skai-shadow-panel: 0 24px 80px rgba(28, 42, 72, 0.12);
 }
 
@@ -54,6 +76,17 @@
     --skai-color-border: rgba(24, 35, 60, 0.14);
     --skai-color-text: #18213a;
     --skai-color-text-muted: #5b6680;
+    --skai-color-sidebar: #eef1f6;
+    --skai-color-sidebar-text: #263044;
+    --skai-color-sidebar-strong: #18213a;
+    --skai-color-sidebar-muted: #66748b;
+    --skai-color-sidebar-subtle: #61708a;
+    --skai-color-sidebar-icon: #61718b;
+    --skai-color-sidebar-hover: rgba(24, 33, 58, 0.06);
+    --skai-color-sidebar-history-hover: rgba(24, 33, 58, 0.05);
+    --skai-color-sidebar-active: rgba(39, 145, 154, 0.12);
+    --skai-color-sidebar-active-border: rgba(39, 145, 154, 0.28);
+    --skai-color-sidebar-border: rgba(24, 33, 58, 0.12);
     --skai-shadow-panel: 0 24px 80px rgba(28, 42, 72, 0.12);
   }
 }
