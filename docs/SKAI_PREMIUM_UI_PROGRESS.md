@@ -314,3 +314,26 @@ Evidence:
 Remaining: durable image job/history storage and a live ComfyUI generation
 acceptance run still require a configured local image runtime; the UI does not
 claim either capability without host evidence.
+
+## Slice — Add honest agent lifecycle metrics
+
+Status: `implemented_build_visual_verified`
+
+The Agent Workbench now follows the reference hierarchy with four summary
+tiles—Queued, Awaiting approval, In progress, and Completed—derived directly
+from the durable task records. The existing list/board views, selected-task
+details, task actions, and scheduled-run controls remain intact. Empty states
+describe the actual host-backed state instead of using example counts.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+- Reopened the production Electron build and visually inspected the live Agent
+  Workbench accessibility tree and foreground screenshot, including real task
+  records and the new four-tile summary.
+
+Remaining: approval controls are still constrained by the current host contract;
+the workbench correctly keeps unsupported approval actions informational rather
+than implying execution.

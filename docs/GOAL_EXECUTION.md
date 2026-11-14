@@ -8247,6 +8247,23 @@ Remaining: the broader objective remains active; live ComfyUI generation,
 durable image history, responsive captures at all required widths, and the
 remaining workspace audits still need completion.
 
+## Slice — Add honest agent lifecycle metrics
+
+Status: `implemented_build_visual_verified`
+
+Workbench now surfaces reference-aligned lifecycle summary cards from the
+actual `DesktopTask` collection: proposed/queued work, awaiting approval,
+running work, and completed results. Existing task detail, list/board modes,
+scheduled automation, and guarded transitions were preserved.
+
+Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
+`git diff --check` passed. The rebuilt Electron app was opened on `/workbench`
+and visually inspected live; the accessibility tree exposed the four metrics
+and the foreground screenshot showed them above the task activity/detail split.
+
+Remaining: host-backed approval controls, full responsive capture coverage,
+and the remaining workspace/packaged-runtime acceptance work are still open.
+
 ## Slice — Immutable GitHub skill inspection
 
 Status: `implemented_build_smoke_verified`
