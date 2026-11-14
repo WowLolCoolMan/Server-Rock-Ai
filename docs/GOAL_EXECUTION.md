@@ -11393,3 +11393,32 @@ Evidence:
 
 Remaining: continue live coding interaction coverage and the remaining shared
 overlay focus slices; the overall premium rebuild remains active.
+
+## Slice 305 — Make local model discovery stateful
+
+Status: `implemented_renderer_typechecked`
+
+Model discovery now returns a real success/failure promise from the local
+workspace coordinator. The Models route uses that result to keep discovery
+buttons disabled during the request and labels the active operation
+`Discovering…`, preventing duplicate local provider calls. Settings accepts
+the same typed action without adding a second discovery path.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The coordinator returns `false` for invalid or failed local requests and
+  clears the shared error only after a successful response.
+- Renderer typecheck and production build are the acceptance gate for this
+  renderer-only interaction slice.
+
+Remaining: continue the remaining local utility and overlay interaction
+slices; the comprehensive premium rebuild remains active.

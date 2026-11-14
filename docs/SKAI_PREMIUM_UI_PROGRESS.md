@@ -47,6 +47,10 @@ Open-file tabs now use roving focus with ArrowLeft/ArrowRight and Home/End,
 retain a single active tab stop, and expose the editor relationship through
 `aria-controls`.
 
+Local model discovery now preserves its real asynchronous result through the
+workspace action. The Models surface disables duplicate requests and reports
+`Discovering…` until the local provider responds.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

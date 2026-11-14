@@ -59,7 +59,7 @@ type SettingsProps = {
   imageWorkflow: string;
   onChange: (key: string, value: string | boolean) => void;
   onSave: () => Promise<boolean>;
-  onDiscoverModels: () => void;
+  onDiscoverModels: () => void | Promise<boolean>;
   onImageChange: (key: "endpoint" | "prompt" | "workflow", value: string) => void;
   onExportMemory: () => void;
 };
