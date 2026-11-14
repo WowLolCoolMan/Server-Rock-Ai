@@ -42,6 +42,11 @@ internal static class AgentTaskArtifactTests
             Check(reloaded.Any(task => task.Id == second.Id && task.Status == AgentTaskStatuses.Failed), "failed agent task artifacts persist their terminal status");
             Check(store.Search("verifier").Count == 1, "agent task search matches role metadata");
             var executor = new AgentTaskExecutor(store);
+            var explicitClaimPlan = store.Create("Explicitly claim review", "Claim one selected task for a local run.");
+            store.Queue(explicitClaimPlan.Id);
+            var explicitlyClaimed = store.TryClaim(explicitClaimPlan.Id);
+            Check(explicitlyClaimed.Status == AgentTaskStatuses.Running, "a specific queued agent task can be claimed for an explicit local run");
+            store.Fail(explicitClaimPlan.Id, "Reset explicit claim fixture.");
             var completedPlan = store.Create("Execute bounded review", "Run an injected review handler.");
             store.Queue(completedPlan.Id);
             var completed = await executor.ExecuteNextAsync((task, _) => Task.FromResult(new AgentTaskExecutionResult($"Completed {task.Title}.", ["handler-result"])));

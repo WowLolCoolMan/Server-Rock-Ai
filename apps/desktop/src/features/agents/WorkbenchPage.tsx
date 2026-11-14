@@ -51,11 +51,12 @@ type WorkbenchPageProps = {
   onNavigate: (route: "chat" | "coding") => void;
   onRetry: () => void;
   onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
+  onExecute: (id: string) => void;
   onSchedule: (draft: ScheduledTaskDraft) => Promise<boolean>;
   onScheduledTransition: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
 };
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onExecute, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
@@ -91,7 +92,7 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, sele
     document.getElementById(`workbench-task-${nextId}`)?.focus();
   };
 
-  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
+  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{task.status === "queued" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>{busyTask === task.id ? "Running…" : "Run locally"}</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
 
   const queuedCount = tasks.filter((task) => task.status === "proposed" || task.status === "queued").length;
   const awaitingApprovalCount = tasks.filter((task) => task.status === "awaiting_approval").length;

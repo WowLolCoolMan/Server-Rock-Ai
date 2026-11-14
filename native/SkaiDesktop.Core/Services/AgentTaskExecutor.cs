@@ -36,6 +36,31 @@ public sealed class AgentTaskExecutor
         }
     }
 
+    /// <summary>Executes one explicitly selected queued task through the injected handler.</summary>
+    public async Task<AgentTaskArtifact> ExecuteAsync(
+        string taskId,
+        Func<AgentTaskArtifact, CancellationToken, Task<AgentTaskExecutionResult>> handler,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+        ArgumentNullException.ThrowIfNull(handler);
+        var task = _store.TryClaim(taskId);
+        try
+        {
+            var result = await handler(task, cancellationToken).ConfigureAwait(false);
+            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return _store.Cancel(task.Id, "Execution was cancelled before the handler completed.");
+        }
+        catch (Exception error)
+        {
+            var summary = string.IsNullOrWhiteSpace(error.Message) ? "The task handler failed." : error.Message;
+            return _store.Fail(task.Id, summary);
+        }
+    }
+
     /// <summary>
     /// Claims one task, creates a sibling Git worktree, persists the lease, and
     /// invokes the injected handler with that isolated target. The worktree is

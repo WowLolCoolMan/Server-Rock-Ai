@@ -10216,3 +10216,20 @@ header values is affected.
 Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
+## Slice — Execute queued local agent tasks
+
+The Electron workbench now connects its queued-task action to a host-backed
+local model execution contract. `tasks.execute` claims one explicit queued
+task only when its dependencies are complete, sends a bounded read-only task
+brief to the configured local model, and records the result in the durable
+agent-task artifact store. The UI exposes `Run locally` for queued tasks and
+refreshes the task lifecycle after completion or failure.
+
+This is intentionally not a hidden coding agent: no file writes, terminal
+commands, network search, or remote model routing occur in this path. The
+existing reviewed workspace write, command, workflow approval, and worktree
+contracts remain the next boundary to connect.
+
+Evidence: `npm test`, `npm run desktop:typecheck`, and
+`dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore`
+passed after implementation.

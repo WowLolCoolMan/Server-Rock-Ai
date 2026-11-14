@@ -65,6 +65,7 @@ export type DesktopTask = {
   resultSummary?: string | null;
   dependsOn: string[];
   updatedAt: string;
+  artifactLabels?: string[];
 };
 
 export type TaskEnvironment = "local" | "worktree";

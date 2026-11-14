@@ -528,3 +528,29 @@ content stays behind the existing provider and local-route consent boundary.
 Remaining: streamed source cards and full task/tool execution parity are still
 separate migration slices; this change does not pretend web pages were opened
 or tools were executed.
+
+## Slice — Make queued agent tasks executable
+
+Status: `implemented_host_renderer_build_tests`
+
+The Agent Workbench now has a real local execution path for queued tasks. A
+user can queue a plan and choose `Run locally`; the Agent Host claims the
+specific dependency-ready task, sends its bounded instruction to the selected
+local model, and durably records a completed or failed result with provenance
+labels. The path is deliberately read-only with respect to project files and
+commands: model output can propose work, while existing reviewed write and
+terminal contracts remain separate approval boundaries.
+
+The execution contract is exposed through `tasks.execute`, shown in runtime
+capabilities, and rendered as an actionable workbench control. Local endpoint
+enforcement prevents an agent task from silently switching to a remote route.
+
+Evidence:
+
+- `npm test` — passed.
+- `npm run desktop:typecheck` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+
+Remaining: connect task execution to the durable workflow approval graph and
+reviewed worktree-backed file changes before the workbench can execute coding
+edits or terminal actions.

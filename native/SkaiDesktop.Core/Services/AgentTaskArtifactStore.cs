@@ -138,6 +138,21 @@ public sealed class AgentTaskArtifactStore
             .FirstOrDefault();
     }
 
+    /// <summary>Claims one specific queued task when all of its dependencies are complete.</summary>
+    public AgentTaskArtifact TryClaim(string id, DateTimeOffset? now = null)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (!IsReady(task, tasks))
+            throw new InvalidOperationException(task.Status == AgentTaskStatuses.Queued
+                ? "This task is waiting for its dependencies to complete."
+                : $"A task in {task.Status} state cannot be executed.");
+        task.Status = AgentTaskStatuses.Running;
+        task.UpdatedAtUtc = now ?? DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     /// <summary>
     /// Reconciles tasks that were running when the process stopped. This is a
     /// local metadata transition only: it does not retry handlers, release
