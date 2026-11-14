@@ -49,6 +49,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
 
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
+    if (["OpenAI API", "ChatGPT", "Custom"].includes(provider)) { onError("This cloud provider is not connected in the current release. Choose Local models in Settings."); return; }
     stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null);
@@ -63,6 +64,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
 
   const retryMessage = async (messageIndex: number) => {
     if (busy || !conversationId) return;
+    if (["OpenAI API", "ChatGPT", "Custom"].includes(provider)) { onError("This cloud provider is not connected in the current release. Choose Local models in Settings."); return; }
     const originalMessages = messages;
     const prefix = messages.slice(0, messageIndex);
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
