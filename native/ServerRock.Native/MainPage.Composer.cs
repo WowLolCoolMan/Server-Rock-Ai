@@ -297,20 +297,24 @@ public sealed partial class MainPage
         if (_isTemporaryChat)
         {
             PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
-                ? local ? "Temporary chat is not saved. Selected project files still go to this on-device model."
-                    : "Temporary chat is not saved. Selected project files still go to the configured remote model."
-                : _settings.WebSearchEnabled
+                ? local ? "Temporary chat is not saved. Selected project files stay on this device."
+                    : "Temporary chat is not saved. Connect a model server on this computer before sending."
+                : !local
+                    ? "Temporary chat is not saved. Connect a model server on this computer before sending."
+                    : _settings.WebSearchEnabled
                     ? $"Temporary chat is not saved. Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model."
-                    : local ? $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the on-device model."
-                        : $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} go to the configured remote model.";
+                    : local ? $"Temporary chat is not saved. Prompts, attached files{(projectFiles ? " and selected project files" : "")} stay on this device."
+                        : "Temporary chat is not saved. Connect a model server on this computer before sending.";
             return;
         }
         PrivacyFootnote.Text = _mode == WorkspaceModes.CodingAgent
-            ? local ? "Only files in your selected folders are sent to this on-device model." : "Files from your selected folders are sent to the configured remote model server."
-            : _settings.WebSearchEnabled
+            ? local ? "Only files in your selected folders are sent to this on-device model." : "Connect a model server on this computer before sending project files."
+            : !local
+                ? "Connect a model server on this computer before sending. Web search is off."
+                : _settings.WebSearchEnabled
                 ? $"Search queries go to DuckDuckGo. Results and your prompt{(projectFiles ? ", plus selected project files," : "")} go to the selected model server."
                 : local ? $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the on-device model. Web search is off."
-                    : $"Your prompt{(projectFiles ? " and selected project files go" : " goes")} to the configured remote model server. Web search is off.";
+                    : "Connect a model server on this computer before sending. Web search is off.";
     }
 
     private void UpdateDocumentsOnlyControls()

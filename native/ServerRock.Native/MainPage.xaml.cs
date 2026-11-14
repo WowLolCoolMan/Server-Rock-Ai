@@ -24,7 +24,7 @@ public sealed partial class MainPage : Page
     private readonly List<ChatMessage> _messages = [];
     private readonly OpenAiCompatibleProvider _provider;
     private readonly AirLlmProvider _airLlmProvider;
-    // OpenRouter keys are session-only; they are never written to settings.json.
+    // Local server tokens are session-only; they are never written to settings.json.
     private string _providerApiKey = string.Empty;
     private readonly ModelLibraryService _modelLibrary;
     private readonly ComfyImageProvider _comfyImageProvider;
@@ -42,9 +42,6 @@ public sealed partial class MainPage : Page
     private readonly WorkflowRunService _workflowRunService;
     private readonly LocalProjectHealthAnalyzer _localHealthAnalyzer;
     private readonly CompanionStateStore _companionStore;
-    private readonly HashSet<string> _remoteProjectConsent = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _remoteAttachmentConsent = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _remoteModelComparisonConsent = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ChatAttachment> _pendingAttachments = [];
     private readonly WorkspaceAttachmentDraftStore _attachmentDraftStore;
     private readonly ChatMessageQueue _messageQueue = new();

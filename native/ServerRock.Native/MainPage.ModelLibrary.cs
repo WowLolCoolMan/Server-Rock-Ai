@@ -35,9 +35,7 @@ public sealed partial class MainPage
             ? "Very large model · local"
             : LocalEndpoint.IsLocal(endpoint)
                 ? "Model on this computer"
-                : provider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase) || provider.Equals("Hosted model", StringComparison.OrdinalIgnoreCase)
-                    ? "Hosted model service"
-                    : "Connected model service";
+                : "Unavailable · non-local route";
 
     private async void ModelClick(object sender, RoutedEventArgs e)
     {
@@ -103,7 +101,7 @@ public sealed partial class MainPage
             selections.Children.Add(check);
             checks.Add((model, check));
         }
-        var note = new TextBlock { Text = "Only this plain-text prompt is compared. Attachments, saved memory, project files, and web results are not included. Remote endpoints require confirmation before sending.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
+        var note = new TextBlock { Text = "Only this plain-text prompt is compared. Attachments, saved memory, project files, and web results are not included. All selected models must be running on this computer.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
         var dialog = new ContentDialog { Title = "Compare pinned models", Content = new StackPanel { Spacing = 10, Children = { prompt, selections, note } }, PrimaryButtonText = "Compare", CloseButtonText = "Cancel", XamlRoot = XamlRoot };
         dialog.Opened += (_, _) => prompt.Focus(FocusState.Programmatic);
         ModelComparisonPlan? plan = null;
@@ -113,22 +111,6 @@ public sealed partial class MainPage
             catch (ArgumentException ex) { RuntimeStatus.Text = ex.Message; args.Cancel = true; }
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary || plan is null) return;
-
-        var remote = plan.Models.Where(model => !LocalEndpoint.IsLocal(model.Endpoint)).ToArray();
-        var remoteConsentKey = string.Join("\n", remote.Select(model => model.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value, StringComparer.OrdinalIgnoreCase)) + "\n" + plan.Prompt;
-        if (remote.Length > 0 && !_remoteModelComparisonConsent.Contains(remoteConsentKey))
-        {
-            var consent = new ContentDialog
-            {
-                Title = "Send comparison prompt to remote models?",
-                Content = new TextBlock { Text = $"This prompt will be sent to {remote.Length} remote pinned model endpoint(s):\n\n{string.Join("\n", remote.Select(model => model.Endpoint).Distinct(StringComparer.OrdinalIgnoreCase))}\n\nNo attachments, project files, memory, or web results will be included.", TextWrapping = TextWrapping.Wrap },
-                PrimaryButtonText = "Continue",
-                CloseButtonText = "Cancel",
-                XamlRoot = XamlRoot
-            };
-            if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
-            _remoteModelComparisonConsent.Add(remoteConsentKey);
-        }
 
         RuntimeStatus.Text = $"Comparing {plan.Models.Count} pinned models…";
         var results = await Task.WhenAll(plan.Models.Select(model => CompareOneModelAsync(plan.Prompt, model)));
@@ -739,9 +721,10 @@ public sealed partial class MainPage
     {
         var local = LocalEndpoint.IsLocal(_settings.Endpoint);
         if (!_providerConnected) return "● Model not connected";
-        if (_mode == WorkspaceModes.CodingAgent) return local ? "● Project context stays on device" : "● Project files go to remote model";
-        if (_includeProjectFilesInChat) return local ? "● Prompt + selected project files stay on device" : "● Project excerpts go to remote model";
-        return local ? "● On-device model" : "● Remote model server";
+        if (!local) return "● Local model connection unavailable";
+        if (_mode == WorkspaceModes.CodingAgent) return "● Project context stays on device";
+        if (_includeProjectFilesInChat) return "● Prompt + selected project files stay on device";
+        return "● On-device model";
     }
 
     private static string TruncateComposerLabel(string value, int maxLength) =>

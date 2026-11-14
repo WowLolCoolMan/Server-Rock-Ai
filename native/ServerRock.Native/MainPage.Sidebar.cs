@@ -819,7 +819,7 @@ public sealed partial class MainPage
         }
 
         AddSection("Getting started", $"{ProductIdentity.DisplayName} keeps your conversations and workspace state on this device by default. Choose a model in Model Library, review the connection status, then send a prompt from Chat or Coding Agent.");
-        AddSection("Privacy and routing", "The composer shows whether the selected endpoint is on-device. Web search, remote endpoints, memory injection, and attachments are opt-in surfaces. Review the provider, model, and privacy label before sending.");
+        AddSection("Privacy and routing", "The composer shows whether the selected model is on this computer. Web search, memory injection, and attachments are opt-in surfaces. Review the model and privacy label before sending.");
         AddSection("Review-first actions", "Files, shell commands, Git changes, workflow steps, scheduled prompts, and agent task plans expose a review or approval step. A preview or queue action does not automatically send a provider request or run a tool.");
         AddSection("Local data controls", "Use Settings, Memory, Activity & tasks, and chat export to inspect, edit, or back up local state. Exports are explicit and bounded; protected files and secret-like paths are rejected.");
         AddSection("Where to look next", "Use the command palette with Ctrl+K for fast navigation. Open Projects & folders for scoped files, GitHub & source control for repository review, Extensions & skills for local packages, and Images for the local image workflow.");

@@ -58,6 +58,11 @@ internal static class LocalStorageAndWorkspaceTests
             Check(normalizedSettings.Endpoint == "http://localhost:11434/v1" && normalizedSettings.Model == "llama3.2" && normalizedSettings.ModelProvider == "Ollama" &&
                   normalizedSettings.PinnedModels is not null && normalizedSettings.PinnedModelConnections is not null && normalizedSettings.LocalModelPerformance is not null && normalizedSettings.ChatFolders is not null && normalizedSettings.WorkspaceRouteHistory is not null,
                 "nullable settings fields recover to usable native defaults");
+            var legacyRemoteSettingsPath = Path.Combine(settingsDirectory, "legacy-remote-settings.json");
+            File.WriteAllText(legacyRemoteSettingsPath, "{\"endpoint\":\"https://openrouter.ai/api/v1\",\"modelProvider\":\"OpenRouter\",\"model\":\"openrouter/free\",\"requireLocalModelEndpoints\":false}");
+            var migratedSettings = new JsonSettingsStore(legacyRemoteSettingsPath).Load();
+            Check(migratedSettings.Endpoint == "http://localhost:11434/v1" && migratedSettings.ModelProvider == "Ollama" && migratedSettings.RequireLocalModelEndpoints,
+                "legacy hosted settings are reduced to the local-only default before runtime use");
 
             var conversationsPath = Path.Combine(settingsDirectory, "conversations.json");
             var conversationStore = new ConversationStore(conversationsPath);

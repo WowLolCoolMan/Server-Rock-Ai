@@ -21,7 +21,7 @@ public sealed partial class MainPage
 
         var summary = $"{ProductIdentity.ShortName} developer diagnostics\n\n" +
             $"Runtime: {Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}\n" +
-            $"Endpoint class: {(LocalEndpoint.IsLocal(_settings.Endpoint) ? "on-device/local" : "remote or non-local")}\n" +
+            $"Endpoint class: {(LocalEndpoint.IsLocal(_settings.Endpoint) ? "on-device/local" : "invalid/non-local")}\n" +
             $"Selected provider: {_settings.ModelProvider}\n" +
             $"Selected model: {_settings.Model}\n" +
             $"Web search: {(_settings.WebSearchEnabled ? "enabled" : "off")} · memory injection: {(_settings.MemoryInjectionEnabled ? "enabled" : "off")}\n" +

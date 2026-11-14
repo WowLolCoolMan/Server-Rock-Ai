@@ -3,10 +3,10 @@
 <div align="center">
   <img src="assets/branding/skaiwolficon.png" width="128" alt="Skai Desktop icon" />
   <h1>Skai Desktop</h1>
-  <p><strong>A local-first desktop workspace for chat, coding, models, projects, and media.</strong></p>
+<p><strong>A local-first desktop workspace for chat, coding, models, projects, and media.</strong></p>
 </div>
 
-Skai Desktop brings your models, code, files, tools, and conversations into one Windows desktop app. Use local models when you want privacy, connect compatible hosted providers when you need them, and keep project work in the same place as the conversation.
+Skai Desktop brings your models, code, files, tools, and conversations into one Windows desktop app. Local inference is the default: choose a model server already running locally, or use AirLLM for very large models that exceed ordinary local capacity. Cloud services are also first-class when explicitly connected, including OpenAI/ChatGPT, ElevenLabs voice, and other supported provider adapters.
 
 ## Why Skai
 
@@ -22,11 +22,11 @@ Most AI apps are built around a chat box. Skai is built around the work around t
 
 ## What it can do
 
-- Chat with Ollama, LM Studio, LocalAI, llama.cpp, vLLM, and OpenAI-compatible endpoints.
+- Chat with Ollama, LM Studio, LocalAI, llama.cpp, vLLM, and other OpenAI-compatible local servers.
 - Discover and manage local models without leaving the app.
 - Work inside a project with bounded context, a guarded terminal, reviewable file edits, undo history, and GitHub workflows.
 - Attach text, PDFs, and images with local safety checks and size limits.
-- Search the web only when you turn it on.
+- Keep model prompts on this device; optional external integrations are separate from model inference and must be explicitly enabled.
 - Generate images through ComfyUI-compatible workflows.
 - Use voice dictation and optional spoken replies on supported Windows systems.
 - Keep conversations, projects, drafts, personas, and settings on the device.
@@ -63,9 +63,9 @@ Electron + React + TypeScript
         │ typed, sandboxed local IPC
         ▼
 .NET agent host
-        │ sessions · providers · tools · persistence
+        │ sessions · local providers · tools · persistence
         ▼
-Ollama · LM Studio · OpenAI-compatible APIs · ComfyUI · GitHub
+Ollama · LM Studio · AirLLM · OpenAI-compatible local APIs · ComfyUI · GitHub
 ```
 
 See [`docs/ELECTRON_MIGRATION_CUTOVER.md`](docs/ELECTRON_MIGRATION_CUTOVER.md)
@@ -75,7 +75,8 @@ for support details. The Uno surface is retained only until parity gates pass.
 ## Privacy and guardrails
 
 - No background analytics or telemetry.
-- Cloud providers receive only content you explicitly send.
+- Local inference is the default and stays on this computer.
+- Cloud services run only through an explicit provider route and user authorization; they are never selected silently or used as an automatic fallback.
 - Project reads are bounded and exclude common secret/dependency paths.
 - File writes require approval and retain guarded undo history.
 - Credentials use platform storage where supported; they are not kept in normal settings files.

@@ -17,6 +17,18 @@ and acceptance evidence.
 - Move completed items to the implemented state only after the user-facing
   workflow and failure states are verified.
 
+## Current product boundary
+
+Skai Desktop is local-first, with explicit cloud access as a separate route.
+The local path may use a model server already running on this computer or
+AirLLM running locally. Cloud services are first-class through provider
+adapters, including OpenAI/ChatGPT, ElevenLabs voice, and future supported
+model, voice, image, search, and integration services. Local inference must
+never silently fall back to cloud inference, and cloud requests must never
+silently fall back to a local model. Every route needs explicit provider
+selection, auth, data-boundary disclosure, cancellation, and credential
+storage. External integrations such as GitHub remain separate workflows.
+
 ## Core chat
 
 - [x] Multi-model picker supporting any compatible provider.
@@ -61,7 +73,7 @@ and acceptance evidence.
 - [ ] Autonomous open-weight model agent.
 - [ ] Headless/daemon mode for CI and cloud deployment.
 - [ ] Portable local harness with orchestrator, models, tools, and queue.
-- [ ] Hybrid cloud/local compute split.
+- [ ] Hybrid cloud/local compute split (explicit route selection only; never an automatic fallback).
 - [ ] Fully offline local-first agent mode.
 - [ ] Remote device access for controlling a desktop elsewhere.
 
@@ -103,7 +115,7 @@ and acceptance evidence.
 - [ ] Detachable chats in their own windows.
 - [ ] Drag-and-drop pane layouts.
 - [x] Custom themes. (Light/dark palettes plus persisted Deep Sea and Deep Space ambient presets with reduced-motion support.)
-- [ ] Cloud sync across devices.
+- [ ] Cloud sync across devices (separate from model routing; requires a future privacy and account decision).
 - [x] Built-in translator. (Review-first translation through the selected model with explicit composer insertion.)
 - [x] Text snippets with AI expansion. (Bounded local save/insert plus review-first model expansion.)
 - [ ] Window management.
@@ -120,7 +132,7 @@ and acceptance evidence.
 - [ ] Lazy-loaded Markdown instruction-pack skills with `$` mentions.
 - [ ] Local model runner support for Ollama and LM Studio.
 - [ ] Offline-capable operation.
-- [ ] OpenAI-compatible API and personal API keys.
+- [ ] OpenAI-compatible API and personal API keys (local servers plus explicit cloud provider routes).
 - [ ] Plugin and pipeline framework.
 - [ ] Community tool library.
 - [ ] Third-party extensions that provide their own AI models.
@@ -138,7 +150,7 @@ and acceptance evidence.
 - [ ] Continuous batching and parallel requests.
 - [ ] KV-cache checkpointing for agentic workflows.
 - [ ] Specialized inference engines such as Splash.
-- [ ] Per-token cloud pricing.
+- [ ] Per-token cloud pricing and usage visibility for explicit cloud routes.
 - [ ] Open-weight Decisions API for classification and routing.
 
 ## Administration and teams

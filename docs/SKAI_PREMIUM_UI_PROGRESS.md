@@ -48,7 +48,6 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `801f9a1` — persisted the local Coding Workspace terminal dock per project, added a keyboard toggle (`Ctrl/Cmd+J`), and exposed the dock state through `aria-pressed`.
 - `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 - `3f38415` — hardened Electron agent-host supervision with bounded pending requests, host-exit cleanup, and Windows process-tree shutdown, with regression assertions in the Electron audit.
-- `e62a632` — split the Chat surface into independent message, composer, and task-rail components; contained the desktop shell to the window; and verified the composer, route navigation, and responsive geometry in a real Electron renderer.
 - `1c27fae` — added the shared strong-border token used by accessible context menus and compact desktop surfaces.
 
 ## Current evidence

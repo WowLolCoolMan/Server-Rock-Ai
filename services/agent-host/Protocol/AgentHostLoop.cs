@@ -128,7 +128,7 @@ public static class AgentHostLoop
 
     private static AgentResponse ListModels(AgentRequest request)
     {
-        var endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
         var provider = new OpenAiCompatibleProvider();
         var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, OptionalString(request, "apiKey"))
             .GetAwaiter().GetResult();
@@ -162,7 +162,7 @@ public static class AgentHostLoop
 
     private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
     {
-        var endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
         var model = RequiredString(request, "model");
         var timeoutSeconds = OptionalInt(request, "timeoutSeconds") ?? 285;
         if (timeoutSeconds is < 5 or > 285) throw new InvalidOperationException("timeoutSeconds must be between 5 and 285.");
@@ -723,7 +723,10 @@ public static class AgentHostLoop
         var settings = CreateSettingsStore().Load();
         return new(ProtocolVersion, request.Id, true, new
         {
-            endpoint = settings.Endpoint,
+            // A settings file may have been written by the legacy surface before
+            // the local-only policy was introduced. Never echo that stale value
+            // back into the Electron runtime as an apparent usable route.
+            endpoint = LocalEndpoint.IsLocal(settings.Endpoint) ? settings.Endpoint : "http://localhost:11434/v1",
             model = settings.Model,
             provider = settings.ModelProvider,
             themeMode = settings.ThemeMode,
@@ -740,7 +743,7 @@ public static class AgentHostLoop
     {
         var store = CreateSettingsStore();
         var settings = store.Load();
-        settings.Endpoint = RequiredHttpEndpoint(request, "endpoint", 2_000);
+        settings.Endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
         settings.Model = RequiredBoundedString(request, "model", 256);
         if (request.Params is { } parameters)
         {
@@ -775,7 +778,7 @@ public static class AgentHostLoop
 
     private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)
     {
-        var endpoint = RequiredBoundedString(request, "endpoint", 512);
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 512);
         var workflow = RequiredBoundedString(request, "workflow", 1_000_000);
         var prompt = RequiredBoundedString(request, "prompt", 8_000);
         var progress = string.Empty;
@@ -813,7 +816,7 @@ public static class AgentHostLoop
         return value.Trim();
     }
 
-    private static string RequiredHttpEndpoint(AgentRequest request, string name, int maxLength)
+    private static string RequiredLocalEndpoint(AgentRequest request, string name, int maxLength)
     {
         var endpoint = RequiredBoundedString(request, name, maxLength);
         if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)

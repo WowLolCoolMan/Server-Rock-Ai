@@ -151,45 +151,10 @@ public sealed partial class MainPage
             return;
         }
         var includeProjectFiles = _mode == WorkspaceModes.CodingAgent || _mode == WorkspaceModes.Chat && _includeProjectFilesInChat;
-        if (includeProjectFiles && project is not null && project.FolderPaths.Count > 0 && !LocalEndpoint.IsLocal(_settings.Endpoint))
+        if (!LocalEndpoint.IsLocal(_settings.Endpoint))
         {
-            var fileCount = WorkspaceFileContext.ReadSelectedFiles(project.FolderPaths).Count;
-            if (fileCount > 0)
-            {
-                var consentKey = project.Id + "\n" + _settings.Endpoint;
-                if (!_remoteProjectConsent.Contains(consentKey))
-                {
-                    var purpose = _mode == WorkspaceModes.CodingAgent ? "this Coding Agent request" : "this Chat message";
-                    var consent = new ContentDialog
-                    {
-                        Title = "Send project context to a remote model?",
-                        Content = $"The selected model endpoint is {_settings.Endpoint}. {purpose} will send your prompt and up to {fileCount} text-file excerpts from this project's selected folders to that server. Files are not sent to an app service. Continue for this project and endpoint?",
-                        PrimaryButtonText = "Continue",
-                        CloseButtonText = "Cancel",
-                        XamlRoot = XamlRoot
-                    };
-                    if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
-                    _remoteProjectConsent.Add(consentKey);
-                }
-            }
-        }
-        if (_pendingAttachments.Count > 0 && !LocalEndpoint.IsLocal(_settings.Endpoint))
-        {
-            var consentKey = ChatAttachmentPolicy.ConsentKey(_settings.Endpoint, _pendingAttachments);
-            if (!_remoteAttachmentConsent.Contains(consentKey))
-            {
-                var names = string.Join("\n", _pendingAttachments.Select(item => "• " + item.FileName));
-                var consent = new ContentDialog
-                {
-                    Title = "Send selected files to a remote model?",
-                    Content = $"The selected model endpoint is {_settings.Endpoint}. The following selected files will be included with your prompt and sent to that server. Text files and extracted PDF text are sent as text; PNG/JPEG images are sent as image data. Image analysis also requires a vision-capable model and endpoint:\n\n{names}\n\nContinue for this endpoint?",
-                    PrimaryButtonText = "Send these files",
-                    CloseButtonText = "Cancel",
-                    XamlRoot = XamlRoot
-                };
-                if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
-                _remoteAttachmentConsent.Add(consentKey);
-            }
+            RuntimeStatus.Text = "Choose a model server on this computer before sending.";
+            return;
         }
         List<ChatAttachment>? messageAttachments = _pendingAttachments.Count == 0 ? null : [.. _pendingAttachments];
         var editingMessageIndex = _editingMessageIndex;
@@ -231,7 +196,7 @@ public sealed partial class MainPage
                 text,
                 modelProvider: _settings.ModelProvider,
                 model: _settings.Model,
-                endpointPrivacy: LocalEndpoint.IsLocal(_settings.Endpoint) ? "local" : "remote");
+                endpointPrivacy: "local");
             _activeOperationRun = _operationService.RecordProviderAttempt(_activeOperationRun, "started");
         }
         catch (Exception ex)

@@ -50,7 +50,7 @@ public sealed partial class MainPage
         AutomationProperties.SetName(import, "Import saved memory backup");
         AutomationProperties.SetName(remove, "Delete memory");
         AutomationProperties.SetName(allowInjection, "Allow approved memory injection");
-        AutomationProperties.SetHelpText(allowInjection, "Off by default. When enabled, only enabled global or active-project notes are sent with a prompt, including to the selected remote endpoint.");
+        AutomationProperties.SetHelpText(allowInjection, "Off by default. When enabled, only enabled global or active-project notes are sent with a prompt to the selected local model.");
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
 
         void ClearEditor()
@@ -340,8 +340,7 @@ public sealed partial class MainPage
         var connectionMode = new ComboBox { Header = "How should Skai run AI?", MinWidth = 340 };
         connectionMode.Items.Add("Models already on this computer");
         connectionMode.Items.Add("Very large models on this computer");
-        connectionMode.Items.Add("A hosted model service");
-        connectionMode.SelectedIndex = AirLlmProvider.IsAirLlmProvider(_settings.ModelProvider) ? 1 : LocalEndpoint.IsLocal(_settings.Endpoint) ? 0 : 2;
+        connectionMode.SelectedIndex = AirLlmProvider.IsAirLlmProvider(_settings.ModelProvider) ? 1 : 0;
         AutomationProperties.SetName(connectionMode, "How should Skai run AI");
         AutomationProperties.SetHelpText(connectionMode, "Choose the outcome you want. Skai handles the technical provider details for you.");
         var connectionModeHelp = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("MutedInkBrush") };
@@ -352,12 +351,9 @@ public sealed partial class MainPage
         var airLlmCompression = new ComboBox { Header = "AirLLM weight compression", MinWidth = 220 };
         airLlmCompression.Items.Add("None"); airLlmCompression.Items.Add("4-bit"); airLlmCompression.Items.Add("8-bit");
         airLlmCompression.SelectedIndex = _settings.AirLlmCompression.ToLowerInvariant() switch { "4bit" => 1, "8bit" => 2, _ => 0 };
-        var providerKey = new PasswordBox { Header = "Provider API key (session only)", PlaceholderText = "Optional bearer token", Password = _providerApiKey };
-        AutomationProperties.SetName(providerKey, "Provider API key");
-        AutomationProperties.SetHelpText(providerKey, "Optional bearer token for OpenAI-compatible hosted endpoints. The key is used only in memory for this app session and is never saved to settings.");
-        var openRouter = new Button { Content = "Use OpenRouter free models", MinWidth = 190 };
-        AutomationProperties.SetName(openRouter, "Use OpenRouter free models");
-        AutomationProperties.SetHelpText(openRouter, "Set the OpenRouter endpoint and automatic free-model router.");
+        var providerKey = new PasswordBox { Header = "Local server token (session only)", PlaceholderText = "Optional local token", Password = _providerApiKey };
+        AutomationProperties.SetName(providerKey, "Local server token");
+        AutomationProperties.SetHelpText(providerKey, "Only send this token to the selected model server on this computer. It is never saved to settings.");
         var smartRewrite = new CheckBox { Content = "Show a smart prompt rewrite before sending", IsChecked = _settings.SmartPromptRewritingEnabled };
         AutomationProperties.SetName(smartRewrite, "Enable smart prompt rewriting");
         AutomationProperties.SetHelpText(smartRewrite, "Use the selected model to rewrite your draft using the current conversation, then review it before sending.");
@@ -389,13 +385,13 @@ public sealed partial class MainPage
         var promptUserName = new TextBox { Header = "Prompt variable name (optional)", Text = _settings.PromptUserName, PlaceholderText = "Only used by {{USER_NAME}}" };
         AutomationProperties.SetName(promptUserName, "Prompt variable name");
         AutomationProperties.SetHelpText(promptUserName, "Stored locally and used only when a reviewed skill prompt contains {{USER_NAME}}. It is never read from the Windows account automatically.");
-        var localOnly = new CheckBox { Content = "Only allow local model endpoints", IsChecked = _settings.RequireLocalModelEndpoints };
-        AutomationProperties.SetHelpText(localOnly, "When enabled, saving a remote endpoint is rejected. OpenRouter remains available when this is off.");
+        var localOnly = new CheckBox { Content = "Use only local model endpoints (required)", IsChecked = true, IsEnabled = false };
+        AutomationProperties.SetHelpText(localOnly, "Skai keeps model inference on this computer. Only model servers running here are allowed.");
         var showPet = new CheckBox { Content = "Show pet when the app starts", IsChecked = _companionState.IsVisible };
         var petCompletion = new CheckBox { Content = "Let the pet announce completed responses", IsChecked = _companionState.NotifyOnCompletion };
         var petErrors = new CheckBox { Content = "Let the pet announce errors and blocked actions", IsChecked = _companionState.NotifyOnErrors };
         var petQuestions = new CheckBox { Content = "Let the pet ask for approval before risky actions", IsChecked = _companionState.AskBeforeActions };
-        var note = new TextBlock { Text = "AirLLM is built into Skai as a local fallback for models that exceed the normal runtime's memory. It uses a Hugging Face model ID, keeps model layers on local disk, and never sends prompts to a cloud service. OpenRouter remains available separately through the compatible endpoint fields.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        var note = new TextBlock { Text = "AirLLM is built into Skai as a local fallback for models that exceed the normal runtime's memory. It uses a Hugging Face model ID, keeps model layers on local disk, and never sends prompts to a hosted model service.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
         var visionFormat = new ComboBox { Header = "Image API format", MinWidth = 300 };
         visionFormat.Items.Add("Automatic (Ollama at localhost:11434)");
         visionFormat.Items.Add("OpenAI-compatible image_url object");
@@ -492,10 +488,9 @@ public sealed partial class MainPage
             connectionModeHelp.Text = connectionMode.SelectedIndex switch
             {
                 1 => "For models whose full size is too large for ordinary local runtimes. Skai downloads and streams model layers locally through AirLLM; use a Hugging Face model ID such as Qwen/Qwen3-32B.",
-                2 => "For a model service running outside this computer. Your prompt may leave this device, so Skai will show the service and keep the session key in memory only.",
                 _ => "For Ollama, LM Studio, or another model server running on this computer. Skai will discover the models it makes available."
             };
-            airLlmAutoFallback.Visibility = connectionMode.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
+            airLlmAutoFallback.Visibility = Visibility.Visible;
             airLlmPython.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             airLlmCache.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             airLlmCompression.Visibility = connectionMode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -564,7 +559,6 @@ public sealed partial class MainPage
             pageBody.Children.Add(connectionModeHelp);
             pageBody.Children.Add(endpoint);
             pageBody.Children.Add(model);
-            pageBody.Children.Add(openRouter);
             pageBody.Children.Add(providerKey);
             pageBody.Children.Add(airLlmAutoFallback);
             pageBody.Children.Add(airLlmPython);
@@ -613,7 +607,7 @@ public sealed partial class MainPage
             pageBody.Children.Add(MakeSettingsCard("Reviewed prompt variables", "Optionally provide a name for the explicit {{USER_NAME}} variable. Skill prompts remain visible and editable before sending.", promptUserName));
             pageBody.Children.Add(localOnly);
             pageBody.Children.Add(MakeSettingsCard("Current runtime", $"{Environment.OSVersion.Platform} · {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture} · {Environment.Version}", new TextBlock { Text = "Read-only", FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), VerticalAlignment = VerticalAlignment.Center }));
-            pageBody.Children.Add(new TextBlock { Text = "Model endpoint and credentials remain in General. Local-only mode is a safety guard for environments where remote model hosts are not allowed.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 2, 4, 0) });
+            pageBody.Children.Add(new TextBlock { Text = "Model endpoint and local server token remain in General. Skai keeps model inference on this computer.", TextWrapping = TextWrapping.Wrap, FontSize = UiTheme.FontSize("CaptionFontSize"), Foreground = UiTheme.Brush("SubtleInkBrush"), Margin = new Thickness(4, 2, 4, 0) });
         }
 
         void BuildChatsPage()
@@ -781,7 +775,7 @@ public sealed partial class MainPage
         AddSection("General", "connection endpoint model", "General", "Choose which local model server and model the app uses by default.", BuildGeneralPage);
         AddSection("Appearance", "accent color density customize interface", "Appearance", "Tune the workspace colors and spacing for the way you work.", BuildAppearancePage);
         AddSection("Pets", "companion mascot notifications approval", "Pets", "Choose your companion and decide when it should speak up.", BuildPetsPage);
-        AddSection("Host configuration", "device runtime local only safety", "Host configuration", "Name this workspace and control whether remote model endpoints are allowed.", BuildHostPage);
+        AddSection("Host configuration", "device runtime local only safety", "Host configuration", "Name this workspace and review the local-only runtime boundary.", BuildHostPage);
         AddSection("Chats & history", "archive import export conversations", "Chats & history", "Organize, restore, import, and export your local conversations.", BuildChatsPage);
         AddSection("Models & downloads", "installed library benchmark pin", "Models & downloads", "Manage installed models and the models shown in the composer switcher.", BuildModelsPage);
         AddSection("GitHub workspace", "repositories coding agent clone push", "GitHub workspace", "Manage repository access and project setup.", BuildGitHubPage);
@@ -820,13 +814,6 @@ public sealed partial class MainPage
             });
         };
 
-        openRouter.Click += (_, _) =>
-        {
-            endpoint.Text = "https://openrouter.ai/api/v1";
-            model.Text = "openrouter/free";
-            checkStatus.Text = "OpenRouter free-model routing selected. Enter your API key, then check the connection.";
-            providerKey.Focus(FocusState.Programmatic);
-        };
         checkConnection.Click += async (_, _) =>
         {
             if (connectionMode.SelectedIndex == 1)
@@ -889,13 +876,11 @@ public sealed partial class MainPage
             _settings.ModelProvider = connectionMode.SelectedIndex switch
             {
                 1 => "AirLLM",
-                2 when _settings.Endpoint.Contains("openrouter.ai", StringComparison.OrdinalIgnoreCase) => "OpenRouter",
-                2 => "Hosted model",
                 _ when _settings.Endpoint.Contains("11434", StringComparison.OrdinalIgnoreCase) => "Ollama",
                 _ when _settings.Endpoint.Contains("1234", StringComparison.OrdinalIgnoreCase) => "LM Studio",
                 _ => "Local model"
             };
-            _settings.AirLlmAutoFallbackEnabled = connectionMode.SelectedIndex != 2 && airLlmAutoFallback.IsChecked == true;
+            _settings.AirLlmAutoFallbackEnabled = airLlmAutoFallback.IsChecked == true;
             _settings.AirLlmPythonPath = string.IsNullOrWhiteSpace(airLlmPython.Text) ? "python" : airLlmPython.Text.Trim();
             _settings.AirLlmCachePath = string.IsNullOrWhiteSpace(airLlmCache.Text) ? null : airLlmCache.Text.Trim();
             _settings.AirLlmCompression = airLlmCompression.SelectedIndex switch { 1 => "4bit", 2 => "8bit", _ => "none" };
@@ -911,7 +896,7 @@ public sealed partial class MainPage
             _settings.InterfaceDensity = density.SelectedIndex == 1 ? "compact" : "comfortable";
             _settings.HostLabel = string.IsNullOrWhiteSpace(hostLabel.Text) ? "This device" : hostLabel.Text.Trim();
             _settings.PromptUserName = promptUserName.Text.Trim();
-            _settings.RequireLocalModelEndpoints = localOnly.IsChecked == true;
+            _settings.RequireLocalModelEndpoints = true;
             _companionState = _companionState with
             {
                 IsVisible = showPet.IsChecked == true,

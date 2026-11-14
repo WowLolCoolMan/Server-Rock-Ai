@@ -193,7 +193,7 @@ Namespaces: `SkaiDesktop.Core.Models`, `SkaiDesktop.Core.Services`,
 
 | File | What it does |
 | --- | --- |
-| `Services/OpenAiCompatibleProvider.cs` | Streams `/chat/completions` (SSE) and lists `/models` for any OpenAI-compatible server (Ollama, LM Studio, OpenRouter, …). Handles image content formats. |
+| `Services/OpenAiCompatibleProvider.cs` | Streams `/chat/completions` (SSE) and lists `/models` for an approved local route or an explicitly authorized OpenAI cloud route. Handles image content formats. Arbitrary remote endpoints are not a provider contract. |
 | `Services/ModelLibraryService.cs` | Finds installed models across known local runtimes, searches Hugging Face and ModelScope, downloads/imports GGUF files into Ollama/LM Studio, pulls/deletes Ollama models. |
 | `Services/CommandPaletteCatalog.cs` | UI-independent command-palette metadata and deterministic keyword search; native execution callbacks remain in the shell. |
 | `Services/StartupRecoveryService.cs` | Bounded local queue/history/project/undo loading and interrupted-operation reconciliation for native startup; never starts external work. |
@@ -222,7 +222,7 @@ Namespaces: `SkaiDesktop.Core.Models`, `SkaiDesktop.Core.Services`,
 | `ConversationArchive.cs` | Import/export chat archives (native format and the old Electron export), with validation and duplicate/ID-collision planning. |
 | `ConversationMarkdownExporter.cs` | Validated, human-readable Markdown transcript export with conversation metadata, messages, source links, and attachment names. |
 | `ModelInstructions.cs` | Fixed system-message text: the Chat and Coding Agent prompts and the "untrusted data" warnings. |
-| `LocalEndpoint.cs` | Whether an endpoint is on this device (loopback/localhost only). |
+| `LocalEndpoint.cs` | Whether an endpoint is an HTTP(S) loopback route without embedded credentials or fragments. Cloud routes use a separate explicit route policy. |
 | `ProviderErrorText.cs` | Plain-language messages for model/image request failures. |
 | `WorkspacePath.cs` | OS-correct path comparison for project folders. |
 | `ExternalLinkPolicy.cs` | Which links in model replies may open (http/https only) and how their real host is shown. |
@@ -255,7 +255,7 @@ All app data goes under the user's platform app-data folders. On Linux,
 | Logs | `LocalApplicationData/ServerRock/AI/logs/` | `AppLogService` | `SRAI_LOG_DIRECTORY` |
 | GitHub token (Windows) | `LocalApplicationData/ServerRock/AI/github-user-token.bin`, DPAPI-encrypted for the current user | `GitHubCredentialStore` | – |
 | GitHub token (Linux) | Desktop keyring (Secret Service) via `secret-tool`; needs a D-Bus session | `GitHubCredentialStore` | – |
-| OpenRouter API key | Memory only (`MainPage._openRouterApiKey`); never written to disk | – | – |
+| OpenAI/cloud credentials | Planned OS-backed credential store; never written to `settings.json` or logs | – | – |
 | Temporary chats | Memory only; never written to `conversations.json` | – | – |
 
 Stores read with a size limit, write atomically, and leave a corrupt file

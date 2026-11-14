@@ -17,8 +17,8 @@ public static class ConnectionSettingsValidator
         if (string.IsNullOrWhiteSpace(normalizedModel))
             return new(false, "Enter a model ID before saving.", uri.IsLoopback);
 
-        if (localOnly && !uri.IsLoopback)
-            return new(false, "Local-only mode requires a localhost or loopback endpoint.", false);
+        if (!uri.IsLoopback || !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Fragment))
+            return new(false, "Skai Desktop only supports localhost or loopback model endpoints.", false);
 
         return new(true, string.Empty, uri.IsLoopback);
     }

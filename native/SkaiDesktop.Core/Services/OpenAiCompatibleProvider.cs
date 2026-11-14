@@ -259,10 +259,10 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
     {
         if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/'), UriKind.Absolute, out var uri)
             || uri.Scheme is not ("http" or "https")
-            || uri.Scheme == "http" && !uri.IsLoopback
+            || !uri.IsLoopback
             || !string.IsNullOrEmpty(uri.UserInfo)
             || !string.IsNullOrEmpty(uri.Fragment))
-            throw new InvalidOperationException("Enter an HTTP or HTTPS model endpoint without embedded credentials or a URL fragment.");
+            throw new InvalidOperationException("Skai Desktop only accepts a local loopback model endpoint without embedded credentials or a URL fragment.");
         return uri;
     }
 

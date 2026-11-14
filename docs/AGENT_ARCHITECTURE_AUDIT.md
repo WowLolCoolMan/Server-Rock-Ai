@@ -43,20 +43,21 @@ Reviewed:
 - Current Electron Chat retry, C# voice, provider-contract, and AirLLM host changes.
 - Active chats `Add future features list` and `Find a lightweight TTS model`.
 - Checks run during this audit: desktop typecheck, desktop build, syntax audit,
-  Electron boundary audit, and Core tests passed; the first agent-host build
-  was blocked by a live `ServerRock.AgentHost` process, then passed after the
-  host was shut down cleanly.
+  Electron boundary audit, local-only audit, legacy/native build, host smoke,
+  and Core tests passed. A live agent-host process was found after UI testing
+  and was terminated before handoff; no agent-host process remains.
 
 ## Decision register
 
 | ID | Decision | Source/status | Audit judgment | Required closure |
 | --- | --- | --- | --- | --- |
-| D-01 | Local-first desktop app with no cloud or hosted model routes | Latest user override; accepted | Sound privacy boundary; older hosted-provider copy is stale | Every model route must be loopback-only and fail closed for remote endpoints |
-| D-02 | Use AirLLM whenever a local model exceeds the computer's practical limits | User requirement; needs refinement | Good outcome, unsafe as currently implemented | Route through the Electron/.NET host, gate by model/runtime capability, show the fallback, and keep it local-only |
-| D-03 | Local provider choice should be understandable to non-experts | User requirement; partially implemented | Correct UX goal | Store local provider identity separately from endpoint/model and expose local intent-based setup flow |
+| D-01 | Local-first desktop app with first-class explicit cloud services | Latest user override; accepted | Sound if local/AirLLM and cloud provider adapters are separate and visible; arbitrary unvalidated endpoints remain unsafe | Add typed route policy, provider adapters, auth storage, explicit data-route labels, and fail-closed route selection |
+| D-02 | Use AirLLM whenever a local model exceeds the computer's practical limits | User requirement; accepted with compatibility limit | Sound when the model is a valid Hugging Face/local-directory AirLLM reference; not possible to infer a mapping from arbitrary Ollama tags | Keep fallback local, visible, bounded, cancellable, and explicit about unsupported model identifiers |
+| D-03 | Local provider choice should be understandable to non-experts | User requirement; partially implemented | Correct UX goal; wording is now local-intent based but the complete Electron setup flow is still missing | Finish the two-choice local setup flow without exposing provider jargon or hosted routes |
 | D-04 | Use the existing visual assets with restrained decoration | User requirement; implemented in the UI slice | Sound; the wolf mark is appropriate as a compact brand anchor | Keep dense work surfaces content-first and continue visual acceptance checks |
 | D-05 | Parent agent owns future-feature implementation; UI chats receive completion handoffs | User requirement; accepted | Correct coordination boundary | One vertical slice, one owner, one evidence bundle; no parallel edits to the same seam |
 | D-06 | Electron + React with one persistent C#/.NET host | User decision and repository canon; accepted | Correct near-term architecture for this codebase | Remove Rust voice runtime references and keep all native capabilities behind the host |
+| D-07 | Support cloud providers and authentication | Latest user override; accepted with auth distinction | Correct product direction; API keys, OAuth/account sign-in, and service-specific credentials are different auth contracts | Implement provider adapters with OS-backed secrets, explicit route/data labels, PKCE/OAuth where supported, revocation, usage/error states, and no secret in settings/logs |
 | D-07 | Push a non-main branch and use a draft PR | User requirement; completed | Correct release safety, but the snapshot was too broad | Curate follow-up commits; do not merge the 522-file mixed worktree snapshot without review |
 
 ## Actual architecture observed
@@ -83,9 +84,14 @@ Electron chat.complete
 ```
 
 The host now supports explicit AirLLM selection and a bounded local capacity
-fallback, returns provider/fallback provenance, and is being restored to a
-strict loopback-only endpoint boundary. Real Electron inference, runtime health,
-cancellation, and trust/consent evidence are still missing.
+fallback, returns provider/fallback provenance, enforces loopback-only model and
+image endpoints, and propagates request deadlines/cancellation into the local
+provider path. The shared Core and legacy/native surface now use the same
+strict HTTP(S) loopback definition, including rejection of URL credentials and
+fragments. Real Electron AirLLM inference, runtime health UX, disk preflight,
+and trust/consent evidence are still missing. The newly approved cloud provider
+routes are not implemented yet; the current transport intentionally rejects
+them until typed provider and credential boundaries are added.
 
 The voice work is now on the correct C# host boundary, with the Rust voice
 source, target output, and stale runtime wording removed. Host lifecycle and
@@ -105,12 +111,12 @@ Hugging Face model that does not fit the normal runtime, and sends a message.
 
 **Consequence.** The original reachability gap is closed, but the feature is
 not yet release-ready: the runtime may be absent, a real model journey has not
-been exercised, and long-running inference still has no request cancellation.
+been exercised, and the worker still lacks provenance/isolation closure.
 
-**Remaining correction.** Complete the shared provider strategy across
-`chat.complete`, `models.list`, runtime health, operation provenance, and
-cancellation. Keep the legacy Uno adapter only as a compatibility caller until
-cutover.
+**Remaining correction.** Add model/runtime health and disk preflight, a real
+Electron AirLLM acceptance path, and explicit provenance/isolation for custom
+model code. The existing host route and cancellation contract must remain the
+only entry point.
 
 **Closure check.** A disposable Electron run sends a compatible Hugging Face
 model request through the host, records `normal -> AirLLM` locally, returns a
@@ -164,38 +170,38 @@ switch would also make troubleshooting and quality comparison harder.
 **Minimal correction.** Define an explicit local fallback policy: preflight the
 selected model/provider, check AirLLM installation and disk budget, classify only
 known capacity errors, reserve a bounded retry, preserve the original error, and
-show the chosen local runtime and reason. Remote endpoints must be rejected
-before any request is sent.
+show the chosen local runtime and reason. Unapproved remote endpoints must be
+rejected before any request is sent; an approved OpenAI cloud route must never
+participate in local AirLLM fallback.
 
 **Closure check.** Tests cover normal success, known capacity failure, unrelated
 failure, unsupported model ID, missing runtime, cancellation, and fallback
 failure. Each outcome records provider, model, reason, and whether a second
 attempt was made.
 
-### Important: the host lifecycle and long-inference control are not release-safe
+### Corrected in this branch: host lifecycle and long-inference control
 
-**Observation.** Electron launches `dotnet run` and calls `host.kill()` during
-window shutdown. The current `chat.complete` path uses `CancellationToken.None`.
-During this audit, a live `ServerRock.AgentHost` process held
-`services/agent-host/bin/Debug/net10.0/SkaiDesktop.Core.dll`, causing a build to
-fail after ten copy retries.
+**Observation.** Electron now supervises a bounded host deadline, resolves
+pending requests on timeout, kills the Windows process tree, and starts a fresh
+host. `chat.complete` passes the same deadline cancellation into the local
+OpenAI-compatible and AirLLM paths. The smoke test launches the direct host
+executable and asserts clean exit.
 
 **Condition.** A long local/AirLLM request is active, the window closes, or a
 smoke test ends while the `dotnet run` child and actual host process have
 different lifetimes.
 
-**Consequence.** The user cannot reliably stop frontier inference; requests can
-outlive the UI; builds and tests become nondeterministic; and the app can report
-that work stopped while the native process remains alive.
+**Consequence.** The original orphan-process and uncancellable-request risk is
+substantially reduced. Release evidence still needs a real Electron AirLLM
+cancel/timeout journey, but the host-level safeguards are now in place.
 
-**Minimal correction.** Use a supervised host lifecycle with a direct executable
-or process-tree shutdown, request timeouts, cancellation propagation, bounded
-pending requests, and explicit `started/active/cancelled/failed/completed` state.
-The smoke test must terminate the actual host and assert no child remains.
+**Closure evidence.** Keep the direct executable launch, process-tree shutdown,
+bounded pending requests, and deadline propagation covered by the runtime audit
+and host smoke tests.
 
-**Closure check.** Start, cancel, timeout, crash, and close-window tests leave no
-agent-host process, resolve pending calls, and permit an immediate clean rebuild.
-AirLLM receives the same cancellation and deadline contract.
+**Remaining closure check.** Exercise the same guarantees through the packaged
+Electron AirLLM path and verify no host process remains after cancellation and
+window close.
 
 ### Important: the current branch snapshot is not a healthy merge unit
 
@@ -220,34 +226,34 @@ Rust target, `dist`, or process-lock residue is present.
 ### Improvement: provider UX is not yet an intent-based provider system
 
 **Observation.** The Electron shell now persists and sends local provider
-identity, and the host returns it with settings and discovered models. The
-replacement shell still does not explain “models on this computer” versus
-“very large models locally through AirLLM” as user goals or provide the setup
-flow.
+identity, the catalog uses local-intent wording, and the host returns provider
+identity with settings and discovered models. The replacement shell still does
+not provide the complete setup flow or an in-context two-choice picker.
 
-**Correction.** Add a small local provider setup flow after the host contract is
-stable: “Use models already on this computer” and “Use a very large model
-locally.” Each choice maps to a typed provider profile with health, capabilities,
-privacy, install state, and a clear next action. Do not expose a hosted option.
+**Correction.** Add a small intent-based setup flow after the host contract is
+stable: local models, very large local models, cloud models, cloud voice, cloud
+images, and other supported services. Each choice maps to a typed provider
+profile with health, capabilities, privacy, auth state, install state, and a
+clear next action. Never expose an arbitrary unvalidated endpoint as a generic
+shortcut.
 
 ## Agent decision audit
 
 ### `Add future features list`
 
-The current decision to finish Chat retry as one isolated slice is healthy. The
-agent preserves parallel TTS edits, uses the existing `chat.complete` contract,
-and reports focused tests. It must stop after that checkpoint. It must not add
-new routes, provider logic, AirLLM behavior, or broad UI polish until the host
-contract is repaired.
+The agent's broad Chat/coding redesign was not a healthy next step: it ignored
+the parent scope, created renderer drift and capture residue, and committed a
+large UI slice while the provider boundary was still being audited. That commit
+was explicitly reverted. The chat is now archived and interrupted; it must not
+resume without a narrow, parent-assigned UI task.
 
 ### `Find a lightweight TTS model`
 
 The decision to consolidate voice into the existing C# host is healthy and
 matches the owner decision. The earlier Rust sidecar was a wrong turn for this
-repository. The agent must finish the cleanup rather than leave a dual-runtime
-story, and its smoke test must prove lifecycle cleanup as well as input
-validation. Kokoro/Pocket TTS should be future C# adapters, not promises that
-depend on a removed Rust runtime.
+repository. Its lifecycle checkpoint is accepted: deadlines, cancellation,
+process-tree cleanup, and direct-host smoke evidence passed. Kokoro/Pocket TTS
+remain future C# adapters, not promises that depend on a removed Rust runtime.
 
 ### Parent/orchestrator decisions
 
@@ -258,15 +264,19 @@ use narrow follow-up commits plus architecture gates before any merge.
 
 ## Priority correction sequence
 
-1. Finish and checkpoint the two current bounded slices; no new scope.
-2. Keep generated artifacts and all Rust voice residue out; make host lifecycle
-   shutdown deterministic.
+1. Keep both implementation chats paused; the UI chat's broad Chat/coding
+   refactor was rejected and reverted because it crossed its assigned scope.
+2. Keep generated artifacts and all Rust voice residue out; retain the now
+   deterministic host lifecycle and local-first transport boundary.
 3. Complete AirLLM provenance, model compatibility, trust/consent, disk/runtime
-   health, cancellation, and bounded fallback tests.
-4. Add the intent-based provider setup flow in Electron on top of the durable
-   provider identity.
-5. Re-run packaged Electron acceptance, Core tests, host smoke, and a real
-   disposable AirLLM model test before discussing merge.
+   health, and bounded fallback tests.
+4. Add the intent-based provider setup flow in Electron on top of durable
+   provider identities for local/AirLLM, cloud models, cloud voice, and other
+   supported services.
+5. Implement OS-backed credentials and service-specific OAuth/API-key flows;
+   never pass secrets through ordinary settings or logs.
+6. Re-run packaged Electron acceptance and a real disposable AirLLM model test
+   before discussing merge.
 
 ## Open evidence gaps
 
@@ -274,7 +284,11 @@ use narrow follow-up commits plus architecture gates before any merge.
 - No packaged installer contains or provisions the AirLLM runtime.
 - No resource/disk estimate or cleanup policy has been verified for layer shards.
 - No safe policy has been demonstrated for AirLLM remote/custom model code.
-- No clean host cancellation/timeout/close-window test has passed.
+- No packaged Electron AirLLM cancellation/timeout/close-window test has passed.
+- The full Electron local-intent setup flow is not yet implemented.
+- No cloud provider credential store or explicit cloud-route acceptance exists.
+- No service-specific OAuth/API-key flows exist yet; account sign-in and API-key
+  auth must not be conflated.
 - No release review has separated the large mixed branch snapshot into focused
   acceptance units.
 
@@ -282,7 +296,8 @@ use narrow follow-up commits plus architecture gates before any merge.
 
 The feature is not “done” when a Python worker starts. It is ready for review
 only when the approved Electron path can select and explain a local AirLLM
-attempt, preserve local-only privacy, cancel it, recover from failure, and leave
-no orphan process or ambiguous provider state. The user must be able to tell
-what Skai is doing, why it chose that runtime, what it downloaded, and how to
-stop or undo the choice.
+attempt or an explicitly authorized OpenAI route, preserve the selected data
+boundary, cancel it, recover from failure, and leave no orphan process or
+ambiguous provider state. The user must be able to tell what Skai is doing, why
+it chose that runtime or account, what it downloaded or billed, and how to stop
+or disconnect the choice.

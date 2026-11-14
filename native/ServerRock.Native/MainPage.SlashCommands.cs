@@ -192,7 +192,7 @@ public sealed partial class MainPage
     {
         var project = _projects.FirstOrDefault(item => item.Id == _activeProjectId);
         var projectLabel = project is null ? "No project" : $"Project: {project.Name} ({project.FolderPaths.Count} folder(s))";
-        RuntimeStatus.Text = $"{_settings.HostLabel} · {_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")} · {( _settings.RequireLocalModelEndpoints ? "local-only" : "remote endpoints allowed")}";
+        RuntimeStatus.Text = $"{_settings.HostLabel} · {_mode} · {_settings.ModelProvider} · {_settings.Model} · {projectLabel} · Web research {(_settings.WebSearchEnabled ? "on" : "off")} · local-only";
     }
 
     private async Task HelpClickAsync()

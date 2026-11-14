@@ -36,16 +36,17 @@ internal static class ChatProviderTests
             && profiles.Single(profile => profile.Model == "flagged-model").Vision == CapabilitySupport.Supported
             && profiles.Single(profile => profile.Model == "text-model").Vision == CapabilitySupport.Unknown,
             "model discovery parses bounded provider capability metadata");
-        var openRouterAuthHandler = new StubHandler((request, _) =>
+        try
         {
-            Check(request.RequestUri?.AbsoluteUri == "https://openrouter.ai/api/v1/models" && request.Headers.Authorization?.Scheme == "Bearer" && request.Headers.Authorization.Parameter == "sk-or-v1-test", "OpenRouter model discovery sends the session API key without persisting it");
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("{\"data\":[{\"id\":\"openrouter/free\"}]}", Encoding.UTF8, "application/json")
-            });
-        });
-        var openRouterModels = await new OpenAiCompatibleProvider(new HttpClient(openRouterAuthHandler)).DiscoverModelsAsync("https://openrouter.ai/api/v1", apiKey: "sk-or-v1-test");
-        Check(openRouterModels.SequenceEqual(["openrouter/free"]), "OpenRouter free router is discoverable through the OpenAI-compatible API");
+            await new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) =>
+                throw new Exception("Remote model endpoints must be rejected before network access."))))
+                .DiscoverModelsAsync("https://openrouter.ai/api/v1", apiKey: "sk-or-v1-test");
+            throw new Exception("Expected hosted model discovery to be rejected.");
+        }
+        catch (InvalidOperationException error)
+        {
+            Check(error.Message.Contains("loopback", StringComparison.OrdinalIgnoreCase), "hosted model discovery is rejected by the local-only transport boundary");
+        }
 
         string? streamedPayload = null;
         var streamHandler = new StubHandler(async (request, cancellationToken) =>
@@ -187,8 +188,9 @@ internal static class ChatProviderTests
         // Local endpoint check and error messages (moved from MainPage into Core).
         Check(LocalEndpoint.IsLocal("http://localhost:11434/v1") && LocalEndpoint.IsLocal("http://127.0.0.1:1234/v1") && LocalEndpoint.IsLocal("http://[::1]:8080"),
             "loopback and localhost endpoints count as on-device");
-        Check(!LocalEndpoint.IsLocal("http://192.168.1.20:11434/v1") && !LocalEndpoint.IsLocal("https://openrouter.ai/api/v1") && !LocalEndpoint.IsLocal("not a url"),
-            "LAN, cloud, and malformed endpoints do not count as on-device");
+        Check(!LocalEndpoint.IsLocal("http://192.168.1.20:11434/v1") && !LocalEndpoint.IsLocal("https://openrouter.ai/api/v1") && !LocalEndpoint.IsLocal("not a url")
+            && !LocalEndpoint.IsLocal("http://user:secret@localhost:11434/v1") && !LocalEndpoint.IsLocal("http://localhost:11434/v1#remote"),
+            "LAN, cloud, credential-bearing, and malformed endpoints do not count as on-device");
         var profile = ModelCapabilityResolver.Resolve(new AppSettings { ModelProvider = "Ollama", Model = "llama3.2", Endpoint = "http://localhost:11434/v1" });
         Check(profile.EndpointPrivacy == "local" && profile.Streaming == CapabilitySupport.Supported && profile.Vision == CapabilitySupport.Unknown,
             "capability profile reports bounded local routing facts without guessing vision support");
@@ -234,6 +236,9 @@ internal static class ChatProviderTests
             "invalid endpoint and missing model are rejected before save");
         Check(!ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
             "local-only settings reject remote endpoints before save");
+        Check(!ConnectionSettingsValidator.Validate("http://user:secret@localhost:11434/v1", "local-a", false).IsValid
+            && !ConnectionSettingsValidator.Validate("http://localhost:11434/v1#remote", "local-a", false).IsValid,
+            "settings reject embedded credentials and URL fragments even on loopback");
         Check(ConnectionSettingsValidator.Validate("http://localhost:11434/v1", "local-a", true).IsValid
             && !ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
             "local-only route selection rejects a pinned remote endpoint before switching");

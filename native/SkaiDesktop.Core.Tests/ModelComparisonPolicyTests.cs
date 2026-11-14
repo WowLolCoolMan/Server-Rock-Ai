@@ -7,7 +7,7 @@ internal static class ModelComparisonPolicyTests
     {
         var plan = ModelComparisonPolicy.Create("Compare these answers", [
             new("Local", "model-a", "http://localhost:11434/v1"),
-            new("Remote", "model-b", "https://example.test/v1"),
+            new("Local", "model-b", "http://127.0.0.1:1234/v1"),
             new("Duplicate", "model-a", "http://localhost:11434/v1")
         ], requireLocalEndpoints: false);
         Check(plan.Models.Count == 2 && plan.Prompt == "Compare these answers", "comparison policy deduplicates pinned models and trims the prompt");
@@ -15,7 +15,7 @@ internal static class ModelComparisonPolicyTests
         CheckThrows(() => ModelComparisonPolicy.Create("remote", [
             new("Local", "a", "http://localhost:11434/v1"),
             new("Remote", "b", "https://example.test/v1")
-        ], true), "comparison policy honors local-only routing");
+        ], false), "comparison policy rejects remote routing under the global local-only policy");
         CheckThrows(() => ModelComparisonPolicy.Create(new string('x', ModelComparisonPolicy.MaxPromptCharacters + 1), [
             new("Local", "a", "http://localhost:11434/v1"),
             new("Local", "b", "http://localhost:11434/v1")

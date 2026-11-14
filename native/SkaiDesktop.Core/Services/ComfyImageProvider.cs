@@ -97,7 +97,11 @@ public sealed class ComfyImageProvider(HttpClient? httpClient = null)
 
     private static Uri ValidateEndpoint(string endpoint)
     {
-        if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/') + "/", UriKind.Absolute, out var root) || root.Scheme is not ("http" or "https") || !root.IsLoopback)
+        if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/') + "/", UriKind.Absolute, out var root)
+            || root.Scheme is not ("http" or "https")
+            || !root.IsLoopback
+            || !string.IsNullOrEmpty(root.UserInfo)
+            || !string.IsNullOrEmpty(root.Fragment))
             throw new InvalidOperationException("ComfyUI must use a loopback HTTP or HTTPS endpoint.");
         return root;
     }

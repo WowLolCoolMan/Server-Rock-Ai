@@ -61,7 +61,8 @@ public sealed class AppSettings
     public string HostLabel { get; set; } = "This device";
     /// <summary>Optional explicit value used only when a reviewed prompt contains {{USER_NAME}}.</summary>
     public string PromptUserName { get; set; } = "";
-    public bool RequireLocalModelEndpoints { get; set; }
+    /// <summary>Model inference is always local; this remains for legacy settings compatibility.</summary>
+    public bool RequireLocalModelEndpoints { get; set; } = true;
     public string ComfyEndpoint { get; set; } = "http://127.0.0.1:8188";
     public string ImageWorkflow { get; set; } = "";
     public string GitHubAppClientId { get; set; } = "";

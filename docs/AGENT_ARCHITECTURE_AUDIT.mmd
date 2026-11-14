@@ -8,9 +8,9 @@ flowchart TD
     A[AirLLM adapter and Python worker]
     S[(Local settings, conversations, provenance)]
     L[Legacy Uno caller]
-    X[Hosted provider]
+    X[Explicit OpenAI route]
     Q[Current discrepancy: AirLLM is only reachable here]
-    G[Proposed gate: local-only, capability, trust, budget, cancellation]
+    G[Proposed gate: explicit route, auth, capability, trust, budget, cancellation]
 
     U --> R --> P --> H --> C
     C --> N

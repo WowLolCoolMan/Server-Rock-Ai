@@ -53,14 +53,15 @@ public sealed partial class MainPage
             }
             var profiles = await _provider.DiscoverModelProfilesAsync(_settings.Endpoint, apiKey: GetProviderApiKey());
             var models = profiles.Select(profile => profile.Model).ToArray();
+            if (!LocalEndpoint.IsLocal(_settings.Endpoint))
+                throw new InvalidOperationException("Skai Desktop only supports model servers on this computer.");
             _advertisedModels = models;
             _providerConnected = true;
-            var local = LocalEndpoint.IsLocal(_settings.Endpoint);
-            ConnectionLabel.Text = local ? "Local ready" : "Remote ready";
+            ConnectionLabel.Text = "Local ready";
             HeaderConnectionLabel.Text = ConnectionLabel.Text;
             ConnectionDot.Fill = UiTheme.Brush("SuccessBrush");
             HeaderConnectionDot.Fill = ConnectionDot.Fill;
-            ProcessingLabel.Text = local ? "● On-device model" : "● Remote model server";
+            ProcessingLabel.Text = "● On-device model";
             var selection = ModelSelectionPolicy.Evaluate(_settings.Model, models);
             if (!selection.IsAvailable)
             {

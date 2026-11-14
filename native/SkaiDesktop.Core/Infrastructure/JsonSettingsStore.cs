@@ -40,6 +40,13 @@ public sealed class JsonSettingsStore
         settings.Endpoint ??= defaults.Endpoint;
         settings.Model ??= defaults.Model;
         settings.ModelProvider ??= defaults.ModelProvider;
+        if (!LocalEndpoint.IsLocal(settings.Endpoint))
+        {
+            settings.Endpoint = defaults.Endpoint;
+            if (!settings.ModelProvider.Equals("AirLLM", StringComparison.OrdinalIgnoreCase))
+                settings.ModelProvider = defaults.ModelProvider;
+        }
+        settings.RequireLocalModelEndpoints = true;
         settings.VisionApiFormat ??= defaults.VisionApiFormat;
         settings.VisionCapabilityOverride = settings.VisionCapabilityOverride?.ToLowerInvariant() switch
         {
