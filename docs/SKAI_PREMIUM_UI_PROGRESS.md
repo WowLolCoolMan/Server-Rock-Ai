@@ -4,6 +4,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- `20826c8` — added a reusable keyboard-accessible Chat overflow menu to keep contextual actions discoverable without crowding the conversation toolbar.
 - `d592412` — added per-conversation local scroll restoration so switching threads preserves the user’s place while retaining automatic scroll for new messages.
 - `0d0e105` — added local Memory scope filters and explicit enabled/provenance status while preserving the existing search, edit, disable, remove, and export contracts.
 - `a661c25` — added a state-aware Workbench next-step panel so selected tasks explain the actionable local recovery path without inventing unsupported host controls.
@@ -119,6 +120,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Workbench visual checkpoint: `output/playwright/skai-workbench-responsive.png`.
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
+- Chat actions menu check: passed compact 1280px toolbar geometry, first/last menu-item keyboard navigation, Escape focus restoration, and no horizontal overflow. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-chat-actions-menu.png`.
 - Chat scroll restoration check: passed switching between two long conversations, saving the prior thread’s scroll position, restoring it on return, and no horizontal overflow at 1280px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-chat-scroll-restoration.png`.
 - Memory scope check: passed scope filtering by stable scope value, enabled/disabled status and source rendering, empty-scope recovery, and no horizontal overflow at 1280px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-memory-scopes.png`.
 
