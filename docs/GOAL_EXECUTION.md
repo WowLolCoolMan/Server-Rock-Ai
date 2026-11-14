@@ -8201,6 +8201,20 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Marketplace model-provider expansion
+
+Marketplace model search now accepts `all`, `huggingface`, and `modelscope`
+provider filters. LLM discovery merges the existing Hugging Face catalog with
+the bounded ModelScope GGUF adapter, preserving size, quantization, and
+abliterated/uncensored filtering; voice and image discovery remain explicitly
+Hugging Face-backed. The renderer now shows the provider and source link, and
+the Skills/MCP cards no longer claim stale integration-pending states.
+
+The current evidence is renderer typecheck/build, an isolated zero-warning
+Agent Host build, and disposable protocol smoke coverage for provider filter
+validation. Download/import actions remain gated behind the selected local
+runtime adapter rather than being presented as generic remote downloads.
+
 ## Marketplace local skill library management
 
 The Marketplace Skills surface now exposes a usable local-folder workflow

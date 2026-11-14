@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using SkaiDesktop.Core.Infrastructure;
 using SkaiDesktop.Core.Models;
 using SkaiDesktop.Core.Services;
@@ -195,12 +196,18 @@ public static class AgentHostLoop
         var uncensored = OptionalBoolean(request, "uncensored");
         var size = OptionalString(request, "size");
         var quantization = OptionalString(request, "quantization");
+        var provider = OptionalString(request, "provider")?.Trim().ToLowerInvariant() ?? "all";
+        if (provider is not ("all" or "huggingface" or "modelscope")) throw new InvalidOperationException("The model provider filter is invalid.");
         var limit = OptionalInt(request, "limit") ?? 100;
-        var models = await new ModelLibraryService().SearchHuggingFaceMarketplaceAsync(query, kind, uncensored, size, quantization, limit).ConfigureAwait(false);
-        return new(ProtocolVersion, request.Id, true, models.Select(model => new
+        var library = new ModelLibraryService();
+        var models = provider == "modelscope"
+            ? []
+            : await library.SearchHuggingFaceMarketplaceAsync(query, kind, uncensored, size, quantization, limit).ConfigureAwait(false);
+        var results = models.Select(model => new
         {
             id = model.Id,
             kind,
+            provider = "Hugging Face",
             task = model.Task,
             downloads = model.Downloads,
             likes = model.Likes,
@@ -209,8 +216,55 @@ public static class AgentHostLoop
             quantizations = model.Quantizations,
             tags = model.Tags,
             url = $"https://huggingface.co/{model.Id}",
-        }).ToArray());
+        }).Cast<object>().ToList();
+
+        if (kind.Equals("llm", StringComparison.OrdinalIgnoreCase) && provider is "all" or "modelscope")
+        {
+            try
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(18));
+                var packages = await library.SearchModelScopeGgufAsync(query, uncensored, timeout.Token).ConfigureAwait(false);
+                results.AddRange(packages
+                    .Where(package => MarketplaceSizeMatches(package.SizeBytes, size))
+                    .Where(package => string.IsNullOrWhiteSpace(quantization) || quantization.Equals("ANY", StringComparison.OrdinalIgnoreCase) || ModelScopeQuantizations(package).Contains(quantization, StringComparer.OrdinalIgnoreCase))
+                    .Take(limit)
+                    .Select(package => (object)new
+                    {
+                        id = package.Repository + ":" + package.Name,
+                        kind,
+                        provider = "ModelScope",
+                        task = "GGUF chat model",
+                        downloads = package.Downloads,
+                        likes = 0,
+                        uncensored = package.IsUncensored,
+                        sizeBytes = package.SizeBytes,
+                        quantizations = ModelScopeQuantizations(package),
+                        tags = Array.Empty<string>(),
+                        url = $"https://modelscope.cn/models/{package.Repository}",
+                    }));
+            }
+            catch (OperationCanceledException) { }
+            catch (HttpRequestException) { }
+            catch (InvalidDataException) { }
+        }
+
+        return new(ProtocolVersion, request.Id, true, results.Take(limit).ToArray());
     }
+
+    private static string[] ModelScopeQuantizations(ModelScopeGgufPackage package) => package.Files
+        .Select(file => Regex.Match(Path.GetFileName(file.Path).ToUpperInvariant(), @"Q[2-8]_[K0-9]+(?:_[A-Z]+)?|IQ[1-4]_[A-Z0-9]+|F16|F32").Value)
+        .Where(value => value.Length > 0)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    private static bool MarketplaceSizeMatches(long sizeBytes, string? size) => (size?.Trim().ToLowerInvariant() ?? "any") switch
+    {
+        "small" => sizeBytes == 0 || sizeBytes < 4L * 1024 * 1024 * 1024,
+        "medium" => sizeBytes == 0 || sizeBytes >= 4L * 1024 * 1024 * 1024 && sizeBytes < 12L * 1024 * 1024 * 1024,
+        "large" => sizeBytes == 0 || sizeBytes >= 12L * 1024 * 1024 * 1024,
+        "any" => true,
+        _ => throw new InvalidOperationException("The model size filter is invalid."),
+    };
 
     private static async Task<AgentResponse> SearchMarketplaceSkills(AgentRequest request)
     {

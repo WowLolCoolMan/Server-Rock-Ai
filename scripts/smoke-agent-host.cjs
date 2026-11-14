@@ -63,6 +63,10 @@ async function run() {
   if (!tools.ok || !Array.isArray(tools.result) || !tools.result.some(item => item.id === "github" && item.builtIn === true)) throw new Error("marketplace.tools.list did not return the built-in tool catalog.");
   const mcp = await request("marketplace.mcp.list");
   if (!mcp.ok || !Array.isArray(mcp.result) || !mcp.result.some(item => item.id === "filesystem" && item.transport === "stdio")) throw new Error("marketplace.mcp.list did not return the MCP server catalog.");
+  const emptyModelScope = await request("marketplace.models.search", { query: "", kind: "llm", provider: "modelscope", limit: 20 });
+  if (!emptyModelScope.ok || !Array.isArray(emptyModelScope.result)) throw new Error("marketplace.models.search did not accept the ModelScope provider lane.");
+  const invalidModelProvider = await request("marketplace.models.search", { query: "", kind: "llm", provider: "unknown-provider", limit: 20 });
+  if (invalidModelProvider.ok) throw new Error("marketplace.models.search accepted an unknown provider filter.");
   const emptySkills = await request("skills.installed.list");
   if (!emptySkills.ok || !Array.isArray(emptySkills.result) || emptySkills.result.length !== 0) throw new Error("Disposable skill library was not empty.");
   const skillPreview = await request("skills.local.preview", { sourceDirectory: skillSource });

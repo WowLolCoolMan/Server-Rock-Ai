@@ -160,3 +160,26 @@ The following working-tree paths are intentionally not part of the premium UI ch
 - `services/airllm/**`
 - `ServerRock_AI_FINAL_COMPLETE_HANDOFF/**`
 - `output/**`
+
+## Slice — Expand Marketplace model discovery across providers
+
+Status: `implemented_build_smoke_verified`
+
+Marketplace model discovery now accepts an explicit provider filter and merges
+Hugging Face lanes with the existing bounded ModelScope GGUF search for LLMs.
+Voice and image lanes remain Hugging Face-backed, while the UI labels provider,
+task, quantization, size, downloads, and source links per result. Skills and
+MCP cards were also corrected to reflect their current host-backed catalog and
+local-library boundaries instead of stale “pending” copy.
+
+Evidence:
+
+- Renderer typecheck and production build passed.
+- Isolated Agent Host build passed with 0 warnings and 0 errors.
+- Disposable Agent Host smoke passed provider-filter validation, including an
+  accepted ModelScope lane and rejection of an unknown provider.
+- Existing Core test suite and `git diff --check` remain green.
+
+Remaining: model download/import actions are still runtime-specific and must be
+surfaced only when the selected local Ollama or LM Studio adapter is available;
+remote catalogs currently remain safe discovery/source-link surfaces.
