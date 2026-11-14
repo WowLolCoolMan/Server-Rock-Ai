@@ -57,8 +57,14 @@ jobs:
           sudo chmod 4755 "$sandbox"
           stat -c '%U:%G %a %n' "$sandbox"
 
+      - name: Install Linux Electron display dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb
+
       - name: Smoke packaged Electron artifact
-        run: npm run smoke:electron:artifact
+        run: xvfb-run -a npm run smoke:electron:artifact
 
       - name: Build persistent agent host
         run: npm run agent-host:build
