@@ -40,7 +40,8 @@ storage. External integrations such as GitHub remain separate workflows.
 - [x] Folders, tags, and pinned chats.
 - [x] Search within the current chat and jump to a matching message.
 - [x] Fork a chat from any message.
-- [ ] Voice input/output, hands-free calls, and advanced voice mode.
+- [ ] Voice input, hands-free calls, and advanced voice mode.
+- [x] Bounded spoken replies with OS-native local speech and explicit opt-in ElevenLabs cloud voice.
 - [ ] Image generation and editing.
 - [x] Context compaction. (Deterministic bounded provider-side compaction with omitted-history markers; semantic summarization remains open.)
 - [ ] 1M+ token context support.

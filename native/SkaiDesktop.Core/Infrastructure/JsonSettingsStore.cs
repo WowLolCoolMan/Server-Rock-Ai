@@ -67,6 +67,8 @@ public sealed class JsonSettingsStore
         settings.VoicePrimaryModelId = VoiceModelCatalog.Resolve(settings.VoicePrimaryModelId).Id;
         settings.VoiceLowResourceModelId = VoiceModelCatalog.Resolve(settings.VoiceLowResourceModelId).Id;
         settings.VoiceProfileId = VoiceProfileCatalog.Resolve(settings.VoiceProfiles, settings.VoiceProfileId).Id;
+        settings.ElevenLabsVoiceId = NormalizeRequired(settings.ElevenLabsVoiceId, defaults.ElevenLabsVoiceId, 128);
+        settings.ElevenLabsModelId = NormalizeRequired(settings.ElevenLabsModelId, defaults.ElevenLabsModelId, 128);
         settings.VoiceProfiles ??= [];
         settings.VoiceProfiles = settings.VoiceProfiles
             .Where(profile => profile is not null)
@@ -156,6 +158,11 @@ public sealed class JsonSettingsStore
         if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)) return null;
         return value.Trim();
     }
+
+    private static string NormalizeRequired(string? value, string fallback, int maxLength) =>
+        string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)
+            ? fallback
+            : value.Trim();
 
     public void Save(AppSettings settings)
     {

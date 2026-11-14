@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { AgentRequest } from "../../services/agentClient";
 import type { ChatAttachment, DesktopConversation, DesktopQueuedMessage } from "../../../shared/contracts";
 import type { Message } from "../../app/types";
-import { speakNativeResponse, stopNativeSpeech } from "../../services/nativeTts";
+import { speakConfiguredResponse, stopNativeSpeech, type CloudVoiceOptions } from "../../services/nativeTts";
 
 type ChatWorkspaceOptions = {
   request: AgentRequest;
@@ -11,10 +11,11 @@ type ChatWorkspaceOptions = {
   endpoint: string;
   model: string;
   cloudRouteEnabled: boolean;
+  cloudVoice: CloudVoiceOptions;
   onError: (message: string | null) => void;
 };
 
-export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, onError }: ChatWorkspaceOptions) {
+export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice, onError }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -59,7 +60,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
-    void speakNativeResponse(completed.at(-1)?.content ?? "");
+    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
   };
 
   const retryMessage = async (messageIndex: number) => {
@@ -74,7 +75,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, conversationId);
-    void speakNativeResponse(completed.at(-1)?.content ?? "");
+    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
   };
 
   const pickAttachments = async () => {
