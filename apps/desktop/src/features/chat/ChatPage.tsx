@@ -23,11 +23,35 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const [renameDraft, setRenameDraft] = useState(conversationTitle);
   const [renameBusy, setRenameBusy] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const restoreScrollRef = useRef(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const scrollStorageKey = conversationId ? `skai.chat.scroll.${conversationId}` : "skai.chat.scroll.new";
   useEffect(() => { skipDraftPersistRef.current = true; setDraft(localStorage.getItem(draftStorageKey) ?? ""); }, [draftStorageKey]);
   useEffect(() => { if (skipDraftPersistRef.current) { skipDraftPersistRef.current = false; return; } localStorage.setItem(draftStorageKey, draft); }, [draftStorageKey, draft]);
   useEffect(() => { if (!renameOpen) setRenameDraft(conversationTitle); }, [conversationTitle, renameOpen]);
-  useEffect(() => { messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages.length, busy]);
+  useEffect(() => {
+    restoreScrollRef.current = true;
+    requestAnimationFrame(() => {
+      const list = document.querySelector<HTMLDivElement>(".message-list");
+      if (!list) return;
+      const saved = Number(localStorage.getItem(scrollStorageKey));
+      list.scrollTop = Number.isFinite(saved) && saved >= 0 ? saved : list.scrollHeight;
+      restoreScrollRef.current = false;
+    });
+  }, [scrollStorageKey]);
+  useEffect(() => {
+    const list = document.querySelector<HTMLDivElement>(".message-list");
+    if (!list || restoreScrollRef.current) return;
+    const nearBottom = list.scrollHeight - list.clientHeight - list.scrollTop < 80;
+    if (busy || nearBottom) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+  }, [messages.length, busy]);
+  useEffect(() => {
+    const list = document.querySelector<HTMLDivElement>(".message-list");
+    if (!list) return;
+    const saveScroll = () => localStorage.setItem(scrollStorageKey, String(list.scrollTop));
+    list.addEventListener("scroll", saveScroll, { passive: true });
+    return () => list.removeEventListener("scroll", saveScroll);
+  }, [scrollStorageKey, messages.length]);
   const submit = () => {
     const text = draft.trim();
     if ((!text && attachments.length === 0)) return;

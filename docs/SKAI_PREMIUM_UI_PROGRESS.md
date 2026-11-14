@@ -253,3 +253,38 @@ Evidence:
 Remaining: publisher trust/signature policy and remote pinned package
 installation remain intentionally open; no remote package is executed or
 installed by this slice.
+
+## Slice — Align shell continuity and model manager
+
+Status: `implemented_build_visual_verified`
+
+The universal shell now exposes all persisted conversations through a scrollable
+sidebar with separate pinned and recent sections instead of truncating the list
+to six items. Conversation drafts are keyed by conversation identity, so
+switching threads cannot overwrite another thread's unsent work.
+
+The Models workspace now follows the reference model-manager composition:
+summary tiles, a searchable local inventory, observed runtime connections, and
+an explicit provider-selection policy. Counts and readiness are derived from
+the host-reported inventory; an empty runtime remains visibly empty rather than
+showing sample models as if they were installed.
+
+The chat conversation viewport now has independent scrolling and stores a
+thread-specific scroll offset locally for restoration when returning to a
+conversation.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:future-features` — passed (161 items, 12 sections, 27 checked).
+- `npm run check:hygiene` — passed.
+- `git diff --check` — passed.
+- Reopened the production Electron build and visually inspected the live
+  reference-aligned Models screen through the desktop accessibility tree and
+  screenshot surface.
+
+Remaining: full-size visual captures and interaction acceptance across every
+reference workspace and supported window size remain open; this slice does not
+claim completion of the broader redesign.

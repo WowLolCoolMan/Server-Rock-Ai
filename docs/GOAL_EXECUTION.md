@@ -8201,6 +8201,33 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice — Align shell continuity and model manager
+
+Status: `implemented_build_visual_verified`
+
+This checkpoint advances the active UI transformation objective. The sidebar
+now renders all matching persisted conversations in pinned/recent sections,
+and ChatPage stores drafts and scroll offsets per conversation. The Models
+route was rebuilt around the v4 reference hierarchy: summary metrics, local
+model inventory/search, runtime observations, and an explicit no-silent-switch
+policy. The empty state is host-backed and honest when no runtime inventory is
+available.
+
+Evidence: `npm run desktop:typecheck`, `npm run desktop:build`,
+`npm run audit:electron-runtime`, `npm run audit:future-features`,
+`npm run check:hygiene`, and `git diff --check` all passed. The production
+Electron build was reopened and visually inspected live on the Models route.
+
+Checkpoint: `579f584 Align shell continuity and model manager` contains the
+previous shell/model-manager implementation; the scroll-restoration changes
+are the next pending checkpoint in the current worktree.
+
+Remaining: the full objective still requires route-by-route visual acceptance,
+responsive captures at 1920/1440/1280/960/640, durable state restoration for
+all workspaces, and completion of the remaining Marketplace trust/install,
+agent approval, image, permissions, onboarding, voice, and packaged-runtime
+acceptance work.
+
 ## Slice — Immutable GitHub skill inspection
 
 Status: `implemented_build_smoke_verified`
