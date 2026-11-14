@@ -115,10 +115,14 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
         event.preventDefault();
         setTerminalOpen((open) => !open);
       }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s" && selectedFile && hasChanges && !fileBusy) {
+        event.preventDefault();
+        onSaveFile();
+      }
     };
     window.addEventListener("keydown", onShortcut);
     return () => window.removeEventListener("keydown", onShortcut);
-  }, []);
+  }, [fileBusy, hasChanges, onSaveFile, selectedFile]);
 
   const planTask = async () => {
     if (!taskTitle.trim() || !taskInstruction.trim() || planningTask) return;

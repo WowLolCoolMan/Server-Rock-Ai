@@ -11342,3 +11342,29 @@ Evidence:
 
 Remaining: continue the editor review and remaining local workflow/accessibility
 slices; the complete premium rebuild remains active.
+
+## Slice 303 — Add guarded editor save shortcut
+
+Status: `implemented_renderer_typechecked`
+
+Coding Workspace now handles Ctrl/Cmd+S when a file is selected, dirty, and not
+already saving. The shortcut calls the existing guarded `project.file.write`
+operation, so it cannot create a new write path or bypass the expected hash
+check. The session bar advertises the shortcut alongside Find file and
+Terminal.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Renderer typecheck and production build passed after adding the shortcut.
+- The handler is gated by the actual selected-file, dirty-buffer, and busy
+  state values.
+
+Remaining: continue the live coding interaction coverage and remaining
+keyboard-focus slices; the broader premium rebuild remains active.

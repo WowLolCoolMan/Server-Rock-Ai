@@ -39,6 +39,10 @@ The editor's Undo action now reflects the actual local undo receipt. It is
 disabled, with an explanatory title, until a saved edit provides a reversible
 operation.
 
+The active project editor now also handles Ctrl/Cmd+S through the same guarded
+save operation and advertises the shortcut beside the existing file and
+terminal shortcuts.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to
