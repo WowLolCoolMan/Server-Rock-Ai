@@ -11447,6 +11447,41 @@ Evidence:
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
 
+## Slice 325 — Close the responsive overflow gap
+
+Status: `implemented_packaged_acceptance`
+
+The shared Electron shell now treats narrow layouts as an explicit overflow
+contract. Toolbar, page-header, panel, settings, composer, coding-session, and
+marketplace rows can shrink or wrap; shared buttons and long labels break
+within their controls instead of forcing a page wider than the viewport; and
+compact action groups wrap at the 900px and 640px breakpoints.
+
+The packaged overflow acceptance was also strengthened. In addition to checking
+viewport bounds and document width, it now checks visible text and interactive
+controls for accidental internal clipping while allowing deliberate `sr-only`
+labels and ellipsized single-line model names.
+
+Changed files:
+
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-electron-overflow.cjs`
+
+Evidence:
+
+- `npm run desktop:typecheck` passed.
+- `npm run desktop:build` passed.
+- `npm run check:syntax` passed.
+- `npm run package:electron` passed.
+- `npm run smoke:electron:overflow` passed for 9 routes at 1920, 1440,
+  1280, 960, and 640 pixels with no viewport overflow or accidental text and
+  control clipping.
+- `git diff --check` passed.
+
+Remaining: release signing and clean-machine lifecycle evidence, Linux parity,
+native Popup focus acceptance, richer agent dispatch/isolation, and the other
+capability-matrix gaps remain open. The active goal remains incomplete.
+
 ## Slice 310 — Make scheduled-run failures recoverable
 
 Status: `implemented_renderer_typechecked`
