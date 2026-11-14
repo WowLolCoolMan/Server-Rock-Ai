@@ -4,6 +4,12 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Coding Workspace now separates its page shell from the
+  active local session. Project switching, file search/tabs, editor/diff review,
+  task planning, terminal docking, local persistence, and activity handoff are
+  contained in `CodingSessionView`, while the route shell owns the project
+  overview and create-project dialog.
+
 - Current checkpoint — Agent Workbench presentation is now split into focused
   task list, board, detail/action, scheduled-run, and shared presentation
   modules. Existing filters, summary cards, next-step guidance, keyboard

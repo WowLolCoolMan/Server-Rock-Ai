@@ -46,6 +46,48 @@ Rollback: restore the Workbench JSX to its previous composition and remove the
 five focused view/presentation modules; the existing host contracts are
 unchanged.
 
+## Slice 280 — Extract the Coding Workspace session surface
+
+Status: `implemented_renderer_refactor_packaged_live_smoke_verified`
+
+The active Coding Workspace session is now owned by `CodingSessionView` rather
+than the route shell. It keeps project switching, file filtering, editor tabs,
+diff review, guarded save/undo controls, task planning, terminal docking,
+keyboard shortcuts, local persistence, and the real activity rail together as
+one focused feature boundary. `CodingPage` now orchestrates the page header,
+empty project overview, create-project dialog, and the active-session feature.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm test` — passed the full native Core suite.
+- `npm run package:electron` — passed and staged the Windows artifact.
+- `npm run smoke:electron:artifact` — passed; the packaged main Chat target,
+  Settings navigation, and separate Percy companion rendered successfully.
+- Live Electron development build loaded the Coding Workspace empty state and
+  its project-first workflow after the renderer extraction.
+- `git diff --check` — passed.
+
+Architecture/UX note: the page shell and active coding session now have clear
+ownership boundaries without adding a new dependency, runtime capability, or
+cloud route. Existing state and handlers remain the source of truth.
+
+Rollback: restore the previous `CodingPage` composition and remove
+`CodingSessionView.tsx`; no native contracts or persisted data formats change.
+
 ## Slice 278 — Add live activity context to Coding Workspace
 
 Status: `implemented_live_and_packaged_verified`
