@@ -23,7 +23,7 @@ public sealed class AgentTaskExecutor
         try
         {
             var result = await handler(task, cancellationToken).ConfigureAwait(false);
-            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels);
+            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels, result.WorkspaceChanges, result.WorkspaceCommands);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -48,7 +48,7 @@ public sealed class AgentTaskExecutor
         try
         {
             var result = await handler(task, cancellationToken).ConfigureAwait(false);
-            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels);
+            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels, result.WorkspaceChanges, result.WorkspaceCommands);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -89,7 +89,7 @@ public sealed class AgentTaskExecutor
             lease = await coordinator.CreateAsync(repositoryPath, target, $"codex/agent-task/{task.Id}", cancellationToken: cancellationToken).ConfigureAwait(false);
             task = _store.AttachWorktree(task.Id, lease.RepositoryRoot, lease.WorktreePath, lease.Branch);
             var result = await handler(task, lease, cancellationToken).ConfigureAwait(false);
-            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels);
+            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels, result.WorkspaceChanges, result.WorkspaceCommands);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -116,4 +116,8 @@ public sealed class AgentTaskExecutor
     }
 }
 
-public sealed record AgentTaskExecutionResult(string Summary, IReadOnlyList<string>? ArtifactLabels = null);
+public sealed record AgentTaskExecutionResult(
+    string Summary,
+    IReadOnlyList<string>? ArtifactLabels = null,
+    IReadOnlyList<AgentTaskWorkspaceChange>? WorkspaceChanges = null,
+    IReadOnlyList<AgentTaskWorkspaceCommand>? WorkspaceCommands = null);

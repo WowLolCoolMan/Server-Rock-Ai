@@ -85,10 +85,15 @@ export type DesktopTask = {
   dependsOn: string[];
   updatedAt: string;
   artifactLabels?: string[];
+  workspaceChanges?: DesktopTaskWorkspaceChange[];
+  workspaceCommands?: DesktopTaskWorkspaceCommand[];
   worktreePath?: string | null;
   worktreeBranch?: string | null;
   worktreeRepositoryRoot?: string | null;
 };
+
+export type DesktopTaskWorkspaceChange = { relativePath: string; content: string };
+export type DesktopTaskWorkspaceCommand = { relativeWorkingDirectory: string; command: string; timeoutSeconds: number };
 
 export type TaskEnvironment = "local" | "worktree";
 

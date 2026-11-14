@@ -36,6 +36,10 @@ public sealed class AgentTaskArtifact
     public List<string> DependsOn { get; set; } = [];
     public string? ResultSummary { get; set; }
     public List<string> ArtifactLabels { get; set; } = [];
+    /// <summary>Review-only file replacements returned by the local task model.</summary>
+    public List<AgentTaskWorkspaceChange> WorkspaceChanges { get; set; } = [];
+    /// <summary>Review-only commands returned by the local task model.</summary>
+    public List<AgentTaskWorkspaceCommand> WorkspaceCommands { get; set; } = [];
     public string? WorktreePath { get; set; }
     public string? WorktreeBranch { get; set; }
     public string? WorktreeRepositoryRoot { get; set; }

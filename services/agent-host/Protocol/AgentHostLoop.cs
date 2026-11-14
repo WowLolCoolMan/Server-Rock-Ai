@@ -990,6 +990,8 @@ public static class AgentHostLoop
                 status = task.Status,
                 resultSummary = task.ResultSummary,
                 artifactLabels = task.ArtifactLabels,
+                workspaceChanges = task.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content }).ToArray(),
+                workspaceCommands = task.WorkspaceCommands.Select(command => new { relativeWorkingDirectory = command.RelativeWorkingDirectory, command = command.Command, timeoutSeconds = command.TimeoutSeconds }).ToArray(),
                 worktreePath = task.WorktreePath,
                 worktreeBranch = task.WorktreeBranch,
                 worktreeRepositoryRoot = task.WorktreeRepositoryRoot,
@@ -1112,7 +1114,16 @@ public static class AgentHostLoop
             };
             await new OpenAiCompatibleProvider().StreamChatAsync(modelSettings, messages, chunk => response.Append(chunk), timeout.Token,
                 EffortModePolicy.MaxTokens(modelSettings.EffortMode, prompt.Length));
-            var summary = response.ToString().Trim();
+            var fullResponse = response.ToString().Trim();
+            var workspaceChanges = WorkspaceChangeProposalParser.Parse(fullResponse)
+                .Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content })
+                .ToArray();
+            var workspaceCommands = WorkspaceCommandProposalParser.Parse(fullResponse)
+                .Select(command => new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = command.RelativeWorkingDirectory, Command = command.Command, TimeoutSeconds = command.TimeoutSeconds })
+                .ToArray();
+            var summary = WorkspaceCommandProposalParser.RemoveProposals(WorkspaceChangeProposalParser.RemoveProposals(fullResponse));
+            if (string.IsNullOrWhiteSpace(summary) && (workspaceChanges.Length > 0 || workspaceCommands.Length > 0))
+                summary = "The local model returned reviewable workspace proposals.";
             if (summary.Length > AgentTaskArtifactStore.MaxResultCharacters)
                 summary = summary[..(AgentTaskArtifactStore.MaxResultCharacters - 18)].TrimEnd() + "\n[…truncated]";
             var labels = task.Environment == AgentTaskEnvironments.Worktree
@@ -1120,7 +1131,10 @@ public static class AgentHostLoop
                 : task.ProjectId is null
                     ? new[] { "local-model-response" }
                     : new[] { "local-model-response", "read-only-project-context" };
-            return new AgentTaskExecutionResult(summary, labels);
+            var proposalLabels = labels.ToList();
+            if (workspaceChanges.Length > 0) proposalLabels.Add("reviewable-file-proposals");
+            if (workspaceCommands.Length > 0) proposalLabels.Add("reviewable-command-proposals");
+            return new AgentTaskExecutionResult(summary, proposalLabels, workspaceChanges, workspaceCommands);
         }).ConfigureAwait(false);
         return new(ProtocolVersion, request.Id, true, new
         {
@@ -1128,6 +1142,8 @@ public static class AgentHostLoop
             status = completed.Status,
             resultSummary = completed.ResultSummary,
             artifactLabels = completed.ArtifactLabels,
+            workspaceChanges = completed.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content }).ToArray(),
+            workspaceCommands = completed.WorkspaceCommands.Select(command => new { relativeWorkingDirectory = command.RelativeWorkingDirectory, command = command.Command, timeoutSeconds = command.TimeoutSeconds }).ToArray(),
             environment = completed.Environment,
             worktreePath = completed.WorktreePath,
             worktreeBranch = completed.WorktreeBranch,

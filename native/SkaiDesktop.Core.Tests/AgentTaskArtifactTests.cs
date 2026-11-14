@@ -1,3 +1,4 @@
+using SkaiDesktop.Core.Infrastructure;
 using SkaiDesktop.Core.Models;
 using SkaiDesktop.Core.Services;
 using static TestSupport;
@@ -65,6 +66,15 @@ internal static class AgentTaskArtifactTests
             store.Queue(completedPlan.Id);
             var completed = await executor.ExecuteNextAsync((task, _) => Task.FromResult(new AgentTaskExecutionResult($"Completed {task.Title}.", ["handler-result"])));
             Check(completed?.Status == AgentTaskStatuses.Completed && completed.ArtifactLabels.Contains("handler-result"), "agent task executor durably completes an injected handler");
+            var proposalText = "Plan first. <workspace-change path=\"src/App.tsx\">export const App = () => null;</workspace-change><workspace-command cwd=\".\" timeout-seconds=\"45\">npm test</workspace-command>";
+            var parsedChanges = WorkspaceChangeProposalParser.Parse(proposalText);
+            var parsedCommands = WorkspaceCommandProposalParser.Parse(proposalText);
+            Check(parsedChanges.Count == 1 && parsedChanges[0].RelativePath == "src/App.tsx" && parsedCommands.Count == 1 && parsedCommands[0].TimeoutSeconds == 45 && !WorkspaceCommandProposalParser.RemoveProposals(WorkspaceChangeProposalParser.RemoveProposals(proposalText)).Contains("workspace-", StringComparison.Ordinal), "workspace proposal parsers extract bounded file and command review blocks");
+            var proposalPlan = store.Create("Persist review proposals", "Record model-generated workspace proposals.");
+            store.Queue(proposalPlan.Id);
+            var proposalResult = await executor.ExecuteNextAsync((_, _) => Task.FromResult(new AgentTaskExecutionResult("Review the proposed workspace changes.", ["reviewable"], [new AgentTaskWorkspaceChange { RelativePath = "src/App.tsx", Content = "export const App = () => null;" }], [new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = ".", Command = "npm test", TimeoutSeconds = 45 }])));
+            var persistedProposal = store.Get(proposalResult!.Id);
+            Check(persistedProposal.WorkspaceChanges.Count == 1 && persistedProposal.WorkspaceChanges[0].RelativePath == "src/App.tsx" && persistedProposal.WorkspaceCommands.Count == 1 && persistedProposal.WorkspaceCommands[0].Command == "npm test", "agent task artifacts persist reviewable workspace proposals");
             var failedPlan = store.Create("Fail bounded review", "Run a failing injected handler.");
             store.Queue(failedPlan.Id);
             var failed = await executor.ExecuteNextAsync((_, _) => throw new InvalidOperationException("handler failure"));

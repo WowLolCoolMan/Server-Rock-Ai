@@ -15,6 +15,9 @@ public sealed class AgentTaskArtifactStore
     public const int MaxArtifactLabelCharacters = 160;
     public const int MaxDependencies = 8;
     public const int MaxArtifactLabels = 8;
+    public const int MaxWorkspaceChanges = 8;
+    public const int MaxWorkspaceCommands = 3;
+    public const int MaxWorkspaceCommandCharacters = 4_000;
     public const int MaxWorktreePathCharacters = 4_096;
     public const int MaxWorktreeBranchCharacters = 256;
     public const int MaxProjectIdCharacters = 128;
@@ -241,8 +244,8 @@ public sealed class AgentTaskArtifactStore
         task.Status == AgentTaskStatuses.Queued && task.DependsOn.All(dependencyId =>
             tasks.Any(dependency => dependency.Id == dependencyId && dependency.Status == AgentTaskStatuses.Completed));
 
-    public AgentTaskArtifact Complete(string id, string resultSummary, IEnumerable<string>? artifactLabels = null) =>
-        Finish(id, AgentTaskStatuses.Completed, resultSummary, artifactLabels);
+    public AgentTaskArtifact Complete(string id, string resultSummary, IEnumerable<string>? artifactLabels = null, IEnumerable<AgentTaskWorkspaceChange>? workspaceChanges = null, IEnumerable<AgentTaskWorkspaceCommand>? workspaceCommands = null) =>
+        Finish(id, AgentTaskStatuses.Completed, resultSummary, artifactLabels, workspaceChanges, workspaceCommands);
 
     public AgentTaskArtifact Fail(string id, string resultSummary) => Finish(id, AgentTaskStatuses.Failed, resultSummary, null);
 
@@ -266,7 +269,7 @@ public sealed class AgentTaskArtifactStore
         return Copy(task);
     }
 
-    private AgentTaskArtifact Finish(string id, string status, string resultSummary, IEnumerable<string>? artifactLabels)
+    private AgentTaskArtifact Finish(string id, string status, string resultSummary, IEnumerable<string>? artifactLabels, IEnumerable<AgentTaskWorkspaceChange>? workspaceChanges = null, IEnumerable<AgentTaskWorkspaceCommand>? workspaceCommands = null)
     {
         var tasks = Load().ToList();
         var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
@@ -274,6 +277,8 @@ public sealed class AgentTaskArtifactStore
         task.Status = status;
         task.ResultSummary = Normalize(resultSummary, MaxResultCharacters, "task result");
         task.ArtifactLabels = NormalizeLabels(artifactLabels);
+        task.WorkspaceChanges = NormalizeWorkspaceChanges(workspaceChanges);
+        task.WorkspaceCommands = NormalizeWorkspaceCommands(workspaceCommands);
         task.UpdatedAtUtc = DateTimeOffset.UtcNow;
         Save(tasks);
         return Copy(task);
@@ -303,6 +308,8 @@ public sealed class AgentTaskArtifactStore
             if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
             if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
             NormalizeLabels(task.ArtifactLabels);
+            NormalizeWorkspaceChanges(task.WorkspaceChanges);
+            NormalizeWorkspaceCommands(task.WorkspaceCommands);
             NormalizeOptional(task.WorktreeRepositoryRoot, MaxWorktreePathCharacters, "worktree repository root");
             task.Environment = NormalizeEnvironment(task.Environment);
             NormalizeOptional(task.WorktreePath, MaxWorktreePathCharacters, "worktree path");
@@ -347,6 +354,44 @@ public sealed class AgentTaskArtifactStore
         return result;
     }
 
+    private static List<AgentTaskWorkspaceChange> NormalizeWorkspaceChanges(IEnumerable<AgentTaskWorkspaceChange>? values)
+    {
+        var result = (values ?? [])
+            .Take(MaxWorkspaceChanges + 1)
+            .Select(change => new AgentTaskWorkspaceChange
+            {
+                RelativePath = Normalize(change.RelativePath, 512, "workspace change path"),
+                Content = NormalizeContent(change.Content, "workspace change content")
+            })
+            .ToList();
+        if (result.Count > MaxWorkspaceChanges) throw new ArgumentException($"A task can have at most {MaxWorkspaceChanges} workspace changes.");
+        if (result.Select(change => change.RelativePath).Distinct(StringComparer.OrdinalIgnoreCase).Count() != result.Count)
+            throw new ArgumentException("A task cannot contain duplicate workspace change paths.");
+        return result;
+    }
+
+    private static List<AgentTaskWorkspaceCommand> NormalizeWorkspaceCommands(IEnumerable<AgentTaskWorkspaceCommand>? values)
+    {
+        var result = (values ?? [])
+            .Take(MaxWorkspaceCommands + 1)
+            .Select(command => new AgentTaskWorkspaceCommand
+            {
+                RelativeWorkingDirectory = Normalize(command.RelativeWorkingDirectory, 512, "workspace command directory"),
+                Command = Normalize(command.Command, MaxWorkspaceCommandCharacters, "workspace command"),
+                TimeoutSeconds = Math.Clamp(command.TimeoutSeconds, 1, (int)WorkspaceCommandRunner.MaxTimeout.TotalSeconds)
+            })
+            .ToList();
+        if (result.Count > MaxWorkspaceCommands) throw new ArgumentException($"A task can have at most {MaxWorkspaceCommands} workspace commands.");
+        return result;
+    }
+
+    private static string NormalizeContent(string value, string label)
+    {
+        if (value is null || value.Length == 0 || value.Length > WorkspaceFileEditor.MaxCharacters || value.Contains('\0'))
+            throw new ArgumentException($"The {label} is invalid.", label);
+        return value;
+    }
+
     private static AgentTaskArtifact Copy(AgentTaskArtifact source) => new()
     {
         Id = source.Id,
@@ -360,6 +405,8 @@ public sealed class AgentTaskArtifactStore
         DependsOn = source.DependsOn.ToList(),
         ResultSummary = source.ResultSummary,
         ArtifactLabels = source.ArtifactLabels.ToList(),
+        WorkspaceChanges = source.WorkspaceChanges.Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content }).ToList(),
+        WorkspaceCommands = source.WorkspaceCommands.Select(command => new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = command.RelativeWorkingDirectory, Command = command.Command, TimeoutSeconds = command.TimeoutSeconds }).ToList(),
         WorktreePath = source.WorktreePath,
         WorktreeBranch = source.WorktreeBranch,
         WorktreeRepositoryRoot = source.WorktreeRepositoryRoot,
