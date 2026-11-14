@@ -3,32 +3,38 @@
 <div align="center">
   <img src="assets/branding/skaiwolficon.png" width="128" alt="Skai Desktop wolf icon" />
   <h1>Skai Desktop</h1>
-  <p><strong>A local-first desktop workspace for chat, coding, projects, models, and media.</strong></p>
-  <p>Private by default. Built for real work on your own computer.</p>
+  <p><strong>A local-first desktop workspace for chat, coding, projects, and local AI models.</strong></p>
+  <p>Private by default. Built to keep useful work on your own computer.</p>
 </div>
 
 <p align="center">
   <img src="assets/branding/skai-desktop-hero.png" alt="Skai Desktop workspace illustration" />
 </p>
 
-Skai Desktop brings conversations, local models, project files, guarded terminal work, GitHub workflows, and creative tools into one Windows desktop application. It is designed to feel like a focused workbench rather than another chat tab.
+Skai Desktop is an Electron + React desktop application with a persistent .NET Agent Host. It brings local model chat, project files, guarded terminal work, task review, GitHub workflows, settings, memory, and creative tools into one focused workspace.
 
-## What Skai is today
+> **Project status:** active development. The Electron surface is the product being advanced now. Capability claims below describe the current synchronized `main` branch; unfinished ideas remain in the [future feature backlog](docs/FUTURE_FEATURES.md).
 
-- **Local chat** with Ollama, LM Studio, LocalAI, llama.cpp, vLLM, and other OpenAI-compatible servers running on this computer.
-- **AirLLM support** for running very large models locally when ordinary local capacity is not enough.
-- **Coding Workspace** with project-scoped folders, file preview and editing, reviewable diffs, guarded terminal commands, undo, and task planning.
-- **Local scheduled automations** with durable prompts, one-time or repeating schedules, pause/resume/cancel controls, and run-now actions; execution remains explicit until the local executor is enabled.
-- **Conversation workspace** with persistent history, attachments, queued follow-ups, Markdown/code rendering, retry, fork, pin, archive, and rename actions.
-- **Local media workflows** through ComfyUI-compatible image generation and supported native voice features.
-- **GitHub project workflows** for repository context and guarded review/commit/push actions. GitHub is a project integration, not a model runtime.
-- **Percy**, the Skai wolf mascot and optional local companion.
+## The product boundary
 
-## No-cloud product boundary
+Skai Desktop is **local-only** for AI runtime and application data:
 
-Skai Desktop does **not** use hosted model providers, cloud model execution, cloud sync, or remote model routing. Model prompts and attachments stay on this computer and are sent only to a local runtime that you configure.
+- No cloud model execution, hosted provider routing, cloud sync, or remote fallback.
+- Prompts and attachments stay on this computer and are sent only to a local runtime selected by the user.
+- GitHub is an explicit project integration for repository context and guarded Git workflows; it is not an AI model provider.
+- Local services such as Ollama, LM Studio, LocalAI, llama.cpp, vLLM, OpenAI-compatible loopback servers, and ComfyUI can be connected by the user.
 
-External integrations such as GitHub are separate, user-initiated project workflows. They never become a model route or an automatic fallback.
+## What is working today
+
+- **Chat** — persistent conversations, attachments, queued follow-ups, Markdown/code rendering, retry, fork, pin, archive, rename, folders, tags, split view, and local memory controls.
+- **Coding Workspace** — project-scoped files, bounded previews, editing, reviewable diffs, guarded terminal commands, undo, task planning, and focused project context.
+- **Agent Workbench** — durable local task plans, dependency-aware readiness, activity filters, cancellation, approvals, and reviewable task state.
+- **Scheduled work** — local one-time and repeating schedules with pause/resume/cancel and reviewed Run now controls. No unattended provider request is implied.
+- **Models** — local provider discovery, model library, pinned models, capability checks, comparison, explicit unavailable-model recovery, and no silent model switching.
+- **Workspace shell** — resizable persistent sidebar, browser-like navigation state, responsive layouts, command palette, settings, in-app documentation, and Deep Sea/Deep Space theme presets.
+- **Integrations and media** — guarded GitHub project workflows, local ComfyUI-compatible image workflows, local attachments, and Percy, the optional Skai wolf companion.
+
+The project favors small, tested vertical slices over static mock screens. UI work is checked against the running desktop surface at multiple widths, with interaction evidence recorded in [`docs/SKAI_PREMIUM_UI_PROGRESS.md`](docs/SKAI_PREMIUM_UI_PROGRESS.md).
 
 ## Why Skai
 
@@ -110,12 +116,12 @@ Useful docs:
 - [`docs/GITHUB_INTEGRATION.md`](docs/GITHUB_INTEGRATION.md) — repository project workflows.
 - [`services/agent-host/README.md`](services/agent-host/README.md) — Agent Host protocol notes.
 
-## Current status
+## Open work
 
-The Electron + React + TypeScript surface is the active product and is being advanced through verified UI and runtime slices. The current workbench includes local task planning and durable scheduled-automation controls, while the Uno application is retained only as a compatibility surface during migration. The project is actively under development; unsupported capabilities should not be assumed to be shipped.
+The next work is deliberately visible rather than implied: richer editor panes, complete agent execution, broader accessibility and packaged acceptance, Linux validation, deeper retrieval, and additional local integrations remain in progress. See the capability matrix for evidence-backed status instead of assuming every item in the product backlog is shipped.
 
 ## Contributing
 
-Keep changes incremental, local-first, and testable. Preserve the Electron → isolated IPC → .NET Agent Host boundary, avoid exposing secrets to the renderer, and do not add cloud model routes.
+Keep changes incremental, local-first, and testable. Preserve the Electron → isolated IPC → .NET Agent Host boundary, avoid exposing secrets to the renderer, do not add cloud model routes, and include validation evidence for user-facing changes.
 
 MIT licensed. Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

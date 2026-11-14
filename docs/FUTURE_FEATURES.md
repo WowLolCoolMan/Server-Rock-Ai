@@ -19,15 +19,18 @@ and acceptance evidence.
 
 ## Current product boundary
 
-Skai Desktop is local-first, with explicit cloud access as a separate route.
-The local path may use a model server already running on this computer or
-AirLLM running locally. Cloud services are first-class through provider
-adapters, including OpenAI/ChatGPT, ElevenLabs voice, and future supported
-model, voice, image, search, and integration services. Local inference must
-never silently fall back to cloud inference, and cloud requests must never
-silently fall back to a local model. Every route needs explicit provider
-selection, auth, data-boundary disclosure, cancellation, and credential
-storage. External integrations such as GitHub remain separate workflows.
+Skai Desktop is local-only. The application does not use hosted model
+providers, cloud model execution, cloud sync, remote model routing, or cloud
+fallbacks. The local path may use a model server already running on this
+computer or AirLLM running locally. Prompts, attachments, credentials, and
+application state stay on this computer unless the user explicitly starts a
+separate external integration workflow such as GitHub.
+
+Any older backlog item that mentions cloud execution, cloud compute, hosted
+accounts, cloud sync, or remote device control is retained as historical
+product research only and is not a commitment for Skai Desktop. New features
+must preserve the local-only boundary and provide explicit provider selection,
+cancellation, permission review, and local credential handling.
 
 ## Core chat
 

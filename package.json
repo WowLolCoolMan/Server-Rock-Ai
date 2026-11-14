@@ -1,7 +1,7 @@
 {
   "name": "skai-desktop",
   "version": "0.1.2",
-  "description": "Skai Desktop — a local-first desktop AI workspace with pluggable model providers",
+  "description": "Skai Desktop — a local-first Electron workspace for chat, coding, projects, and local AI models",
   "author": "Skai Desktop",
   "license": "MIT",
   "private": false,
