@@ -679,3 +679,16 @@ Evidence:
 Remaining: connect the retained worktree to reviewed file-edit and terminal
 actions, add process isolation and background execution, and capture packaged
 live acceptance for the complete coding-agent workflow.
+
+## Slice — Clarify task environment controls
+
+Status: `implemented_renderer_build_verified`
+
+The shared task composer now disables Worktree until a project is selected,
+making the host requirement visible before submission rather than surfacing a
+preventable request error. Agent Workbench approval copy distinguishes local
+and isolated execution, and retained worktree details include the repository
+root alongside the branch and target path.
+
+Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
+`git diff --check` passed. Commit: `991ec42`.

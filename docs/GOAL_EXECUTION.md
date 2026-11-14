@@ -10311,3 +10311,15 @@ audit, local-only audit, syntax checks, and `git diff --check` passed.
 Remaining: connect retained worktrees to reviewed file-edit and terminal
 actions, add process isolation and background execution, and complete packaged
 live acceptance for the coding-agent workflow.
+
+## Slice — Clarify task environment controls
+
+Status: `implemented_renderer_build_verified`
+
+The shared task composer now disables Worktree until a project is selected,
+which makes the host prerequisite visible before submission. Workbench approval
+copy distinguishes local and isolated execution, and retained worktree details
+show the repository root together with the branch and target path.
+
+Evidence: `991ec42`; desktop typecheck, production build, and `git diff --check`
+passed.
