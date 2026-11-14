@@ -152,6 +152,22 @@ public sealed class GitHubWorkspaceService
         return await CommitSelectedCoreAsync(repositoryPath, currentSelection, message, null, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Pushes clean local commits through the user's configured Git credential helper.</summary>
+    public async Task<string> PushLocalAsync(string repositoryPath, CancellationToken cancellationToken = default)
+    {
+        var status = await GetLocalStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        if (status.Changes.Count > 0) throw new InvalidOperationException("Commit or discard the listed changes before pushing.");
+        if (GitHubWorkspaceService.HasConflicts(status.Changes)) throw new InvalidOperationException("Resolve conflicts before pushing.");
+        if (status.CommitsAhead == 0) throw new InvalidOperationException("There are no local commits waiting to push.");
+        if (status.CommitsBehind > 0) throw new InvalidOperationException("The remote branch has newer commits. Fetch and review them before pushing.");
+        var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var remote = await RunGitAsync(root, ["remote", "get-url", "origin"], null, TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+        EnsureSuccess(remote, "This project has no origin remote configured. Add one before pushing.");
+        var push = await RunGitAsync(root, ["push", "--set-upstream", "origin", "HEAD"], null, TimeSpan.FromMinutes(5), cancellationToken).ConfigureAwait(false);
+        EnsureSuccess(push, "Git push failed. Your local commit is preserved; review the Git credential helper and remote state.");
+        return (push.StandardOutput + push.StandardError).Trim();
+    }
+
     private async Task<string> CommitSelectedCoreAsync(string repositoryPath, IReadOnlyCollection<GitWorkspaceFileChange> selectedChanges, string message,
         string? accessToken, CancellationToken cancellationToken)
     {

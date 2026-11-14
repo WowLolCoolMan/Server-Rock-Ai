@@ -61,7 +61,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -73,6 +73,7 @@ public static class AgentHostLoop
             "project.git.status" => GetProjectGitStatusAsync(request).GetAwaiter().GetResult(),
             "project.git.diff" => GetProjectGitDiffAsync(request).GetAwaiter().GetResult(),
             "project.git.commit" => CommitProjectGitChangesAsync(request).GetAwaiter().GetResult(),
+            "project.git.push" => PushProjectGitAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -432,6 +433,15 @@ public static class AgentHostLoop
         var message = RequiredBoundedString(request, "message", 256);
         var commit = await new GitHubWorkspaceService().CommitSelectedLocallyAsync(root, changes, message, CancellationToken.None).ConfigureAwait(false);
         return new(ProtocolVersion, request.Id, true, new { repository = project.Name, committed = true, output = commit });
+    }
+
+    private static async Task<AgentResponse> PushProjectGitAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault() ?? throw new InvalidOperationException("Select a project folder before pushing.");
+        var output = await new GitHubWorkspaceService().PushLocalAsync(root, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { repository = project.Name, pushed = true, output });
     }
 
     private static async Task<(LocalProject Project, string Root, IReadOnlyList<GitWorkspaceFileChange> Changes)> ResolveProjectGitSelectionAsync(AgentRequest request)

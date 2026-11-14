@@ -28,6 +28,7 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [gitDiff, setGitDiff] = useState<DesktopGitDiff | null>(null);
   const [gitDiffBusy, setGitDiffBusy] = useState(false);
   const [gitCommitBusy, setGitCommitBusy] = useState(false);
+  const [gitPushBusy, setGitPushBusy] = useState(false);
 
   useEffect(() => {
     if (connection !== "ready") return;
@@ -97,6 +98,17 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     return true;
   };
 
+  const pushGitChanges = async () => {
+    if (!selectedProject || gitPushBusy) return false;
+    setGitPushBusy(true);
+    const response = await request("project.git.push", { id: selectedProject.id });
+    setGitPushBusy(false);
+    if (!response.ok) { onError(response.error?.message ?? "Git push was rejected."); return false; }
+    await refreshGitStatus(selectedProject.id);
+    onError(null);
+    return true;
+  };
+
   useEffect(() => {
     if (connection !== "ready" || selectedProject || projects.length === 0) return;
     const storedId = localStorage.getItem("skai.selectedProject");
@@ -145,5 +157,5 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalExitCode(result.exitCode);
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus, loadGitDiff, commitGitChanges };
+  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus, loadGitDiff, commitGitChanges, pushGitChanges };
 }

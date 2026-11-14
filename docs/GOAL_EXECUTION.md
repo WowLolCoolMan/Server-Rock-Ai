@@ -11576,6 +11576,28 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 323 — Expose guarded local Git push
+
+Status: `implemented_renderer_typechecked`
+
+Coding Workspace now exposes an explicit push action when the working tree is
+clean and local commits are ahead. The Agent Host rechecks status immediately,
+blocks conflicts, uncommitted changes, and branches behind their remote, then
+invokes `git push` through the user’s configured credential helper. No token is
+accepted from renderer input, and pull/PR creation remains unavailable until a
+separate authenticated GitHub workflow is connected.
+
+Evidence:
+
+- Agent Host build passed with zero warnings and zero errors.
+- Renderer typecheck/build and syntax checks passed.
+- The local-only boundary is preserved; the push path never embeds credentials
+  in arguments or remote URLs.
+
+Remaining: add focused push smoke coverage with a disposable remote, then
+continue PR support, file/tool verification, model/voice recovery, and release
+gates.
+
 ## Slice 322 — Validate packaged approval and verification flow
 
 Status: `implemented_and_packaged_verified`
