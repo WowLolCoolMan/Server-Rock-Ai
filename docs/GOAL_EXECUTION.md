@@ -3,6 +3,31 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 272 — Expose active navigation state semantically
+
+Status: `implemented_live_electron_verified`
+
+The shared sidebar now exposes the selected Chat, Coding, Workbench, Models,
+Image Studio, Marketplace, Terminal, Memory, and Settings destinations with
+`aria-current="page"` while preserving the existing visual active state and
+route IDs. This keeps keyboard and assistive-technology navigation aligned
+with the same persistent route state shown on screen.
+
+Changed file:
+
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+
+Evidence:
+
+- `npm run build` — passed.
+- `npm run typecheck` — passed.
+- Live Electron loaded the rebuilt Chat shell with the full route navigation,
+  project and utility groups, and Percy companion surface present.
+- `git diff --check` — passed before commit.
+
+Remaining: continue the next higher-impact keyboard/focus or packaged
+Electron acceptance gap; the active goal remains incomplete.
+
 ## Slice 271 — Standardize high-frequency workspace icons
 
 Status: `implemented_live_electron_verified`
