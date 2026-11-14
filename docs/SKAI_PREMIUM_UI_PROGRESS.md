@@ -4,6 +4,12 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Chat’s composer now has a keyboard-first local slash
+  command menu with filtering, pointer and ArrowUp/ArrowDown selection,
+  Escape dismissal, local route handoffs, and a review-first `/goal` task
+  planner command. It is bounded to existing local handlers and does not add
+  cloud behavior.
+
 - Current checkpoint — Chat’s model control is now a reusable local picker with
   provider/capability identity, search, keyboard navigation, selected state,
   Escape dismissal, and an honest empty-registry handoff to Models.

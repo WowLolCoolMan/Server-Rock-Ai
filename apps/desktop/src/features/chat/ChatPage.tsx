@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { ChatAttachment, DesktopQueuedMessage, TaskEnvironment } from "../../../shared/contracts";
-import type { Message, Model } from "../../app/types";
+import type { Message, Model, Route } from "../../app/types";
 import { Button, Card, EmptyState } from "../../components/ui/Primitives";
+import { ComposerCommandMenu } from "../../components/ui/ComposerCommandMenu";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { ModalDialog } from "../../components/ui/ModalDialog";
 import { OverflowMenu } from "../../components/ui/OverflowMenu";
 import { ModelPicker } from "../../components/ui/ModelPicker";
 import { AttachmentList } from "./AttachmentList";
 import { ChatMessage } from "./ChatMessage";
+import { composerCommands, type ComposerCommand } from "./composerCommands";
 
 const SKAI_WOLF_ICON = new URL("../../../../../assets/branding/skaiwolficon.png", import.meta.url).href;
 const CHAT_SCROLL_KEY_PREFIX = "skai.chat.scroll.";
@@ -35,7 +37,7 @@ type ChatPageProps = {
   onAttach: () => void;
   onRemoveAttachment: (index: number) => void;
   onModelChange: (model: string) => void;
-  onNavigate: (route: "coding" | "images" | "marketplace" | "models" | "workbench") => void;
+  onNavigate: (route: Route) => void;
   onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onExport: () => void;
   onFork: () => void;
@@ -58,14 +60,18 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const [renameDraft, setRenameDraft] = useState(conversationTitle);
   const [renameBusy, setRenameBusy] = useState(false);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [commandIndex, setCommandIndex] = useState(0);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef(conversationId);
   const restoreScrollPendingRef = useRef(false);
   const stickToLatestRef = useRef(true);
+  const commandQuery = draft.match(/^\/([^\s]*)$/)?.[1] ?? null;
+  const commandMatches = useMemo(() => commandQuery === null ? [] : composerCommands.filter((command) => `${command.label} ${command.detail} ${command.shortcut}`.toLowerCase().includes(commandQuery.toLowerCase())), [commandQuery]);
 
   useEffect(() => { localStorage.setItem("skai.chat.draft", draft); }, [draft]);
   useEffect(() => { localStorage.setItem("skai.chat.taskComposerOpen", String(taskComposerOpen)); }, [taskComposerOpen]);
+  useEffect(() => { setCommandIndex(0); }, [commandQuery]);
   useEffect(() => { if (!renameOpen) setRenameDraft(conversationTitle); }, [conversationTitle, renameOpen]);
   useEffect(() => {
     const key = chatScrollKey(conversationId);
@@ -137,6 +143,25 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
     }
   };
 
+  const selectComposerCommand = (command: ComposerCommand) => {
+    setDraft("");
+    if (command.opensTaskPlanner) {
+      setTaskComposerOpen(true);
+      return;
+    }
+    if (command.route) onNavigate(command.route);
+  };
+
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (commandQuery !== null && commandMatches.length > 0) {
+      if (event.key === "ArrowDown") { event.preventDefault(); setCommandIndex((index) => Math.min(index + 1, commandMatches.length - 1)); return; }
+      if (event.key === "ArrowUp") { event.preventDefault(); setCommandIndex((index) => Math.max(index - 1, 0)); return; }
+      if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); selectComposerCommand(commandMatches[commandIndex]); return; }
+    }
+    if (event.key === "Escape" && commandQuery !== null) { event.preventDefault(); setDraft(""); return; }
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); }
+  };
+
   const renameConversation = async () => {
     const title = renameDraft.trim();
     if (!title || !conversationId || renameBusy) return;
@@ -154,7 +179,7 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
     <div className="chat-layout">
       <main className="chat-column">
         <Card className="conversation-card"><div className="conversation-header"><span className="conversation-context">LOCAL CHAT</span><span className="conversation-count">{messages.length} messages</span></div>{messages.length === 0 ? <EmptyState visual={<img src={SKAI_WOLF_ICON} alt="" />} title="Start a conversation" description="Ask a question, attach a file, or jump into a coding workspace." /> : <><div className="message-list" ref={messageListRef}>{messages.map((message, index) => <ChatMessage key={`${message.role}-${index}`} message={message} index={index} model={model} busy={busy} conversationId={conversationId} copied={copiedMessage === index} onCopy={(content, itemIndex) => void copyMessage(content, itemIndex)} onRetry={onRetryMessage} onFork={onForkFromMessage} onEdit={onEditMessage} />)}{busy && <article className="message-bubble assistant"><span>{model}</span><p className="typing">Thinking…</p></article>}</div>{showJumpToLatest && <div className="chat-latest-action"><Button variant="secondary" type="button" onClick={jumpToLatest}>Jump to latest ↓</Button></div>}</>}</Card>
-        <Card className="composer-card">{queuedMessages.length > 0 && <div className="queued-messages" aria-label="Queued messages"><div className="queued-heading"><span className="section-kicker">UP NEXT</span><span>{queuedMessages.length}/8 queued</span></div>{queuedMessages.map((queued) => <div className="queued-message" key={queued.index}><span>{queued.text}</span>{queued.attachments?.length ? <small>{queued.attachments.map((attachment) => attachment.fileName).join(", ")}</small> : null}<button type="button" onClick={() => onRemoveQueued(queued.index)} aria-label={`Remove queued message ${queued.index + 1}`}>×</button></div>)}</div>}{attachments.length > 0 && <AttachmentList attachments={attachments} onRemove={onRemoveAttachment} />}<textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }} placeholder={busy ? "Type a follow-up while the model responds…" : "Message your model…"} aria-label="Message your model" rows={3} /><div className="composer-actions"><Button variant="ghost" type="button" onClick={onAttach} disabled={attachments.length >= 5}>Attach</Button><div><span className="composer-hint">Enter to {busy ? "queue" : "send"} · Shift+Enter for a new line</span><Button variant={busy ? "secondary" : "primary"} disabled={!draft.trim() && attachments.length === 0} onClick={submit}>{busy ? "Queue ↗" : "Send ↗"}</Button></div></div></Card>
+        <Card className="composer-card">{commandQuery !== null && <ComposerCommandMenu commands={commandMatches} activeIndex={commandIndex} onActiveIndexChange={setCommandIndex} onSelect={selectComposerCommand} />}{queuedMessages.length > 0 && <div className="queued-messages" aria-label="Queued messages"><div className="queued-heading"><span className="section-kicker">UP NEXT</span><span>{queuedMessages.length}/8 queued</span></div>{queuedMessages.map((queued) => <div className="queued-message" key={queued.index}><span>{queued.text}</span>{queued.attachments?.length ? <small>{queued.attachments.map((attachment) => attachment.fileName).join(", ")}</small> : null}<button type="button" onClick={() => onRemoveQueued(queued.index)} aria-label={`Remove queued message ${queued.index + 1}`}>×</button></div>)}</div>}{attachments.length > 0 && <AttachmentList attachments={attachments} onRemove={onRemoveAttachment} />}<textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={handleComposerKeyDown} placeholder={busy ? "Type a follow-up while the model responds…" : "Message your model…"} aria-label="Message your model" aria-controls={commandQuery !== null ? "composer-command-menu" : undefined} rows={3} /><div className="composer-actions"><Button variant="ghost" type="button" onClick={onAttach} disabled={attachments.length >= 5}>Attach</Button><div><span className="composer-hint">Enter to {busy ? "queue" : "send"} · Shift+Enter for a new line · / for commands</span><Button variant={busy ? "secondary" : "primary"} disabled={!draft.trim() && attachments.length === 0} onClick={submit}>{busy ? "Queue ↗" : "Send ↗"}</Button></div></div></Card>
       </main>
       <aside className="chat-rail">{messages.length === 0 ? <Card className="rail-card"><p className="section-kicker">QUICK START</p><button onClick={() => onNavigate("coding")} type="button"><strong>Build in a project</strong><span>Open files, terminal, and agent tasks</span></button><button onClick={() => onNavigate("images")} type="button"><strong>Create an image</strong><span>Use a local image workflow</span></button><button onClick={() => onNavigate("workbench")} type="button"><strong>Run an agent</strong><span>Plan, execute, and verify work</span></button><button onClick={() => onNavigate("marketplace")} type="button"><strong>Find a model or tool</strong><span>Browse voices, image models, skills, and runtimes</span></button></Card> : <Card className="rail-card chat-thread-summary"><p className="section-kicker">ACTIVE THREAD</p><strong>{conversationTitle}</strong><span>{messages.length} messages · {model}</span><small>Saved locally on this device.</small></Card>}<form className={`task-composer chat-task-composer ${taskComposerOpen ? "is-open" : ""}`} onSubmit={(event) => { event.preventDefault(); void planTask(); }}><div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan local work</h3><p>Prepare a task for review before any tools run.</p></div><div className="task-composer-heading-actions"><span className="task-composer-badge">Local only</span><Button variant="ghost" type="button" className="task-composer-toggle" aria-expanded={taskComposerOpen} aria-controls="chat-task-composer-fields" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Collapse" : "Open"}</Button></div></div>{taskComposerOpen && <div id="chat-task-composer-fields"><div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Triage the next change" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome and how you will verify it." rows={4} /></label></div><EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} /><div className="task-composer-footer"><span>Creates a proposed task. Nothing runs yet.</span><Button variant="primary" type="submit" disabled={taskBusy === "planning" || !taskTitle.trim() || !taskInstruction.trim()}>{taskBusy === "planning" ? "Planning…" : "Add to task plan"}</Button></div></div>}</form></aside>
     </div>

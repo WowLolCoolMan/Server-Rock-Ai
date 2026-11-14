@@ -3,6 +3,43 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 276 — Add keyboard-first slash commands to the Chat composer
+
+Status: `implemented_packaged_verified`
+
+The Chat composer now exposes a local command menu when the draft starts with
+`/`. Commands can be filtered by typing, selected with the pointer or
+ArrowUp/ArrowDown plus Enter, dismissed with Escape, and invoke existing local
+routes or the existing review-first task planner. The menu is deliberately
+bounded to handlers already present in the app, so it does not imply cloud
+execution or unsupported integrations.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/ComposerCommandMenu.tsx`
+- `apps/desktop/src/features/chat/composerCommands.ts`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm test` — passed; native core checks completed successfully.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run package:electron` — passed after installing the local Electron
+  runtime artifact.
+- `npm run smoke:electron:artifact` — passed; packaged main and Percy
+  surfaces rendered.
+- `git diff --check` — passed.
+
+Remaining: continue primary-workflow fidelity and live visual comparison; the
+active goal remains incomplete.
+
 ## Slice 275 — Replace the Chat model select with a local model picker
 
 Status: `implemented_live_electron_verified`
