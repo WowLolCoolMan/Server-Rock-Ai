@@ -230,3 +230,14 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .coding-project-context span:last-child { color: var(--skai-color-text-muted); font-size: 10px; }
 .coding-project-context select { min-width: 190px; max-width: 300px; padding: 8px 10px; border: 1px solid var(--skai-color-border); border-radius: 8px; color: var(--skai-color-text); background: var(--skai-color-surface); }
 @media (max-width:640px) { .coding-project-context { align-items: stretch; flex-direction: column; }.coding-project-context select { width: 100%; max-width: none; } }
+.workbench-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.workbench-stat { display: grid; gap: 5px; min-width: 0; padding: 13px 14px; }
+.workbench-stat span { color: var(--skai-color-text-muted); font-family: var(--skai-font-mono); font-size: 9px; letter-spacing: .1em; }
+.workbench-stat strong { color: var(--skai-color-text); font-size: 24px; letter-spacing: -.04em; }
+.workbench-stat small { overflow: hidden; color: var(--skai-color-text-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.workbench-filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 5px 0; }
+.workbench-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+.workbench-filters .ui-button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; font-size: 10px; }
+.workbench-filter-count { min-width: 16px; padding: 2px 5px; border-radius: 999px; color: var(--skai-color-text-muted); background: var(--skai-color-surface-soft); font-family: var(--skai-font-mono); font-size: 9px; text-align: center; }
+@media (max-width:900px) { .workbench-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width:640px) { .workbench-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }.workbench-filter-bar { align-items: flex-start; flex-direction: column; }.workbench-filters { width: 100%; }.workbench-filters .ui-button { flex: 1; justify-content: center; } }
