@@ -41,7 +41,7 @@ public sealed class AgentTaskArtifactStore
         }
     }
 
-    public AgentTaskArtifact Create(string title, string instruction, string role = "specialist", string? parentRunId = null, IEnumerable<string>? dependsOn = null, string? projectId = null)
+    public AgentTaskArtifact Create(string title, string instruction, string role = "specialist", string? parentRunId = null, IEnumerable<string>? dependsOn = null, string? projectId = null, string environment = AgentTaskEnvironments.Local)
     {
         var now = DateTimeOffset.UtcNow;
         var task = new AgentTaskArtifact
@@ -51,6 +51,7 @@ public sealed class AgentTaskArtifactStore
             Role = Normalize(role, MaxRoleCharacters, "task role"),
             ParentRunId = NormalizeOptional(parentRunId, 128, "parent run ID"),
             ProjectId = NormalizeOptional(projectId, MaxProjectIdCharacters, "project ID"),
+            Environment = NormalizeEnvironment(environment),
             DependsOn = NormalizeIds(dependsOn),
             CreatedAtUtc = now,
             UpdatedAtUtc = now
@@ -303,6 +304,7 @@ public sealed class AgentTaskArtifactStore
             if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
             NormalizeLabels(task.ArtifactLabels);
             NormalizeOptional(task.WorktreeRepositoryRoot, MaxWorktreePathCharacters, "worktree repository root");
+            task.Environment = NormalizeEnvironment(task.Environment);
             NormalizeOptional(task.WorktreePath, MaxWorktreePathCharacters, "worktree path");
             NormalizeOptional(task.WorktreeBranch, MaxWorktreeBranchCharacters, "worktree branch");
             var hasRepositoryRoot = task.WorktreeRepositoryRoot is not null;
@@ -324,6 +326,13 @@ public sealed class AgentTaskArtifactStore
         return Normalize(value, maxLength, label);
     }
 
+    private static string NormalizeEnvironment(string? value)
+    {
+        var normalized = string.IsNullOrWhiteSpace(value) ? AgentTaskEnvironments.Local : value.Trim().ToLowerInvariant();
+        if (!AgentTaskEnvironments.IsSupported(normalized)) throw new ArgumentException("The task execution environment is unsupported.", nameof(value));
+        return normalized;
+    }
+
     private static List<string> NormalizeIds(IEnumerable<string>? values)
     {
         var result = (values ?? []).Select(value => Normalize(value, 128, "task dependency ID")).Distinct(StringComparer.Ordinal).ToList();
@@ -343,6 +352,7 @@ public sealed class AgentTaskArtifactStore
         Id = source.Id,
         ParentRunId = source.ParentRunId,
         ProjectId = source.ProjectId,
+        Environment = source.Environment,
         Title = source.Title,
         Instruction = source.Instruction,
         Role = source.Role,

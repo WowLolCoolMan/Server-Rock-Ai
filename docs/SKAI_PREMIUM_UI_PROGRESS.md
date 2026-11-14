@@ -141,7 +141,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 ## Outstanding priorities
 
-1. Keep the truthful per-task environment selector and task-oriented composer local-only; Local is functional today, while Worktree must remain visibly unavailable until supported. Hosted model routes and cloud execution are out of scope.
+1. Keep the truthful per-task environment selector and task-oriented composer local-only; Local and approved Worktree lease execution are functional, while file writes, terminal actions, and hosted model routes remain separately guarded and out of scope for this slice.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; task approval is host-backed, and selected-project tasks now carry bounded read-only project context into local execution. Reviewed worktree-backed edits and terminal actions remain separate approval boundaries.
 4. Extend the keyboard-focus pass from the shared modal surfaces and new workspace shortcuts to remaining overlay and menu surfaces, including more real Electron interaction capture.
@@ -639,3 +639,43 @@ Evidence:
 
 Remaining: reviewed Git diff selection, commit/push approval, and worktree-backed
 agent edits remain separate guarded migration slices.
+
+## Slice — Connect approved Worktree task execution
+
+Status: `implemented_host_renderer_smoke_verified`
+
+The task environment selected in Chat or Coding now persists as `local` or
+`worktree`. Worktree planning requires a selected project, and approved
+execution creates a named sibling Git worktree only after the explicit execute
+action. The lease is attached to the durable task artifact, the bounded
+read-only project sample is read from the isolated path, and Workbench exposes
+the retained branch/path plus an explicit clean-release action. Local model
+execution remains read-only: this slice does not claim that task execution
+edited files, ran commands, or committed changes.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Models/AgentTaskArtifact.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/components/ui/EnvironmentPicker.tsx`
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- Core tests passed, including selected environment persistence and isolated
+  worktree lease acquisition/retention/release coverage.
+- `npm run desktop:typecheck` and `npm run desktop:build` passed.
+- Agent Host build passed with 0 warnings and 0 errors.
+- Agent Host smoke passed with capability, project, task, and unsupported
+  environment checks.
+- Future-feature, Electron runtime, local-only, syntax, and diff checks passed.
+
+Remaining: connect the retained worktree to reviewed file-edit and terminal
+actions, add process isolation and background execution, and capture packaged
+live acceptance for the complete coding-agent workflow.

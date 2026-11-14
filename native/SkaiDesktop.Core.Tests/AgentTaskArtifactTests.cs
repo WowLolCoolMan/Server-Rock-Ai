@@ -13,9 +13,11 @@ internal static class AgentTaskArtifactTests
             var store = new AgentTaskArtifactStore(Path.Combine(root, "agent-tasks.json"));
             var first = store.Create("Inspect provider routing", "Review capability preflight evidence.", "researcher", "run-1");
             var projectAttached = store.Create("Inspect selected project", "Review the bounded source context.", projectId: "project-1");
+            var worktreePlanned = store.Create("Prepare isolated review", "Review changes in a sibling worktree.", projectId: "project-1", environment: AgentTaskEnvironments.Worktree);
             var second = store.Create("Verify the routing change", "Check the result against the first task.", "verifier", dependsOn: [first.Id]);
             Check(first.Status == AgentTaskStatuses.Proposed && second.DependsOn.SequenceEqual([first.Id]), "agent task artifacts preserve roles and dependencies");
             Check(projectAttached.ProjectId == "project-1" && store.Load().Single(task => task.Id == projectAttached.Id).ProjectId == "project-1", "agent task artifacts persist an optional project context identity");
+            Check(worktreePlanned.Environment == AgentTaskEnvironments.Worktree && store.Load().Single(task => task.Id == worktreePlanned.Id).Environment == AgentTaskEnvironments.Worktree, "agent task artifacts persist the selected worktree environment");
             var approvalStore = new AgentTaskArtifactStore(Path.Combine(root, "approval-tasks.json"));
             var approvalPlan = approvalStore.Create("Approve bounded review", "Review the approval boundary before local execution.");
             var pendingApproval = approvalStore.RequestApproval(approvalPlan.Id);

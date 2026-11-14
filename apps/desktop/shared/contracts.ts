@@ -79,11 +79,14 @@ export type DesktopTask = {
   instruction: string;
   role: string;
   projectId?: string | null;
+  environment: TaskEnvironment;
   status: string;
   resultSummary?: string | null;
   dependsOn: string[];
   updatedAt: string;
   artifactLabels?: string[];
+  worktreePath?: string | null;
+  worktreeBranch?: string | null;
 };
 
 export type TaskEnvironment = "local" | "worktree";

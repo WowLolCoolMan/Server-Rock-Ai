@@ -6,8 +6,8 @@ type EnvironmentPickerProps = {
 };
 
 const environments: Array<{ id: TaskEnvironment; label: string; description: string; available: boolean }> = [
-  { id: "local", label: "Local", description: "Edit the selected project directly", available: true },
-  { id: "worktree", label: "Worktree", description: "Isolated Git workspace · coming soon", available: false },
+  { id: "local", label: "Local", description: "Use the selected project for bounded context", available: true },
+  { id: "worktree", label: "Worktree", description: "Create an isolated Git workspace after approval", available: true },
 ];
 
 export function EnvironmentPicker({ value, onChange }: EnvironmentPickerProps) {
@@ -20,6 +20,6 @@ export function EnvironmentPicker({ value, onChange }: EnvironmentPickerProps) {
         {!environment.available && <span className="environment-status">Unavailable</span>}
       </label>)}
     </div>
-    <p className="environment-note">Local is the only configured execution environment. Selecting it keeps the task plan bounded to this project.</p>
+    <p className="environment-note">Worktree requires a selected Git project and keeps the isolated branch until you explicitly release it.</p>
   </fieldset>;
 }

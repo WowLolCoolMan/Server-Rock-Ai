@@ -12,6 +12,14 @@ public static class AgentTaskStatuses
     public const string Blocked = "blocked";
 }
 
+public static class AgentTaskEnvironments
+{
+    public const string Local = "local";
+    public const string Worktree = "worktree";
+
+    public static bool IsSupported(string? value) => value is Local or Worktree;
+}
+
 /// <summary>Bounded local metadata for a planned agent task; it does not authorize execution.</summary>
 public sealed class AgentTaskArtifact
 {
@@ -22,6 +30,8 @@ public sealed class AgentTaskArtifact
     public string Role { get; set; } = "specialist";
     /// <summary>Optional selected project identity whose bounded read-only context may be supplied at execution time.</summary>
     public string? ProjectId { get; set; }
+    /// <summary>Execution boundary selected by the user before approval.</summary>
+    public string Environment { get; set; } = AgentTaskEnvironments.Local;
     public string Status { get; set; } = AgentTaskStatuses.Proposed;
     public List<string> DependsOn { get; set; } = [];
     public string? ResultSummary { get; set; }

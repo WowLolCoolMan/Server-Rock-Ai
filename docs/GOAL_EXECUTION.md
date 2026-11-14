@@ -10271,3 +10271,43 @@ was added.
 Evidence: `b63f232`; Core checks, desktop typecheck/build, Agent Host build,
 `scripts/smoke-agent-host.cjs`, future-feature audit, Electron runtime audit,
 local-only audit, repository hygiene, and `git diff --check` passed.
+
+## Slice — Connect approved Worktree task execution
+
+Status: `implemented_host_renderer_smoke_verified`
+
+The task environment is now a durable, typed choice between `local` and
+`worktree`. Planning rejects Worktree without a selected project. After the
+existing approval boundary and an explicit execute action, the Agent Host
+creates a named sibling Git worktree, records its repository/path/branch lease
+on the task artifact, and samples project context from that isolated path.
+Workbench shows the retained branch/path and offers an explicit release
+operation. Release delegates to the existing clean-only coordinator; dirty
+worktrees are not force-deleted.
+
+This remains an honest read-only task-result path. The local model receives a
+bounded project sample and returns a plan/findings/result summary; it does not
+write files, run terminal commands, commit, push, or silently switch to a
+remote model. Reviewed file edits and terminal actions remain separate
+approval boundaries.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Models/AgentTaskArtifact.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/components/ui/EnvironmentPicker.tsx`
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence: Core tests, `npm run desktop:typecheck`, `npm run desktop:build`,
+Agent Host build, Agent Host smoke, future-feature audit, Electron runtime
+audit, local-only audit, syntax checks, and `git diff --check` passed.
+
+Remaining: connect retained worktrees to reviewed file-edit and terminal
+actions, add process isolation and background execution, and complete packaged
+live acceptance for the coding-agent workflow.

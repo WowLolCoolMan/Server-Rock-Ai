@@ -116,6 +116,7 @@ export type AppRouteActions = {
   onRetryWorkbench: () => void;
   onTransitionTask: (id: string, operation: "queue" | "cancel" | "retry") => void;
   onExecuteTask: (id: string) => void;
+  onReleaseTaskWorktree: (id: string) => void;
   onApproveTask?: (id: string) => void;
   onDenyTask?: (id: string, reason: string) => void;
   onScheduleTask: (draft: ScheduledTaskDraft) => Promise<boolean>;
@@ -138,7 +139,7 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "models") return <ModelsPage models={state.models} selectedModel={state.model} onDiscover={actions.onDiscoverModels} onSelect={actions.onSelectModel} />;
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} selectedProject={state.selectedProject} conversationTitle={state.conversationTitle} onNavigate={actions.onNavigate} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;
   if (route === "marketplace") return <MarketplacePage onNavigate={actions.onNavigate} />;
-  if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} projects={state.projects} selectedProject={state.selectedProject} conversationTitle={state.conversationTitle} onNavigate={actions.onNavigate} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} onExecute={actions.onExecuteTask} onApprove={actions.onApproveTask ?? (() => undefined)} onDeny={actions.onDenyTask ?? (() => undefined)} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
+  if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} projects={state.projects} selectedProject={state.selectedProject} conversationTitle={state.conversationTitle} onNavigate={actions.onNavigate} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} onExecute={actions.onExecuteTask} onReleaseTaskWorktree={actions.onReleaseTaskWorktree} onApprove={actions.onApproveTask ?? (() => undefined)} onDeny={actions.onDenyTask ?? (() => undefined)} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} />;
   if (route === "usage") return <UsagePage tasks={state.tasks} scheduled={state.scheduledTasks} onNavigate={(nextRoute) => actions.onNavigate(nextRoute)} />;
   if (route === "permissions") return <PermissionsPage />;

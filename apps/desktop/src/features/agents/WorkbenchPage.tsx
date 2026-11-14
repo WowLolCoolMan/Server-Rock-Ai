@@ -30,7 +30,10 @@ function TaskDetails({ task, openByDefault = false }: { task: DesktopTask; openB
     <summary>View task details</summary>
     <dl>
       <div><dt>Task ID</dt><dd>{task.id}</dd></div>
+      <div><dt>Environment</dt><dd>{task.environment === "worktree" ? "Isolated Git worktree" : "Local project"}</dd></div>
         <div><dt>Project context</dt><dd>{task.projectId ? "Bounded read-only project sample attached" : "No project context attached"}</dd></div>
+      {task.worktreeBranch && <div><dt>Worktree branch</dt><dd>{task.worktreeBranch}</dd></div>}
+      {task.worktreePath && <div><dt>Retained worktree</dt><dd className="task-instruction">{task.worktreePath}</dd></div>}
       <div><dt>Task brief</dt><dd className="task-instruction">{task.instruction}</dd></div>
       <div><dt>Role</dt><dd>{task.role}</dd></div>
       <div><dt>Dependencies</dt><dd>{task.dependsOn.length ? task.dependsOn.join(", ") : "None"}</dd></div>
@@ -54,13 +57,14 @@ type WorkbenchPageProps = {
   onRetry: () => void;
   onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
   onExecute: (id: string) => void;
+  onReleaseTaskWorktree: (id: string) => void;
   onApprove: (id: string) => void;
   onDeny: (id: string, reason: string) => void;
   onSchedule: (draft: ScheduledTaskDraft) => Promise<boolean>;
   onScheduledTransition: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
 };
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, projects, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onExecute, onApprove, onDeny, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, projects, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onExecute, onReleaseTaskWorktree, onApprove, onDeny, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
@@ -97,7 +101,7 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, proj
     document.getElementById(`workbench-task-${nextId}`)?.focus();
   };
 
-  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Request approval</Button>}{task.status === "awaiting_approval" && <><Button variant="primary" disabled={busyTask === task.id} onClick={() => onApprove(task.id)}>Approve for local run</Button><Button variant="ghost" disabled={busyTask === task.id} onClick={() => onDeny(task.id, "User denied execution from the Workbench.")}>Deny</Button></>}{task.status === "queued" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>{busyTask === task.id ? "Running…" : "Run locally"}</Button>}{(task.status === "proposed" || task.status === "awaiting_approval" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
+  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Request approval</Button>}{task.status === "awaiting_approval" && <><Button variant="primary" disabled={busyTask === task.id} onClick={() => onApprove(task.id)}>Approve for local run</Button><Button variant="ghost" disabled={busyTask === task.id} onClick={() => onDeny(task.id, "User denied execution from the Workbench.")}>Deny</Button></>}{task.status === "queued" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>{busyTask === task.id ? "Running…" : task.environment === "worktree" ? "Run in worktree" : "Run locally"}</Button>}{task.worktreePath && task.status !== "running" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onReleaseTaskWorktree(task.id)}>Release worktree</Button>}{(task.status === "proposed" || task.status === "awaiting_approval" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
 
   const queuedCount = tasks.filter((task) => task.status === "proposed" || task.status === "queued").length;
   const awaitingApprovalCount = tasks.filter((task) => task.status === "awaiting_approval").length;
