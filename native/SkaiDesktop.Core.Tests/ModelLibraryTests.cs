@@ -37,6 +37,17 @@ internal static class ModelLibraryTests
         Check(hubModels.Count == 1 && hubModels[0].Id == "org/model-gguf" && hubModels[0].Downloads == 1234, "model library parses Hub IDs and popularity metadata");
         var uncensoredHubModels = await hfSearch.SearchHuggingFaceAsync("small instruct", uncensored: true);
         Check(uncensoredHubModels.Count >= 1 && uncensoredHubModels.All(model => model.IsUncensored), "uncensored catalog includes only explicitly labeled repositories");
+        var marketplaceCalls = 0;
+        var hfMarketplace = new ModelLibraryService(new HttpClient(new StubHandler((request, _) =>
+        {
+            marketplaceCalls++;
+            var pipeline = request.RequestUri?.Query.Contains("text-to-speech", StringComparison.OrdinalIgnoreCase) == true ? "text-to-speech" : "text-to-image";
+            var data = $"[{{\"id\":\"org/{pipeline}\",\"downloads\":42,\"likes\":7,\"pipeline_tag\":\"{pipeline}\",\"siblings\":[{{\"rfilename\":\"model-Q4_K_M.gguf\",\"size\":4294967296}}]}}]";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(data) });
+        })));
+        var marketplaceAssets = await hfMarketplace.SearchHuggingFaceMarketplaceAsync("", "voice", uncensored: false, size: "medium", quantization: "ANY", limit: 20);
+        Check(marketplaceCalls == 2 && marketplaceAssets.Count == 2 && marketplaceAssets.All(asset => asset.Task is "text-to-speech" or "automatic-speech-recognition"), "marketplace polls parallel Hugging Face task lanes and returns typed assets");
+        Check(marketplaceAssets.Any(asset => asset.Quantizations.Contains("Q4_K_M") && asset.SizeBytes == 4294967296), "marketplace preserves GGUF quantization and size metadata for filters");
         var boundedCatalog = new ModelLibraryService(new HttpClient(new StubHandler((_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[{\"id\":\"" + new string('x', 513) + "\"}]") }))));
         try

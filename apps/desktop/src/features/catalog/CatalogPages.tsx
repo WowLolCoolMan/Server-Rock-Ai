@@ -12,8 +12,8 @@ function modelVisionLabel(vision: string) {
   return vision.toLowerCase() === "supported" ? "Vision" : "Text";
 }
 
-type MarketplaceModel = { id: string; downloads: number; likes: number; tags: string[]; url: string };
-type MarketplaceSkill = { id: string; name: string; description: string; stars: number; url: string; defaultBranch: string };
+type MarketplaceModel = { id: string; kind: string; task: string; downloads: number; likes: number; sizeBytes: number; quantizations: string[]; uncensored: boolean; tags: string[]; url: string };
+type MarketplaceSkill = { id: string; name: string; description: string; stars: number; url: string; defaultBranch: string; lane: string; laneDescription: string };
 type MarketplaceTool = { id: string; name: string; category: string; description: string; access: string; status: string; builtIn: boolean; whereToFind?: string | null };
 type MarketplaceMcp = { id: string; name: string; transport: string; description: string; source: string; status: string };
 
@@ -43,6 +43,8 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
 
 export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "coding" | "models" | "images" | "workbench" | "terminal" | "memory" | "settings") => void }) {
   type Category = "All" | "LLMs" | "Voices" | "Image models" | "Skills" | "Tools";
+  type ModelSize = "any" | "small" | "medium" | "large";
+  const skillLanes = ["All lanes", "Research", "Coding", "Writing", "Data", "Documents", "Design", "Testing", "DevOps", "Security", "Productivity", "Creative", "Automation"];
   const cards = [
     { title: "LLMs", category: "LLMs" as const, description: "Discover and select local chat, coding, reasoning, and vision models.", detail: "Open the model library to discover a running local provider and use it in Chat.", icon: "◌", status: "Ready", action: "Open Models", route: "models" as const },
     { title: "Voices & TTS", category: "Voices" as const, description: "Preview and configure local voices for replies and narration.", detail: "OS-native speech is available now; voice profiles and low-resource settings are persisted locally.", icon: "◖", status: "Ready", action: "Open Settings", route: "settings" as const },
@@ -62,6 +64,10 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [mcpServers, setMcpServers] = useState<MarketplaceMcp[]>([]);
   const [catalogBusy, setCatalogBusy] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [modelSize, setModelSize] = useState<ModelSize>("any");
+  const [modelQuantization, setModelQuantization] = useState("ANY");
+  const [modelUncensored, setModelUncensored] = useState(false);
+  const [skillLane, setSkillLane] = useState("All lanes");
   const filtered = useMemo(() => cards.filter((card) => {
     const matchesCategory = category === "All" || card.category === category;
     const haystack = `${card.title} ${card.description} ${card.detail}`.toLowerCase();
@@ -74,14 +80,16 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
     setCatalogBusy(true); setCatalogError(null);
     try {
       const request = window.serverRockAgent.request;
-      const [modelResponse, skillResponse, toolResponse, mcpResponse] = await Promise.all([
-        request("marketplace.models.search", { query }),
-        request("marketplace.skills.search", { query }),
+      const modelRequest = (kind: string) => request("marketplace.models.search", { query, kind, size: modelSize, quantization: modelQuantization, uncensored: modelUncensored, limit: 100 });
+      const [llmResponse, voiceResponse, imageResponse, skillResponse, toolResponse, mcpResponse] = await Promise.all([
+        modelRequest("llm"), modelRequest("voice"), modelRequest("image"),
+        request("marketplace.skills.search", { query, lane: skillLane === "All lanes" ? undefined : skillLane.toLowerCase() }),
         request("marketplace.tools.list", { query }),
         request("marketplace.mcp.list"),
       ]);
       const errors: string[] = [];
-      if (modelResponse.ok) setModels((modelResponse.result as MarketplaceModel[]) ?? []); else errors.push(`Models: ${modelResponse.error?.message ?? "unavailable"}`);
+      const modelResponses = [llmResponse, voiceResponse, imageResponse];
+      if (modelResponses.every(response => response.ok)) setModels(modelResponses.flatMap(response => (response.result as MarketplaceModel[]) ?? [])); else errors.push("Hugging Face: one or more model lanes were unavailable");
       if (skillResponse.ok) setSkills((skillResponse.result as MarketplaceSkill[]) ?? []); else errors.push(`Skills: ${skillResponse.error?.message ?? "unavailable"}`);
       if (toolResponse.ok) setTools((toolResponse.result as MarketplaceTool[]) ?? []); else errors.push(`Tools: ${toolResponse.error?.message ?? "unavailable"}`);
       if (mcpResponse.ok) setMcpServers((mcpResponse.result as MarketplaceMcp[]) ?? []); else errors.push(`MCP: ${mcpResponse.error?.message ?? "unavailable"}`);
@@ -91,13 +99,17 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   };
   useEffect(() => { void refreshCatalog(); }, []);
 
+  const selectedModels = models.filter(model => model.kind === (selected.title === "Voices & TTS" ? "voice" : selected.title === "Image Studio" ? "image" : "llm"));
+  const sizeLabel = (bytes: number) => bytes > 0 ? `${(bytes / 1073741824).toFixed(1)} GB` : "size not published";
+
   return <div className="feature-page">
     <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover Hugging Face models, GitHub skills, built-in tools, and permission-aware MCP server sources." actions={<Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Refreshing…" : "↻ Refresh catalogs"}</Button>} />
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">
         <div className="marketplace-search-row">
           <label className="sr-only" htmlFor="marketplace-search">Search marketplace</label>
-          <input id="marketplace-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, voices, image packs, skills, and tools…" />
+          <input id="marketplace-search" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void refreshCatalog(); }} placeholder="Search Hugging Face, curated GitHub skills, tools…" />
+          <Button variant="primary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Polling…" : "Search"}</Button>
           <span>{filtered.length} {filtered.length === 1 ? "category" : "categories"}</span>
         </div>
         <div className="marketplace-filters" role="group" aria-label="Marketplace categories">
@@ -119,7 +131,19 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
           <p>{selected.detail}</p>
           <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>{selected.status === "Ready" ? "Available in this desktop build" : "Core capability present; Electron integration remains bounded"}</dd></div><div><dt>Next step</dt><dd>{selected.status === "Ready" ? `Use ${selected.action} to open the workflow.` : "Keep this capability visible until its host-backed workflow is connected."}</dd></div></dl>
           <Button variant={selected.status === "Ready" ? "primary" : "secondary"} onClick={() => onNavigate(selected.route)}>{selected.action}</Button>
-          {selected.title === "LLMs" ? <CatalogList title="Hugging Face GGUF models" loading={catalogBusy} empty="No models matched. Try a broader search." items={models.map(model => ({ id: model.id, title: model.id, detail: `${model.downloads.toLocaleString()} downloads · ${model.likes.toLocaleString()} likes`, href: model.url, action: "Open on Hugging Face" }))} /> : selected.title === "Skills" ? <CatalogList title="GitHub skill repositories" loading={catalogBusy} empty="No GitHub skill repositories matched." items={skills.map(skill => ({ id: skill.id, title: skill.name, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || "No description"}`, href: skill.url, action: "Open on GitHub" }))} /> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">
+          {selected.title === "LLMs" || selected.title === "Voices & TTS" || selected.title === "Image Studio" ? <>
+            <div className="marketplace-filter-panel">
+              <div><p className="section-kicker">MODEL FILTERS</p><strong>Choose what Skai should surface</strong><small>Every lane polls Hugging Face’s public catalog; downloads remain user-approved.</small></div>
+              <label>Model size<select value={modelSize} onChange={(event) => setModelSize(event.target.value as ModelSize)}><option value="any">Any size</option><option value="small">Small · under 4 GB</option><option value="medium">Medium · 4–12 GB</option><option value="large">Large · 12 GB+</option></select></label>
+              {selected.title === "LLMs" && <label>Quantization<select value={modelQuantization} onChange={(event) => setModelQuantization(event.target.value)}><option value="ANY">Any quantization</option><option value="Q4_K_M">Q4_K_M · balanced</option><option value="Q5_K_M">Q5_K_M · quality</option><option value="Q8_0">Q8_0 · high fidelity</option><option value="F16">F16 · full precision</option></select></label>}
+              {selected.title === "LLMs" && <label className="settings-toggle"><span><strong>Show abliterated / uncensored</strong><small>Only explicitly labeled repositories are included.</small></span><input type="checkbox" checked={modelUncensored} onChange={(event) => setModelUncensored(event.target.checked)} /></label>}
+              <Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>Apply filters</Button>
+            </div>
+            <CatalogList title={`Hugging Face · ${selected.title === "LLMs" ? "GGUF LLMs" : selected.title === "Voices & TTS" ? "voice models" : "image models"}`} loading={catalogBusy} empty="No Hugging Face assets matched these filters. Try Any size or a broader search." items={selectedModels.map(model => ({ id: model.id, title: model.id, detail: `${model.task} · ${sizeLabel(model.sizeBytes)} · ${model.downloads.toLocaleString()} downloads${model.uncensored ? " · abliterated/uncensored" : ""}${model.quantizations.length ? ` · ${model.quantizations.join(", ")}` : ""}`, href: model.url, action: "Open on Hugging Face" }))} />
+          </> : selected.title === "Skills" ? <>
+            <div className="marketplace-filter-panel"><div><p className="section-kicker">CURATED SKILLS</p><strong>Universal workflows authored for Skai</strong><small>Skai polls multiple GitHub discovery lanes, then keeps only public, non-fork repositories with useful community signal.</small></div><label>Skill lane<select value={skillLane} onChange={(event) => setSkillLane(event.target.value)}>{skillLanes.map(lane => <option key={lane}>{lane}</option>)}</select></label><Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>Poll GitHub lanes</Button></div>
+            <CatalogList title="GitHub skill repositories · curated lanes" loading={catalogBusy} empty="No curated GitHub skills matched. Try All lanes or a broader search." items={skills.map(skill => ({ id: skill.id, title: `${skill.name} · ${skill.lane}`, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || skill.laneDescription}`, href: skill.url, action: "Review on GitHub" }))} />
+          </> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">
             <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Low-resource mode voice<select value={voiceSettings.lowResourceModelId} onChange={(event) => updateVoice("lowResourceModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Voice profile<select value={voiceSettings.profileId} onChange={(event) => updateVoice("profileId", event.target.value)}>{voiceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.description}</option>)}</select></label>

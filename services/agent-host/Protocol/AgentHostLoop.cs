@@ -186,15 +186,23 @@ public static class AgentHostLoop
     private static async Task<AgentResponse> SearchMarketplaceModels(AgentRequest request)
     {
         var query = OptionalString(request, "query") ?? string.Empty;
+        var kind = OptionalString(request, "kind") ?? "llm";
         var uncensored = OptionalBoolean(request, "uncensored");
-        var models = await new ModelLibraryService().SearchHuggingFaceAsync(query, uncensored).ConfigureAwait(false);
+        var size = OptionalString(request, "size");
+        var quantization = OptionalString(request, "quantization");
+        var limit = OptionalInt(request, "limit") ?? 100;
+        var models = await new ModelLibraryService().SearchHuggingFaceMarketplaceAsync(query, kind, uncensored, size, quantization, limit).ConfigureAwait(false);
         return new(ProtocolVersion, request.Id, true, models.Select(model => new
         {
             id = model.Id,
+            kind,
+            task = model.Task,
             downloads = model.Downloads,
             likes = model.Likes,
             uncensored = model.IsUncensored,
-            tags = model.Tags ?? [],
+            sizeBytes = model.SizeBytes,
+            quantizations = model.Quantizations,
+            tags = model.Tags,
             url = $"https://huggingface.co/{model.Id}",
         }).ToArray());
     }
@@ -203,27 +211,42 @@ public static class AgentHostLoop
     {
         var query = OptionalString(request, "query")?.Trim() ?? string.Empty;
         if (query.Length > 128 || query.Any(char.IsControl)) throw new InvalidOperationException("The skill catalog query is invalid.");
-        var searchTerms = string.IsNullOrWhiteSpace(query) ? "agent skill" : query + " skill";
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-        using var message = new HttpRequestMessage(HttpMethod.Get, new Uri("https://api.github.com/search/repositories?q=" + Uri.EscapeDataString(searchTerms) + "+in:name,description,readme&sort=stars&order=desc&per_page=30"));
-        message.Headers.Accept.ParseAdd("application/vnd.github+json");
-        message.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("skill marketplace"));
-        message.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
-        using var response = await client.SendAsync(message).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"GitHub skill search failed ({(int)response.StatusCode}).");
-        using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, CancellationToken.None, "GitHub skill catalog").ConfigureAwait(false);
-        if (!json.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
-            return new(ProtocolVersion, request.Id, true, Array.Empty<object>());
-        var results = items.EnumerateArray().Select(item => new
+        var requestedLane = OptionalString(request, "lane")?.Trim();
+        var lanes = string.IsNullOrWhiteSpace(requestedLane)
+            ? CuratedSkillCatalog.Select(query)
+            : CuratedSkillCatalog.Lanes.Where(lane => lane.Id.Equals(requestedLane, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var results = new List<object>();
+        using var parallel = new SemaphoreSlim(4, 4);
+        var laneResults = await Task.WhenAll(lanes.Select(async lane =>
         {
-            id = item.TryGetProperty("full_name", out var fullName) ? fullName.GetString() ?? string.Empty : string.Empty,
-            name = item.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
-            description = item.TryGetProperty("description", out var description) ? description.GetString() ?? string.Empty : string.Empty,
-            stars = item.TryGetProperty("stargazers_count", out var stars) && stars.TryGetInt32(out var count) ? count : 0,
-            url = item.TryGetProperty("html_url", out var url) ? url.GetString() ?? string.Empty : string.Empty,
-            defaultBranch = item.TryGetProperty("default_branch", out var branch) ? branch.GetString() ?? "main" : "main",
-        }).Where(item => item.id.Length > 0 && item.url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)).ToArray();
-        return new(ProtocolVersion, request.Id, true, results);
+            await parallel.WaitAsync();
+            try
+            {
+                using var message = new HttpRequestMessage(HttpMethod.Get, new Uri("https://api.github.com/search/repositories?q=" + Uri.EscapeDataString(lane.Query) + "+in:name,description,readme&sort=stars&order=desc&per_page=30"));
+                message.Headers.Accept.ParseAdd("application/vnd.github+json");
+                message.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("skill marketplace"));
+                message.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+                using var response = await client.SendAsync(message).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode) return Array.Empty<object>();
+                using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, CancellationToken.None, "GitHub skill catalog").ConfigureAwait(false);
+                if (!json.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array) return Array.Empty<object>();
+                return items.EnumerateArray().Select(item => new
+                {
+                    id = item.TryGetProperty("full_name", out var fullName) ? fullName.GetString() ?? string.Empty : string.Empty,
+                    name = item.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
+                    description = item.TryGetProperty("description", out var description) ? description.GetString() ?? string.Empty : string.Empty,
+                    stars = item.TryGetProperty("stargazers_count", out var stars) && stars.TryGetInt32(out var count) ? count : 0,
+                    url = item.TryGetProperty("html_url", out var url) ? url.GetString() ?? string.Empty : string.Empty,
+                    defaultBranch = item.TryGetProperty("default_branch", out var branch) ? branch.GetString() ?? "main" : "main",
+                    lane = lane.Label,
+                    laneDescription = lane.Description,
+                }).Where(item => item.id.Length > 0 && item.stars >= 5 && item.url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)).Cast<object>().ToArray();
+            }
+            finally { parallel.Release(); }
+        }));
+        var unique = laneResults.SelectMany(items => items).GroupBy(item => item.GetType().GetProperty("id")?.GetValue(item)?.ToString(), StringComparer.OrdinalIgnoreCase).Select(group => group.First()).Take(CuratedSkillCatalog.MaxResults).ToArray();
+        return new(ProtocolVersion, request.Id, true, unique);
     }
 
     private static AgentResponse ListMarketplaceTools(AgentRequest request)

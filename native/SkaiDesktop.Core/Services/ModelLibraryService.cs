@@ -215,6 +215,103 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
         return filtered.DistinctBy(model => model.Id, StringComparer.OrdinalIgnoreCase).OrderByDescending(model => model.Downloads).ToArray();
     }
 
+    public async Task<IReadOnlyList<HuggingFaceMarketplaceAsset>> SearchHuggingFaceMarketplaceAsync(
+        string query,
+        string kind,
+        bool uncensored,
+        string? size,
+        string? quantization,
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var queryText = ValidateCatalogQuery(query);
+        var selectedKind = kind.Trim().ToLowerInvariant() switch
+        {
+            "voice" or "voices" or "tts" => "voice",
+            "image" or "images" or "image-model" => "image",
+            _ => "llm"
+        };
+        var selectedSize = size?.Trim().ToLowerInvariant() ?? "any";
+        if (selectedSize is not ("any" or "small" or "medium" or "large")) throw new InvalidOperationException("The model size filter is invalid.");
+        var selectedQuantization = quantization?.Trim().ToUpperInvariant() ?? "ANY";
+        if (selectedQuantization.Length > 32 || selectedQuantization.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-')))
+            throw new InvalidOperationException("The quantization filter is invalid.");
+        limit = Math.Clamp(limit, 20, 200);
+
+        var lanes = selectedKind switch
+        {
+            "voice" => new (string? Pipeline, string? Filter)[] { ("text-to-speech", null), ("automatic-speech-recognition", null) },
+            "image" => new (string? Pipeline, string? Filter)[] { ("text-to-image", null), ("image-to-image", null) },
+            _ => new (string? Pipeline, string? Filter)[] { (null, "gguf"), ("text-generation", "gguf") }
+        };
+        var searchTerms = uncensored
+            ? new[] { string.Join(' ', new[] { queryText, "uncensored abliterated" }.Where(term => term.Length > 0)) }
+            : new[] { queryText };
+        using var parallel = new SemaphoreSlim(4, 4);
+        var responses = await Task.WhenAll((from lane in lanes from term in searchTerms select ReadHuggingFaceLaneAsync(term, lane.Pipeline, lane.Filter, limit, parallel, cancellationToken)));
+        var assets = responses.SelectMany(result => result).ToArray();
+        return assets
+            .Where(asset => uncensored == asset.IsUncensored)
+            .Where(asset => selectedQuantization == "ANY" || asset.Quantizations.Any(value => value.Equals(selectedQuantization, StringComparison.OrdinalIgnoreCase)))
+            .Where(asset => MatchesSize(asset.SizeBytes, selectedSize))
+            .GroupBy(asset => asset.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.OrderByDescending(asset => asset.Downloads).First())
+            .OrderByDescending(asset => asset.Downloads)
+            .Take(limit)
+            .ToArray();
+    }
+
+    private async Task<IReadOnlyList<HuggingFaceMarketplaceAsset>> ReadHuggingFaceLaneAsync(string term, string? pipeline, string? filter, int limit, SemaphoreSlim parallel, CancellationToken cancellationToken)
+    {
+        await parallel.WaitAsync(cancellationToken);
+        try
+        {
+            var query = new List<string> { "sort=downloads", "direction=-1", "limit=" + limit, "full=true" };
+            if (term.Length > 0) query.Insert(0, "search=" + Uri.EscapeDataString(term));
+            if (!string.IsNullOrWhiteSpace(pipeline)) query.Add("pipeline_tag=" + Uri.EscapeDataString(pipeline));
+            if (!string.IsNullOrWhiteSpace(filter)) query.Add("filter=" + Uri.EscapeDataString(filter));
+            using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://huggingface.co/api/models?" + string.Join('&', query)));
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("marketplace"));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(30));
+            using var response = await _http.SendAsync(request, timeout.Token);
+            if (!response.IsSuccessStatusCode) return [];
+            using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, timeout.Token, "Hugging Face marketplace response");
+            return json.RootElement.ValueKind != JsonValueKind.Array ? [] : json.RootElement.EnumerateArray()
+                .Where(item => item.TryGetProperty("id", out var id) && IsSafeCatalogIdentifier(id.GetString()))
+                .Select(item => ParseMarketplaceAsset(item, pipeline))
+                .Where(asset => asset is not null).Select(asset => asset!).ToArray();
+        }
+        finally { parallel.Release(); }
+    }
+
+    private static HuggingFaceMarketplaceAsset? ParseMarketplaceAsset(JsonElement item, string? pipeline)
+    {
+        var id = item.GetProperty("id").GetString() ?? string.Empty;
+        var tags = item.TryGetProperty("tags", out var tagElement) && tagElement.ValueKind == JsonValueKind.Array
+            ? tagElement.EnumerateArray().Where(tag => tag.ValueKind == JsonValueKind.String).Select(tag => tag.GetString() ?? string.Empty).Take(40).ToArray() : [];
+        var files = item.TryGetProperty("siblings", out var siblings) && siblings.ValueKind == JsonValueKind.Array
+            ? siblings.EnumerateArray().Where(file => file.TryGetProperty("rfilename", out _)).Select(file => new
+            {
+                Name = file.GetProperty("rfilename").GetString() ?? string.Empty,
+                Size = file.TryGetProperty("size", out var size) && size.TryGetInt64(out var bytes) ? bytes : 0
+            }).Where(file => file.Name.Length > 0).ToArray() : [];
+        var size = files.Where(file => file.Name.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase) || files.Length == 0).Sum(file => Math.Max(0, file.Size));
+        var quantizations = files.Select(file => Regex.Match(file.Name.ToUpperInvariant(), @"Q[2-8]_[K0-9]+(?:_[A-Z]+)?|IQ[1-4]_[A-Z0-9]+|F16|F32").Value).Where(value => value.Length > 0).Distinct().ToArray();
+        var uncensored = IsExplicitUncensoredLabel(id, tags);
+        var task = pipeline ?? (item.TryGetProperty("pipeline_tag", out var taskElement) ? taskElement.GetString() : null);
+        return new HuggingFaceMarketplaceAsset(id, task ?? "model", item.TryGetProperty("downloads", out var downloads) && downloads.TryGetInt64(out var count) ? count : 0,
+            item.TryGetProperty("likes", out var likes) && likes.TryGetInt32(out var likeCount) ? likeCount : 0, size, uncensored, tags, quantizations);
+    }
+
+    private static bool MatchesSize(long sizeBytes, string size) => size switch
+    {
+        "small" => sizeBytes == 0 || sizeBytes < 4L * 1024 * 1024 * 1024,
+        "medium" => sizeBytes == 0 || (sizeBytes >= 4L * 1024 * 1024 * 1024 && sizeBytes < 12L * 1024 * 1024 * 1024),
+        "large" => sizeBytes == 0 || sizeBytes >= 12L * 1024 * 1024 * 1024,
+        _ => true
+    };
+
     private static bool IsExplicitUncensoredLabel(string id, IEnumerable<string> tags) =>
         new[] { id }.Concat(tags).Any(value => value.Contains("uncensored", StringComparison.OrdinalIgnoreCase) ||
             value.Contains("abliterat", StringComparison.OrdinalIgnoreCase));
@@ -550,6 +647,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
 }
 
 public sealed record HubModel(string Id, long Downloads, int Likes, bool IsUncensored = false, string[]? Tags = null);
+public sealed record HuggingFaceMarketplaceAsset(string Id, string Task, long Downloads, int Likes, long SizeBytes, bool IsUncensored, string[] Tags, string[] Quantizations);
 public sealed record ModelScopeGgufFile(string Path, long SizeBytes, string? Sha256);
 public sealed record ModelScopeGgufPackage(string Repository, string Name, IReadOnlyList<ModelScopeGgufFile> Files, long Downloads, bool IsUncensored = false)
 {
