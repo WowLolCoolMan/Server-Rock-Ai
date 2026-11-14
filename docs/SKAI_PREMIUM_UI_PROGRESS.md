@@ -49,6 +49,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 - `3f38415` — hardened Electron agent-host supervision with bounded pending requests, host-exit cleanup, and Windows process-tree shutdown, with regression assertions in the Electron audit.
 - `1c27fae` — added the shared strong-border token used by accessible context menus and compact desktop surfaces.
+- `6cf8b5e` — added a keyboard- and pointer-resizable sidebar with bounded, persisted width so the shared shell adapts to real desktop workspaces without changing route layouts.
 
 ## Current evidence
 
@@ -93,6 +94,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Branded shell check: passed tracked wolf asset loading with preserved transparency, accessible decorative-image treatment, responsive shell rendering, and no Cloud UI. Screenshot: `output/playwright/skai-branded-shell.png`.
 - Chat first-run check: passed the branded empty state, hashed asset loading from `dist/assets`, visible composer, fresh Electron renderer launch, and no Cloud UI. Screenshot: `output/playwright/skai-chat-branded-empty.png`.
 - Sidebar navigation check: passed all nine route transitions, active-state styling, nine SVG icon instances, no horizontal overflow at 1280px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-svg-icons.png`. Fresh Electron process launch also passed; the Windows accessibility surface did not settle to the renderer content on the final restart, so this checkpoint does not claim a live Electron visual screenshot.
+- Sidebar resize interaction check: passed default 276px sizing, keyboard resize to the 360px bound, reload persistence, separator ARIA range state, route title preservation, and a 1440px screenshot review. The resize handle is hidden while collapsed and the responsive shell keeps the bounded width above the compact breakpoint.
 - Conversation context-menu check: passed right-click and keyboard-visible menu actions for stable-ID pinning and renaming, persisted title rendering, compact action-row geometry at 1440px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-context-menu.png`.
 - Chat retry check: passed replacement of the selected assistant response through `chat.complete`, stable conversation persistence, custom-title preservation, failure recovery with the previous response restored, and no Cloud UI. Screenshot: `output/playwright/skai-chat-retry.png`.
 - Coding terminal persistence check: passed renderer typecheck/build plus project-browser and guarded-editor smoke coverage for the local coding workflow; the per-project dock preference is stored locally and no Cloud references are present in shipped source. Live Electron visual interaction remains limited by the Windows screenshot/input bridge returning another app's pixels.
