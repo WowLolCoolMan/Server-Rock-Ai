@@ -11,6 +11,7 @@ const commands: Command[] = [
   { id: "models", label: "Open Models", detail: "Discover and select a provider model", route: "models" },
   { id: "images", label: "Open Image Studio", detail: "Create with a local workflow", route: "images" },
   { id: "marketplace", label: "Open Marketplace", detail: "Find models, voices, tools, and skills", route: "marketplace" },
+  { id: "usage", label: "Open Usage", detail: "Review measured activity and unavailable telemetry", route: "usage" },
   { id: "memory", label: "Open Memory", detail: "Review approved local memory", route: "memory" },
   { id: "settings", label: "Open Settings", detail: "Appearance and workspace preferences", route: "settings" },
 ];
