@@ -26,6 +26,29 @@ function timeLabel(value: string) {
   return Number.isNaN(date.valueOf()) ? "Updated time unavailable" : `Updated ${date.toLocaleString()}`;
 }
 
+function nextStepFor(task: DesktopTask) {
+  switch (task.status) {
+    case "proposed":
+      return { label: "Ready to queue", description: "Review the brief, then queue this local task when you are ready for execution." };
+    case "queued":
+      return { label: "Waiting for the local agent", description: "This task is queued for the local host. You can cancel it while it waits." };
+    case "running":
+      return { label: "Execution in progress", description: "The local agent is working. Results will appear here when the host reports completion." };
+    case "awaiting_approval":
+      return { label: "Approval requires host support", description: "The current host does not expose approval controls, so this task remains informational until that capability exists." };
+    case "blocked":
+      return { label: "Retry is available", description: "Resolve the blocking condition, then retry to place this task back in the local queue." };
+    case "failed":
+      return { label: "Review and re-plan", description: "The current host does not expose failed-task retry. Review the result and create a new local plan from Chat or Coding Workspace." };
+    case "completed":
+      return { label: "Task complete", description: "The recorded result is preserved here for review." };
+    case "cancelled":
+      return { label: "Task cancelled", description: "No work will run for this task unless you create a new local plan." };
+    default:
+      return { label: "Review task status", description: "The local host has not reported a next action for this task yet." };
+  }
+}
+
 function TaskDetails({ task, openByDefault = false }: { task: DesktopTask; openByDefault?: boolean }) {
   return <details className="task-details" open={openByDefault || undefined}>
     <summary>View task details</summary>
@@ -101,7 +124,7 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRe
     <div className="workbench-filter-bar" role="toolbar" aria-label="Filter task activity"><span className="section-kicker">SHOW</span><div className="workbench-filters">{filterOptions.map((option) => <Button key={option.id} variant={taskFilter === option.id ? "secondary" : "ghost"} aria-pressed={taskFilter === option.id} onClick={() => setTaskFilter(option.id)}>{option.label}<span className="workbench-filter-count">{option.count}</span></Button>)}</div></div>
     {error ? <div className="surface-error workbench-error" role="alert"><strong>Agent workbench is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="workbench-loading" aria-label="Loading agent workbench">{[1, 2, 3].map((item) => <Card className="loading-card" key={item}><span /><span /><span /></Card>)}</div> : viewMode === "list" ? <div className="workbench-layout">
       <Card className="workbench-task-list"><div className="panel-heading"><div><p className="section-kicker">TASK ACTIVITY</p><h3>{taskFilter === "all" ? "All tasks" : filterOptions.find((option) => option.id === taskFilter)?.label}</h3></div><span className="panel-count">{visibleTasks.length}</span></div>{tasks.length === 0 ? <EmptyState title="No tasks yet" description="Plan a local task from Chat or Coding Workspace to review it here." /> : visibleTasks.length === 0 ? <EmptyState title="No matching tasks" description="Try another activity filter to see more of the task history." action={<Button variant="secondary" onClick={() => setTaskFilter("all")}>Show all tasks</Button>} /> : <div className="workbench-task-groups">{groups.map((group) => { const items = visibleTasks.filter((task) => task.status === group.key); return items.length ? <section className="workbench-task-group" key={group.key}><div className="workbench-task-group-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.map((task) => <button className={`workbench-task-row ${selectedTaskId === task.id ? "is-selected" : ""}`} id={`workbench-task-${task.id}`} key={task.id} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => handleTaskKeyDown(event, task.id)} aria-keyshortcuts="ArrowUp ArrowDown Home End" type="button"><span><strong>{task.title}</strong><small>{task.role} · {timeLabel(task.updatedAt)}</small></span><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge></button>)}</section> : null; })}</div>}</Card>
-      <Card className="workbench-task-detail">{selectedTask ? <><div className="workbench-detail-heading"><div><p className="section-kicker">SELECTED TASK</p><h3>{selectedTask.title}</h3><p>{selectedTask.role} · {timeLabel(selectedTask.updatedAt)}</p></div><StatusBadge tone={toneFor(selectedTask.status)}>{groups.find((group) => group.key === selectedTask.status)?.label ?? selectedTask.status}</StatusBadge></div>{selectedTask.dependsOn.length > 0 && <p className="task-dependencies">Depends on {selectedTask.dependsOn.length} task{selectedTask.dependsOn.length === 1 ? "" : "s"}</p>}{selectedTask.resultSummary && <p className="workbench-result">{selectedTask.resultSummary}</p>}<TaskDetails task={selectedTask} openByDefault />{taskActions(selectedTask)}</> : <EmptyState title="Select a task" description="Choose a task from the activity list to review its brief, status, and available actions." />}</Card>
+      <Card className="workbench-task-detail">{selectedTask ? <><div className="workbench-detail-heading"><div><p className="section-kicker">SELECTED TASK</p><h3>{selectedTask.title}</h3><p>{selectedTask.role} · {timeLabel(selectedTask.updatedAt)}</p></div><StatusBadge tone={toneFor(selectedTask.status)}>{groups.find((group) => group.key === selectedTask.status)?.label ?? selectedTask.status}</StatusBadge></div>{selectedTask.dependsOn.length > 0 && <p className="task-dependencies">Depends on {selectedTask.dependsOn.length} task{selectedTask.dependsOn.length === 1 ? "" : "s"}</p>}{selectedTask.resultSummary && <p className="workbench-result">{selectedTask.resultSummary}</p>}<div className={`workbench-next-step workbench-next-step-${toneFor(selectedTask.status)}`} aria-label="Next task step"><span className="section-kicker">NEXT STEP</span><strong>{nextStepFor(selectedTask).label}</strong><p>{nextStepFor(selectedTask).description}</p></div><TaskDetails task={selectedTask} openByDefault />{taskActions(selectedTask)}</> : <EmptyState title="Select a task" description="Choose a task from the activity list to review its brief, status, and available actions." />}</Card>
     </div> : <div className="workbench-board">{groups.map((group) => {
       const items = visibleTasks.filter((task) => task.status === group.key);
       return <Card className="task-column" key={group.key}><div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}><strong>{task.title}</strong><span>{task.role}</span>{task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}{task.resultSummary && <p>{task.resultSummary}</p>}<small className="task-updated">{timeLabel(task.updatedAt)}</small><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge><TaskDetails task={task} />{taskActions(task)}</article>)}</Card>;
