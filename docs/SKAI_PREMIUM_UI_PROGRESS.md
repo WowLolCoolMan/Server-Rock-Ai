@@ -51,6 +51,9 @@ Local model discovery now preserves its real asynchronous result through the
 workspace action. The Models surface disables duplicate requests and reports
 `Discovering…` until the local provider responds.
 
+Settings uses the same guard and progress label for its model-provider panel,
+so both entry points behave consistently.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

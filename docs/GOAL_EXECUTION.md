@@ -11422,3 +11422,27 @@ Evidence:
 
 Remaining: continue the remaining local utility and overlay interaction
 slices; the comprehensive premium rebuild remains active.
+
+## Slice 306 — Align Settings model discovery feedback
+
+Status: `implemented_renderer_typechecked`
+
+The Settings Models & Providers panel now uses the same local discovery guard
+as the dedicated Models route. Its button disables during the real async host
+request and changes to `Discovering…`, preventing duplicate calls from either
+entry point.
+
+Changed files:
+
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The Settings action awaits the typed coordinator promise and restores the
+  button after success or failure.
+- Renderer typecheck and production build passed for the shared behavior.
+
+Remaining: continue the shared utility and overlay interaction slices; the
+overall premium rebuild remains active.
