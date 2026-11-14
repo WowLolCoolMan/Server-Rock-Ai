@@ -499,6 +499,7 @@ final audit pass.
 - Local Git workflow: Coding Workspace now offers a guarded Create pull request dialog after clean, pushed feature-branch commits. The operation uses the local GitHub CLI session through Agent Host and reports missing CLI/authentication honestly; no renderer token entry was added.
 - Local model acquisition: Models now exposes the bounded Ollama pull adapter through Agent Host with local-only validation and streamed status feedback, plus responsive download controls and honest non-Ollama/unavailable states.
 - Model pull lifecycle: Ollama downloads now run as non-blocking Agent Host operations with start/status/cancel capability contracts, live renderer polling, duplicate prevention, and disposable failed-endpoint recovery smoke coverage.
+- Local retrieval: the durable corpus now exposes an injectable vector-index boundary and combines lexical matching with a deterministic local sparse-token cosine score, reporting the hybrid retrieval mode without claiming semantic/cloud embeddings.
 
 ## Current task
 

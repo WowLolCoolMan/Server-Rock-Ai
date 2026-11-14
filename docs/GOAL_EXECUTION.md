@@ -11580,6 +11580,33 @@ Evidence:
 Remaining: successful live download/cancel acceptance still requires a local
 Ollama runtime and a user-selected model; no hosted model route was added.
 
+## Slice 329 — Add vector-ready local hybrid retrieval
+
+Status: `implemented_local_hybrid_retrieval_smoked`
+
+The durable document corpus now accepts an injectable `ICorpusVectorIndex`
+boundary and ships a deterministic local sparse-token vector index. Corpus
+search combines the existing lexical match score with bounded cosine
+similarity, returns a `hybridScore`, and identifies the retrieval mode as
+`hybrid-token-vector`. This provides a real local vector-ready seam without
+pretending that cloud embeddings or an unavailable semantic model exist.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/DocumentCorpusStore.cs`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- `npm test` passed all native Core checks.
+- `npm run agent-host:build` passed with 0 warnings and 0 errors.
+- `npm run desktop:typecheck` passed.
+- Agent Host smoke now verifies hybrid retrieval mode and a numeric hybrid
+  score on a disposable local corpus document.
+
+Remaining: production semantic embeddings, configurable vector databases, and
+reranking remain future local adapters; no remote embedding route was added.
+
 ## Slice 310 — Make scheduled-run failures recoverable
 
 Status: `implemented_renderer_typechecked`

@@ -14,10 +14,12 @@ public sealed class DocumentCorpusStore
     private const int MaxSerializedCharacters = 64 * 1024 * 1024;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 8 };
     private readonly string _path;
+    private readonly ICorpusVectorIndex _vectorIndex;
 
-    public DocumentCorpusStore(string? path = null)
+    public DocumentCorpusStore(string? path = null, ICorpusVectorIndex? vectorIndex = null)
     {
         _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ServerRock", "AI", "document-corpus.json");
+        _vectorIndex = vectorIndex ?? new TokenVectorIndex();
     }
 
     public IReadOnlyList<CorpusDocument> Load() => Read().OrderByDescending(document => document.UpdatedAtUtc).ToArray();
@@ -54,8 +56,9 @@ public sealed class DocumentCorpusStore
         {
             var haystack = $"{document.Title}\n{document.Source}\n{document.Content}\n{string.Join(' ', document.Tags)}";
             var score = terms.Length == 0 ? 1 : terms.Sum(term => haystack.Contains(term, StringComparison.OrdinalIgnoreCase) ? 1 : 0);
-            return new CorpusSearchResult(document, score, CreateSnippet(document.Content, terms));
-        }).Where(result => terms.Length == 0 || result.Score > 0).OrderByDescending(result => result.Score).ThenByDescending(result => result.Document.UpdatedAtUtc).Take(limit).ToArray();
+            var vectorScore = terms.Length == 0 ? 0 : _vectorIndex.Similarity(normalized, haystack);
+            return new CorpusSearchResult(document, score, CreateSnippet(document.Content, terms), score + vectorScore * 2, _vectorIndex.Name);
+        }).Where(result => terms.Length == 0 || result.Score > 0 || result.HybridScore > 0).OrderByDescending(result => result.HybridScore).ThenByDescending(result => result.Document.UpdatedAtUtc).Take(limit).ToArray();
     }
 
     public void Remove(string id)
@@ -131,4 +134,31 @@ public sealed class CorpusDocument
     public DateTimeOffset UpdatedAtUtc { get; set; }
 }
 
-public sealed record CorpusSearchResult(CorpusDocument Document, int Score, string Snippet);
+public interface ICorpusVectorIndex
+{
+    string Name { get; }
+    double Similarity(string query, string document);
+}
+
+/// <summary>Deterministic local sparse-vector index. It is vector-ready without requiring a cloud embedding service.</summary>
+public sealed class TokenVectorIndex : ICorpusVectorIndex
+{
+    public string Name => "hybrid-token-vector";
+
+    public double Similarity(string query, string document)
+    {
+        var left = Build(query); var right = Build(document);
+        if (left.Count == 0 || right.Count == 0) return 0;
+        var dot = left.Sum(pair => right.TryGetValue(pair.Key, out var value) ? pair.Value * value : 0);
+        var leftNorm = Math.Sqrt(left.Sum(pair => pair.Value * pair.Value));
+        var rightNorm = Math.Sqrt(right.Sum(pair => pair.Value * pair.Value));
+        return leftNorm == 0 || rightNorm == 0 ? 0 : dot / (leftNorm * rightNorm);
+    }
+
+    private static Dictionary<string, double> Build(string value) => value.Split([' ', '\r', '\n', '\t', '.', ',', ':', ';', '/', '(', ')', '[', ']', '{', '}', '-', '_'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Where(token => token.Length > 1)
+        .GroupBy(token => token.ToLowerInvariant())
+        .ToDictionary(group => group.Key, group => (double)group.Count(), StringComparer.Ordinal);
+}
+
+public sealed record CorpusSearchResult(CorpusDocument Document, int Score, string Snippet, double HybridScore = 0, string RetrievalMode = "lexical");

@@ -131,7 +131,7 @@ async function run() {
   const corpusDocument = await request("corpus.upsert", { title: "Local retrieval smoke", source: "smoke://document", content: "Skai retrieves explicit local documents with bounded snippets.", tags: ["local", "retrieval"] });
   if (!corpusDocument.ok || typeof corpusDocument.result?.id !== "string") throw new Error("corpus.upsert did not persist a local document.");
   const corpusSearch = await request("corpus.search", { query: "bounded snippets" });
-  if (!corpusSearch.ok || corpusSearch.result?.[0]?.document?.id !== corpusDocument.result.id || !corpusSearch.result?.[0]?.snippet?.includes("bounded")) throw new Error("corpus.search did not return a matching bounded snippet.");
+  if (!corpusSearch.ok || corpusSearch.result?.[0]?.document?.id !== corpusDocument.result.id || !corpusSearch.result?.[0]?.snippet?.includes("bounded") || corpusSearch.result?.[0]?.retrievalMode !== "hybrid-token-vector" || typeof corpusSearch.result?.[0]?.hybridScore !== "number") throw new Error("corpus.search did not return a matching hybrid bounded snippet.");
   const corpusRemoved = await request("corpus.remove", { id: corpusDocument.result.id });
   if (!corpusRemoved.ok || corpusRemoved.result?.removed !== true) throw new Error("corpus.remove did not remove the local document.");
   const voices = await request("voice.models");
