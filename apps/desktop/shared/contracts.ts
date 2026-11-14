@@ -128,6 +128,7 @@ export interface PetBridge {
   onPosition(listener: (position: PetPosition) => void): () => void;
   onVisibilityChange(listener: (visible: boolean) => void): () => void;
   pickAsset(kind: PetAssetKind): Promise<PetAssetSelection | null>;
+  setPosition(position: PetPosition): void;
   dragStart(position: { screenX: number; screenY: number }): void;
   dragMove(position: { screenX: number; screenY: number }): void;
   dragEnd(): void;

@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld("serverRockAgent", {
       return () => ipcRenderer.removeListener("pet:visibility", handler);
     },
     pickAsset: (kind) => ipcRenderer.invoke("pet:pick-asset", kind),
+    setPosition: (position) => ipcRenderer.send("pet:set-position", position),
     dragStart: (position) => ipcRenderer.send("pet:drag-start", position),
     dragMove: (position) => ipcRenderer.send("pet:drag-move", position),
     dragEnd: () => ipcRenderer.send("pet:drag-end"),

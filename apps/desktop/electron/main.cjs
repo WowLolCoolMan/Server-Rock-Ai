@@ -479,6 +479,11 @@ app.whenReady().then(() => {
   });
   ipcMain.handle("pet:get-config", () => buildPetWindowConfig());
   ipcMain.handle("pet:pick-asset", async (_event, kind) => pickPetAsset(kind));
+  ipcMain.on("pet:set-position", (_event, position) => {
+    if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) return;
+    petSettings.position = clampPetPosition({ x: position.x, y: position.y });
+    syncPetWindowPosition();
+  });
   ipcMain.on("pet:configure", (_event, settings) => {
     petSettings = sanitizePetSettings(settings);
     configurePetWander();
