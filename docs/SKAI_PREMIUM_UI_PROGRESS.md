@@ -43,6 +43,10 @@ The active project editor now also handles Ctrl/Cmd+S through the same guarded
 save operation and advertises the shortcut beside the existing file and
 terminal shortcuts.
 
+Open-file tabs now use roving focus with ArrowLeft/ArrowRight and Home/End,
+retain a single active tab stop, and expose the editor relationship through
+`aria-controls`.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

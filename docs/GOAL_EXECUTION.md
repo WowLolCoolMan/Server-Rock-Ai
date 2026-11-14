@@ -11368,3 +11368,28 @@ Evidence:
 
 Remaining: continue the live coding interaction coverage and remaining
 keyboard-focus slices; the broader premium rebuild remains active.
+
+## Slice 304 — Make editor tabs keyboard-native
+
+Status: `implemented_renderer_typechecked`
+
+The open-file strip now implements a roving tab stop and keyboard navigation.
+ArrowLeft/ArrowRight move between files, Home/End jump to the first or last
+file, and selecting a tab still re-reads that file through the guarded local
+host path. The active tab points at the editor heading with `aria-controls`.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Renderer typecheck and production build passed after the tab interaction
+  change.
+- The tab strip keeps only the active (or first restored) file in the tab
+  sequence, avoiding an uncontrolled focus loop.
+
+Remaining: continue live coding interaction coverage and the remaining shared
+overlay focus slices; the overall premium rebuild remains active.
