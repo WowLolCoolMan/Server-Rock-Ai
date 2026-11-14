@@ -11576,6 +11576,28 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 319 — Import local text and PDF documents into corpus
+
+Status: `implemented_renderer_and_packaged_verified`
+
+Memory’s corpus panel now uses the Electron local file picker. Text files are
+stored as bounded corpus documents, PDFs pass through the existing bounded PDF
+text extractor, and image files stop with an explicit OCR-unavailable message.
+The import path remains user-triggered and local; it does not crawl folders or
+send files to a hosted service.
+
+Evidence:
+
+- Renderer typecheck and production build passed.
+- Packaged Electron overflow acceptance passed 9 routes × 5 viewport widths.
+- The existing Agent Host PDF extraction and local-only boundaries remain in
+  use; no cloud routing was added.
+- `git diff --check` passed.
+
+Remaining: add dedicated import smoke coverage and richer preview/indexing,
+then continue vector-ready retrieval, model/voice recovery, Git remotes, and
+release gates.
+
 ## Slice 318 — Connect the local corpus to Memory workspace
 
 Status: `implemented_renderer_and_packaged_verified`

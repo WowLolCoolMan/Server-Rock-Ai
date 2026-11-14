@@ -19,9 +19,10 @@ type MemoryPageProps = {
   onSearchCorpus: (query: string) => void;
   onSaveCorpus: (title: string, source: string, content: string, tags: string, id?: string) => Promise<boolean>;
   onRemoveCorpus: (document: CorpusDocument) => Promise<boolean>;
+  onImportCorpus: () => void;
 };
 
-export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, onSave, onToggle, onRemove, onExport, corpusDocuments, corpusLoading, corpusError, onSearchCorpus, onSaveCorpus, onRemoveCorpus }: MemoryPageProps) {
+export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, onSave, onToggle, onRemove, onExport, corpusDocuments, corpusLoading, corpusError, onSearchCorpus, onSaveCorpus, onRemoveCorpus, onImportCorpus }: MemoryPageProps) {
   const [content, setContent] = useState("");
   const [scope, setScope] = useState("global");
   const [tags, setTags] = useState("");
@@ -73,7 +74,7 @@ export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, o
   };
 
   return <div className="feature-page">
-    <PageHeader eyebrow="LOCAL MEMORY" title="Review what Skai remembers" description="Only explicitly saved notes are stored. Search, edit, disable, remove, or export them at any time." actions={<Button variant="ghost" onClick={onExport}>Export backup</Button>} />
+    <PageHeader eyebrow="LOCAL MEMORY" title="Review what Skai remembers" description="Only explicitly saved notes are stored. Search, edit, disable, remove, or export them at any time." actions={<><Button variant="ghost" onClick={onExport}>Export backup</Button><Button variant="secondary" disabled={corpusLoading} onClick={onImportCorpus}>Import local files</Button></>} />
     <Card className="corpus-panel"><div className="memory-editor-heading"><div><p className="section-kicker">LOCAL DOCUMENT CORPUS</p><strong>Ground responses in documents you explicitly add</strong></div><span className="inline-status">{corpusLoading ? "Working locally…" : `${corpusDocuments.length} document${corpusDocuments.length === 1 ? "" : "s"}`}</span></div><p className="settings-help">Text search and bounded snippets are available now. No implicit file crawling or OCR is performed.</p><div className="memory-inputs"><input value={corpusTitle} onChange={(event) => setCorpusTitle(event.target.value)} placeholder="Document title" aria-label="Document title" /><input value={corpusSource} onChange={(event) => setCorpusSource(event.target.value)} placeholder="Source path or label" aria-label="Document source" /></div><textarea value={corpusContent} onChange={(event) => setCorpusContent(event.target.value)} placeholder="Paste document text or extracted content…" rows={3} aria-label="Document content" /><div className="memory-inputs"><input value={corpusTags} onChange={(event) => setCorpusTags(event.target.value)} placeholder="Tags, comma separated" aria-label="Document tags" /><Button variant="primary" disabled={corpusLoading || !corpusTitle.trim() || !corpusSource.trim() || !corpusContent.trim()} onClick={() => void saveDocument()}>Add document</Button></div><div className="memory-toolbar"><input value={corpusQuery} onChange={(event) => { setCorpusQuery(event.target.value); onSearchCorpus(event.target.value); }} placeholder="Search document corpus…" aria-label="Search document corpus" /></div>{corpusError ? <div className="surface-error" role="alert"><strong>Document corpus unavailable</strong><p>{corpusError}</p></div> : corpusDocuments.length === 0 ? <EmptyState title="No local documents" description="Add a document above to make it available for bounded local retrieval." /> : <div className="corpus-list">{corpusDocuments.map((document) => <article className="memory-entry" key={document.id}><div><strong>{document.title}</strong><span>{document.source} · {document.tags.join(", ") || "untagged"}</span><small className="memory-provenance">{document.content.slice(0, 180)}{document.content.length > 180 ? "…" : ""}</small></div><Button variant="danger" disabled={corpusLoading} onClick={() => void onRemoveCorpus(document)}>Remove</Button></article>)}</div>}</Card>
     <div className="memory-layout">
       <Card className="memory-editor">

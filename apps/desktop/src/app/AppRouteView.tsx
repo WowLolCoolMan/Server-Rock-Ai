@@ -120,6 +120,7 @@ export type AppRouteActions = {
   onSearchCorpus?: (query: string) => void;
   onSaveCorpus?: (title: string, source: string, content: string, tags: string, id?: string) => Promise<boolean>;
   onRemoveCorpus?: (document: CorpusDocument) => Promise<boolean>;
+  onImportCorpus?: () => void;
   onRunProjectCommand: (projectId: string, command: string, cwd: string) => void;
 };
 
@@ -132,6 +133,6 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;
   if (route === "marketplace") return <MarketplacePage />;
   if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onNavigate={(route) => actions.onNavigate(route)} onTransition={actions.onTransitionTask} onExecuteTask={actions.onExecuteTask} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
-  if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} corpusDocuments={state.corpusDocuments} corpusLoading={state.corpusLoading} corpusError={state.corpusError} onSearchCorpus={actions.onSearchCorpus ?? (() => undefined)} onSaveCorpus={actions.onSaveCorpus ?? (async () => false)} onRemoveCorpus={actions.onRemoveCorpus ?? (async () => false)} />;
+  if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} corpusDocuments={state.corpusDocuments} corpusLoading={state.corpusLoading} corpusError={state.corpusError} onSearchCorpus={actions.onSearchCorpus ?? (() => undefined)} onSaveCorpus={actions.onSaveCorpus ?? (async () => false)} onRemoveCorpus={actions.onRemoveCorpus ?? (async () => false)} onImportCorpus={actions.onImportCorpus ?? (() => undefined)} />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} onRun={actions.onRunProjectCommand} onOpenCoding={() => actions.onNavigate("coding")} />;
 }

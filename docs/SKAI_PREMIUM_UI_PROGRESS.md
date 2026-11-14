@@ -34,6 +34,16 @@ states that the current workflow does not crawl files or claim OCR support.
 Evidence: renderer typecheck/build, Agent Host smoke, local-only audit, and
 packaged Electron overflow acceptance all passed.
 
+## Slice 319 — Local file and PDF corpus import
+
+The corpus panel now opens the local Electron picker. Text files are imported
+as bounded documents, PDFs use the existing bounded text extractor, and image
+selection reports that OCR is not available rather than creating fake text.
+The workflow is explicit and local-only.
+
+Evidence: renderer typecheck/build and packaged Electron overflow acceptance
+passed after the import control was added.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution
