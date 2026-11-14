@@ -63,6 +63,7 @@ export type DesktopTask = {
   role: string;
   status: string;
   resultSummary?: string | null;
+  artifactLabels?: string[];
   dependsOn: string[];
   updatedAt: string;
 };

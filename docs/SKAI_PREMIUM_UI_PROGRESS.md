@@ -20,6 +20,13 @@ install or activation controls; unavailable catalogs are labeled as such.
 The Models surface now also provides a one-action recovery when a valid local
 model inventory has no search match.
 
+## Current slice — Workbench artifact continuity
+
+Agent task artifact labels already persisted by the local task store now travel
+through the Agent Host task-list response and appear in the Workbench detail
+disclosure. Tasks without recorded artifacts say so explicitly; no artifact is
+invented by the renderer.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

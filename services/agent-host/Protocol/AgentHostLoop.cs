@@ -396,6 +396,7 @@ public static class AgentHostLoop
                 role = task.Role,
                 status = task.Status,
                 resultSummary = task.ResultSummary,
+                artifactLabels = task.ArtifactLabels,
                 dependsOn = task.DependsOn,
                 updatedAt = task.UpdatedAtUtc,
             })

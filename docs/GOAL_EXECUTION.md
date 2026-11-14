@@ -11226,3 +11226,36 @@ behavior changed. The change is renderer-only and local-only.
 
 Remaining: continue the keyboard focus pass for any newly uncovered overlays,
 then deepen the remaining local workbench and project workflows.
+
+## Slice 299 — Preserve task artifact labels in Workbench
+
+Status: `implemented_host_contract_and_smoke_verified`
+
+The local task store already persisted bounded artifact labels, but the Agent
+Host `tasks.list` projection omitted them and the Electron Workbench could not
+show them. The shared task contract, host projection, and task detail disclosure
+now preserve those labels. A task with no labels renders `None recorded`, which
+keeps the UI truthful until an executor produces actual artifacts.
+
+Changed files:
+
+- `apps/desktop/shared/contracts.ts`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/src/features/agents/WorkbenchTaskDetails.tsx`
+- `scripts/smoke-agent-host.cjs`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The disposable Agent Host smoke now asserts that `tasks.list` returns an
+  artifact-label array for a newly planned task.
+- Renderer typecheck, Agent Host build, and packaged Electron acceptance remain
+  required before this slice is pushed.
+
+Privacy/security/licensing: this exposes already-local bounded metadata only;
+no new network route, credential, execution permission, or external asset was
+added.
+
+Remaining: continue the local task execution/recovery and keyboard-focus
+slices; the broader premium rebuild remains incomplete.
