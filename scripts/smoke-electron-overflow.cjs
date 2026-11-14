@@ -12,7 +12,7 @@ function connect(target) {
   const socket = new WebSocket(target.webSocketDebuggerUrl);
   const pending = new Map();
   let nextId = 1;
-  socket.addEventListener("message", (event) => { const message = JSON.parse(typeof event.data === "string" ? event.data : String(event.data)); const resolve = pending.get(message.id); if (!resolve) return; pending.delete(message.id); resolve(message); });
+  socket.addEventListener("message", (event) => { const message = JSON.parse(typeof event.data === "string" ? event.data : String(event.data)); const resolve = pending.get(message.id); if (typeof resolve !== "function") return; pending.delete(message.id); resolve(message); });
   const send = (method, params = {}) => new Promise((resolve, reject) => { const id = nextId++; pending.set(id, (message) => message.error ? reject(new Error(message.error.message)) : resolve(message.result)); socket.send(JSON.stringify({ id, method, params })); setTimeout(() => { if (pending.delete(id)) reject(new Error(`Timed out: ${method}`)); }, 8000); });
   return { open: new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); }), send, evaluate: async (expression) => { const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }); return result?.result?.value; }, close: () => socket.close() };
 }

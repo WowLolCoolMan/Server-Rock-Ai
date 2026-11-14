@@ -33,7 +33,7 @@ function connect(target) {
   socket.addEventListener("message", (event) => {
     const message = JSON.parse(typeof event.data === "string" ? event.data : String(event.data));
     const resolve = pending.get(message.id);
-    if (!resolve) return;
+    if (typeof resolve !== "function") return;
     pending.delete(message.id);
     resolve(message);
   });
@@ -50,8 +50,26 @@ function connect(target) {
     const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
     return result?.result?.value;
   };
+  const callFunction = async (functionDeclaration, args = []) => {
+    const windowResult = await send("Runtime.evaluate", { expression: "window", returnByValue: false });
+    const objectId = windowResult?.result?.objectId;
+    if (!objectId) throw new Error("DevTools did not return a page object for the probe.");
+    try {
+      const result = await send("Runtime.callFunctionOn", {
+        objectId,
+        functionDeclaration,
+        arguments: args.map((value) => ({ value })),
+        returnByValue: true,
+        awaitPromise: true,
+      });
+      if (result?.exceptionDetails) throw new Error("The page probe failed.");
+      return result?.result?.value;
+    } finally {
+      await send("Runtime.releaseObject", { objectId }).catch(() => {});
+    }
+  };
   const close = () => socket.close();
-  return { open: new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); }), send, evaluate, close };
+  return { open: new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); }), send, evaluate, callFunction, close };
 }
 
 async function waitFor(evaluate, expression, predicate, label) {
@@ -85,8 +103,7 @@ async function main() {
   await waitFor(devtools.evaluate, "document.querySelector('.settings-content select')?.value", (value) => typeof value === "string", "Appearance controls");
 
   const setAppearance = async (theme, backdrop) => {
-    const expression = `(() => { const labels = [...document.querySelectorAll('.settings-content label')]; const set = (labelText, value) => { const select = labels.find((label) => label.textContent?.includes(labelText))?.querySelector('select'); if (!select) return false; const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set; setter?.call(select, value); select.dispatchEvent(new Event('change', { bubbles: true })); return true; }; return { theme: set('Color theme', ${JSON.stringify(theme)}), backdrop: set('Backdrop', ${JSON.stringify(backdrop)}) }; })()`;
-    const selected = await devtools.evaluate(expression);
+    const selected = await devtools.callFunction("function (theme, backdrop) { const labels = [...document.querySelectorAll('.settings-content label')]; const set = (labelText, value) => { const select = labels.find((label) => label.textContent?.includes(labelText))?.querySelector('select'); if (!select) return false; select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); return true; }; return { theme: set('Color theme', theme), backdrop: set('Backdrop', backdrop) } }", [theme, backdrop]);
     if (!selected?.theme || !selected?.backdrop) throw new Error(`Appearance controls were not found for ${theme}/${backdrop}`);
     const state = await waitFor(devtools.evaluate, "JSON.stringify((() => { const root = document.documentElement; const styles = getComputedStyle(root); return { theme: root.dataset.theme, backdrop: root.dataset.backdrop, canvas: styles.getPropertyValue('--skai-color-canvas').trim(), accent: styles.getPropertyValue('--skai-color-accent').trim(), overflow: Math.max(root.scrollWidth, document.body.scrollWidth) <= window.innerWidth + 1, width: window.innerWidth }; })())", (value) => { try { const parsed = JSON.parse(value); return parsed.theme === theme && parsed.backdrop === backdrop; } catch { return false; } }, `${theme}/${backdrop} state`);
     const parsed = JSON.parse(state);
