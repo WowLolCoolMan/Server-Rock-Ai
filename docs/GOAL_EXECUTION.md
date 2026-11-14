@@ -3,6 +3,46 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 260 — Dock the Electron Chat composer
+
+Status: `implemented_renderer_chat_viewport_live_electron_verified`
+
+Chat now treats the conversation and composer as a desktop workspace rather
+than one page-length document. The message list owns its scroll position and
+restores that position per conversation, while the composer is reserved as a
+bottom dock with responsive bounds and space preserved below the thread. The
+shared shell now provides a bounded flex/overflow contract for route content,
+and the composer remains reachable when the message history grows.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `git diff --check` — passed.
+- Live Electron acceptance at the normal desktop window size showed the
+  composer fully visible and reachable at the bottom of the window while the
+  thread remained above it; the accessibility tree exposed the message field,
+  Attach, and Send controls.
+
+Privacy/security/licensing: this is renderer-only layout and local scroll
+state; no provider, network, filesystem, or permission boundary changed.
+
+Rollback: remove the route-specific shell class, message-list scroll ref, and
+Chat viewport rules to restore the prior page-flow layout.
+
+Remaining: wider packaged visual comparison at all target sizes, attachment
+selection preview acceptance, and the remaining Coding Workspace and
+secondary-surface fidelity gaps remain open.
+
 ## Slice 259 — Add reusable local attachment previews
 
 Status: `implemented_renderer_attachment_preview_build_and_picker_verified`
