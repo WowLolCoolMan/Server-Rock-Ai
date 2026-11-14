@@ -1,5 +1,17 @@
 # Skai Premium UI Transformation
 
+## Slice 316 — Packaged Electron overflow acceptance matrix
+
+The packaged Electron smoke suite now checks every primary route at five
+viewport widths: 1920, 1440, 1280, 960, and 640px. It reports rendered
+elements that escape the viewport while allowing intentional overflow only
+when contained by a scrollable region. The narrow shell hides the sidebar
+resize handle and constrains settings and feature surfaces to the available
+width.
+
+Evidence: `npm run desktop:build`, `npm run package:electron`, and
+`npm run smoke:electron:overflow` passed (`9 routes × 5 viewport widths`).
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution

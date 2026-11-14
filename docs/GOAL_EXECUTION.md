@@ -11546,6 +11546,36 @@ smoke all pass, including a disposable local Git repository.
 Remaining: implement reviewed diff selection and stage/commit/push actions
 without weakening protected-path or remote-state safeguards.
 
+## Slice 316 — Packaged Electron overflow acceptance matrix
+
+Status: `implemented_and_smoke_verified`
+
+The packaged Electron smoke suite now checks Chat, Coding, Settings, Models,
+Image Studio, Marketplace, Workbench, Terminal, and Memory at 1920, 1440,
+1280, 960, and 640px. It reports rendered elements that escape the viewport
+while allowing intentional overflow only when contained by a scrollable region.
+The narrow shell hides the sidebar resize affordance and constrains settings
+and feature surfaces to the available width.
+
+Changed files:
+
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-electron-overflow.cjs`
+- `scripts/audit-electron-runtime.cjs`
+- `package.json`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- `npm run desktop:build` passed.
+- `npm run package:electron` passed.
+- `npm run smoke:electron:overflow` passed: 9 routes × 5 viewport widths.
+- `npm run check:syntax` includes the new acceptance script.
+
+Remaining: continue closing the local RAG, agent execution, model/voice,
+release, and integration gaps; this goal remains active.
+
 ## Slice 315 — Review and commit local Git changes
 
 Status: `implemented_and_smoke_verified`

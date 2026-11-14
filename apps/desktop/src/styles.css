@@ -293,6 +293,8 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .git-review-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .git-review-actions input { flex: 1 1 190px; min-width: 0; padding: 7px 9px; border: 1px solid var(--skai-color-border); border-radius: 7px; color: var(--skai-color-text); background: var(--skai-color-surface); font-size: 10px; }
 .git-diff-preview { max-height: 220px; margin: 0; padding: 10px; overflow: auto; border: 1px solid var(--skai-color-border); border-radius: 7px; color: var(--skai-color-text-muted); background: var(--skai-color-canvas); font-family: var(--skai-font-mono); font-size: 9px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.app-content, .feature-page { min-width: 0; }
+@media (max-width:760px) { .app-sidebar { width: 100%; max-width: 100%; overflow: hidden; }.sidebar-resize-handle { display: none; }.app-content-settings .settings-page { width: 100%; } }
 @media (max-width:900px) { .coding-project-context { align-items: stretch; flex-direction: column; }.coding-project-context-actions { justify-content: stretch; flex-wrap: wrap; }.git-summary { flex: 1 1 180px; }.coding-project-context select { flex: 1 1 190px; width: auto; max-width: none; } }
 @media (max-width:640px) { .coding-project-context select { width: 100%; }.coding-project-context-actions .ui-button { flex: 1 1 auto; }.git-summary { flex-basis: 100%; border-right: 0; border-bottom: 1px solid var(--skai-color-border); padding: 0 0 8px; } }
 .workbench-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -408,6 +410,7 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .app-content-settings .settings-page-header h2 { font-size: 26px; }
 .app-content-settings .settings-window { min-height: 0; flex: 1 1 0; }
 .app-content-settings .settings-nav, .app-content-settings .settings-content { min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.app-content-settings .settings-page, .app-content-settings .settings-window, .app-content-settings .settings-content { min-width: 0; }
 @media (max-width: 640px) {
   .app-content-settings { overflow: auto; }
   .app-content-settings .settings-page { height: auto; }
