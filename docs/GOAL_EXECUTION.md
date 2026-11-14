@@ -120,6 +120,39 @@ Evidence:
 - `npm run audit:electron-runtime` — passed.
 - `git diff --check` — passed.
 
+## Slice 264 — Make Settings a bounded control workspace
+
+Status: `implemented_renderer_settings_workspace_live_electron_verified`
+
+Settings now shares the desktop workspace discipline used by Chat, Coding, and
+Agent Workbench. The route header is compact, the settings shell fills the
+available desktop height, and the navigation rail and active settings panel
+scroll independently instead of turning the whole route into a long form.
+Category navigation now uses the shared icon system for faster scanning while
+preserving searchable categories, local-only controls, and the existing save
+contract. Narrow windows fall back to the existing horizontal category rail
+and natural document flow.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- Before the change, live Settings rendered as a generic page header followed
+  by an unbounded settings card.
+- Rebuilt Electron at 1440×900 rendered the compact Settings route, icon-marked
+  category rail, and local General controls without clipping or renderer
+  errors.
+- Live category navigation from General to Appearance updated the active panel
+  and kept the settings workspace in the same bounded surface.
+- `npm run typecheck` — passed.
+- `npm run build` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+
 ## Slice 260 — Dock the Electron Chat composer
 
 Status: `implemented_renderer_chat_viewport_live_electron_verified`
