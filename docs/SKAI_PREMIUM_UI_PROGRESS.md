@@ -288,3 +288,29 @@ Evidence:
 Remaining: full-size visual captures and interaction acceptance across every
 reference workspace and supported window size remain open; this slice does not
 claim completion of the broader redesign.
+
+## Slice — Recompose Image Studio around prompt-first generation
+
+Status: `implemented_build_visual_verified`
+
+Image Studio now follows the supplied reference composition: recent session
+outputs occupy the main workspace while a compact right-side New generation
+panel keeps model/workflow, prompt, aspect ratio, output, advanced ComfyUI
+configuration, readiness, and generation controls together. The surface only
+renders returned session outputs and explicitly explains the local workflow
+boundary when no image exists.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+- Reopened the production Electron build and inspected the live Image Studio
+  accessibility tree and foreground screenshot. The tree exposed the prompt,
+  recipe buttons, model/workflow selector, aspect ratio selector, output
+  selector, advanced toggle, and disabled generation state while configuration
+  was incomplete.
+
+Remaining: durable image job/history storage and a live ComfyUI generation
+acceptance run still require a configured local image runtime; the UI does not
+claim either capability without host evidence.

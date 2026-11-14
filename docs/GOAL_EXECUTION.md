@@ -8228,6 +8228,25 @@ all workspaces, and completion of the remaining Marketplace trust/install,
 agent approval, image, permissions, onboarding, voice, and packaged-runtime
 acceptance work.
 
+## Slice — Recompose Image Studio around prompt-first generation
+
+Status: `implemented_build_visual_verified`
+
+Image Studio was rebuilt around the reference layout while preserving the
+existing `imageEndpoint`, `imagePrompt`, `imageWorkflow`, generation busy state,
+and returned-output state. The main workspace shows only actual session images;
+the right panel exposes local workflow selection, prompt recipes, aspect ratio,
+output, advanced endpoint/workflow controls, readiness, and the generation
+action. Empty and disconnected states remain explicit.
+
+Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
+`git diff --check` passed. The rebuilt Electron app was reopened on `/images`
+and inspected through the live accessibility tree and foreground screenshot.
+
+Remaining: the broader objective remains active; live ComfyUI generation,
+durable image history, responsive captures at all required widths, and the
+remaining workspace audits still need completion.
+
 ## Slice — Immutable GitHub skill inspection
 
 Status: `implemented_build_smoke_verified`
