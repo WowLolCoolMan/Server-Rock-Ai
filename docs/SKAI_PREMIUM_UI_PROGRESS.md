@@ -4,6 +4,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — standardized high-frequency navigation, sidebar, Models, command-palette, companion, and attachment controls on the shared typed SVG icon system; live Electron verification confirmed the refreshed Chat and Models surfaces.
+
 - `c5e5276` — persisted the last saved local appearance in renderer startup state so theme, accent, density, backdrop, and reduced-motion settings no longer flash back to defaults while the host loads.
 - `20826c8` — added a reusable keyboard-accessible Chat overflow menu to keep contextual actions discoverable without crowding the conversation toolbar.
 - `d592412` — added per-conversation local scroll restoration so switching threads preserves the user’s place while retaining automatic scroll for new messages.

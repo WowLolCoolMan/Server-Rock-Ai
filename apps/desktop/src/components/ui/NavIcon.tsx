@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type NavIconName = "chat" | "code" | "activity" | "model" | "image" | "sparkle" | "terminal" | "memory" | "settings" | "project" | "plus" | "arrow-right" | "arrow-up-right";
+export type NavIconName = "chat" | "code" | "activity" | "model" | "image" | "sparkle" | "terminal" | "memory" | "settings" | "project" | "plus" | "arrow-right" | "arrow-up-right" | "chevron-left" | "chevron-right" | "refresh" | "close" | "more";
 
 export function NavIcon({ name, ...props }: { name: NavIconName } & SVGProps<SVGSVGElement>) {
   const common = { fill: "none", stroke: "currentColor", strokeLinecap: "round" as const, strokeLinejoin: "round" as const, strokeWidth: 1.65 };
@@ -19,6 +19,11 @@ export function NavIcon({ name, ...props }: { name: NavIconName } & SVGProps<SVG
     case "plus": content = <path {...common} d="M12 5v14M5 12h14" />; break;
     case "arrow-right": content = <><path {...common} d="M4 12h15" /><path {...common} d="m13 6 6 6-6 6" /></> ; break;
     case "arrow-up-right": content = <><path {...common} d="M6 18 18 6" /><path {...common} d="M9 6h9v9" /></> ; break;
+    case "chevron-left": content = <path {...common} d="m15 5-7 7 7 7" />; break;
+    case "chevron-right": content = <path {...common} d="m9 5 7 7-7 7" />; break;
+    case "refresh": content = <><path {...common} d="M20 11a8 8 0 0 0-14.8-4L3 10" /><path {...common} d="M3 5v5h5" /><path {...common} d="M4 13a8 8 0 0 0 14.8 4L21 14" /><path {...common} d="M21 19v-5h-5" /></>; break;
+    case "close": content = <><path {...common} d="m6 6 12 12" /><path {...common} d="m18 6-12 12" /></>; break;
+    case "more": content = <><circle fill="currentColor" cx="5" cy="12" r="1.4" /><circle fill="currentColor" cx="12" cy="12" r="1.4" /><circle fill="currentColor" cx="19" cy="12" r="1.4" /></>; break;
   }
   return <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...props}>{content}</svg>;
 }

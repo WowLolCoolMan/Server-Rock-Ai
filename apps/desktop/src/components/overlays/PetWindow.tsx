@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { PetCompletionEvent, PetMotionSettings } from "../../../shared/contracts";
+import { NavIcon } from "../ui/NavIcon";
 
 const WALK_SHEET = new URL("../../../../../assets/pets/percy-walk-frames.png", import.meta.url).href;
 const IDLE_SHEET = new URL("../../../../../assets/pets/percy-idle-frames.png", import.meta.url).href;
@@ -68,7 +69,7 @@ export function PetWindow() {
   };
   return <main className="pet-window-root" aria-label="Percy desktop companion. Drag to move." onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
     {bubble && <div className="pet-window-bubble" role="status">{bubble}</div>}
-    <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Percy companion">×</button>
+    <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Percy companion"><NavIcon name="close" /></button>
     <div className={`pet-window-sprite pet-window-sprite-${activePose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Percy companion" />
   </main>;
 }

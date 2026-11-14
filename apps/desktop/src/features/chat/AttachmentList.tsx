@@ -1,5 +1,6 @@
 import type { ChatAttachment } from "../../../shared/contracts";
 import { Button } from "../../components/ui/Primitives";
+import { NavIcon } from "../../components/ui/NavIcon";
 
 function isImage(attachment: ChatAttachment) {
   return attachment.mediaType === "image/png" || attachment.mediaType === "image/jpeg";
@@ -26,7 +27,7 @@ export function AttachmentList({ attachments, onRemove }: { attachments: ChatAtt
     {attachments.map((attachment, index) => <article className="attachment-card" key={`${attachment.fileName}-${index}`}>
       <div className="attachment-preview" aria-hidden="true">{attachmentPreview(attachment)}</div>
       <div className="attachment-copy"><strong title={attachment.fileName}>{attachment.fileName}</strong><small>{attachmentKind(attachment)}</small></div>
-      {onRemove && <Button variant="ghost" type="button" className="attachment-remove" onClick={() => onRemove(index)} aria-label={`Remove ${attachment.fileName}`}>×</Button>}
+      {onRemove && <Button variant="ghost" type="button" className="attachment-remove" onClick={() => onRemove(index)} aria-label={`Remove ${attachment.fileName}`}><NavIcon name="close" /></Button>}
     </article>)}
   </div>;
 }

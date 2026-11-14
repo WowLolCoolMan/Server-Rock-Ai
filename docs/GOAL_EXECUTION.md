@@ -3,6 +3,41 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 271 — Standardize high-frequency workspace icons
+
+Status: `implemented_live_electron_verified`
+
+High-frequency controls no longer mix Unicode glyphs with the shared SVG icon
+language. Navigation history, sidebar creation/collapse/actions, Models
+discovery, model rows, command-palette close, companion hide, and attachment
+removal now use typed `NavIcon` variants with consistent sizing. Labels and
+accessible names remain explicit, so the visual cleanup does not remove
+keyboard or screen-reader meaning.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/NavIcon.tsx`
+- `apps/desktop/src/components/layout/Toolbar.tsx`
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+- `apps/desktop/src/components/overlays/CommandPalette.tsx`
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/src/features/catalog/CatalogPages.tsx`
+- `apps/desktop/src/features/chat/AttachmentList.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm ci --ignore-scripts` — passed in the isolated worktree.
+- `npm run build` — passed.
+- `npm run typecheck` — passed.
+- Live Electron rendered the Chat shell and Models route from the rebuilt
+  renderer; the shared navigation and “Discover local models” controls showed
+  the new SVG icons without clipping or layout drift.
+- `git diff --check` — passed before commit.
+
+Remaining: continue the next highest-impact keyboard/focus or packaged
+Electron acceptance gap; the active goal remains incomplete.
+
 ## Slice 270 — Restore readable code surfaces across appearances
 
 Status: `implemented_live_electron_verified`
