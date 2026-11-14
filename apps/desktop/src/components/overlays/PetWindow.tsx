@@ -2,17 +2,23 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { PetCompletionEvent, PetMotionSettings } from "../../../shared/contracts";
 
 const WALK_SHEET = new URL("../../../../../assets/pets/percy-walk-frames.png", import.meta.url).href;
+const IDLE_SHEET = new URL("../../../../../assets/pets/percy-idle-frames.png", import.meta.url).href;
 const SUCCESS_SHEET = new URL("../../../../../assets/pets/percy-success-frames.png", import.meta.url).href;
 
-type PetPose = "walk" | "success";
+type PetPose = "idle" | "walk" | "success";
 
 export function PetWindow() {
   const [pose, setPose] = useState<PetPose>("walk");
   const [bubble, setBubble] = useState<string | null>(null);
   const [motion, setMotion] = useState<PetMotionSettings>({ wander: true, reduceMotion: false });
   const dragging = useRef(false);
+  const motionRef = useRef(motion);
   const bubbleTimer = useRef<number | undefined>(undefined);
   const poseTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    motionRef.current = motion;
+  }, [motion]);
 
   useEffect(() => {
     document.title = "Percy · Skai companion";
@@ -26,7 +32,7 @@ export function PetWindow() {
       window.clearTimeout(bubbleTimer.current);
       window.clearTimeout(poseTimer.current);
       bubbleTimer.current = window.setTimeout(() => setBubble(null), 6500);
-      poseTimer.current = window.setTimeout(() => setPose("walk"), 1500);
+      poseTimer.current = window.setTimeout(() => setPose(motionRef.current.wander ? "walk" : "idle"), 1500);
     };
     const removeMessage = pet.onMessage(showCompletion);
     const removeMotion = pet.onMotionChange(setMotion);
@@ -40,10 +46,12 @@ export function PetWindow() {
     };
   }, []);
 
-  const sheet = pose === "success" ? SUCCESS_SHEET : WALK_SHEET;
-  const animationPaused = motion.reduceMotion || !motion.wander || pose === "success";
+  const activePose = pose === "success" ? "success" : motion.wander ? "walk" : "idle";
+  const sheet = activePose === "success" ? SUCCESS_SHEET : activePose === "idle" ? IDLE_SHEET : WALK_SHEET;
+  const animationPaused = motion.reduceMotion;
   const beginDrag = (event: PointerEvent<HTMLElement>) => {
     if (event.target instanceof HTMLElement && event.target.closest("button")) return;
+    event.preventDefault();
     dragging.current = true;
     event.currentTarget.setPointerCapture?.(event.pointerId);
     window.serverRockAgent?.pet?.beginDrag({ x: event.screenX, y: event.screenY });
@@ -61,6 +69,6 @@ export function PetWindow() {
   return <main className="pet-window-root" aria-label="Percy desktop companion. Drag to move." onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
     {bubble && <div className="pet-window-bubble" role="status">{bubble}</div>}
     <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Percy companion">×</button>
-    <div className={`pet-window-sprite pet-window-sprite-${pose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Percy companion" />
+    <div className={`pet-window-sprite pet-window-sprite-${activePose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Percy companion" />
   </main>;
 }

@@ -8465,6 +8465,34 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 267 — Make Percy recoverable and visibly alive as a desktop companion
+
+Status: `implemented_pending_electron_verification`
+
+Percy remains a separate transparent, always-on-top Electron window with a
+drag gesture that uses screen coordinates, persisted placement, and completion
+messages from the local agent bridge. This slice hardens the behavior that
+matters outside the main app: saved positions are clamped back onto a connected
+display when monitor topology changes, idle and success states use their own
+six-frame transparent strips, and reduced motion pauses animation without
+turning a completion state into a frozen sprite. The companion remains local;
+no cloud service or unrestricted renderer API was added.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence to record after the live pass:
+
+- Percy window is separately discoverable from the main Skai window.
+- Transparent wolf sprite is visible without a rectangular background.
+- Dragging changes the window position independently of the app window.
+- A completed local agent request produces a short bubble and success animation.
+- A saved off-screen position is recovered onto the primary work area.
+
 ## Slice 199 — Restore stable package identifiers after rebrand
 
 Status: `implemented_release_gate_verified`

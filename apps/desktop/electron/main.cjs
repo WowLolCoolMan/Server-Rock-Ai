@@ -33,6 +33,7 @@ let petMotion = { wander: true, reduceMotion: false };
 const pendingPetMessages = [];
 const PET_WINDOW_WIDTH = 220;
 const PET_WINDOW_HEIGHT = 190;
+const PET_WINDOW_MARGIN = 16;
 const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
 const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
 const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
@@ -56,9 +57,21 @@ function petBounds() {
   const stored = readPetState().bounds;
   const width = PET_WINDOW_WIDTH;
   const height = PET_WINDOW_HEIGHT;
-  if (stored && [stored.x, stored.y].every(Number.isFinite)) return { x: stored.x, y: stored.y, width, height };
   const workArea = screen.getPrimaryDisplay().workArea;
-  return { x: workArea.x + workArea.width - width - 28, y: workArea.y + workArea.height - height - 28, width, height };
+  if (!stored || ![stored.x, stored.y].every(Number.isFinite)) {
+    return { x: workArea.x + workArea.width - width - 28, y: workArea.y + workArea.height - height - 28, width, height };
+  }
+
+  // A saved position can outlive a monitor being disconnected. Keep Percy
+  // recoverable instead of creating an invisible companion window.
+  const display = screen.getAllDisplays().find(({ workArea: area }) => stored.x < area.x + area.width && stored.x + width > area.x && stored.y < area.y + area.height && stored.y + height > area.y) ?? screen.getPrimaryDisplay();
+  const area = display.workArea;
+  return {
+    x: Math.min(Math.max(stored.x, area.x + PET_WINDOW_MARGIN), area.x + area.width - width - PET_WINDOW_MARGIN),
+    y: Math.min(Math.max(stored.y, area.y + PET_WINDOW_MARGIN), area.y + area.height - height - PET_WINDOW_MARGIN),
+    width,
+    height,
+  };
 }
 
 function stopPetWander() {
@@ -84,9 +97,9 @@ function schedulePetWander() {
     if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
     const area = petWorkArea();
     const bounds = petWindow.getBounds();
-    const minX = area.x + 16;
-    const maxX = Math.max(minX, area.x + area.width - PET_WINDOW_WIDTH - 16);
-    const y = Math.min(Math.max(bounds.y, area.y + 16), area.y + area.height - PET_WINDOW_HEIGHT - 16);
+    const minX = area.x + PET_WINDOW_MARGIN;
+    const maxX = Math.max(minX, area.x + area.width - PET_WINDOW_WIDTH - PET_WINDOW_MARGIN);
+    const y = Math.min(Math.max(bounds.y, area.y + PET_WINDOW_MARGIN), area.y + area.height - PET_WINDOW_HEIGHT - PET_WINDOW_MARGIN);
     let x = Math.round(minX + Math.random() * Math.max(1, maxX - minX));
     if (Math.abs(x - bounds.x) < 96) x = bounds.x < (minX + maxX) / 2 ? maxX : minX;
     petWanderTarget = { x, y };
@@ -226,6 +239,7 @@ function createPetWindow() {
     void petWindow.loadFile(path.join(rendererRoot, "dist", "index.html"), { query: { pet: "1" } });
   }
   petWindow.once("ready-to-show", () => {
+    persistPetState();
     if (savedState.visible !== false) {
       petWindow?.showInactive();
       schedulePetWander();
