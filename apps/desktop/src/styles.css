@@ -469,6 +469,42 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .scheduled-row-heading .status-badge { flex: 0 0 auto; }
 .scheduled-row-meta { display: flex; flex-wrap: wrap; gap: 3px 9px; color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.35; }
 .scheduled-row-meta span + span::before { margin-right: 9px; color: var(--skai-color-border-strong); content: "·"; }
+
+/* Overflow contract: every shared shell row must be allowed to shrink or wrap.
+   Feature pages may opt into scrolling, but no label or action should be clipped
+   merely because a sibling has a long name or a narrow viewport. */
+.app-toolbar, .toolbar-actions, .page-header, .page-actions, .panel-heading,
+.conversation-header, .settings-heading, .settings-section-heading,
+.coding-session-bar, .coding-project-context, .coding-project-context-actions,
+.marketplace-toolbar, .composer-actions, .form-footer, .settings-footer,
+.file-editor-heading, .file-editor-heading > div { min-width: 0; flex-wrap: wrap; }
+.toolbar-title, .page-header > div:first-child, .panel-heading > div:first-child,
+.conversation-header > div:first-child, .settings-section-heading > div,
+.coding-session-copy, .coding-project-context > div:first-child { min-width: 0; }
+.ui-button { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.toolbar-title h1, .page-header h2, .panel-heading h3, .settings-section-heading h3,
+.coding-session-copy strong, .coding-project-context strong, .marketplace-card strong,
+.marketplace-detail h3 { min-width: 0; overflow-wrap: anywhere; }
+.page-description, .panel-subtitle, .settings-section-heading p,
+.marketplace-card p, .marketplace-detail > p, .message-content,
+.task-composer-heading p, .ui-empty p { overflow-wrap: anywhere; }
+.settings-field, .settings-toggle, .form-footer, .settings-footer { min-width: 0; }
+.settings-toggle > span, .settings-footer > span, .form-footer > span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .app-toolbar { align-items: flex-start; }
+  .toolbar-title { flex: 1 1 240px; }
+  .toolbar-actions, .page-actions { flex: 1 1 100%; justify-content: flex-start; }
+  .coding-session-bar, .coding-project-context { align-items: flex-start; }
+  .coding-session-copy, .coding-shortcuts { flex: 1 1 100%; }
+}
+@media (max-width: 640px) {
+  .toolbar-title { flex-basis: 100%; }
+  .toolbar-actions, .page-actions, .composer-actions, .form-footer, .settings-footer { align-items: stretch; }
+  .toolbar-actions .ui-button, .page-actions .ui-button,
+  .composer-actions .ui-button, .form-footer .ui-button, .settings-footer .ui-button { flex: 1 1 auto; }
+  .settings-toggle { align-items: flex-start; gap: 12px; }
+  .settings-toggle input { flex: 0 0 auto; }
+}
 .scheduled-row small { color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.35; }
 .scheduled-row small b { color: var(--skai-color-text); font-weight: 600; }
 .scheduled-row-actions { flex: 0 0 auto; align-items: flex-start; }
