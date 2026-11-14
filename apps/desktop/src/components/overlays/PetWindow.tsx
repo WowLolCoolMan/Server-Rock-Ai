@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { PetCompletionEvent, PetMotionSettings } from "../../../shared/contracts";
 
-const WALK_SHEET = new URL("../../../../../assets/pets/byte-walk-frames.png", import.meta.url).href;
-const SUCCESS_SHEET = new URL("../../../../../assets/pets/byte-success-frames.png", import.meta.url).href;
+const WALK_SHEET = new URL("../../../../../assets/pets/percy-walk-frames.png", import.meta.url).href;
+const SUCCESS_SHEET = new URL("../../../../../assets/pets/percy-success-frames.png", import.meta.url).href;
 
 type PetPose = "walk" | "success";
 
