@@ -58,6 +58,10 @@ The Models surface now keeps the last known inventory visible after a failed
 refresh, marks the registry `Needs attention`, and explains that the previous
 inventory is being shown instead of presenting stale data as ready.
 
+Discovery status is announced through the shared status region and the active
+button exposes `aria-busy`, so keyboard and assistive-technology users receive
+the same progress and recovery signal as visual users.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

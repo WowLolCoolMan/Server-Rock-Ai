@@ -11447,6 +11447,31 @@ Evidence:
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
 
+## Slice 308 — Announce local model discovery state
+
+Status: `implemented_renderer_typechecked`
+
+The Models route now exposes discovery progress and failure through a polite
+live region. Discovery buttons also expose `aria-busy` while the local request
+is active, keeping the local-only recovery flow understandable without relying
+on color or visual inspection.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The header status and failure recovery copy are announced without changing
+  the existing model inventory or navigation behavior.
+- Renderer typecheck and production build are the acceptance gate for this
+  renderer-only accessibility slice.
+
+Remaining: continue the shared utility and overlay interaction slices; the
+overall premium rebuild remains active.
+
 ## Slice 307 — Show local model discovery failure state
 
 Status: `implemented_renderer_typechecked`
