@@ -1,44 +1,39 @@
-# Coding Conventions
+# Conventions
 
-## Core Sections (Required)
+## TypeScript/React
 
-### 1) Naming Rules
+- Components use PascalCase filenames and exported component names.
+- Hooks use the `use...` prefix.
+- CSS classes use kebab-case and are centralized primarily in `apps/desktop/src/styles.css`.
+- TypeScript is strict and uses bundler module resolution with no emit.
+- Imports are predominantly relative; no repository-wide path alias contract was found.
 
-| Item | Rule | Example | Evidence |
-|------|------|---------|----------|
-| Files | C# types use PascalCase; feature partials use `MainPage.<Feature>.cs` | `MainPage.ModelLibrary.cs` | `native/ServerRock.Native/` |
-| Functions/methods | PascalCase for C# methods; private fields use `_camelCase` | `BuildProviderMessages`, `_settings` | `native/ServerRock.Native/MainPage.Chat.cs` |
-| Types/interfaces | PascalCase; records are used for bounded immutable contracts | `ModelComparisonPlan` | `native/SkaiDesktop.Core/Services/ModelComparisonPolicy.cs` |
-| Constants/env vars | C# constants use PascalCase; environment names are uppercase | `MaxPromptCharacters`, `RELEASE_SIGNING_READY` | `native/SkaiDesktop.Core/`, `scripts/validate-release-config.cjs` |
+## C#
 
-### 2) Formatting and Linting
+- Types, methods, and files use PascalCase; locals and parameters use camelCase.
+- Nullable reference types and implicit usings are enabled in the primary projects.
+- Services are generally named by domain responsibility and live under `native/SkaiDesktop.Core/Services`.
+- Tests use `*Tests.cs` files and a lightweight executable-style harness rather than a conventional test framework in the main Core test project.
 
-- Formatter: `[TODO]` no repository formatter configuration was detected by the scan.
-- Linter: `[TODO]` no root linter configuration was detected.
-- Enforced gates: compiler/nullable checks, Node syntax, native UI contract audit, repository hygiene, and release metadata validation.
-- Run commands: `npm run check:syntax`, `npm run check:hygiene`, `npm run audit:native-ui`, `npm run check:release-config`.
+## Errors and logging
 
-### 3) Import and Module Conventions
+- Agent Host catches request failures and returns structured error responses rather than allowing the JSON-lines process to die for ordinary request errors.
+- Core uses bounded exceptions and validator results for invalid paths, capabilities, permissions, and state transitions.
+- Electron main logs host lifecycle and protocol information with prefixed console messages.
+- There is no single structured logging, correlation-ID, retention, or redaction contract shared across Electron, Agent Host, and Core. [TODO]
 
-- C# files use explicit namespaces and standard `using` directives; implicit usings are enabled in `native/Directory.Build.props`.
-- Core services are referenced through project boundaries; no generated-source or barrel-export convention was observed.
-- UI partials share `MainPage` state but feature behavior should remain in the owning partial.
+## Tests and checks
 
-### 4) Error and Logging Conventions
+- C# checks print explicit pass/fail output and are invoked through npm scripts.
+- Node audits are small repository scripts for syntax, hygiene, runtime policy, local-only behavior, release workflow, and native UI contracts.
+- There is no repository lint configuration, formatter configuration, coverage threshold, or renderer E2E test standard. [TODO]
 
-- Core rejects invalid input with bounded `ArgumentException`/`InvalidDataException` or structured result types.
-- Native surfaces expose truthful recovery text and log unexpected failures through `App.Log`.
-- Sensitive values are redacted by diagnostics and kept out of ordinary settings; provider credentials use session/credential mechanisms rather than plaintext settings.
+## Evidence
 
-### 5) Testing Conventions
-
-- Tests are named `*Tests.cs` under `native/SkaiDesktop.Core.Tests/` and are registered explicitly in `Program.cs`.
-- Tests use deterministic temp paths, stub HTTP handlers and local fixtures; no coverage threshold was found.
-- New behavior should add a focused Core check and a native audit contract when a visible control or route changes.
-
-### 6) Evidence
-
-- `native/Directory.Build.props`
-- `native/SkaiDesktop.Core.Tests/Program.cs`
-- `scripts/audit-native-ui.cjs`
-- `scripts/check-repo-hygiene.cjs`
+- `apps/desktop/tsconfig.json`
+- `apps/desktop/src/`
+- `apps/desktop/src/styles.css`
+- `native/SkaiDesktop.Core/SkaiDesktop.Core.csproj`
+- `native/SkaiDesktop.Core.Tests/`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/package.json`

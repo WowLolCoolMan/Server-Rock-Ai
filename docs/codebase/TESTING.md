@@ -1,50 +1,43 @@
-# Testing Patterns
+# Testing
 
-## Core Sections (Required)
+## Current verification layers
 
-### 1) Test Stack and Commands
+- Core behavior and persistence tests run through `npm test -- --no-restore` and cover planners, path bounds, models, tasks, approvals, providers, local-only policy, attachments, schedules, Git, and recovery behavior.
+- Agent Host compilation is verified with `npm run agent-host:build -- --no-restore`.
+- Renderer correctness is currently typechecked and bundled with `npm run desktop:typecheck` and `npm run desktop:build`.
+- Repository-level audits cover syntax, hygiene, native UI contracts, Electron runtime policy, local-only policy, and release workflow policy.
+- GitHub Actions provide CI/release execution, but the repository does not have a browser-runner or coverage threshold as a standard.
 
-- Primary test framework: executable .NET test harness with custom `Check` helpers; no xUnit/NUnit package was found.
-- Assertion/mocking tools: `TestSupport`, temporary filesystem fixtures and stub HTTP handlers.
-- Commands:
+## Test organization
 
-```bash
-dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore
-dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-windows10.0.26100 --no-restore
-npm run audit:native-ui
-npm run check:hygiene
-```
+- `native/SkaiDesktop.Core.Tests/` contains the primary automated behavior suite.
+- `scripts/` contains Node smoke/audit scripts.
+- `native/ServerRock.Native.Tests/` and native acceptance helpers cover selected legacy/native paths.
+- UI behavior is mostly validated by build/audit contracts rather than by driving the running Electron app.
 
-### 2) Test Layout
+## Pet coverage
 
-- Tests live in `native/SkaiDesktop.Core.Tests/`, one focused `*Tests.cs` area per domain.
-- `Program.cs` registers the suite in explicit order and prints pass evidence.
-- Native visible-control contracts are checked by `scripts/audit-native-ui.cjs`; live Windows evidence is recorded separately in `docs/GOAL_EXECUTION.md`.
+`PetWanderPlannerTests.cs` gives strong unit-level coverage for the contributed grid planner: deterministic paths, blocked composer space, resize/clamping, tiny windows, gliding, facing, and no-jump behavior. This coverage currently stops at Core. There is no equivalent test that creates the Electron pet BrowserWindow, applies the real screen/composer geometry, resizes or hides it, and asserts the live window remains inside valid cells.
 
-### 3) Test Scope Matrix
+## Current validation result
 
-| Scope | Covered? | Typical target | Notes |
-|-------|----------|----------------|-------|
-| Unit | yes | Core policies, models, planners, validators | Broad deterministic suite |
-| Integration | partial | Stub HTTP, temp stores, Git/MCP/workflow fixtures | Real remote providers are not used by Core tests |
-| E2E | partial | Native Windows inspection and artifact smoke scripts | Linux, clean-install and full accessibility evidence remain `[TODO]` |
+The review run passed the sequential Core suite, Agent Host build, renderer typecheck/build, syntax, hygiene, native UI, Electron runtime, local-only, and release-workflow checks. A first parallel attempt encountered a transient `SkaiDesktop.Core.dll` file lock while build and test processes overlapped; rerunning sequentially passed. The check suite should document or serialize this dependency to keep CI diagnostics deterministic. [TODO]
 
-### 4) Mocking and Isolation Strategy
+## Largest testing gaps
 
-- Network boundaries use stub handlers or local fake responses; filesystem tests use unique temp paths and clean them up.
-- Tests avoid the real user profile and do not silently send prompts to cloud services.
-- Common failure mode: concurrent `dotnet` builds can contend for output files; run Core and native builds serially.
+- Electron renderer and main-process end-to-end coverage for routing, command palette, marketplace, chat, coding, and pet interactions.
+- Packaged Windows acceptance on a clean machine, including first run, profile migration, updates, signed installer behavior, and recovery.
+- DPI, multi-monitor, narrow-window, resize, always-on-top, and accessibility/focus matrix.
+- Real provider/download smoke tests with controlled fixtures for Hugging Face, GitHub, ComfyUI, Ollama, and MCP.
+- Agent golden-loop tests proving plan → approval → execution → diff → test → commit with durable restart recovery.
+- Linux verification; current documentation identifies it as unverified.
 
-### 5) Coverage and Quality Signals
+## Evidence
 
-- Coverage tool/threshold: `[TODO]` no numeric coverage gate is configured.
-- Current evidence: Core suite, native build, UI audit, syntax, hygiene and release-config gates pass for the current `main` checkout when run serially.
-- Known gaps: Linux runtime/accessibility, live popup focus bridge, clean-machine package lifecycle, signed artifacts and some migration-surface parity.
-
-### 6) Evidence
-
-- `native/SkaiDesktop.Core.Tests/Program.cs`
-- `native/SkaiDesktop.Core.Tests/TestSupport.cs`
-- `scripts/audit-native-ui.cjs`
-- `.github/workflows/native-ci.yml`
-- `docs/NATIVE_RELEASE_ACCEPTANCE.md`
+- `native/SkaiDesktop.Core.Tests/PetWanderPlannerTests.cs`
+- `native/SkaiDesktop.Core.Tests/`
+- `scripts/`
+- `package.json`
+- `.github/workflows/`
+- `docs/CAPABILITY_MATRIX.md`
+- `docs/PRODUCTION_READINESS_GAPS.md`

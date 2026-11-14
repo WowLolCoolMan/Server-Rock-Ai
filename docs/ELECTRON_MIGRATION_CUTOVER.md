@@ -39,9 +39,11 @@ capability matrix and goal ledger:
 5. Legacy data paths and archive imports are proven readable by the replacement
    before any native project or data cleanup is considered.
 
-Until all gates pass, retaining Uno is intentional and reversible. Deleting it
-would create a false completion claim and remove a comparison surface needed to
-validate parity.
+Until all gates pass, retaining Uno is intentional and reversible, but its
+product surface is now frozen. Do not add new Uno pages, providers, workflows,
+or desktop-only behavior. Fixes required for parity belong in shared Core or
+Electron first; Uno may receive only build, packaging, security, or narrowly
+scoped compatibility fixes needed to validate the cutover.
 
 ## Current replacement evidence
 
@@ -50,6 +52,12 @@ validate parity.
   `conversations.list`, `conversation.save`, `settings.get`, `settings.save`,
   `image.generate`, and `chat.complete` are available through the versioned
   host protocol.
+- Electron now exposes the host-backed marketplace catalog, live Hugging Face
+  and ModelScope GGUF discovery, provider/size/abliteration filters, and
+  verified local install operations with status and cancellation contracts.
+- The always-on-top Electron pet now uses the contributed 10x10 grid planner
+  and eased path walk semantics, including display/work-area clamping and
+  deterministic blocked-cell planning for future compositor obstacles.
 - The Electron renderer has persisted projects, conversations, settings, model
   discovery, chat, Agent Workbench, and a local ComfyUI Image Studio surface.
 - The Electron chat restores the newest local conversation and saves both the

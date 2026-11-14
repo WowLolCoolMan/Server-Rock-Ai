@@ -4,6 +4,7 @@ const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const readline = require("node:readline");
+const { PetWanderGrid, PetWanderPlanner, PetWalk } = require("./pet-wander.cjs");
 
 const repoRoot = path.resolve(__dirname, "../../..");
 const hostProject = path.join(repoRoot, "services", "agent-host", "ServerRock.AgentHost.csproj");
@@ -26,10 +27,14 @@ let petWindow;
 let petReady = false;
 let petDragOffset = null;
 let petDragTimer;
-let petWanderTarget = null;
 let petWanderPauseTimer;
 let petWanderStepTimer;
 let petWanderMoving = false;
+let petWanderWalk = null;
+let petWanderStartedAt = 0;
+let petWanderNextAt = 0;
+let petWanderLayoutSignature = "";
+const petWanderPlanner = new PetWanderPlanner();
 let petMotion = { wander: true, reduceMotion: false };
 const pendingPetMessages = [];
 const PET_WINDOW_WIDTH = 220;
@@ -101,7 +106,7 @@ function stopPetWander() {
   if (petWanderStepTimer) clearTimeout(petWanderStepTimer);
   petWanderPauseTimer = undefined;
   petWanderStepTimer = undefined;
-  petWanderTarget = null;
+  petWanderWalk = null;
   petWanderMoving = false;
 }
 
@@ -119,50 +124,87 @@ function petWorkArea() {
 
 function clampPetPosition(point) {
   const area = screen.getDisplayNearestPoint(point).workArea;
+  const grid = new PetWanderGrid(area.width, area.height, { x: PET_WINDOW_WIDTH, y: PET_WINDOW_HEIGHT }, PET_WINDOW_MARGIN);
+  const position = grid.clampPetPosition({ x: point.x - area.x, y: point.y - area.y });
   return {
-    x: Math.min(Math.max(Math.round(point.x), area.x + PET_WINDOW_MARGIN), area.x + area.width - PET_WINDOW_WIDTH - PET_WINDOW_MARGIN),
-    y: Math.min(Math.max(Math.round(point.y), area.y + PET_WINDOW_MARGIN), area.y + area.height - PET_WINDOW_HEIGHT - PET_WINDOW_MARGIN),
+    x: Math.round(area.x + position.x),
+    y: Math.round(area.y + position.y),
   };
+}
+
+function petWanderLayout() {
+  const area = petWorkArea();
+  const bounds = petWindow?.getBounds() ?? { x: area.x + area.width - PET_WINDOW_WIDTH - PET_WINDOW_MARGIN, y: area.y + area.height - PET_WINDOW_HEIGHT - PET_WINDOW_MARGIN };
+  const grid = new PetWanderGrid(area.width, area.height, { x: PET_WINDOW_WIDTH, y: PET_WINDOW_HEIGHT }, PET_WINDOW_MARGIN);
+  // This is a desktop-wide companion. Keep the contributed grid authoritative
+  // for bounds and neighboring-cell movement without treating a maximized
+  // main window as an obstacle that would block every cell.
+  return { area, bounds, grid, blocked: new Set() };
 }
 
 function schedulePetWander() {
   if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
   if (petWanderPauseTimer || petWanderStepTimer) return;
+  const delay = Math.max(0, petWanderNextAt - Date.now()) || 1800 + Math.round(Math.random() * 2600);
   petWanderPauseTimer = setTimeout(() => {
     petWanderPauseTimer = undefined;
     if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
-    const area = petWorkArea();
-    const bounds = petWindow.getBounds();
-    const minX = area.x + PET_WINDOW_MARGIN;
-    const maxX = Math.max(minX, area.x + area.width - PET_WINDOW_WIDTH - PET_WINDOW_MARGIN);
-    const y = Math.min(Math.max(bounds.y, area.y + PET_WINDOW_MARGIN), area.y + area.height - PET_WINDOW_HEIGHT - PET_WINDOW_MARGIN);
-    let x = Math.round(minX + Math.random() * Math.max(1, maxX - minX));
-    if (Math.abs(x - bounds.x) < 96) x = bounds.x < (minX + maxX) / 2 ? maxX : minX;
-    petWanderTarget = { x, y };
-    movePetTowardTarget();
-  }, 1800 + Math.round(Math.random() * 2600));
+    startPetWander();
+  }, delay);
 }
 
-function movePetTowardTarget() {
-  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petWanderTarget || !petMotion.wander || petMotion.reduceMotion || petDragOffset) {
-    petWanderStepTimer = undefined;
-    petWanderMoving = false;
-    return;
-  }
-  const bounds = petWindow.getBounds();
-  const dx = petWanderTarget.x - bounds.x;
-  const dy = petWanderTarget.y - bounds.y;
-  if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
-    petWindow.setPosition(petWanderTarget.x, petWanderTarget.y);
-    petWanderTarget = null;
-    petWanderStepTimer = undefined;
-    petWanderMoving = false;
+function startPetWander() {
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
+  const { area, bounds, grid, blocked } = petWanderLayout();
+  const signature = `${area.x}:${area.y}:${area.width}:${area.height}`;
+  const relative = grid.clampPetPosition({ x: bounds.x - area.x, y: bounds.y - area.y });
+  const plan = petWanderPlanner.tryPlanWalk(grid.cellForPetPosition(relative), blocked);
+  if (!plan.planned || plan.path.length === 0) {
+    petWanderNextAt = Date.now() + petWanderPlanner.nextRestSeconds() * 1000;
+    petWanderLayoutSignature = signature;
     schedulePetWander();
     return;
   }
-  const step = Math.min(3, Math.max(Math.abs(dx), Math.abs(dy)));
+  const walk = new PetWalk(relative, plan.path.map((cell) => grid.petPositionFor(cell)), 90);
+  if (walk.length < 1) {
+    petWanderNextAt = Date.now() + petWanderPlanner.nextRestSeconds() * 1000;
+    schedulePetWander();
+    return;
+  }
+  petWanderWalk = walk;
+  petWanderStartedAt = Date.now();
+  petWanderLayoutSignature = signature;
+  movePetTowardTarget();
+}
+
+function movePetTowardTarget() {
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petWanderWalk || !petMotion.wander || petMotion.reduceMotion || petDragOffset) {
+    petWanderStepTimer = undefined;
+    petWanderMoving = false;
+    return;
+  }
+  const { area, grid } = petWanderLayout();
+  const signature = `${area.x}:${area.y}:${area.width}:${area.height}`;
+  if (signature !== petWanderLayoutSignature) {
+    petWanderWalk = null;
+    petWanderStepTimer = undefined;
+    petWanderMoving = false;
+    petWanderNextAt = Date.now() + 250;
+    schedulePetWander();
+    return;
+  }
+  const elapsed = (Date.now() - petWanderStartedAt) / 1000;
+  const position = grid.clampPetPosition(petWanderWalk.positionAt(elapsed));
   petWanderMoving = true;
-  petWindow.setPosition(Math.round(bounds.x + Math.sign(dx) * Math.min(Math.abs(dx), step)), Math.round(bounds.y + Math.sign(dy) * Math.min(Math.abs(dy), step)));
+  petWindow.setPosition(Math.round(area.x + position.x), Math.round(area.y + position.y));
+  if (petWanderWalk.isFinished(elapsed)) {
+    petWanderWalk = null;
+    petWanderMoving = false;
+    petWanderNextAt = Date.now() + petWanderPlanner.nextRestSeconds() * 1000;
+    petWanderStepTimer = undefined;
+    schedulePetWander();
+    return;
+  }
   petWanderStepTimer = setTimeout(movePetTowardTarget, 55);
 }
 
@@ -325,7 +367,7 @@ function createPetWindow() {
 const allowedMethods = new Set([
   "runtime.health", "models.list", "models.pull.start", "models.pull.status", "models.pull.cancel", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
-  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop",
+  "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop", "marketplace.catalog", "marketplace.models.search",
   "workspace.pickFolder",
 ]);
 

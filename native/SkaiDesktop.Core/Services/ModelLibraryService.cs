@@ -205,10 +205,18 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
                     ? tagElement.EnumerateArray().Where(tag => tag.ValueKind == JsonValueKind.String).Select(tag => tag.GetString() ?? "").ToArray()
                     : [];
                 var label = IsExplicitUncensoredLabel(id, tags);
+                var sizeBytes = item.TryGetProperty("siblings", out var siblings) && siblings.ValueKind == JsonValueKind.Array
+                    ? siblings.EnumerateArray()
+                        .Where(file => file.TryGetProperty("rfilename", out var name) && name.GetString()?.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase) == true)
+                        .Select(file => file.TryGetProperty("size", out var size) && size.TryGetInt64(out var bytes) ? bytes : 0)
+                        .Where(bytes => bytes > 0)
+                        .Select(bytes => (long?)bytes)
+                        .Sum()
+                    : null;
                 return new HubModel(id,
                     item.TryGetProperty("downloads", out var downloads) && downloads.TryGetInt64(out var count) ? count : 0,
                     item.TryGetProperty("likes", out var likes) && likes.TryGetInt32(out var likeCount) ? likeCount : 0,
-                    label, tags);
+                    label, tags, sizeBytes);
             }));
         }
         var filtered = (uncensored ? allModels.Where(model => model.IsUncensored) : allModels.Where(model => !model.IsUncensored));
@@ -549,7 +557,7 @@ public sealed class ModelLibraryService(HttpClient? httpClient = null)
     }
 }
 
-public sealed record HubModel(string Id, long Downloads, int Likes, bool IsUncensored = false, string[]? Tags = null);
+public sealed record HubModel(string Id, long Downloads, int Likes, bool IsUncensored = false, string[]? Tags = null, long? SizeBytes = null);
 public sealed record ModelScopeGgufFile(string Path, long SizeBytes, string? Sha256);
 public sealed record ModelScopeGgufPackage(string Repository, string Name, IReadOnlyList<ModelScopeGgufFile> Files, long Downloads, bool IsUncensored = false)
 {

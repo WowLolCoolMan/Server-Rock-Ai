@@ -60,7 +60,7 @@ Electron + React + TypeScript
 Ollama · LM Studio · AirLLM · local OpenAI-compatible APIs · ComfyUI
 ```
 
-The Electron renderer is the product UI. The isolated preload bridge exposes only typed desktop operations. The persistent .NET Agent Host and shared Core services own local model requests, project boundaries, persistence, approvals, and guarded file/terminal operations. The older Uno/XAML surface remains only as migration compatibility code.
+The Electron renderer is the product UI and the only active desktop shell. The isolated preload bridge exposes only typed desktop operations. The persistent .NET Agent Host and shared Core services own local model requests, project boundaries, persistence, approvals, and guarded file/terminal operations. The older Uno/XAML surface is frozen compatibility code: it remains buildable until parity and rollback evidence are complete, but new product behavior must land in Electron and shared Core.
 
 ## Run locally
 

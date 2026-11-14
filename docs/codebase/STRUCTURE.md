@@ -1,46 +1,44 @@
-# Codebase Structure
+# Structure
 
-## Core Sections (Required)
+## Top-level layout
 
-### 1) Top-Level Map
+- `.github/workflows/` — CI, acceptance, and release automation.
+- `apps/desktop/` — Electron main/preload process, React renderer, features, shell components, assets, and desktop scripts.
+- `services/agent-host/` — executable .NET JSON-lines host and protocol loop.
+- `native/SkaiDesktop.Core/` — shared domain services, adapters, validators, persistence, provider clients, and policy logic.
+- `native/SkaiDesktop.Core.Tests/` — focused .NET behavior and contract tests.
+- `native/ServerRock.Native/` — legacy Uno/XAML desktop surface retained for compatibility and historical feature parity.
+- `assets/` — pet sprites, branding, and other static media.
+- `docs/` — product intent, capability matrix, migrations, release/readiness notes, and the generated codebase map.
+- `scripts/` and `packaging/` — audits, smoke checks, packaging helpers, and release support.
 
-| Path | Purpose | Evidence |
-|------|---------|----------|
-| `native/SkaiDesktop.Core/` | UI-independent models, persistence, providers, policies and workflow/runtime services | `native/SkaiDesktop.Core/` |
-| `native/ServerRock.Native/` | Uno/XAML desktop shell and feature partials | `native/ServerRock.Native/` |
-| `native/SkaiDesktop.Core.Tests/` | Executable Core/domain test harness | `native/SkaiDesktop.Core.Tests/Program.cs` |
-| `apps/desktop/` | Electron/React migration prototype | `apps/desktop/package.json`, `docs/ELECTRON_MIGRATION_STAGE1.md` |
-| `services/agent-host/` | Persistent .NET agent-host protocol seam | `services/agent-host/README.md`, `services/agent-host/ServerRock.AgentHost.csproj` |
-| `scripts/` | Build, audit, release and hygiene scripts | `package.json`, `scripts/` |
-| `packaging/native/` | Transitional Windows/Linux packaging scripts and manifest | `packaging/native/README.md` |
-| `docs/` | Architecture, evidence, capability and release documentation | `docs/` |
+## Runtime entry points
 
-### 2) Entry Points
+- Electron main: `apps/desktop/electron/main.cjs`.
+- Electron preload: `apps/desktop/electron/preload.cjs`.
+- React entry: `apps/desktop/src/main.tsx`.
+- React composition: `apps/desktop/src/App.tsx`, `apps/desktop/src/app/AppRouteView.tsx`, and `apps/desktop/src/app/useDesktopWorkspace.ts`.
+- Agent Host entry: `services/agent-host/Program.cs`, with request dispatch in `services/agent-host/Protocol/AgentHostLoop.cs`.
+- Shared services: `native/SkaiDesktop.Core/Services/` and `native/SkaiDesktop.Core/Providers/`.
+- Legacy Uno entry: `native/ServerRock.Native/App.xaml` and `MainPage.xaml`.
 
-- Main native runtime: `native/ServerRock.Native/MainPage.xaml` and its `MainPage.*.cs` partials.
-- Core test entry: `native/SkaiDesktop.Core.Tests/Program.cs`.
-- Migration renderer/host entry: `apps/desktop/src/` and `services/agent-host/Program.cs`.
-- Script entry selection: root `package.json` scripts.
+## Feature organization
 
-### 3) Module Boundaries
+The renderer is organized by product feature under `apps/desktop/src/features/`: chat, coding, catalog/marketplace, models, images, settings, workbench, terminal, memory, voice, and related surfaces. Cross-cutting layout and overlays live under `apps/desktop/src/components/`.
 
-| Boundary | What belongs here | What must not be here |
-|----------|-------------------|------------------------|
-| `SkaiDesktop.Core` | UI-independent policy, models, persistence, provider and workflow logic | XAML controls or platform-only visual state |
-| `ServerRock.Native` | Native UI, dialogs, accessibility labels, UI event orchestration | Unbounded provider/persistence policy duplicated from Core |
-| `Core.Tests` | Deterministic domain and integration-style fixture checks | Real user profile mutation or unapproved cloud calls |
-| `apps/desktop` + `agent-host` | Incremental migration seam and typed local protocol | Replacing native parity without an owner decision |
+The Agent Host is more centralized than the renderer: most request routing and response shaping is concentrated in `AgentHostLoop.cs`, while the actual domain behavior is delegated to Core services. This makes the protocol boundary clear but makes the host loop a high-risk change surface.
 
-### 4) Naming and Organization Rules
+## Important boundary
 
-- C# types/files use PascalCase; native UI responsibilities are split into `MainPage.<Feature>.cs` partials.
-- Services, models and infrastructure are grouped by responsibility under `native/SkaiDesktop.Core/`.
-- JavaScript scripts use descriptive kebab/camel-compatible filenames under `scripts/`; npm tasks are named `check:*`, `audit:*`, `build:*`, or `desktop:*`.
+The intended boundary is Electron renderer → typed preload bridge → Agent Host → Core service/provider → local runtime or local persistence. The legacy Uno surface is outside the active Electron route and should not become a second source of product truth without an explicit decision. [ASK USER]
 
-### 5) Evidence
+## Evidence
 
 - `README.md`
-- `docs/ARCHITECTURE.md`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/electron/preload.cjs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `native/SkaiDesktop.Core/Services/`
 - `native/ServerRock.Native/MainPage.xaml`
-- `native/SkaiDesktop.Core.Tests/Program.cs`
-- Codebase scan command output from the required acquisition workflow

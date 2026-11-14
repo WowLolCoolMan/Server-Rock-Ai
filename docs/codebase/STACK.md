@@ -1,52 +1,48 @@
-# Technology Stack
+# Stack
 
-## Core Sections (Required)
+## Product/runtime
 
-### 1) Runtime Summary
+- Electron main process with a React + TypeScript renderer is the current desktop product surface.
+- A persistent .NET 10 Agent Host is started by Electron and communicates over JSON-lines stdio.
+- `native/SkaiDesktop.Core` is the shared service/domain layer for local models, projects, terminal, Git, memory, skills, MCP, images, voice, approvals, and persistence.
+- `native/ServerRock.Native` is a legacy Uno/XAML compatibility surface. The current product direction in `README.md` is Electron + React; Uno is described as migration compatibility rather than the primary shell.
 
-| Area | Value | Evidence |
-|------|-------|----------|
-| Primary language | C# for the native product and Core; TypeScript/React for the migration surface; JavaScript for repository scripts | `native/`, `apps/desktop/`, `package.json` |
-| Runtime + version | .NET 10; Node.js scripts; Uno Platform targets `net10.0-desktop` and `net10.0-windows10.0.26100` | `native/ServerRock.Native/ServerRock.Native.csproj`, `native/SkaiDesktop.Core/SkaiDesktop.Core.csproj` |
-| Package manager | NuGet/MSBuild for .NET; npm for root and Electron migration packages | `native/Directory.Packages.props`, `package.json`, `apps/desktop/package.json` |
-| Module/build system | MSBuild/Uno single-project native app plus npm scripts and GitHub Actions | `native/ServerRock.Native/ServerRock.Native.csproj`, `package.json`, `.github/workflows/` |
+## Toolchain
 
-### 2) Production Frameworks and Dependencies
+- Node/npm, Vite, TypeScript, React, Electron, `concurrently`, and `wait-on` are used by `apps/desktop`.
+- .NET SDK 10 is used by `native/SkaiDesktop.Core`, `native/SkaiDesktop.Core.Tests`, `services/agent-host`, and the legacy Uno project.
+- C# dependencies include PdfPig, Porta.Pty, ProtectedData, XTerm.NET, Markdig, and SVG/Uno packages.
+- GitHub Actions provide CI and release checks.
 
-| Dependency | Version | Role in system | Evidence |
-|------------|---------|----------------|----------|
-| Uno Platform | centrally managed | Cross-platform XAML/native UI | `native/Directory.Packages.props`, `native/ServerRock.Native/ServerRock.Native.csproj` |
-| .NET Windows App SDK | centrally managed | Windows target and WinUI surface | `native/Directory.Packages.props`, `native/ServerRock.Native/ServerRock.Native.csproj` |
-| System.Text.Json | .NET runtime | Bounded local persistence and protocol JSON | `native/SkaiDesktop.Core/Infrastructure/`, `native/SkaiDesktop.Core/Services/` |
-| React + TypeScript | migration package manifests | Electron renderer prototype | `apps/desktop/package.json`, `apps/desktop/src/` |
+## Commands
 
-### 3) Development Toolchain
+- `npm run desktop:install`
+- `npm run desktop:dev`
+- `npm run desktop:build`
+- `npm run desktop:typecheck`
+- `npm run agent-host:build`
+- `npm test -- --no-restore`
+- `npm run check:syntax`
+- `npm run check:hygiene`
+- `npm run audit:native-ui`
+- `npm run audit:electron-runtime`
+- `npm run audit:local-only`
+- `npm run audit:release-workflow`
 
-| Tool | Purpose | Evidence |
-|------|---------|----------|
-| `dotnet` | Core tests and native builds | `package.json`, `native/SkaiDesktop.Core.Tests/` |
-| Node `--check` | Script syntax gate | `package.json` (`check:syntax`) |
-| GitHub Actions | CI, artifacts, platform acceptance and release gates | `.github/workflows/` |
+## Configuration and state
 
-### 4) Key Commands
+- Electron can use `SERVER_ROCK_RENDERER_URL` for a development renderer URL.
+- Profile and storage paths are resolved through `SRAI_*_PATH` variables in tests and supporting scripts.
+- Local services are expected on loopback endpoints such as Ollama, LM Studio/OpenAI-compatible servers, and ComfyUI.
+- There is no repository `.env.example` or `.env.template`; deployment-specific configuration is therefore not documented in one discoverable contract. [TODO]
 
-```bash
-dotnet build native/ServerRock.Native/ServerRock.Native.csproj -f net10.0-desktop --no-restore
-dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore
-npm run audit:native-ui
-npm run check:release-config
-```
+## Evidence
 
-### 5) Environment and Config
-
-- Config sources: `native/Directory.Build.props`, `packaging/native/release-manifest.json`, local application-data stores, and provider settings.
-- Required env vars: none for ordinary local execution; signing variables are required only when release signing is explicitly enabled by `scripts/validate-release-config.cjs`.
-- Deployment/runtime constraints: Linux SDK/runtime availability and exact packaged-artifact acceptance are `[TODO]`; Windows native build is locally available.
-
-### 6) Evidence
-
-- `package.json`
+- `README.md`
+- `apps/desktop/package.json`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/main.tsx`
+- `services/agent-host/ServerRock.AgentHost.csproj`
+- `native/SkaiDesktop.Core/SkaiDesktop.Core.csproj`
 - `native/ServerRock.Native/ServerRock.Native.csproj`
-- `native/Directory.Packages.props`
-- `.github/workflows/native-ci.yml`
-- Codebase scan command output from the required acquisition workflow
+- `.github/workflows/`

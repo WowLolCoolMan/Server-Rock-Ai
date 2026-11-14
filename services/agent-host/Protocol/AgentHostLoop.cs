@@ -15,6 +15,8 @@ public static class AgentHostLoop
     private static readonly object TerminalSessionsGate = new();
     private static readonly Dictionary<string, ModelPullOperation> ModelPulls = new(StringComparer.Ordinal);
     private static readonly object ModelPullsGate = new();
+    private static readonly Dictionary<string, MarketplaceDownloadOperation> MarketplaceDownloads = new(StringComparer.Ordinal);
+    private static readonly object MarketplaceDownloadsGate = new();
 
     public static async Task RunAsync(Stream input, Stream output, CancellationToken cancellationToken = default)
     {
@@ -66,7 +68,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "models.pull.start", "models.pull.status", "models.pull.cancel", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "models.pull.start", "models.pull.status", "models.pull.cancel", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop", "marketplace.catalog", "marketplace.models.search", "marketplace.models.install.start", "marketplace.models.install.status", "marketplace.models.install.cancel"])),
             "models.list" => ListModels(request),
             "models.pull.start" => StartModelPull(request),
             "models.pull.status" => GetModelPullStatus(request),
@@ -128,6 +130,11 @@ public static class AgentHostLoop
             "voice.models" => ListVoiceModels(request),
             "voice.speak" => SpeakVoice(request, voice),
             "voice.stop" => StopVoice(request, voice),
+            "marketplace.catalog" => ListMarketplaceCatalog(request),
+            "marketplace.models.search" => SearchMarketplaceModelsAsync(request).GetAwaiter().GetResult(),
+            "marketplace.models.install.start" => StartMarketplaceModelInstall(request),
+            "marketplace.models.install.status" => GetMarketplaceModelInstallStatus(request),
+            "marketplace.models.install.cancel" => CancelMarketplaceModelInstall(request),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
     }
@@ -145,6 +152,158 @@ public static class AgentHostLoop
                 lowResource = model.IsLowResource,
             }).ToArray(),
         });
+
+    private static AgentResponse ListMarketplaceCatalog(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, MarketplaceCatalogService.Snapshot());
+
+    private static async Task<AgentResponse> SearchMarketplaceModelsAsync(AgentRequest request)
+    {
+        var query = OptionalString(request, "query") ?? string.Empty;
+        var uncensored = request.Params?.TryGetProperty("uncensored", out var uncensoredValue) == true && uncensoredValue.ValueKind == JsonValueKind.True;
+        var library = new ModelLibraryService();
+        var providers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var models = new List<object>();
+
+        try
+        {
+            var huggingFace = await library.SearchHuggingFaceAsync(query, uncensored).ConfigureAwait(false);
+            models.AddRange(huggingFace.Select(model => new
+            {
+                id = $"huggingface:{model.Id}",
+                repository = model.Id,
+                source = "Hugging Face",
+                kind = "llm",
+                downloads = model.Downloads,
+                likes = model.Likes,
+                uncensored = model.IsUncensored,
+                tags = model.Tags ?? [],
+                sizeBytes = model.SizeBytes,
+                installRoute = "lm-studio",
+                installable = true,
+            }));
+            providers["Hugging Face"] = "ready";
+        }
+        catch (Exception error) when (error is HttpRequestException or InvalidDataException or TaskCanceledException)
+        {
+            providers["Hugging Face"] = error.Message;
+        }
+
+        try
+        {
+            var modelScope = await library.SearchModelScopeGgufAsync(query, uncensored).ConfigureAwait(false);
+            models.AddRange(modelScope.Select(model => new
+            {
+                id = $"modelscope:{model.Repository}:{model.Name}",
+                repository = model.Repository,
+                name = model.Name,
+                source = "ModelScope",
+                kind = "llm",
+                downloads = model.Downloads,
+                likes = 0,
+                uncensored = model.IsUncensored,
+                tags = Array.Empty<string>(),
+                sizeBytes = model.SizeBytes,
+                installRoute = "ollama-gguf",
+                installable = true,
+                files = model.Files.Select(file => new { path = file.Path, sizeBytes = file.SizeBytes, sha256 = file.Sha256 }).ToArray(),
+            }));
+            providers["ModelScope"] = "ready";
+        }
+        catch (Exception error) when (error is HttpRequestException or InvalidDataException or TaskCanceledException)
+        {
+            providers["ModelScope"] = error.Message;
+        }
+
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            query,
+            uncensored,
+            fetchedAtUtc = DateTimeOffset.UtcNow,
+            providers,
+            models = models.Take(100).ToArray(),
+        });
+    }
+
+    private static AgentResponse StartMarketplaceModelInstall(AgentRequest request)
+    {
+        var source = RequiredBoundedString(request, "source", 32).Trim().ToLowerInvariant();
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
+        var repository = RequiredBoundedString(request, "repository", 512);
+        var quantization = OptionalString(request, "quantization");
+        var operation = new MarketplaceDownloadOperation(Guid.NewGuid().ToString("N"), source, repository, new CancellationTokenSource());
+        lock (MarketplaceDownloadsGate)
+        {
+            if (MarketplaceDownloads.Values.Any(item => item.Source == source && item.Repository.Equals(repository, StringComparison.OrdinalIgnoreCase) && item.State == "running"))
+                throw new InvalidOperationException("This marketplace model is already downloading.");
+            MarketplaceDownloads[operation.Id] = operation;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var library = new ModelLibraryService();
+                if (source == "huggingface")
+                {
+                    await library.DownloadFromHuggingFaceAsync(endpoint, repository, quantization, operation.AddProgress, operation.Cancellation.Token).ConfigureAwait(false);
+                }
+                else if (source == "modelscope")
+                {
+                    var files = ReadMarketplaceFiles(request);
+                    var package = new ModelScopeGgufPackage(repository, OptionalString(request, "name") ?? repository, files, OptionalLong(request, "downloads") ?? 0, OptionalBoolean(request, "uncensored"));
+                    await library.DownloadAndImportModelScopeGgufAsync(endpoint, package, operation.AddProgress, operation.Cancellation.Token).ConfigureAwait(false);
+                }
+                else throw new InvalidOperationException("This marketplace provider does not have a verified local installer.");
+                operation.Complete();
+            }
+            catch (OperationCanceledException) when (operation.Cancellation.IsCancellationRequested) { operation.Cancelled(); }
+            catch (Exception error) { operation.Fail(error.Message); }
+        });
+        return MarketplaceDownloadResponse(request, operation);
+    }
+
+    private static AgentResponse GetMarketplaceModelInstallStatus(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 64);
+        lock (MarketplaceDownloadsGate)
+        {
+            return MarketplaceDownloads.TryGetValue(id, out var operation)
+                ? MarketplaceDownloadResponse(request, operation)
+                : throw new KeyNotFoundException("The marketplace model download no longer exists.");
+        }
+    }
+
+    private static AgentResponse CancelMarketplaceModelInstall(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 64);
+        lock (MarketplaceDownloadsGate)
+        {
+            if (!MarketplaceDownloads.TryGetValue(id, out var operation)) throw new KeyNotFoundException("The marketplace model download no longer exists.");
+            operation.Cancellation.Cancel();
+            return MarketplaceDownloadResponse(request, operation);
+        }
+    }
+
+    private static AgentResponse MarketplaceDownloadResponse(AgentRequest request, MarketplaceDownloadOperation operation) => new(ProtocolVersion, request.Id, true, new
+    {
+        id = operation.Id,
+        source = operation.Source,
+        repository = operation.Repository,
+        status = operation.State,
+        progress = operation.Progress.ToArray(),
+        error = operation.Error,
+    });
+
+    private static IReadOnlyList<ModelScopeGgufFile> ReadMarketplaceFiles(AgentRequest request)
+    {
+        if (request.Params is not { } parameters || !parameters.TryGetProperty("files", out var files) || files.ValueKind != JsonValueKind.Array)
+            throw new InvalidOperationException("ModelScope installs require the verified GGUF file manifest from discovery.");
+        var result = files.EnumerateArray().Select(file => new ModelScopeGgufFile(
+            RequiredJsonString(file, "path", 512),
+            RequiredJsonLong(file, "sizeBytes"),
+            OptionalJsonString(file, "sha256"))).ToArray();
+        if (result.Length == 0 || result.Length > 128) throw new InvalidOperationException("The model file manifest is empty or too large.");
+        return result;
+    }
 
     private static AgentResponse SpeakVoice(AgentRequest request, OsNativeTtsService voice)
     {
@@ -247,6 +406,22 @@ public static class AgentHostLoop
         public void Complete() { lock (gate) State = "completed"; }
         public void Cancelled() { lock (gate) State = "cancelled"; }
         public void Fail(string message) { lock (gate) { State = "failed"; Error = string.IsNullOrWhiteSpace(message) ? "Local model download failed." : message[..Math.Min(message.Length, 400)]; } }
+    }
+
+    private sealed class MarketplaceDownloadOperation(string id, string source, string repository, CancellationTokenSource cancellation)
+    {
+        private readonly object gate = new();
+        public string Id { get; } = id;
+        public string Source { get; } = source;
+        public string Repository { get; } = repository;
+        public CancellationTokenSource Cancellation { get; } = cancellation;
+        public string State { get; private set; } = "running";
+        public string? Error { get; private set; }
+        public List<string> Progress { get; } = [];
+        public void AddProgress(string? message) { if (!string.IsNullOrWhiteSpace(message)) lock (gate) { if (Progress.Count < 128) Progress.Add(message[..Math.Min(message.Length, 240)]); } }
+        public void Complete() { lock (gate) State = "completed"; }
+        public void Cancelled() { lock (gate) State = "cancelled"; }
+        public void Fail(string message) { lock (gate) { State = "failed"; Error = string.IsNullOrWhiteSpace(message) ? "Marketplace model download failed." : message[..Math.Min(message.Length, 400)]; } }
     }
 
     private static AgentResponse ListProjects(AgentRequest request)
@@ -1176,6 +1351,34 @@ public static class AgentHostLoop
 
     private static ScheduledTaskStore CreateScheduledTaskStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_SCHEDULED_TASKS_PATH"));
+
+    private static bool OptionalBoolean(AgentRequest request, string name) =>
+        request.Params?.TryGetProperty(name, out var value) == true && value.ValueKind == JsonValueKind.True;
+
+    private static long? OptionalLong(AgentRequest request, string name) =>
+        request.Params?.TryGetProperty(name, out var value) == true && value.TryGetInt64(out var result) ? result : null;
+
+    private static string RequiredJsonString(JsonElement value, string name, int maxLength)
+    {
+        if (!value.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String)
+            throw new InvalidOperationException($"The marketplace file manifest requires a {name} value.");
+        var result = property.GetString() ?? string.Empty;
+        if (result.Length == 0 || result.Length > maxLength || result.Any(char.IsControl)) throw new InvalidOperationException($"The marketplace file manifest {name} value is invalid.");
+        return result;
+    }
+
+    private static string? OptionalJsonString(JsonElement value, string name)
+    {
+        if (!value.TryGetProperty(name, out var property) || property.ValueKind == JsonValueKind.Null) return null;
+        return property.ValueKind == JsonValueKind.String ? property.GetString() : null;
+    }
+
+    private static long RequiredJsonLong(JsonElement value, string name)
+    {
+        if (!value.TryGetProperty(name, out var property) || !property.TryGetInt64(out var result) || result < 0)
+            throw new InvalidOperationException($"The marketplace file manifest {name} value is invalid.");
+        return result;
+    }
 
     private static ProjectStore CreateProjectStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_PROJECTS_PATH"));
