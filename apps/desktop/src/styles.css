@@ -416,6 +416,11 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .app-content-marketplace .marketplace-toolbar { flex: 0 0 auto; }
 .app-content-marketplace .marketplace-layout { min-height: 0; flex: 1 1 0; align-items: stretch; overflow: hidden; }
 .app-content-marketplace .marketplace-grid, .app-content-marketplace .marketplace-detail { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.app-content-marketplace .marketplace-grid { align-content: start; }
+.app-content-marketplace .marketplace-card { min-height: 120px; padding: 13px; gap: 7px; }
+.app-content-marketplace .marketplace-card strong { font-size: 14px; }
+.app-content-marketplace .marketplace-card > span:not(.marketplace-card-heading) { font-size: 10px; line-height: 1.35; }
+.app-content-marketplace .marketplace-card small { font-size: 9px; }
 @media (max-width: 900px) {
   .app-content-marketplace { overflow: auto; }
   .app-content-marketplace .marketplace-page { height: auto; }

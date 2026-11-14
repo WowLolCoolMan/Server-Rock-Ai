@@ -3,6 +3,35 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 288 — Keep Marketplace categories discoverable
+
+Status: `implemented_marketplace_catalog_density_packaged_live_verified`
+
+The local Marketplace catalog now uses a tighter card rhythm at desktop size,
+so all five capability categories remain visible beside the selected-category
+detail pane instead of forcing the first view behind an internal scrollbar.
+The catalog search, category controls, selected detail state, local readiness
+labels, and explicit unavailable/disabled semantics remain unchanged.
+
+Changed files:
+
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+- Packaged Electron artifact — passed.
+- Live Electron inspection — passed; the Marketplace displayed all five
+  categories and the selected detail pane at desktop size.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 287 — Make Image Studio prompt-first
 
 Status: `implemented_image_studio_first_use_packaged_live_verified`

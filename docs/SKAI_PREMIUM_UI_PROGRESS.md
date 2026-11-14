@@ -2,6 +2,13 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Marketplace catalog density
+
+Marketplace category cards now fit in the normal desktop view beside their
+detail pane, improving discoverability without implying that unavailable
+local catalogs can be installed. Search, filters, selected detail, and local
+readiness messaging remain intact.
+
 ## Current slice — Image Studio prompt-first workflow
 
 The image workspace now puts endpoint, prompt, and starter recipes in the
