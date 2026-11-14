@@ -78,8 +78,17 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute") || !health.result?.capabilities?.includes("corpus.search"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute") || !health.result?.capabilities?.includes("corpus.search") || !health.result?.capabilities?.includes("models.pull.start") || !health.result?.capabilities?.includes("models.pull.status") || !health.result?.capabilities?.includes("models.pull.cancel"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
+  const pullStart = await request("models.pull.start", { endpoint: "http://127.0.0.1:1/v1", model: "smoke-model" });
+  if (!pullStart.ok || typeof pullStart.result?.id !== "string") throw new Error("models.pull.start did not create a disposable local operation.");
+  let pullStatus;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    pullStatus = await request("models.pull.status", { id: pullStart.result.id });
+    if (["failed", "cancelled", "completed"].includes(pullStatus.result?.status)) break;
+  }
+  if (!pullStatus?.ok || pullStatus.result?.status !== "failed") throw new Error(`models.pull.status did not recover a closed local endpoint: ${JSON.stringify(pullStatus)}`);
   const recovered = await request("tasks.list");
   const interrupted = recovered.result?.find(task => task.id === interruptedTaskId);
   if (!recovered.ok || interrupted?.status !== "blocked" || !interrupted.resultSummary?.includes("interrupted"))

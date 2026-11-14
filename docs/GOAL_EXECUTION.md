@@ -11550,6 +11550,36 @@ Remaining: live download acceptance requires a running local Ollama instance
 and a model selected by the user; that external runtime evidence is not
 claimed here.
 
+## Slice 328 — Make model downloads non-blocking and recoverable
+
+Status: `implemented_async_local_lifecycle_smoked`
+
+The local Ollama download path now runs as a bounded Agent Host background
+operation instead of blocking the JSON-lines protocol request. Electron can
+start a pull, poll its status and progress, and observe completed, failed, or
+cancelled outcomes. The host prevents duplicate pulls for the same model and
+keeps the local-only endpoint and identifier validation at the boundary.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- `npm run agent-host:build` passed with 0 warnings and 0 errors.
+- `npm run smoke:agent-host` passed, including a disposable pull against a
+  closed loopback port and verified failed-operation recovery.
+- `npm run desktop:typecheck` passed.
+- `npm run check:syntax` passed.
+
+Remaining: successful live download/cancel acceptance still requires a local
+Ollama runtime and a user-selected model; no hosted model route was added.
+
 ## Slice 310 — Make scheduled-run failures recoverable
 
 Status: `implemented_renderer_typechecked`

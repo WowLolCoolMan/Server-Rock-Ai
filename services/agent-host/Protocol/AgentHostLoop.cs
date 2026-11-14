@@ -13,6 +13,8 @@ public static class AgentHostLoop
     private static readonly object ActiveTaskExecutionsGate = new();
     private static readonly Dictionary<string, WorkspaceTerminalSession> TerminalSessions = new(StringComparer.Ordinal);
     private static readonly object TerminalSessionsGate = new();
+    private static readonly Dictionary<string, ModelPullOperation> ModelPulls = new(StringComparer.Ordinal);
+    private static readonly object ModelPullsGate = new();
 
     public static async Task RunAsync(Stream input, Stream output, CancellationToken cancellationToken = default)
     {
@@ -64,9 +66,11 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "models.pull", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "models.pull.start", "models.pull.status", "models.pull.cancel", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
-            "models.pull" => PullModelAsync(request).GetAwaiter().GetResult(),
+            "models.pull.start" => StartModelPull(request),
+            "models.pull.status" => GetModelPullStatus(request),
+            "models.pull.cancel" => CancelModelPull(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
@@ -174,16 +178,75 @@ public static class AgentHostLoop
         }).ToArray());
     }
 
-    private static async Task<AgentResponse> PullModelAsync(AgentRequest request)
+    private static AgentResponse StartModelPull(AgentRequest request)
     {
         var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
         var model = RequiredBoundedString(request, "model", 512);
-        var progress = new List<string>();
-        await new ModelLibraryService().PullOllamaAsync(endpoint, model, message =>
+        var operation = new ModelPullOperation(Guid.NewGuid().ToString("N"), model, new CancellationTokenSource());
+        lock (ModelPullsGate)
         {
-            if (progress.Count < 64 && !string.IsNullOrWhiteSpace(message)) progress.Add(message[..Math.Min(message.Length, 240)]);
-        }, CancellationToken.None).ConfigureAwait(false);
-        return new(ProtocolVersion, request.Id, true, new { model, provider = "Ollama", completed = true, progress });
+            if (ModelPulls.Values.Any(item => item.Model.Equals(model, StringComparison.OrdinalIgnoreCase) && item.State == "running"))
+                throw new InvalidOperationException("This model is already being downloaded locally.");
+            ModelPulls[operation.Id] = operation;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await new ModelLibraryService().PullOllamaAsync(endpoint, model, message => operation.AddProgress(message), operation.Cancellation.Token).ConfigureAwait(false);
+                operation.Complete();
+            }
+            catch (OperationCanceledException) when (operation.Cancellation.IsCancellationRequested) { operation.Cancelled(); }
+            catch (Exception error) { operation.Fail(error.Message); }
+        });
+        return ModelPullResponse(request, operation);
+    }
+
+    private static AgentResponse GetModelPullStatus(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 64);
+        lock (ModelPullsGate)
+        {
+            return ModelPulls.TryGetValue(id, out var operation)
+                ? ModelPullResponse(request, operation)
+                : throw new KeyNotFoundException("The local model download no longer exists.");
+        }
+    }
+
+    private static AgentResponse CancelModelPull(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 64);
+        lock (ModelPullsGate)
+        {
+            if (!ModelPulls.TryGetValue(id, out var operation)) throw new KeyNotFoundException("The local model download no longer exists.");
+            operation.Cancellation.Cancel();
+            return ModelPullResponse(request, operation);
+        }
+    }
+
+    private static AgentResponse ModelPullResponse(AgentRequest request, ModelPullOperation operation) => new(ProtocolVersion, request.Id, true, new
+    {
+        id = operation.Id,
+        model = operation.Model,
+        provider = "Ollama",
+        status = operation.State,
+        progress = operation.Progress.ToArray(),
+        error = operation.Error,
+    });
+
+    private sealed class ModelPullOperation(string id, string model, CancellationTokenSource cancellation)
+    {
+        private readonly object gate = new();
+        public string Id { get; } = id;
+        public string Model { get; } = model;
+        public CancellationTokenSource Cancellation { get; } = cancellation;
+        public string State { get; private set; } = "running";
+        public string? Error { get; private set; }
+        public List<string> Progress { get; } = [];
+        public void AddProgress(string? message) { if (!string.IsNullOrWhiteSpace(message)) lock (gate) { if (Progress.Count < 64) Progress.Add(message[..Math.Min(message.Length, 240)]); } }
+        public void Complete() { lock (gate) State = "completed"; }
+        public void Cancelled() { lock (gate) State = "cancelled"; }
+        public void Fail(string message) { lock (gate) { State = "failed"; Error = string.IsNullOrWhiteSpace(message) ? "Local model download failed." : message[..Math.Min(message.Length, 400)]; } }
     }
 
     private static AgentResponse ListProjects(AgentRequest request)
