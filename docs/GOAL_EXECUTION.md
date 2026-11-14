@@ -3,6 +3,38 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 296 — Close menus cleanly on Tab
+
+Status: `implemented_menu_tab_exit_typechecked`
+
+The shared overflow menu and recent-chat context menu now treat Tab as an
+explicit exit: the menu closes and its trigger regains focus. This complements
+their existing Escape and arrow-key behavior and prevents an open overlay from
+being left behind while focus continues elsewhere in the shell.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/OverflowMenu.tsx`
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run check:syntax` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; the packaged main and separate
+  Percy companion surfaces still rendered.
+- `git diff --check` — passed.
+- Electron runtime audit now requires Tab-exit behavior in both menu surfaces.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 295 — Keep model selection keyboard-safe
 
 Status: `implemented_model_picker_focus_typechecked`

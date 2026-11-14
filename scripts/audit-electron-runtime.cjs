@@ -8,6 +8,8 @@ const main = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "mai
 const preload = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "preload.cjs"), "utf8");
 const petWindow = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "overlays", "PetWindow.tsx"), "utf8");
 const modelPicker = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "ui", "ModelPicker.tsx"), "utf8");
+const overflowMenu = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "ui", "OverflowMenu.tsx"), "utf8");
+const sidebar = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "layout", "Sidebar.tsx"), "utf8");
 const chatComposer = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "ChatComposer.tsx"), "utf8");
 const chatWorkspace = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "useChatWorkspace.ts"), "utf8");
 const navigation = fs.readFileSync(path.join(root, "apps", "desktop", "src", "app", "navigation.ts"), "utf8");
@@ -32,6 +34,7 @@ expect(main.includes('"workspace.importDroppedFiles"') && main.includes("decodeD
 expect(chatComposer.includes("onDrop={handleDrop}") && chatComposer.includes("Drop files to attach"), "Chat composer must expose a visible drag-and-drop attachment state");
 expect(chatComposer.includes("aria-activedescendant={commandQuery !== null ? activeCommandId : undefined}") && chatComposer.includes("(index + 1) % commandMatches.length"), "Chat composer commands must expose the active option and wrap keyboard navigation");
 expect(modelPicker.includes("const onPopoverKeyDown") && modelPicker.includes("aria-activedescendant={filtered[activeIndex]"), "Model picker must keep keyboard focus inside the popover and expose the active option");
+expect(overflowMenu.includes('event.key === "Tab"') && sidebar.includes('event.key === "Tab"'), "Overflow and recent-chat menus must close when keyboard focus leaves with Tab");
 expect(chatWorkspace.includes("importDroppedFiles") && chatWorkspace.includes("workspace.importDroppedFiles"), "Chat workspace must route dropped files through the guarded Electron method");
 expect(navigation.includes("NavigationState") && navigation.includes("HISTORY_KEY"), "Renderer navigation must keep typed app history state");
 expect(navigation.includes('window.location.protocol === "file:"') && navigation.includes("#/${route}"), "Electron navigation must use reload-safe hash routes for file URLs");

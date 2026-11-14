@@ -39,6 +39,7 @@ export function OverflowMenu({ items, label = "More" }: { items: OverflowMenuIte
     const current = document.activeElement as HTMLButtonElement | null;
     const index = current ? actions.indexOf(current) : -1;
     if (event.key === "Escape") { event.preventDefault(); close(); return; }
+    if (event.key === "Tab") { event.preventDefault(); close(); return; }
     const nextIndex = event.key === "ArrowDown" ? (index + 1) % actions.length
       : event.key === "ArrowUp" ? (index - 1 + actions.length) % actions.length
       : event.key === "Home" ? 0

@@ -59,6 +59,7 @@ export function Sidebar({ route, onNavigate, conversations, projects, query, col
   const onMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const menu = menuRef.current;
     if (!menu) return;
+    if (event.key === "Tab") { event.preventDefault(); setMenuConversationId(null); return; }
     const items = Array.from(menu.querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled])"));
     if (!items.length) return;
     const currentIndex = Math.max(0, items.indexOf(document.activeElement as HTMLElement));

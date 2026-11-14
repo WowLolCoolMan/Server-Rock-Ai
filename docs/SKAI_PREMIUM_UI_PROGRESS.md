@@ -2,6 +2,13 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Menu exit behavior
+
+Overflow actions and recent-chat context menus now close and restore focus to
+their trigger when the user presses Tab. Escape and arrow navigation remain
+available, and menus no longer remain visually open after keyboard focus has
+moved away.
+
 ## Current slice — Model picker focus discipline
 
 The local model picker now keeps Tab focus inside its open popover, updates the
