@@ -730,3 +730,23 @@ syntax, hygiene, and diff checks passed.
 Remaining: guarded command execution/output capture, stronger process
 isolation/background execution, and packaged live acceptance for the complete
 coding-agent workflow.
+
+## Slice — Align the live shell with reference pack v4
+
+Status: `implemented_renderer_build_live_electron_verified`
+
+The shared desktop visual system now defaults to the reference graphite palette,
+amethyst accent, compact toolbar hierarchy, 11px panel geometry, and consistent
+violet SK branding. Duplicate toolbar Settings was removed because Settings is
+already a global-rail destination. Companion visibility and wandering are now
+opt-in so the first-run workspace is not obscured by an always-on-top window.
+
+The live Marketplace remains host-backed and visibly usable: the running Electron
+window shows a 100-result GGUF catalog, Hugging Face/ModelScope/GitHub source
+labels, model-size and quantization filters, an explicit abliterated/uncensored
+filter, capability cards, and user-approved download language.
+
+Evidence: live Electron AX/screenshot inspection, `npm run desktop:typecheck`,
+`npm run desktop:build`, and `git diff --check` passed. The source reference
+pack remains design guidance; marketplace results are live provider data while
+install actions remain explicitly user-approved.

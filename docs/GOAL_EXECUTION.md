@@ -10363,3 +10363,22 @@ syntax, hygiene, and `git diff --check` passed.
 Remaining: guarded command execution/output capture, stronger process
 isolation/background execution, and packaged live acceptance for the complete
 coding-agent workflow.
+
+## Slice — Reference-aligned visual refinement and first-run continuity
+
+Status: `implemented_renderer_build_live_electron_verified`
+
+Applied the v4 reference visual contract to the shared Electron shell: graphite
+surfaces, violet accent tokens, compact toolbar spacing, restrained page
+headlines, consistent SK marks, and safe pet defaults. Removed the duplicate
+toolbar Settings action so global navigation has one clear destination.
+
+Live Electron inspection confirmed the Marketplace route is not a mock shell:
+it displays 100 provider results and exposes source, size, quantization, and
+abliterated/uncensored controls alongside the skills, tools, MCP, memory, image,
+and workbench capability surfaces.
+
+Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
+`git diff --check` passed after the refinement. The Electron window was opened
+from the rebuilt renderer and inspected through its accessibility tree and
+screenshot before commit.

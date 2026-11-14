@@ -10,25 +10,28 @@
   --skai-space-6: 24px;
   --skai-space-8: 32px;
   --skai-space-10: 40px;
-  --skai-radius-sm: 8px;
-  --skai-radius-md: 12px;
-  --skai-radius-lg: 18px;
-  --skai-radius-xl: 24px;
+  --skai-radius-sm: 7px;
+  --skai-radius-md: 9px;
+  --skai-radius-lg: 11px;
+  --skai-radius-xl: 14px;
   --skai-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --skai-duration-fast: 140ms;
   --skai-duration-standard: 220ms;
-  --skai-color-canvas: #0b0d20;
-  --skai-color-surface: #13162c;
-  --skai-color-surface-raised: #1a1f3a;
-  --skai-color-surface-soft: rgba(255, 255, 255, 0.06);
-  --skai-color-border: rgba(255, 255, 255, 0.12);
-  --skai-color-border-strong: rgba(255, 255, 255, 0.2);
-  --skai-color-text: #f4f6ff;
-  --skai-color-text-muted: #a9b0ca;
-  --skai-color-accent: #63d9e9;
-  --skai-color-accent-strong: #26b8d1;
-  --skai-color-danger: #ff8d9c;
-  --skai-shadow-panel: 0 24px 80px rgba(0, 0, 0, 0.24);
+  /* Reference pack v4: graphite surfaces with a restrained amethyst accent. */
+  --skai-color-canvas: #191a1c;
+  --skai-color-surface: #222326;
+  --skai-color-surface-raised: #292a2e;
+  --skai-color-surface-soft: rgba(255, 255, 255, 0.045);
+  --skai-color-border: #34363a;
+  --skai-color-border-strong: #4a4c52;
+  --skai-color-text: #f0efef;
+  --skai-color-text-muted: #a0a2a8;
+  --skai-color-accent: #b6a5f5;
+  --skai-color-accent-strong: #9e8ce9;
+  --skai-color-success: #8dd4b0;
+  --skai-color-warning: #e6b36a;
+  --skai-color-danger: #ff9da9;
+  --skai-shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.18);
 }
 
 [data-theme="light"] {
@@ -60,10 +63,32 @@
 
 [data-backdrop="deep-sea"] {
   --skai-color-accent: #67e8f9;
+  --skai-color-accent-strong: #29bfd6;
 }
 
 [data-backdrop="deep-space"] {
   --skai-color-accent: #b5a5ff;
+  --skai-color-accent-strong: #9684e8;
+}
+
+[data-accent="cyan"] {
+  --skai-color-accent: #67d7e5;
+  --skai-color-accent-strong: #2ab6c9;
+}
+
+[data-accent="violet"] {
+  --skai-color-accent: #b6a5f5;
+  --skai-color-accent-strong: #9e8ce9;
+}
+
+[data-accent="amber"] {
+  --skai-color-accent: #e6b36a;
+  --skai-color-accent-strong: #c68c43;
+}
+
+[data-accent="rose"] {
+  --skai-color-accent: #f0a0bd;
+  --skai-color-accent-strong: #d9789d;
 }
 
 [data-density="compact"] {

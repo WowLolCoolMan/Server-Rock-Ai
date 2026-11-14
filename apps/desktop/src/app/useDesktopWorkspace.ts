@@ -74,12 +74,12 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
-  const [accentColor, setAccentColor] = useState("cyan");
+  const [accentColor, setAccentColor] = useState("violet");
   const [density, setDensity] = useState("comfortable");
   const [backdrop, setBackdrop] = useState("none");
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [petVisible, setPetVisible] = useState(localStorage.getItem("skai.pet.visible") !== "false");
-  const [petWander, setPetWander] = useState(localStorage.getItem("skai.pet.wander") !== "false");
+  const [petVisible, setPetVisible] = useState(localStorage.getItem("skai.pet.visible") === "true");
+  const [petWander, setPetWander] = useState(localStorage.getItem("skai.pet.wander") === "true");
   const [petId, setPetId] = useState(localStorage.getItem("skai.pet.id") ?? "byte");
   const [petSpritePath, setPetSpritePath] = useState(localStorage.getItem("skai.pet.spritePath") ?? "");
   const [petManifestPath, setPetManifestPath] = useState(localStorage.getItem("skai.pet.manifestPath") ?? "");

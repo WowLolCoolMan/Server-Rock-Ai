@@ -31,8 +31,8 @@ let petWanderTimer;
 let petWanderTarget;
 let petWanderNextAt = 0;
 let petSettings = {
-  visible: true,
-  wander: true,
+  visible: false,
+  wander: false,
   reduceMotion: false,
   petId: "byte",
   spritePath: "",
@@ -259,7 +259,7 @@ function clampPetPosition(position) {
   // Keep the always-on-top companion in the rail/sidebar dock. Dragging and wandering
   // remain available, but the pet must not cover the active workspace or composer.
   const maxX = Math.max(12, Math.min(160, bounds.width - petWindowSize.width - 12));
-  const maxY = Math.max(56, bounds.height - petWindowSize.height - 12);
+  const maxY = Math.max(56, Math.min(220, bounds.height - petWindowSize.height - 12));
   return { x: Math.max(12, Math.min(Math.round(position.x), maxX)), y: Math.max(56, Math.min(Math.round(position.y), maxY)) };
 }
 
@@ -300,7 +300,7 @@ function stepPetWander() {
   const now = Date.now();
   if (!petWanderTarget && now >= petWanderNextAt) {
     const maxX = Math.max(12, Math.min(160, bounds.width - petWindowSize.width - 12));
-    const maxY = Math.max(56, bounds.height - petWindowSize.height - 12);
+    const maxY = Math.max(56, Math.min(220, bounds.height - petWindowSize.height - 12));
     petWanderTarget = { x: 12 + Math.random() * Math.max(1, maxX - 12), y: 56 + Math.random() * Math.max(1, maxY - 56) };
     petActivity = "walking";
     sendPetConfig();

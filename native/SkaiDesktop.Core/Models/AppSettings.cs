@@ -57,8 +57,8 @@ public sealed class AppSettings
     public bool VoiceLowResourceModeEnabled { get; set; }
     public string VoiceProfileId { get; set; } = "skai-neutral";
     public List<VoiceProfile> VoiceProfiles { get; set; } = [];
-    public string AccentColor { get; set; } = "cyan";
-    public string ThemeMode { get; set; } = "light";
+    public string AccentColor { get; set; } = "violet";
+    public string ThemeMode { get; set; } = "dark";
     /// <summary>Ambient workspace backdrop preset. Kept separate from the light/dark palette.</summary>
     public string BackdropPreset { get; set; } = "none";
     /// <summary>Disables decorative backdrop motion while retaining the selected visual preset.</summary>
@@ -67,9 +67,9 @@ public sealed class AppSettings
     public bool DeveloperMode { get; set; }
     public string InterfaceDensity { get; set; } = "comfortable";
     /// <summary>Whether the separate always-on-top companion window is visible.</summary>
-    public bool PetVisible { get; set; } = true;
+    public bool PetVisible { get; set; }
     /// <summary>Whether the companion may wander inside the main workspace bounds.</summary>
-    public bool PetWanderEnabled { get; set; } = true;
+    public bool PetWanderEnabled { get; set; }
     /// <summary>Built-in companion id or custom when user assets are selected.</summary>
     public string PetId { get; set; } = "byte";
     /// <summary>Copied local sprite asset path, never a remote URL.</summary>

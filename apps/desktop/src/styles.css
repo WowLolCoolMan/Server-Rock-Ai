@@ -393,6 +393,27 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .workbench-context-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 16px; padding: 13px 16px; }.workbench-context-strip > div { display: grid; gap: 4px; min-width: 0; }.workbench-context-strip strong { overflow: hidden; color: var(--skai-color-text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }.workbench-context-strip small { color: var(--skai-color-text-muted); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .image-studio-header-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
+/* Reference pack v4 polish: compact toolbar hierarchy, restrained page
+   headlines, and the purple SK mark used across the reference screens. */
+.app-toolbar { min-height: 60px; padding: 10px 24px; background: #191a1c; border-bottom-color: #34363a; }
+.toolbar-title h1 { font-size: 15px; letter-spacing: -.02em; }
+.feature-page .page-header h2,
+.marketplace-v4 .page-header h2,
+.image-studio-v4 .page-header h2,
+.workbench-v4 .page-header h2,
+.models-v4 .page-header h2,
+.auxiliary-v4 .page-header h2,
+.usage-v4 .page-header h2,
+.settings-v4 .page-header h2,
+.memory-v4 .page-header h2,
+.terminal-v4 .page-header h2 { font-size: clamp(24px, 2vw, 30px); letter-spacing: -.045em; }
+.global-rail-mark, .sidebar-brand .brand-mark { position: relative; color: #f0efef; background: linear-gradient(145deg, #b6a5f5, #6d55a9); box-shadow: 0 8px 18px rgba(80, 60, 132, .28); }
+.global-rail-mark img, .sidebar-brand .brand-mark img { display: none; }
+.global-rail-mark::after, .sidebar-brand .brand-mark::after { content: "SK"; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: -.06em; }
+.pet-window-button { border-color: rgba(182,165,245,.38); background: rgba(34,35,38,.96); }
+.pet-window-hint { color: #c5c5ca; background: rgba(25,26,28,.92); }
+.pet-window-dismiss { color: #a0a2a8; background: #222326; }
+
 /* Chat continuity: the conversation is an open canvas, while the composer
    remains a compact, always-visible control surface. */
 .chat-page { display: flex; flex-direction: column; min-height: calc(100vh - 150px); }
