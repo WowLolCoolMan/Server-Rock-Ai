@@ -2,6 +2,13 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Image Studio prompt-first workflow
+
+The image workspace now puts endpoint, prompt, and starter recipes in the
+first-use path. ComfyUI workflow JSON is still visible as an explicit advanced
+section and remains required before generation; the change only improves
+information hierarchy and available desktop space.
+
 ## Current slice — Workbench empty-state behavior
 
 Agent Workbench empty task/detail states now have explicit layout behavior,

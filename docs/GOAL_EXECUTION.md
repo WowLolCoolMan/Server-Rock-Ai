@@ -3,6 +3,41 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 287 — Make Image Studio prompt-first
+
+Status: `implemented_image_studio_first_use_packaged_live_verified`
+
+Image Studio now keeps the first-use path focused on the local endpoint,
+prompt, and starter recipes. The ComfyUI workflow JSON remains required and
+fully editable, but is presented as an explicit advanced disclosure instead
+of consuming the initial form surface. The desktop layout has more vertical
+room for the prompt workflow, and recipe controls stay readable at the normal
+desktop width while wrapping again on narrow windows.
+
+No generation capability was invented: the readiness state, disabled action,
+local endpoint, and output history remain tied to the existing ComfyUI bridge.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ImagesPage.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+- Packaged Electron artifact — passed.
+- Live Electron inspection — passed; the prompt-first Image Studio path,
+  recipe buttons, workflow disclosure, disabled readiness state, and empty
+  generation history rendered at desktop size.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 286 — Remove empty-state scroll traps from Agent Workbench
 
 Status: `implemented_workbench_empty_state_polish_packaged_live_verified`
