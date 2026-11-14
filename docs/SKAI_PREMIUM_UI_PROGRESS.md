@@ -2,6 +2,14 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Workbench empty-state behavior
+
+Agent Workbench empty task/detail states now have explicit layout behavior,
+so an empty filter presents its message without a needless nested scrollbar.
+Real task and scheduled-run histories remain bounded and scrollable when
+content requires it. The change preserves local-only execution semantics and
+the existing list/detail, scheduling, and recovery actions.
+
 ## Current slice — Chat and Coding composition
 
 Chat now uses a fluid conversation canvas with semantic message rows rather

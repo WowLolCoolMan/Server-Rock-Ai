@@ -7,7 +7,7 @@ export function ScheduledRunsPanel({ scheduled, busyTask, onSchedule, onTransiti
   const [scheduleWhen, setScheduleWhen] = useState(() => new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16));
   const [scheduleRepeat, setScheduleRepeat] = useState("");
 
-  return <Card className="scheduled-card"><div className="panel-heading"><div><p className="section-kicker">SCHEDULED RUNS</p><h3>Automations</h3></div><span className="panel-count">{scheduled.length}</span></div>
+  return <Card className={`scheduled-card ${scheduled.length === 0 ? "is-empty" : ""}`}><div className="panel-heading"><div><p className="section-kicker">SCHEDULED RUNS</p><h3>Automations</h3></div><span className="panel-count">{scheduled.length}</span></div>
     <form className="schedule-form" onSubmit={async (event) => { event.preventDefault(); if (!schedulePrompt.trim()) return; const saved = await onSchedule({ prompt: schedulePrompt.trim(), dueAt: new Date(scheduleWhen).toISOString(), repeatEveryMinutes: scheduleRepeat ? Number(scheduleRepeat) : null, workspaceMode: "chat" }); if (saved) { setSchedulePrompt(""); setScheduleRepeat(""); } }}>
       <label>Prompt<input value={schedulePrompt} onChange={(event) => setSchedulePrompt(event.target.value)} placeholder="Review new project activity" /></label>
       <label>Run at<input type="datetime-local" value={scheduleWhen} onChange={(event) => setScheduleWhen(event.target.value)} /></label>

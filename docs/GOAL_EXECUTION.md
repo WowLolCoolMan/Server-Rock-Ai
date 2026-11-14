@@ -3,6 +3,39 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 286 — Remove empty-state scroll traps from Agent Workbench
+
+Status: `implemented_workbench_empty_state_polish_packaged_live_verified`
+
+The Workbench now marks empty task/detail and scheduled-run surfaces
+explicitly. Empty filters no longer render an internal scrollbar when there is
+nothing to scroll; populated task histories and scheduled records retain their
+bounded scrolling behavior. This keeps the list/detail workflow readable while
+preserving the existing local task lifecycle, scheduling, and recovery
+contracts.
+
+Changed files:
+
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/features/agents/WorkbenchTaskViews.tsx`
+- `apps/desktop/src/features/agents/ScheduledRunsPanel.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+- Packaged Electron artifact — passed.
+- Live Electron inspection — passed; populated and empty Workbench filter
+  states were exercised, with empty task panels no longer showing scroll traps.
+
+Remaining: continue the active goal’s broader secondary-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 285 — Recompose Chat and Coding workspace surfaces
 
 Status: `implemented_premium_workspace_composition_packaged_verified`

@@ -369,6 +369,9 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .app-content-workbench .workbench-page > .workbench-layout, .app-content-workbench .workbench-page > .workbench-board { min-height: 0; flex: 1 1 0; overflow: hidden; }
 .app-content-workbench .workbench-task-list, .app-content-workbench .workbench-task-detail { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 .app-content-workbench .workbench-page > .scheduled-card { min-height: 0; max-height: min(32vh, 260px); overflow: auto; }
+.app-content-workbench .workbench-task-list.is-empty, .app-content-workbench .workbench-task-detail.is-empty, .app-content-workbench .workbench-page > .scheduled-card.is-empty { overflow: hidden; }
+.app-content-workbench .workbench-task-list.is-empty .ui-empty, .app-content-workbench .workbench-task-detail.is-empty .ui-empty { min-height: 0; height: 100%; }
+.app-content-workbench .workbench-page > .scheduled-card.is-empty .ui-empty { min-height: 0; padding: 12px 14px 2px; }
 @media (max-width: 900px) {
   .app-content-workbench { overflow: auto; }
   .app-content-workbench .workbench-page { height: auto; }

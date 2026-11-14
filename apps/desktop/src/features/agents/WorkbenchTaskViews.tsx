@@ -15,7 +15,7 @@ type TaskSelectionProps = {
 };
 
 export function WorkbenchTaskList({ tasks, totalTasks, title, selectedTaskId, orderedTaskIds, onSelect, onKeyDown, onClearFilter }: TaskSelectionProps & { onClearFilter: () => void }) {
-  return <Card className="workbench-task-list">
+  return <Card className={`workbench-task-list ${tasks.length === 0 ? "is-empty" : ""}`}>
     <div className="panel-heading"><div><p className="section-kicker">TASK ACTIVITY</p><h3>{title}</h3></div><span className="panel-count">{tasks.length}</span></div>
     {totalTasks === 0 ? <EmptyState title="No tasks yet" description="Plan a local task from Chat or Coding Workspace to review it here." /> : tasks.length === 0 ? <EmptyState title="No matching tasks" description="Try another activity filter to see more of the task history." action={<Button variant="secondary" onClick={onClearFilter}>Show all tasks</Button>} /> : <div className="workbench-task-groups">{workbenchGroups.map((group) => {
       const items = tasks.filter((task) => task.status === group.key);
