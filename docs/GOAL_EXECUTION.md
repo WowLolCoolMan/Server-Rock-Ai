@@ -3,6 +3,49 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 279 — Decompose the Agent Workbench into focused views
+
+Status: `implemented_renderer_refactor_build_and_audit_verified`
+
+The Agent Workbench now delegates task presentation to focused components for
+the list, board, task detail/actions, and scheduled-run panel. The refactor
+preserves the existing filters, summary metrics, keyboard navigation, next-step
+guidance, failed-task re-plan handoffs, scheduled-run outcome display, and the
+honest local-only “Mark due” behavior. Shared status labels, tones, and task
+guidance now live in one presentation module instead of being duplicated.
+
+Changed files:
+
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/features/agents/WorkbenchTaskViews.tsx`
+- `apps/desktop/src/features/agents/WorkbenchTaskDetails.tsx`
+- `apps/desktop/src/features/agents/ScheduledRunsPanel.tsx`
+- `apps/desktop/src/features/agents/workbenchPresentation.ts`
+- `apps/desktop/src/app/AppRouteView.tsx`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm test` — passed the full native Core suite.
+- `git diff --check` — passed.
+- Prior live Electron acceptance for this route family remains recorded in
+  Slice 278; this slice only changes renderer composition and preserves the
+  existing route contract.
+
+Architecture/UX note: this removes a large single-file Workbench surface
+without adding a new runtime capability or cloud path. The task lifecycle
+remains bounded by the current host contract.
+
+Rollback: restore the Workbench JSX to its previous composition and remove the
+five focused view/presentation modules; the existing host contracts are
+unchanged.
+
 ## Slice 278 — Add live activity context to Coding Workspace
 
 Status: `implemented_live_and_packaged_verified`

@@ -4,6 +4,12 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Agent Workbench presentation is now split into focused
+  task list, board, detail/action, scheduled-run, and shared presentation
+  modules. Existing filters, summary cards, next-step guidance, keyboard
+  navigation, recovery handoffs, and local-only scheduling semantics remain
+  intact while the route becomes easier to extend without another monolith.
+
 - Current checkpoint — Coding Workspace now includes a live task-activity rail
   beside the project/file surface, showing real local task counts and recent
   results with a direct Agent Workbench handoff. The empty state remains
