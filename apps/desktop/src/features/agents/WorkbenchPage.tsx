@@ -1,5 +1,5 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
-import type { DesktopScheduledTask, DesktopTask } from "../../../shared/contracts";
+import type { DesktopScheduledTask, DesktopTask, ScheduledTaskDraft } from "../../../shared/contracts";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
 const groups = [
@@ -48,12 +48,17 @@ type WorkbenchPageProps = {
   error: string | null;
   onRetry: () => void;
   onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
+  onSchedule: (draft: ScheduledTaskDraft) => Promise<boolean>;
+  onScheduledTransition: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
 };
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition }: WorkbenchPageProps) {
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
+  const [schedulePrompt, setSchedulePrompt] = useState("");
+  const [scheduleWhen, setScheduleWhen] = useState(() => new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16));
+  const [scheduleRepeat, setScheduleRepeat] = useState("");
 
   const orderedTaskIds = groups.flatMap((group) => tasks.filter((task) => task.status === group.key).map((task) => task.id));
 
@@ -94,6 +99,6 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRe
       const items = tasks.filter((task) => task.status === group.key);
       return <Card className="task-column" key={group.key}><div className="task-column-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.length === 0 ? <p className="task-column-empty">No {group.label.toLowerCase()} tasks</p> : items.map((task) => <article className="task-card" key={task.id}><strong>{task.title}</strong><span>{task.role}</span>{task.dependsOn.length > 0 && <small className="task-dependencies">Depends on {task.dependsOn.length} task{task.dependsOn.length === 1 ? "" : "s"}</small>}{task.resultSummary && <p>{task.resultSummary}</p>}<small className="task-updated">{timeLabel(task.updatedAt)}</small><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge><TaskDetails task={task} />{taskActions(task)}</article>)}</Card>;
     })}</div>}
-    <Card className="scheduled-card"><p className="section-kicker">SCHEDULED RUNS</p>{scheduled.length === 0 ? <EmptyState title="No scheduled runs" description="Scheduled automations will appear here when they are configured." /> : scheduled.map((task) => <div className="scheduled-row" key={task.id}><strong>{task.prompt}</strong><span>{new Date(task.dueAt).toLocaleString()} · {task.status}</span></div>)}</Card>
+    <Card className="scheduled-card"><div className="panel-heading"><div><p className="section-kicker">SCHEDULED RUNS</p><h3>Automations</h3></div><span className="panel-count">{scheduled.length}</span></div><form className="schedule-form" onSubmit={async (event) => { event.preventDefault(); if (!schedulePrompt.trim()) return; const saved = await onSchedule({ prompt: schedulePrompt.trim(), dueAt: new Date(scheduleWhen).toISOString(), repeatEveryMinutes: scheduleRepeat ? Number(scheduleRepeat) : null, workspaceMode: "chat" }); if (saved) { setSchedulePrompt(""); setScheduleRepeat(""); } }}><label>Prompt<input value={schedulePrompt} onChange={(event) => setSchedulePrompt(event.target.value)} placeholder="Review new project activity" /></label><label>Run at<input type="datetime-local" value={scheduleWhen} onChange={(event) => setScheduleWhen(event.target.value)} /></label><label>Repeat<select value={scheduleRepeat} onChange={(event) => setScheduleRepeat(event.target.value)}><option value="">Once</option><option value="60">Every hour</option><option value="1440">Every day</option><option value="10080">Every week</option></select></label><Button variant="primary" type="submit" disabled={busyTask === "schedule" || !schedulePrompt.trim()}>{busyTask === "schedule" ? "Scheduling…" : "Schedule"}</Button></form>{scheduled.length === 0 ? <EmptyState title="No scheduled runs" description="Create a local schedule above. Scheduling records the intent; execution remains explicit until an executor is enabled." /> : scheduled.map((task) => <div className="scheduled-row" key={task.id}><div><strong>{task.prompt}</strong><span>{new Date(task.dueAt).toLocaleString()} · {task.status}{task.repeatEveryMinutes ? ` · every ${task.repeatEveryMinutes}m` : ""}</span></div><div className="task-card-actions">{task.status === "scheduled" && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => void onScheduledTransition(task.id, "pause")}>Pause</Button>}{task.status === "paused" && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => void onScheduledTransition(task.id, "resume")}>Resume</Button>}{task.status === "scheduled" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => void onScheduledTransition(task.id, "runNow")}>Run now</Button>}{(task.status === "scheduled" || task.status === "paused") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => void onScheduledTransition(task.id, "cancel")}>Cancel</Button>}</div></div>)}</Card>
   </div>;
 }
