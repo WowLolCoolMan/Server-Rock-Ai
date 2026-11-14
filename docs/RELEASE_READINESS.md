@@ -17,8 +17,8 @@ Status: **not ready to publish as the first major release**.
 
 ## Release blockers
 
-1. A signed Electron installer/release asset and clean-machine install/upgrade/uninstall evidence are not available in this checkout. The portable artifact is validated, but the release workflow still packages the native artifact only and remains fail-closed until signing material and lifecycle evidence are supplied.
+1. A signed Electron installer/release asset and clean-machine install/upgrade/uninstall evidence are not available in this checkout. The release workflow now packages and smoke-tests Electron for Windows and Linux, but remains fail-closed until signing material and lifecycle evidence are supplied.
 2. Cloud routing is not implemented. OpenAI API keys, ChatGPT sign-in, OpenAI-compatible cloud services, and ElevenLabs voice need explicit provider adapters, secure credential storage, consent/data-boundary handling, and end-to-end tests. The current host intentionally accepts only local loopback endpoints.
-3. Linux runtime and packaged acceptance are still unverified in this checkout.
+3. Linux packaged acceptance is defined in the release workflow and still needs a successful hosted-run record; it is not evidence that can be claimed from this Windows checkout alone.
 
 Main remains untouched. This branch is suitable for continuing the release work, but it is not an honest candidate for a public release or a “ready to merge” release PR until the blockers above are closed.
