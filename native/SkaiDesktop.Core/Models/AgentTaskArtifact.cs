@@ -6,6 +6,7 @@ public static class AgentTaskStatuses
     public const string Queued = "queued";
     public const string AwaitingApproval = "awaiting_approval";
     public const string Running = "running";
+    public const string Verifying = "verifying";
     public const string Completed = "completed";
     public const string Failed = "failed";
     public const string Cancelled = "cancelled";

@@ -42,7 +42,8 @@ public sealed class AgentTaskExecutor
         try
         {
             var result = await handler(task, cancellationToken).ConfigureAwait(false);
-            return _store.Complete(task.Id, result.Summary, result.ArtifactLabels);
+            _store.BeginVerification(task.Id, result.Summary, result.ArtifactLabels);
+            return _store.Verify(task.Id);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

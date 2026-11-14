@@ -29,10 +29,10 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRe
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
-  const visibleTasks = useMemo(() => tasks.filter((task) => taskFilter === "all" || taskFilter === "attention" && ["awaiting_approval", "blocked", "failed"].includes(task.status) || taskFilter === "active" && ["proposed", "queued", "running"].includes(task.status) || taskFilter === "completed" && task.status === "completed"), [taskFilter, tasks]);
+  const visibleTasks = useMemo(() => tasks.filter((task) => taskFilter === "all" || taskFilter === "attention" && ["awaiting_approval", "blocked", "failed"].includes(task.status) || taskFilter === "active" && ["proposed", "queued", "running", "verifying"].includes(task.status) || taskFilter === "completed" && task.status === "completed"), [taskFilter, tasks]);
   const selectedTask = visibleTasks.find((task) => task.id === selectedTaskId) ?? null;
   const orderedTaskIds = workbenchGroups.flatMap((group) => visibleTasks.filter((task) => task.status === group.key).map((task) => task.id));
-  const taskCounts = useMemo(() => ({ active: tasks.filter((task) => ["queued", "running"].includes(task.status)).length, attention: tasks.filter((task) => ["awaiting_approval", "blocked", "failed"].includes(task.status)).length, completed: tasks.filter((task) => task.status === "completed").length }), [tasks]);
+  const taskCounts = useMemo(() => ({ active: tasks.filter((task) => ["queued", "running", "verifying"].includes(task.status)).length, attention: tasks.filter((task) => ["awaiting_approval", "blocked", "failed"].includes(task.status)).length, completed: tasks.filter((task) => task.status === "completed").length }), [tasks]);
   const filterOptions: Array<{ id: TaskFilter; label: string; count: number }> = [{ id: "all", label: "All", count: tasks.length }, { id: "active", label: "Active", count: taskCounts.active }, { id: "attention", label: "Needs attention", count: taskCounts.attention }, { id: "completed", label: "Completed", count: taskCounts.completed }];
 
   useEffect(() => { if (selectedTaskId && visibleTasks.some((task) => task.id === selectedTaskId)) return; setSelectedTaskId(visibleTasks[0]?.id ?? null); }, [selectedTaskId, visibleTasks]);

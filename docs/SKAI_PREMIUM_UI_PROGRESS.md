@@ -52,6 +52,14 @@ a durable cancellation reason; execution remains blocked until approval.
 
 Evidence: Agent Host build/protocol smoke and renderer typecheck passed.
 
+## Slice 321 — Truthful execution verification state
+
+Local task execution now persists `verifying` between model completion and
+terminal success. The host requires a non-empty result and artifact record
+before completion, and the Workbench exposes verification as an active state.
+
+Evidence: Agent Host build/protocol smoke and renderer typecheck passed.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution

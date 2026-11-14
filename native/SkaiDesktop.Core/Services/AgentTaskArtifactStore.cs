@@ -209,6 +209,32 @@ public sealed class AgentTaskArtifactStore
     public AgentTaskArtifact Complete(string id, string resultSummary, IEnumerable<string>? artifactLabels = null) =>
         Finish(id, AgentTaskStatuses.Completed, resultSummary, artifactLabels);
 
+    public AgentTaskArtifact BeginVerification(string id, string resultSummary, IEnumerable<string>? artifactLabels = null)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Running) throw new InvalidOperationException("Only a running task can enter verification.");
+        task.Status = AgentTaskStatuses.Verifying;
+        task.ResultSummary = Normalize(resultSummary, MaxResultCharacters, "task result");
+        task.ArtifactLabels = NormalizeLabels(artifactLabels);
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    public AgentTaskArtifact Verify(string id)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Verifying) throw new InvalidOperationException("Only a task in verification can be completed.");
+        if (string.IsNullOrWhiteSpace(task.ResultSummary)) throw new InvalidOperationException("Verification failed because the task returned no result.");
+        if (task.ArtifactLabels.Count == 0) throw new InvalidOperationException("Verification failed because the task returned no artifact record.");
+        task.Status = AgentTaskStatuses.Completed;
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     public AgentTaskArtifact Fail(string id, string resultSummary) => Finish(id, AgentTaskStatuses.Failed, resultSummary, null);
 
     public AgentTaskArtifact Cancel(string id, string resultSummary) => Finish(id, AgentTaskStatuses.Cancelled, resultSummary, null);
@@ -236,7 +262,7 @@ public sealed class AgentTaskArtifactStore
     {
         var tasks = Load().ToList();
         var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
-        if (task.Status != AgentTaskStatuses.Running) throw new InvalidOperationException("Only a claimed running task can be finished.");
+        if (task.Status is not (AgentTaskStatuses.Running or AgentTaskStatuses.Verifying)) throw new InvalidOperationException("Only a claimed running or verifying task can be finished.");
         task.Status = status;
         task.ResultSummary = Normalize(resultSummary, MaxResultCharacters, "task result");
         task.ArtifactLabels = NormalizeLabels(artifactLabels);
@@ -265,7 +291,7 @@ public sealed class AgentTaskArtifactStore
             NormalizeOptional(task.ParentRunId, 128, "parent run ID");
             NormalizeIds(task.DependsOn);
             if (task.DependsOn.Any(id => !ids.Contains(id)) || task.DependsOn.Contains(task.Id, StringComparer.Ordinal)) throw new InvalidDataException("The agent task store contains an invalid dependency.");
-            if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
+            if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Running or AgentTaskStatuses.Verifying or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
             if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
             NormalizeLabels(task.ArtifactLabels);
             NormalizeOptional(task.WorktreeRepositoryRoot, MaxWorktreePathCharacters, "worktree repository root");

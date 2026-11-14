@@ -11576,6 +11576,25 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 321 — Add durable task verification state
+
+Status: `implemented_and_smoke_verified`
+
+The local executor now records a separate `verifying` state after the model
+handler returns. Completion requires a non-empty result and at least one
+artifact label; otherwise the task fails with a reviewable reason. Workbench
+active filters and status presentation include verification rather than
+collapsing execution and validation into one optimistic terminal state.
+
+Evidence:
+
+- Agent Host build passed with zero warnings and zero errors.
+- Protocol smoke passed the existing local execution lifecycle.
+- Renderer typecheck and `git diff --check` passed.
+
+Remaining: add explicit tool/file verification artifacts and recovery replay,
+then continue Git remote workflows and release gates.
+
 ## Slice 320 — Implement durable task approval gates
 
 Status: `implemented_and_smoke_verified`
