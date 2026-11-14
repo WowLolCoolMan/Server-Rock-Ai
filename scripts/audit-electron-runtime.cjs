@@ -23,6 +23,9 @@ expect(main.includes("sandbox: true"), "renderer sandbox must remain enabled");
 expect(preload.includes("contextBridge.exposeInMainWorld"), "renderer communication must use preload");
 expect(!preload.includes("require(\"node:fs\")"), "preload must not expose filesystem access");
 expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
+for (const method of ["scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow"]) {
+  expect(main.includes(`"${method}"`), `Electron bridge must expose the local scheduled method ${method}`);
+}
 expect(main.includes("HOST_TIMEOUT"), "Electron bridge must bound pending host requests");
 expect(main.includes("taskkill") && main.includes("/T"), "Electron shutdown must terminate the full Windows host process tree");
 expect(main.includes("restartAgentHost"), "Electron must restart a timed-out host after resolving pending requests");

@@ -108,7 +108,10 @@ function petCompletionText(method, response) {
     "tasks.queue": "Queued the local task.",
     "tasks.cancel": "Stopped the local task.",
     "scheduled.create": "Scheduled the local task for review.",
+    "scheduled.pause": "Paused the local scheduled task.",
+    "scheduled.resume": "Resumed the local scheduled task.",
     "scheduled.cancel": "Canceled the scheduled local task.",
+    "scheduled.runNow": "Ran the local scheduled task now.",
     "memory.save": "Saved the approved memory note.",
     "image.generate": "Finished the local image workflow.",
   };
@@ -159,7 +162,7 @@ function createPetWindow() {
 }
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
-  "scheduled.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
+  "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
   "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop",
   "workspace.pickFolder",
 ]);

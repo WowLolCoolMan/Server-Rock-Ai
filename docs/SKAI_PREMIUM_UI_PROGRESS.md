@@ -54,6 +54,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `bc1364d` — persisted Agent Workbench list/board selection and selected task identity locally, with Arrow/Home/End keyboard movement across task rows.
 - `3f38415` — hardened Electron agent-host supervision with bounded pending requests, host-exit cleanup, and Windows process-tree shutdown, with regression assertions in the Electron audit.
 - `1c27fae` — added the shared strong-border token used by accessible context menus and compact desktop surfaces.
+- `3e4dd54` — exposed the Agent Host's existing local scheduled create, pause, resume, cancel, and run-now operations through Electron's secure allowlist, with Percy completion summaries and audit coverage. The disposable Agent Host lifecycle smoke passed all scheduled transitions.
 - `6cf8b5e` — added a keyboard- and pointer-resizable sidebar with bounded, persisted width so the shared shell adapts to real desktop workspaces without changing route layouts.
 - `719b215` — converted the selected-project Coding Workspace into a focused session layout with active-project switching and a single continuous surface for task planning, files, editor/diff, terminal, and workbench handoff.
 - `117149b` — added data-derived Agent Workbench activity summaries and keyboard-accessible task filters for active, attention-needed, completed, and all task views.
