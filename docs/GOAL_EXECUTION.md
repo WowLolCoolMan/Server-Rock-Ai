@@ -10233,3 +10233,17 @@ contracts remain the next boundary to connect.
 Evidence: `npm test`, `npm run desktop:typecheck`, and
 `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore`
 passed after implementation.
+
+## Slice — Connect agent-task approval controls
+
+The Electron Agent Workbench now has a real host-backed plan → approve/deny →
+queue → execute lifecycle. New tasks created through `tasks.plan` enter the
+durable `awaiting_approval` state. `tasks.approve` records a bounded approval
+identity and releases the task to `queued`; `tasks.deny` records a bounded
+reason and cancels it. Approval never claims a task or starts model work, so
+`tasks.execute` remains the only execution boundary. Existing native and older
+queued task records remain compatible.
+
+Evidence: Core task tests, `npm run smoke:agent-host`, desktop typecheck,
+desktop build, host build, syntax, runtime-boundary, local-only, future-feature,
+and repository-hygiene checks passed.

@@ -3,6 +3,7 @@ namespace SkaiDesktop.Core.Models;
 public static class AgentTaskStatuses
 {
     public const string Proposed = "proposed";
+    public const string AwaitingApproval = "awaiting_approval";
     public const string Queued = "queued";
     public const string Running = "running";
     public const string Completed = "completed";

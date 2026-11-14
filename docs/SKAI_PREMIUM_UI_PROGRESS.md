@@ -378,9 +378,10 @@ Evidence:
   Workbench accessibility tree and foreground screenshot, including real task
   records and the new four-tile summary.
 
-Remaining: approval controls are still constrained by the current host contract;
-the workbench correctly keeps unsupported approval actions informational rather
-than implying execution.
+The host contract now exposes explicit approval actions for Electron agent tasks.
+Newly planned tasks enter `awaiting_approval`; Approve releases the task to the
+durable queue, Deny records a bounded cancellation reason, and only the separate
+Run locally action can claim and execute a task.
 
 ## Slice — Make auxiliary reference workspaces reachable
 
@@ -551,6 +552,5 @@ Evidence:
 - `npm run desktop:typecheck` — passed.
 - `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
 
-Remaining: connect task execution to the durable workflow approval graph and
-reviewed worktree-backed file changes before the workbench can execute coding
-edits or terminal actions.
+Remaining: connect approved task execution to reviewed worktree-backed file
+changes and terminal actions before the workbench can execute coding edits.

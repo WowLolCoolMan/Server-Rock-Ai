@@ -14,6 +14,16 @@ internal static class AgentTaskArtifactTests
             var first = store.Create("Inspect provider routing", "Review capability preflight evidence.", "researcher", "run-1");
             var second = store.Create("Verify the routing change", "Check the result against the first task.", "verifier", dependsOn: [first.Id]);
             Check(first.Status == AgentTaskStatuses.Proposed && second.DependsOn.SequenceEqual([first.Id]), "agent task artifacts preserve roles and dependencies");
+            var approvalStore = new AgentTaskArtifactStore(Path.Combine(root, "approval-tasks.json"));
+            var approvalPlan = approvalStore.Create("Approve bounded review", "Review the approval boundary before local execution.");
+            var pendingApproval = approvalStore.RequestApproval(approvalPlan.Id);
+            Check(pendingApproval.Status == AgentTaskStatuses.AwaitingApproval && approvalStore.GetNextReady() is null, "agent task approval blocks execution before a decision");
+            var approvedPlan = approvalStore.Approve(approvalPlan.Id, "test-user");
+            Check(approvedPlan.Status == AgentTaskStatuses.Queued && approvedPlan.ResultSummary?.Contains("Approved by test-user", StringComparison.Ordinal) == true, "agent task approval releases a task to the explicit queue");
+            var deniedPlan = approvalStore.Create("Deny bounded review", "Review a denied approval path.");
+            approvalStore.RequestApproval(deniedPlan.Id);
+            var denied = approvalStore.Deny(deniedPlan.Id, "Needs a narrower scope.");
+            Check(denied.Status == AgentTaskStatuses.Cancelled && denied.ResultSummary?.Contains("Needs a narrower scope", StringComparison.Ordinal) == true, "agent task denial is durable and never executes");
             Check(store.GetNextReady() is null, "agent task readiness preview ignores proposed tasks");
             Check(store.TryClaimReady() is null, "queued dependent agent task is not claimable before its prerequisite is queued and completed");
             store.Queue(first.Id);

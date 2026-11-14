@@ -65,6 +65,51 @@ public sealed class AgentTaskArtifactStore
 
     public AgentTaskArtifact Queue(string id) => Transition(id, AgentTaskStatuses.Proposed, AgentTaskStatuses.Queued);
 
+    /// <summary>Moves a planned task into the explicit approval inbox without claiming or executing it.</summary>
+    public AgentTaskArtifact RequestApproval(string id)
+    {
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.Proposed)
+            throw new InvalidOperationException($"A task in {task.Status} state cannot request approval.");
+        task.Status = AgentTaskStatuses.AwaitingApproval;
+        task.ResultSummary = "Awaiting explicit approval before local execution.";
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    /// <summary>Approves a task for the bounded local executor; approval never starts execution.</summary>
+    public AgentTaskArtifact Approve(string id, string approvalId)
+    {
+        if (string.IsNullOrWhiteSpace(approvalId) || approvalId.Length > 128 || approvalId.Any(char.IsControl))
+            throw new ArgumentException("Approval identity is invalid.", nameof(approvalId));
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.AwaitingApproval)
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be approved.");
+        task.Status = AgentTaskStatuses.Queued;
+        task.ResultSummary = $"Approved by {approvalId}; waiting for an explicit local executor.";
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    /// <summary>Denies an awaiting task and records the bounded review reason without executing it.</summary>
+    public AgentTaskArtifact Deny(string id, string reason)
+    {
+        var normalizedReason = Normalize(reason, MaxResultCharacters, "approval denial reason");
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status != AgentTaskStatuses.AwaitingApproval)
+            throw new InvalidOperationException($"A task in {task.Status} state cannot be denied.");
+        task.Status = AgentTaskStatuses.Cancelled;
+        task.ResultSummary = $"Approval denied: {normalizedReason}";
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     public AgentTaskArtifact Get(string id) => Copy(Load().SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist."));
 
     public AgentTaskArtifact AttachWorktree(string id, string repositoryRoot, string path, string branch)
@@ -98,7 +143,7 @@ public sealed class AgentTaskArtifactStore
     {
         var tasks = Load().ToList();
         var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
-        if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued))
+        if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Queued))
             throw new InvalidOperationException($"A task in {task.Status} state cannot be cancelled before execution.");
         task.Status = AgentTaskStatuses.Cancelled;
         task.ResultSummary = Normalize(reason, MaxResultCharacters, "task cancellation reason");
@@ -251,7 +296,7 @@ public sealed class AgentTaskArtifactStore
             NormalizeOptional(task.ParentRunId, 128, "parent run ID");
             NormalizeIds(task.DependsOn);
             if (task.DependsOn.Any(id => !ids.Contains(id)) || task.DependsOn.Contains(task.Id, StringComparer.Ordinal)) throw new InvalidDataException("The agent task store contains an invalid dependency.");
-            if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
+            if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
             if (task.ResultSummary is not null) Normalize(task.ResultSummary, MaxResultCharacters, "task result");
             NormalizeLabels(task.ArtifactLabels);
             NormalizeOptional(task.WorktreeRepositoryRoot, MaxWorktreePathCharacters, "worktree repository root");

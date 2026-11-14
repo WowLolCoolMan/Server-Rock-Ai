@@ -35,7 +35,7 @@ function TaskDetails({ task, openByDefault = false }: { task: DesktopTask; openB
       <div><dt>Dependencies</dt><dd>{task.dependsOn.length ? task.dependsOn.join(", ") : "None"}</dd></div>
       <div><dt>Result</dt><dd>{task.resultSummary || "No result recorded yet."}</dd></div>
     </dl>
-    {task.status === "awaiting_approval" && <p className="task-capability-note">Approval controls are not exposed by the current host, so this task remains informational.</p>}
+    {task.status === "awaiting_approval" && <p className="task-capability-note">Execution is blocked until you approve this task. Approval only releases it to the queued state; it does not start the model.</p>}
     {task.status === "failed" && <p className="task-capability-note">Retry is only supported for blocked tasks in the current host. Review the result and create a new plan if needed.</p>}
   </details>;
 }
@@ -52,11 +52,13 @@ type WorkbenchPageProps = {
   onRetry: () => void;
   onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
   onExecute: (id: string) => void;
+  onApprove: (id: string) => void;
+  onDeny: (id: string, reason: string) => void;
   onSchedule: (draft: ScheduledTaskDraft) => Promise<boolean>;
   onScheduledTransition: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
 };
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onExecute, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onExecute, onApprove, onDeny, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
@@ -92,7 +94,7 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, sele
     document.getElementById(`workbench-task-${nextId}`)?.focus();
   };
 
-  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}{task.status === "queued" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>{busyTask === task.id ? "Running…" : "Run locally"}</Button>}{(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
+  const taskActions = (task: DesktopTask) => <div className="task-card-actions">{task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Request approval</Button>}{task.status === "awaiting_approval" && <><Button variant="primary" disabled={busyTask === task.id} onClick={() => onApprove(task.id)}>Approve for local run</Button><Button variant="ghost" disabled={busyTask === task.id} onClick={() => onDeny(task.id, "User denied execution from the Workbench.")}>Deny</Button></>}{task.status === "queued" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>{busyTask === task.id ? "Running…" : "Run locally"}</Button>}{(task.status === "proposed" || task.status === "awaiting_approval" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}{task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}</div>;
 
   const queuedCount = tasks.filter((task) => task.status === "proposed" || task.status === "queued").length;
   const awaitingApprovalCount = tasks.filter((task) => task.status === "awaiting_approval").length;

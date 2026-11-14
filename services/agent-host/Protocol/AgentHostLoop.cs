@@ -58,7 +58,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
@@ -83,6 +83,8 @@ public static class AgentHostLoop
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
+            "tasks.approve" => ApproveTask(request),
+            "tasks.deny" => DenyTask(request),
             "tasks.execute" => ExecuteTaskAsync(request).GetAwaiter().GetResult(),
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
@@ -975,12 +977,13 @@ public static class AgentHostLoop
             RequiredBoundedString(request, "title", AgentTaskArtifactStore.MaxTitleCharacters),
             RequiredBoundedString(request, "instruction", AgentTaskArtifactStore.MaxInstructionCharacters),
             OptionalString(request, "role") ?? "specialist");
+        var approved = CreateTaskStore().RequestApproval(task.Id);
         return new(ProtocolVersion, request.Id, true, new
         {
-            id = task.Id,
-            title = task.Title,
-            status = task.Status,
-            updatedAt = task.UpdatedAtUtc,
+            id = approved.Id,
+            title = approved.Title,
+            status = approved.Status,
+            updatedAt = approved.UpdatedAtUtc,
         });
     }
 
@@ -995,6 +998,22 @@ public static class AgentHostLoop
             "retry" => store.RetryBlocked(id),
             _ => throw new InvalidOperationException("Unknown task operation."),
         };
+        return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });
+    }
+
+    private static AgentResponse ApproveTask(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var approvalId = OptionalString(request, "approvalId") ?? "desktop-user";
+        var task = CreateTaskStore().Approve(id, approvalId);
+        return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });
+    }
+
+    private static AgentResponse DenyTask(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var reason = RequiredBoundedString(request, "reason", AgentTaskArtifactStore.MaxResultCharacters);
+        var task = CreateTaskStore().Deny(id, reason);
         return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });
     }
 
