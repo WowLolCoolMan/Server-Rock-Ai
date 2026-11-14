@@ -3,6 +3,33 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 270 — Restore readable code surfaces across appearances
+
+Status: `implemented_live_electron_verified`
+
+The Coding Workspace editor, diff preview, and chat code blocks now use
+dedicated semantic code-surface tokens. Code remains on a stable dark surface
+in light, dark, and system appearances, with readable source text, an accent
+caret, and dark native control rendering instead of inheriting the surrounding
+page text color.
+
+Changed files:
+
+- `apps/desktop/src/design-system/tokens.css`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run build` — passed.
+- `npm run typecheck` — passed.
+- Live Electron rendered a real connected local project with `README.md`
+  filtered and open in the Coding Workspace.
+- The live screenshot showed readable README source text on the dark editor
+  surface in the light application appearance.
+
+Remaining: continue the next evidence-backed handoff slice after the shared
+keyboard/focus and packaged Electron acceptance checks are audited.
+
 ## Slice 261 — Make Percy a true desktop companion overlay
 
 Status: `implemented_native_wander_live_electron_verified`
