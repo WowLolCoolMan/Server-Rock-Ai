@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Model, ThemeMode } from "../../app/types";
 import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
 import { isLocalProvider, localProviderOrFallback } from "../../services/localOnly";
@@ -6,6 +6,20 @@ import { Button, Card, PageHeader, StatusBadge } from "../../components/ui/Primi
 
 const categories = ["General", "Appearance", "Models & Providers", "Voice & Audio", "Image Generation", "Agents", "Integrations", "Privacy & Security", "Storage", "Updates", "Advanced"] as const;
 type Category = typeof categories[number];
+
+const categorySearchText: Record<Category, string> = {
+  General: "runtime provider model answer local preferred",
+  Appearance: "theme color accent density backdrop reduced motion pet companion animation",
+  "Models & Providers": "endpoint runtime model discover Ollama LM Studio AirLLM provider local",
+  "Voice & Audio": "voice speech audio low resource profile preview text to speech TTS",
+  "Image Generation": "image ComfyUI workflow prompt endpoint generation",
+  Agents: "task developer diagnostics memory prompts planning",
+  Integrations: "GitHub local services ComfyUI integrations repository",
+  "Privacy & Security": "privacy security local storage memory credentials data boundary",
+  Storage: "export backup data workspace local memory",
+  Updates: "release channel automatic update delivery",
+  Advanced: "developer diagnostics motion routing provider",
+};
 
 const providerChoices = [
   { id: "Ollama", label: "Ollama", detail: "Run local models through Ollama on this computer." },
@@ -41,7 +55,13 @@ export function SettingsPage(props: SettingsProps) {
   const [query, setQuery] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [voiceSettings, setVoiceSettings] = useState(selectedVoiceSettings);
-  const visibleCategories = useMemo(() => categories.filter((category) => category.toLowerCase().includes(query.trim().toLowerCase())), [query]);
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleCategories = useMemo(() => categories.filter((category) => !normalizedQuery || `${category} ${categoryDescription(category)} ${categorySearchText[category]}`.toLowerCase().includes(normalizedQuery)), [normalizedQuery]);
+  useEffect(() => {
+    if (!normalizedQuery || visibleCategories.includes(activeCategory)) return;
+    const nextCategory = visibleCategories[0];
+    if (nextCategory) setActiveCategory(nextCategory);
+  }, [activeCategory, normalizedQuery, visibleCategories]);
   const change = (key: string, value: string | boolean) => { setSaveState("idle"); props.onChange(key, value); };
   const save = async () => { if (saveState === "saving") return; setSaveState("saving"); setSaveState(await props.onSave() ? "saved" : "idle"); };
   const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
@@ -52,7 +72,7 @@ export function SettingsPage(props: SettingsProps) {
   return <div className="feature-page settings-page">
     <PageHeader eyebrow="CONTROL CENTER" title="Settings" description="Tune the local runtime, appearance, voice, media, memory, and workspace behavior." />
     <Card className="settings-window">
-      <aside className="settings-nav"><p className="section-kicker">SETTINGS</p><input className="settings-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search settings…" aria-label="Search settings" />{visibleCategories.map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} onClick={() => setActiveCategory(category)} type="button">{category}</button>)}{visibleCategories.length === 0 && <p className="settings-no-results">No categories match.</p>}</aside>
+      <aside className="settings-nav"><p className="section-kicker">SETTINGS</p><input className="settings-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search settings…" aria-label="Search settings" />{normalizedQuery && <p className="settings-search-status" role="status">{visibleCategories.length} matching {visibleCategories.length === 1 ? "section" : "sections"}</p>}{visibleCategories.map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} onClick={() => setActiveCategory(category)} type="button">{category}</button>)}{visibleCategories.length === 0 && <p className="settings-no-results">No settings match. Try a label such as endpoint, motion, or memory.</p>}</aside>
       <main className="settings-content">
         <div className="settings-section-heading"><div><p className="section-kicker">{activeCategory.toUpperCase()}</p><h3>{activeCategory}</h3><p>{categoryDescription(activeCategory)}</p></div><StatusBadge tone={activeCategory === "Integrations" && !localRoute ? "warning" : "success"}>{activeCategory === "Integrations" && !localRoute ? "Needs setup" : "Available"}</StatusBadge></div>
 
