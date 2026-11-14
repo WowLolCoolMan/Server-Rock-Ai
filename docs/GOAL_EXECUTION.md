@@ -11576,6 +11576,24 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 322 — Validate packaged approval and verification flow
+
+Status: `implemented_and_packaged_verified`
+
+The release artifact now includes the approval-gated Workbench lifecycle and
+the durable verification state. Packaging, the Electron main/Percy smoke, and
+the 9-route × 5-width overflow matrix all pass after the host/runtime changes.
+
+Evidence:
+
+- `npm run package:electron` passed.
+- `npm run smoke:electron:artifact` passed for the main and separate Percy
+  surfaces.
+- `npm run smoke:electron:overflow` passed.
+
+Remaining: continue tool/file verification, Git remote workflows, local model
+and voice recovery, and signing/update/release evidence.
+
 ## Slice 321 — Add durable task verification state
 
 Status: `implemented_and_smoke_verified`

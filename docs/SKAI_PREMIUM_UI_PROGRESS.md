@@ -60,6 +60,14 @@ before completion, and the Workbench exposes verification as an active state.
 
 Evidence: Agent Host build/protocol smoke and renderer typecheck passed.
 
+## Slice 322 — Packaged lifecycle regression gate
+
+The packaged Electron artifact includes the approval and verification lifecycle
+changes without regressing the main window, separate Percy companion, or the
+route-wide overflow matrix.
+
+Evidence: package, main/Percy artifact smoke, and overflow acceptance passed.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution
