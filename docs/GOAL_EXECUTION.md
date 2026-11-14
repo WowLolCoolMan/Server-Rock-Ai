@@ -11482,6 +11482,41 @@ Remaining: release signing and clean-machine lifecycle evidence, Linux parity,
 native Popup focus acceptance, richer agent dispatch/isolation, and the other
 capability-matrix gaps remain open. The active goal remains incomplete.
 
+## Slice 326 — Add guarded local pull-request workflow
+
+Status: `implemented_local_git_workflow_typechecked`
+
+Coding Workspace now exposes a Create pull request action after local commits
+are ahead of the remote and the working tree is clean. The action validates
+that the project is on a feature branch, has no conflicts, is not behind its
+remote, and has at least one pushed commit. It invokes the user's local
+authenticated GitHub CLI session without accepting or placing tokens in the
+renderer. The review dialog makes the local-only credential boundary explicit;
+missing GitHub CLI or authentication returns a truthful unavailable error.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/coding/useCodingWorkspace.ts`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+
+Evidence:
+
+- `npm run desktop:typecheck` passed.
+- `npm run agent-host:build` passed with 0 warnings and 0 errors.
+- `npm run check:syntax` passed.
+- The operation remains behind the typed Electron allowlist and does not add a
+  cloud model, voice, execution, or credential route.
+
+Remaining: live PR creation requires an authenticated GitHub CLI session and a
+feature-branch project; that external acceptance is not claimed here.
+
 ## Slice 310 — Make scheduled-run failures recoverable
 
 Status: `implemented_renderer_typechecked`

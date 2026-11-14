@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { DesktopGitDiff, DesktopGitStatus, DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
 import { Button, Card, EmptyState } from "../../components/ui/Primitives";
+import { ModalDialog } from "../../components/ui/ModalDialog";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { NavIcon } from "../../components/ui/NavIcon";
 import { TerminalPanel } from "../terminal/TerminalPanel";
@@ -52,6 +53,7 @@ type CodingSessionViewProps = {
   gitDiffBusy: boolean;
   gitCommitBusy: boolean;
   gitPushBusy: boolean;
+  gitPullRequestBusy: boolean;
   onOpenProject: (project: DesktopProject) => void;
   onOpenFile: (relativePath: string) => void;
   onCloseFile: () => void;
@@ -63,11 +65,12 @@ type CodingSessionViewProps = {
   onLoadGitDiff: () => void;
   onCommitGitChanges: (message: string) => Promise<boolean>;
   onPushGitChanges: () => Promise<boolean>;
+  onCreateGitPullRequest: (title: string, body: string) => Promise<boolean>;
   onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, onRefreshGitStatus, onLoadGitDiff, onCommitGitChanges, onPushGitChanges, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
+export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, gitPullRequestBusy, onRefreshGitStatus, onLoadGitDiff, onCommitGitChanges, onPushGitChanges, onCreateGitPullRequest, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [fileQuery, setFileQuery] = useState("");
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -78,6 +81,9 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
   const [planningTask, setPlanningTask] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
   const [gitMessage, setGitMessage] = useState("Update local project");
+  const [pullRequestOpen, setPullRequestOpen] = useState(false);
+  const [pullRequestTitle, setPullRequestTitle] = useState("Review local project changes");
+  const [pullRequestBody, setPullRequestBody] = useState("Please review the local changes and validation evidence.");
   const loadedTabsProjectRef = useRef<string | null>(null);
   const skipTabPersistenceRef = useRef(false);
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
@@ -183,7 +189,7 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>Files &amp; changes</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
       {gitStatus && <div className={`git-change-summary${gitStatus.hasConflicts ? " has-conflicts" : ""}`} aria-label="Local Git changes"><div><p className="section-kicker">LOCAL GIT REVIEW</p><strong>{gitStatus.changes.length ? `${gitStatus.changes.length} changed file${gitStatus.changes.length === 1 ? "" : "s"}` : "Working tree clean"}</strong><span>{gitStatus.commitsAhead} ahead · {gitStatus.commitsBehind} behind · {gitStatus.repository}</span></div>{gitStatus.changes.length > 0 && <ul>{gitStatus.changes.slice(0, 8).map((change) => <li key={`${change.status}-${change.path}`}><b>{change.status}</b><span>{change.path}</span></li>)}</ul>}{gitStatus.changes.length > 8 && <small>Showing the first 8 changes. Review is bounded to 24 files per operation.</small>}{gitStatus.hasConflicts && <small role="alert">Conflicts need review before any commit workflow can proceed.</small>}{gitStatus.changes.length > 0 && <div className="git-review-actions"><Button variant="secondary" disabled={gitDiffBusy || gitStatus.hasConflicts} onClick={onLoadGitDiff}>{gitDiffBusy ? "Loading diff…" : gitDiff ? "Refresh diff" : "Review diff"}</Button><input value={gitMessage} onChange={(event) => setGitMessage(event.target.value)} aria-label="Local Git commit message" maxLength={256} placeholder="Commit message" /><Button variant="primary" disabled={gitCommitBusy || gitStatus.hasConflicts || !gitMessage.trim()} onClick={() => void onCommitGitChanges(gitMessage)}>{gitCommitBusy ? "Committing…" : "Commit changes"}</Button></div>}{gitDiff && <pre className="git-diff-preview" aria-label="Local Git diff preview">{gitDiff.text}</pre>}</div>}
-       {gitStatus && gitStatus.changes.length === 0 && gitStatus.commitsAhead > 0 && <div className="git-review-actions"><span className="settings-help">Clean working tree · push uses the configured local Git credential helper.</span><Button variant="primary" disabled={gitPushBusy || gitStatus.commitsBehind > 0} onClick={() => void onPushGitChanges()}>{gitPushBusy ? "Pushing…" : "Push local commits"}</Button></div>}
+       {gitStatus && gitStatus.changes.length === 0 && gitStatus.commitsAhead > 0 && <div className="git-review-actions"><span className="settings-help">Clean working tree · push uses the configured local Git credential helper.</span><Button variant="primary" disabled={gitPushBusy || gitStatus.commitsBehind > 0} onClick={() => void onPushGitChanges()}>{gitPushBusy ? "Pushing…" : "Push local commits"}</Button><Button variant="secondary" disabled={gitPullRequestBusy || gitStatus.commitsBehind > 0} onClick={() => setPullRequestOpen(true)}>{gitPullRequestBusy ? "Opening PR…" : "Create pull request"}</Button></div>}
        <div className={`task-composer coding-task-composer ${taskComposerOpen ? "is-open" : ""}`}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>{taskComposerOpen ? "Write the outcome you want, then review it in Agent Workbench before anything runs." : "Draft a reviewed local task without leaving this project."}</p></div><span className="task-composer-badge">Local only</span><Button variant="secondary" type="button" aria-expanded={taskComposerOpen} aria-controls="coding-task-brief" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Hide brief" : "Plan task"}</Button></div>
         {taskComposerOpen && <form id="coding-task-brief" className="task-composer-form" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
@@ -201,5 +207,6 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
       </div>
       {terminalOpen && <div className="project-dock"><TerminalPanel projects={projects} initialProjectId={selectedProject.id} busy={terminalBusy} output={terminalOutput} exitCode={terminalExitCode} compact onRun={onRunTerminal} /></div>}
     </Card><CodingActivityPanel tasks={tasks} onOpenWorkbench={() => onNavigate("workbench")} /></div>
+    <ModalDialog open={pullRequestOpen} onClose={() => setPullRequestOpen(false)} titleId="create-pull-request-title"><form onSubmit={(event) => { event.preventDefault(); void onCreateGitPullRequest(pullRequestTitle, pullRequestBody).then((created) => { if (created) setPullRequestOpen(false); }); }}><div className="dialog-heading"><div><p className="section-kicker">GITHUB WORKFLOW</p><h3 id="create-pull-request-title">Create pull request</h3><p>Uses the local GitHub CLI session. No token is entered into Skai Desktop.</p></div><button type="button" onClick={() => setPullRequestOpen(false)} aria-label="Close dialog">×</button></div><label>Title<input value={pullRequestTitle} onChange={(event) => setPullRequestTitle(event.target.value)} maxLength={256} /></label><label>Description<textarea value={pullRequestBody} onChange={(event) => setPullRequestBody(event.target.value)} maxLength={16000} rows={6} /></label><div className="dialog-actions"><Button variant="ghost" type="button" onClick={() => setPullRequestOpen(false)}>Cancel</Button><Button variant="primary" type="submit" disabled={gitPullRequestBusy || !pullRequestTitle.trim()}>{gitPullRequestBusy ? "Creating…" : "Create pull request"}</Button></div></form></ModalDialog>
   </>;
 }

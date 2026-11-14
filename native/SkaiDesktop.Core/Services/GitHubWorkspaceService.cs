@@ -1,4 +1,4 @@
-// Local `git` operations for a GitHub repository: clone, status, diff preview, commit, push.
+// Local `git` operations for a GitHub repository: clone, status, diff preview, commit, push, and guarded PR creation.
 // Tokens are passed via a credential helper, never on the command line or in the remote URL.
 // Depends on: GitHubApiClient, WorkspaceFileEditor (bounded file read). Used by: MainPage.GitHub.cs.
 
@@ -166,6 +166,30 @@ public sealed class GitHubWorkspaceService
         var push = await RunGitAsync(root, ["push", "--set-upstream", "origin", "HEAD"], null, TimeSpan.FromMinutes(5), cancellationToken).ConfigureAwait(false);
         EnsureSuccess(push, "Git push failed. Your local commit is preserved; review the Git credential helper and remote state.");
         return (push.StandardOutput + push.StandardError).Trim();
+    }
+
+    /// <summary>Creates a pull request with the user's authenticated local GitHub CLI session.</summary>
+    public async Task<string> CreatePullRequestAsync(string repositoryPath, string title, string body,
+        CancellationToken cancellationToken = default)
+    {
+        title = (title ?? "").Trim();
+        body = (body ?? "").Trim();
+        if (title.Length is < 1 or > 256) throw new ArgumentException("Enter a pull request title between 1 and 256 characters.", nameof(title));
+        if (body.Length > 16_000) throw new ArgumentException("Keep the pull request description under 16,000 characters.", nameof(body));
+
+        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        if (status.Branch.Equals("main", StringComparison.OrdinalIgnoreCase) || status.Branch.Equals("master", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Create a pull request from a feature branch, not the default branch.");
+        if (status.Changes.Count > 0) throw new InvalidOperationException("Commit or discard workspace changes before creating a pull request.");
+        if (HasConflicts(status.Changes)) throw new InvalidOperationException("Resolve conflicts before creating a pull request.");
+        if (status.CommitsAhead == 0) throw new InvalidOperationException("Push at least one local commit before creating a pull request.");
+        if (status.CommitsBehind > 0) throw new InvalidOperationException("The remote branch has newer commits. Fetch and review them before creating a pull request.");
+
+        var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var result = await RunToolAsync(root, "gh", ["pr", "create", "--title", title, "--body", body, "--base", "main", "--head", status.Branch],
+            TimeSpan.FromMinutes(2), cancellationToken).ConfigureAwait(false);
+        EnsureSuccess(result, "Pull request creation is unavailable. Install GitHub CLI and run `gh auth login`, then try again.");
+        return (result.StandardOutput + result.StandardError).Trim();
     }
 
     private async Task<string> CommitSelectedCoreAsync(string repositoryPath, IReadOnlyCollection<GitWorkspaceFileChange> selectedChanges, string message,
@@ -427,6 +451,46 @@ public sealed class GitHubWorkspaceService
         {
             try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
             if (!cancellationToken.IsCancellationRequested) throw new TimeoutException("Git did not finish before the operation timed out.");
+            throw;
+        }
+    }
+
+    private static async Task<GitProcessResult> RunToolAsync(string workingDirectory, string executable, IReadOnlyList<string> arguments,
+        TimeSpan timeoutDuration, CancellationToken cancellationToken)
+    {
+        var startInfo = new ProcessStartInfo(executable)
+        {
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+        startInfo.Environment["GH_PROMPT_DISABLED"] = "1";
+        using var process = new Process { StartInfo = startInfo };
+        try
+        {
+            if (!process.Start()) throw new InvalidOperationException($"{executable} could not be started.");
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            throw new InvalidOperationException("GitHub CLI is not installed or is not available on PATH.", exception);
+        }
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(timeoutDuration);
+        var stdout = ReadLimitedAsync(process.StandardOutput, timeout.Token);
+        var stderr = ReadLimitedAsync(process.StandardError, timeout.Token);
+        try
+        {
+            await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+            return new(process.ExitCode, await stdout.ConfigureAwait(false), await stderr.ConfigureAwait(false));
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+            if (!cancellationToken.IsCancellationRequested) throw new TimeoutException($"{executable} did not finish before the operation timed out.");
             throw;
         }
     }

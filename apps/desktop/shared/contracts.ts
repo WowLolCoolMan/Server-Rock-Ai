@@ -60,6 +60,11 @@ export type DesktopGitDiff = {
   truncated: boolean;
 };
 
+export type DesktopPullRequestDraft = {
+  title: string;
+  body: string;
+};
+
 export type DesktopConversation = {
   id: string;
   title: string;

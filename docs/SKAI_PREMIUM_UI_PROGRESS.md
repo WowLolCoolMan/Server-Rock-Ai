@@ -496,6 +496,7 @@ final audit pass.
 - Overflow menu focus check: shared Chat `More` menus now focus the first enabled action, safely retain trigger focus when every action is unavailable, wrap ArrowUp/ArrowDown navigation, expose `aria-controls`, and close cleanly on outside click. Renderer interaction passed active and empty conversation states with no errors or horizontal overflow at 1440px and 960px; live Electron smoke passed with two windows and screenshot review at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-overflow-after-1440.png` and `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-electron-overflow.png`.
 - Bridge fallback check: a renderer without the Electron preload now renders an explicit unavailable-host state instead of throwing during pet/agent initialization. The fallback harness passed with no page errors and no horizontal overflow at 1280px.
 - Responsive overflow acceptance: shared shell rows now shrink or wrap long labels and action groups, and the packaged matrix checks both viewport bounds and accidental internal clipping. Electron acceptance passed across 9 routes and 1920/1440/1280/960/640px widths.
+- Local Git workflow: Coding Workspace now offers a guarded Create pull request dialog after clean, pushed feature-branch commits. The operation uses the local GitHub CLI session through Agent Host and reports missing CLI/authentication honestly; no renderer token entry was added.
 
 ## Current task
 

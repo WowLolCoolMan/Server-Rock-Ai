@@ -31,6 +31,7 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [gitDiffBusy, setGitDiffBusy] = useState(false);
   const [gitCommitBusy, setGitCommitBusy] = useState(false);
   const [gitPushBusy, setGitPushBusy] = useState(false);
+  const [gitPullRequestBusy, setGitPullRequestBusy] = useState(false);
 
   useEffect(() => {
     if (connection !== "ready") return;
@@ -107,6 +108,16 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setGitPushBusy(false);
     if (!response.ok) { onError(response.error?.message ?? "Git push was rejected."); return false; }
     await refreshGitStatus(selectedProject.id);
+    onError(null);
+    return true;
+  };
+
+  const createGitPullRequest = async (title: string, body: string) => {
+    if (!selectedProject || gitPullRequestBusy || !title.trim()) return false;
+    setGitPullRequestBusy(true);
+    const response = await request("project.git.pullRequest", { id: selectedProject.id, title: title.trim(), body: body.trim() });
+    setGitPullRequestBusy(false);
+    if (!response.ok) { onError(response.error?.message ?? "Pull request creation was unavailable."); return false; }
     onError(null);
     return true;
   };
@@ -191,5 +202,5 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalSessionId(null); setTerminalScreen(null); setTerminalExitCode(null); return true;
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, terminalSessionId, terminalScreen, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, startTerminalSession, writeTerminalSession, refreshTerminalSession, closeTerminalSession, refreshGitStatus, loadGitDiff, commitGitChanges, pushGitChanges };
+  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, terminalSessionId, terminalScreen, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, gitPullRequestBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, startTerminalSession, writeTerminalSession, refreshTerminalSession, closeTerminalSession, refreshGitStatus, loadGitDiff, commitGitChanges, pushGitChanges, createGitPullRequest };
 }

@@ -64,7 +64,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -81,6 +81,7 @@ public static class AgentHostLoop
             "project.git.diff" => GetProjectGitDiffAsync(request).GetAwaiter().GetResult(),
             "project.git.commit" => CommitProjectGitChangesAsync(request).GetAwaiter().GetResult(),
             "project.git.push" => PushProjectGitAsync(request).GetAwaiter().GetResult(),
+            "project.git.pullRequest" => CreateProjectPullRequestAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -500,6 +501,19 @@ public static class AgentHostLoop
         var root = project.FolderPaths.FirstOrDefault() ?? throw new InvalidOperationException("Select a project folder before pushing.");
         var output = await new GitHubWorkspaceService().PushLocalAsync(root, CancellationToken.None).ConfigureAwait(false);
         return new(ProtocolVersion, request.Id, true, new { repository = project.Name, pushed = true, output });
+    }
+
+    private static async Task<AgentResponse> CreateProjectPullRequestAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault()
+            ?? throw new InvalidOperationException("Select a project folder before creating a pull request.");
+        var title = RequiredBoundedString(request, "title", 256);
+        var body = OptionalString(request, "body") ?? string.Empty;
+        var output = await new GitHubWorkspaceService().CreatePullRequestAsync(root, title, body, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { repository = project.Name, created = true, output });
     }
 
     private static async Task<(LocalProject Project, string Root, IReadOnlyList<GitWorkspaceFileChange> Changes)> ResolveProjectGitSelectionAsync(AgentRequest request)
