@@ -9,6 +9,7 @@ const preload = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "
 const petWindow = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "overlays", "PetWindow.tsx"), "utf8");
 const chatComposer = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "ChatComposer.tsx"), "utf8");
 const chatWorkspace = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "useChatWorkspace.ts"), "utf8");
+const navigation = fs.readFileSync(path.join(root, "apps", "desktop", "src", "app", "navigation.ts"), "utf8");
 const packageScript = fs.readFileSync(path.join(root, "scripts", "package-electron.cjs"), "utf8");
 const smokeScript = fs.readFileSync(path.join(root, "scripts", "smoke-electron-artifact.cjs"), "utf8");
 
@@ -29,6 +30,9 @@ expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-fi
 expect(main.includes('"workspace.importDroppedFiles"') && main.includes("decodeDroppedAttachment"), "Electron bridge must validate dropped chat files at the local boundary");
 expect(chatComposer.includes("onDrop={handleDrop}") && chatComposer.includes("Drop files to attach"), "Chat composer must expose a visible drag-and-drop attachment state");
 expect(chatWorkspace.includes("importDroppedFiles") && chatWorkspace.includes("workspace.importDroppedFiles"), "Chat workspace must route dropped files through the guarded Electron method");
+expect(navigation.includes("NavigationState") && navigation.includes("HISTORY_KEY"), "Renderer navigation must keep typed app history state");
+expect(navigation.includes('window.location.protocol === "file:"') && navigation.includes("#/${route}"), "Electron navigation must use reload-safe hash routes for file URLs");
+expect(navigation.includes("window.history.replaceState") && navigation.includes('window.history[replace ? "replaceState" : "pushState"]'), "Renderer navigation must preserve browser-like back/forward history");
 for (const method of ["scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow"]) {
   expect(main.includes(`"${method}"`), `Electron bridge must expose the local scheduled method ${method}`);
 }

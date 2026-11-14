@@ -3,6 +3,50 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 283 — Make renderer route history file-safe
+
+Status: `implemented_renderer_navigation_live_and_packaged_verified`
+
+Renderer navigation now owns a typed route-history record instead of leaving
+the toolbar to call browser history directly. Route changes persist the
+selected route, suppress duplicate entries, expose honest back/forward
+availability, and use the stored route to restore the workspace on restart.
+Electron `file:` pages use hash routes so reloads stay on the bundled
+`index.html`; browser/dev-server pages retain pathname routes.
+
+Changed files:
+
+- `apps/desktop/src/app/navigation.ts`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/components/layout/Toolbar.tsx`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- Live Electron inspection — passed; a persisted Marketplace route restored
+  as `index.html#/marketplace`, Chat navigation created a history entry, and
+  toolbar Back/Forward controls tracked the route after both actions.
+- `npm run audit:electron-runtime` — passed; the audit covers typed renderer
+  history, Electron hash routes, secure IPC, and the packaged companion path.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm run check:hygiene` — passed (1115 tracked files).
+- `npm test` — passed the full native Core suite.
+- `npm run package:electron` — passed; the self-contained Agent Host and
+  renderer were staged in `dist/electron/win-x64`.
+- `npm run smoke:electron:artifact` — passed; packaged Chat, Settings, and
+  the separate Percy companion rendered successfully.
+
+Remaining: continue the active goal's broader UI, routing, and workflow slices;
+the full handoff remains incomplete.
+
 ## Slice 282 — Make Percy completion feedback truthful
 
 Status: `implemented_companion_feedback_packaged_verified`

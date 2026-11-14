@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AgentResponse, DesktopConversation, DesktopScheduledTask, DesktopTask, RuntimeHealth, ScheduledTaskDraft, TaskEnvironment } from "../../shared/contracts";
 import { PRODUCT_DISPLAY_NAME } from "../../shared/productIdentity";
 import type { AppRouteActions, AppRouteState } from "./AppRouteView";
-import { routeFromLocation, navigate } from "./navigation";
+import { initializeNavigation, navigate, readNavigationState, routeFromLocation, type NavigationState } from "./navigation";
 import type { ConnectionState, MemoryEntry, Model, Route, ThemeMode } from "./types";
 import { createAgentClient } from "../services/agentClient";
 import { isLocalEndpoint, LOCAL_ENDPOINT_ERROR, localEndpointOrFallback, localProviderOrFallback } from "../services/localOnly";
@@ -30,6 +30,10 @@ export type DesktopWorkspace = {
   selectConversation: (id: string) => void;
   updateConversationMetadata: (id: string, patch: { pinned?: boolean; archived?: boolean; title?: string }) => Promise<boolean>;
   onNavigate: (route: Route) => void;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  goBack: () => void;
+  goForward: () => void;
   petVisible: boolean;
   petWander: boolean;
   setPetVisible: (value: boolean) => void;
@@ -69,6 +73,7 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   }), []);
   const request = agent.request;
   const [route, setRoute] = useState<Route>(routeFromLocation);
+  const [navigation, setNavigation] = useState<NavigationState>(() => readNavigationState(routeFromLocation()));
   const [commandOpen, setCommandOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(localStorage.getItem("skai.sidebar.collapsed") === "true");
   const [sidebarWidth, setSidebarWidth] = useState(readSidebarWidth);
@@ -108,13 +113,26 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const chat = useChatWorkspace({ request, connection, provider, endpoint, model, onError: setError });
 
   const onNavigate = useCallback((nextRoute: Route) => navigate(nextRoute), []);
+  const goBack = useCallback(() => { if (navigation.index > 0) window.history.back(); }, [navigation.index]);
+  const goForward = useCallback(() => { if (navigation.index < navigation.length - 1) window.history.forward(); }, [navigation.index, navigation.length]);
   const coding = useCodingWorkspace({ request, connection, onError: setError, onNavigate: () => onNavigate("coding") });
   const openCommandPalette = useCallback(() => setCommandOpen(true), []);
   const closeCommandPalette = useCallback(() => setCommandOpen(false), []);
   const toggleSidebar = useCallback(() => setSidebarCollapsed((value) => !value), []);
   const resizeSidebar = useCallback((width: number) => setSidebarWidth(Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, Math.round(width)))), []);
   const startNewChat = useCallback(() => { chat.startNewChat(); onNavigate("chat"); }, [chat, onNavigate]);
-  useEffect(() => { const onPopState = () => setRoute(routeFromLocation()); window.addEventListener("popstate", onPopState); return () => window.removeEventListener("popstate", onPopState); }, []);
+  useEffect(() => {
+    const initialRoute = routeFromLocation();
+    setRoute(initialRoute);
+    setNavigation(initializeNavigation(initialRoute));
+    const onPopState = () => {
+      const nextRoute = routeFromLocation();
+      setRoute(nextRoute);
+      setNavigation(readNavigationState(nextRoute));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
   useEffect(() => { document.title = `${PRODUCT_DISPLAY_NAME} · ${route}`; document.documentElement.dataset.theme = themeMode; document.documentElement.dataset.accent = accentColor; document.documentElement.dataset.density = density; document.documentElement.dataset.backdrop = backdrop; document.documentElement.dataset.reduceMotion = reduceMotion ? "true" : "false"; }, [route, themeMode, accentColor, density, backdrop, reduceMotion]);
   useEffect(() => { localStorage.setItem("skai.sidebar.collapsed", String(sidebarCollapsed)); }, [sidebarCollapsed]);
   useEffect(() => { localStorage.setItem(SIDEBAR_WIDTH_KEY, String(sidebarWidth)); }, [sidebarWidth]);
@@ -150,5 +168,5 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const routeState: AppRouteState = { route, provider, model, models, endpoint, messages: chat.messages, busy: chat.busy, attachments: chat.attachments, queuedMessages: chat.queuedMessages, conversationId: chat.conversationId, conversationTitle: chat.activeConversation?.title ?? "New chat", pinned: chat.activeConversation?.pinned ?? false, archived: chat.activeConversation?.archived ?? false, projects: coding.projects, selectedProject: coding.selectedProject, projectFiles: coding.projectFiles, selectedFile: coding.selectedFile, fileDraft: coding.fileDraft, fileOriginal: coding.fileOriginal, fileSummary: coding.fileSummary, fileBusy: coding.fileBusy, terminalBusy: coding.terminalBusy, terminalOutput: coding.terminalOutput, terminalExitCode: coding.terminalExitCode, themeMode, accentColor, density, backdrop, reduceMotion, petVisible, petWander, developerMode, memoryInjectionEnabled, imageEndpoint, imagePrompt, imageWorkflow, imageBusy, generatedImages, tasks, scheduledTasks, taskBusy, tasksLoading, tasksError, memoryEntries, memoryBusy, memoryLoading, memoryError };
   const routeActions: AppRouteActions = { onNavigate, onSend: chat.sendMessage, onQueue: chat.queueMessage, onRemoveQueued: chat.removeQueuedMessage, onAttach: chat.pickAttachments, onFilesDropped: chat.importDroppedFiles, onRemoveAttachment: (index) => chat.setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index)), onModelChange: (nextModel) => { setModel(nextModel); localStorage.setItem("skai.model", nextModel); }, onProviderChange: (nextProvider) => { const selectedProvider = localProviderOrFallback(nextProvider); setProvider(selectedProvider); localStorage.setItem("skai.provider", selectedProvider); if (!isLocalEndpoint(endpoint)) setEndpoint(defaultEndpoint); }, onExportConversations: chat.exportConversations, onFork: () => void chat.forkConversation(), onForkFromMessage: (index) => void chat.forkConversation(index), onRetryMessage: (index) => void chat.retryMessage(index), onEditMessage: chat.editMessage, onTogglePinned: () => void chat.updateConversationMetadata({ pinned: !(chat.activeConversation?.pinned ?? false) }), onArchive: () => void chat.updateConversationMetadata({ archived: !(chat.activeConversation?.archived ?? false) }), onRenameConversation: (title) => chat.updateConversationMetadata({ title }), onPickFolder: coding.pickProjectFolder, onSaveProject: coding.saveProject, onOpenProject: coding.selectProject, onOpenFile: (path) => void coding.openProjectFile(path), onCloseFile: () => coding.closeProjectFile(), onDraftChange: coding.setFileDraft, onSaveFile: () => void coding.saveProjectFile(), onUndoFile: () => void coding.undoProjectFile(), onRunTerminal: (projectId, command, cwd) => void coding.runTerminal(projectId, command, cwd), onPlanTask: planTask, onSettingsChange: (key, value) => { if (key === "themeMode") setThemeMode(value as ThemeMode); if (key === "accentColor") setAccentColor(String(value)); if (key === "density") setDensity(String(value)); if (key === "backdrop") setBackdrop(String(value)); if (key === "reduceMotion") setReduceMotion(Boolean(value)); if (key === "petVisible") setPetVisible(Boolean(value)); if (key === "petWander") setPetWander(Boolean(value)); if (key === "developerMode") setDeveloperMode(Boolean(value)); if (key === "memoryInjectionEnabled") setMemoryInjectionEnabled(Boolean(value)); if (key === "provider") setProvider(localProviderOrFallback(String(value))); if (key === "model") setModel(String(value)); if (key === "endpoint") setEndpoint(String(value)); }, onSaveSettings: saveSettings, onDiscoverModels: () => void discoverModels(), onSelectModel: (nextModel) => { setModel(nextModel); onNavigate("chat"); }, onImageChange: (key, value) => { if (key === "endpoint") setImageEndpoint(value); if (key === "prompt") setImagePrompt(value); if (key === "workflow") setImageWorkflow(value); }, onGenerateImage: () => void generateImage(), onRetryWorkbench: () => void loadWorkbench(), onTransitionTask: (id, operation) => void transitionTask(id, operation), onScheduleTask: scheduleTask, onTransitionScheduledTask: transitionScheduledTask, onRetryMemory: () => void loadMemory(), onSearchMemory: (query) => void loadMemory(query), onSaveMemory: saveMemory, onToggleMemory: (entry) => void toggleMemory(entry), onRemoveMemory: removeMemory, onExportMemory: () => void exportMemory(), onRunProjectCommand: (projectId, command, cwd) => void coding.runTerminal(projectId, command, cwd) };
 
-  return { routeState, routeActions, route, connection, health, error, conversations: chat.conversations, conversationQuery, setConversationQuery, sidebarCollapsed, sidebarWidth, toggleSidebar, resizeSidebar, commandOpen, openCommandPalette, closeCommandPalette, startNewChat, selectConversation: chat.selectConversation, updateConversationMetadata: (id, patch) => chat.updateConversationMetadata(patch, id), onNavigate, petVisible, petWander, setPetVisible, setPetWander };
+  return { routeState, routeActions, route, connection, health, error, conversations: chat.conversations, conversationQuery, setConversationQuery, sidebarCollapsed, sidebarWidth, toggleSidebar, resizeSidebar, commandOpen, openCommandPalette, closeCommandPalette, startNewChat, selectConversation: chat.selectConversation, updateConversationMetadata: (id, patch) => chat.updateConversationMetadata(patch, id), onNavigate, canGoBack: navigation.index > 0, canGoForward: navigation.index < navigation.length - 1, goBack, goForward, petVisible, petWander, setPetVisible, setPetWander };
 }

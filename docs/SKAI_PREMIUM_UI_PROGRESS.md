@@ -2,6 +2,16 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current checkpoint
+
+Renderer routing now has a typed history state shared by the app shell and
+toolbar. Back/Forward controls are disabled when no browser-style entry is
+available, duplicate route selections do not add history noise, and Electron
+uses reload-safe `index.html#/route` URLs while browser/dev builds keep
+pathname routes. Live Electron navigation and persisted route restoration were
+verified; packaged verification is recorded in the execution ledger after the
+final audit pass.
+
 ## Completed checkpoints
 
 - Current checkpoint — Percy’s standalone desktop companion now reports both
