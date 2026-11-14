@@ -5,6 +5,7 @@ import { Button, Card, EmptyState } from "../../components/ui/Primitives";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { ModalDialog } from "../../components/ui/ModalDialog";
 import { OverflowMenu } from "../../components/ui/OverflowMenu";
+import { ModelPicker } from "../../components/ui/ModelPicker";
 import { AttachmentList } from "./AttachmentList";
 import { ChatMessage } from "./ChatMessage";
 
@@ -34,7 +35,7 @@ type ChatPageProps = {
   onAttach: () => void;
   onRemoveAttachment: (index: number) => void;
   onModelChange: (model: string) => void;
-  onNavigate: (route: "coding" | "images" | "marketplace" | "workbench") => void;
+  onNavigate: (route: "coding" | "images" | "marketplace" | "models" | "workbench") => void;
   onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onExport: () => void;
   onFork: () => void;
@@ -148,7 +149,7 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   return <div className="feature-page chat-page">
     <div className="chat-context-bar">
       <div><p className="section-kicker">CONVERSATION</p><strong>{conversationId ? conversationTitle : "New chat"}</strong><span>{provider} · saved on this device · keep the thread focused, then turn work into a reviewed task when needed.</span></div>
-      <div className="chat-header-actions"><select className="toolbar-select" value={model} onChange={(event) => onModelChange(event.target.value)} aria-label="Choose model"><option value={model}>{model}</option>{models.filter((item) => item.model !== model).map((item) => <option key={item.model} value={item.model}>{item.model}</option>)}</select><Button variant="ghost" disabled={!conversationId} onClick={() => setRenameOpen(true)}>Rename</Button><Button variant="ghost" onClick={onExport}>Export</Button><OverflowMenu label="More" items={[{ label: pinned ? "Unpin chat" : "Pin chat", disabled: !conversationId, onSelect: onTogglePinned }, { label: "Fork chat", disabled: !conversationId, onSelect: onFork }, { label: archived ? "Unarchive chat" : "Archive chat", disabled: !conversationId, onSelect: onArchive }]} /></div>
+      <div className="chat-header-actions"><ModelPicker model={model} provider={provider} models={models} onChange={onModelChange} onOpenModels={() => onNavigate("models")} /><Button variant="ghost" disabled={!conversationId} onClick={() => setRenameOpen(true)}>Rename</Button><Button variant="ghost" onClick={onExport}>Export</Button><OverflowMenu label="More" items={[{ label: pinned ? "Unpin chat" : "Pin chat", disabled: !conversationId, onSelect: onTogglePinned }, { label: "Fork chat", disabled: !conversationId, onSelect: onFork }, { label: archived ? "Unarchive chat" : "Archive chat", disabled: !conversationId, onSelect: onArchive }]} /></div>
     </div>
     <div className="chat-layout">
       <main className="chat-column">

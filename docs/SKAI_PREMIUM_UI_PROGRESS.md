@@ -4,6 +4,10 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Chat’s model control is now a reusable local picker with
+  provider/capability identity, search, keyboard navigation, selected state,
+  Escape dismissal, and an honest empty-registry handoff to Models.
+
 - Current checkpoint — Percy’s separate transparent companion window now has
   safer drag lifecycle handling, monitor-aware native clamping, reliable hide
   control behavior, and a retry completion summary while retaining the bundled

@@ -3,6 +3,36 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 275 — Replace the Chat model select with a local model picker
+
+Status: `implemented_live_electron_verified`
+
+Chat now uses a reusable model picker instead of a raw native select. The
+picker keeps model choice in the conversation context while exposing provider,
+vision/text, and capability metadata, local search, selected state, keyboard
+navigation, Escape dismissal, and a truthful empty state that links to the
+existing Models route. It does not add a hosted catalog or change the local
+provider contract.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/ModelPicker.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- Live Electron Chat inspection — passed; the picker opened in the actual
+  desktop window, showed the selected local model with `Ollama` and `Text`
+  metadata, filtered to `0 available` with the `Open Models` recovery action,
+  and dismissed with Escape.
+- `git diff --check` — passed.
+
+Remaining: continue primary-workflow fidelity and packaged visual comparison;
+the active goal remains incomplete.
+
 ## Slice 274 — Make Percy a recoverable desktop companion
 
 Status: `implemented_packaged_electron_verified`
