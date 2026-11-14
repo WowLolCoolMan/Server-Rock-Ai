@@ -66,6 +66,9 @@ Task environment radios now use an instance-scoped group name and describe the
 local-only execution boundary directly from the control, avoiding collisions
 when more than one composer is mounted.
 
+Scheduled local runs now validate their date before submission and show a
+recoverable error when the host rejects a schedule instead of failing silently.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

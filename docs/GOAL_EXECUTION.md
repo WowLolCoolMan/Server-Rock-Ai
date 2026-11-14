@@ -11447,6 +11447,31 @@ Evidence:
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
 
+## Slice 310 — Make scheduled-run failures recoverable
+
+Status: `implemented_renderer_typechecked`
+
+The local Automations panel now rejects invalid or past schedule times before
+calling the host and shows an explicit alert when the host declines a valid
+schedule. Successful saves retain the existing reset behavior, while the
+disclosure that background execution is not enabled remains unchanged.
+
+Changed files:
+
+- `apps/desktop/src/features/agents/ScheduledRunsPanel.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Invalid dates, past dates, and host failures now produce actionable local
+  feedback without creating a false scheduled task.
+- Renderer typecheck and production build are the acceptance gate for this
+  local automation recovery slice.
+
+Remaining: continue the shared utility and overlay interaction slices; the
+overall premium rebuild remains active.
+
 ## Slice 309 — Isolate task environment radio groups
 
 Status: `implemented_renderer_typechecked`
