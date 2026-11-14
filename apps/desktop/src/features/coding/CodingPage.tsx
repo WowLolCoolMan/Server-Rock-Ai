@@ -11,6 +11,10 @@ function terminalStorageKey(projectId: string | null) {
   return `skai.coding.terminalOpen.${projectId ?? "none"}`;
 }
 
+function taskComposerStorageKey(projectId: string | null) {
+  return `skai.coding.taskComposerOpen.${projectId ?? "none"}`;
+}
+
 function createDiff(before: string, after: string): DiffRow[] {
   const beforeLines = before.split("\n");
   const afterLines = after.split("\n");
@@ -60,6 +64,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
   const [taskTitle, setTaskTitle] = useState("");
   const [taskInstruction, setTaskInstruction] = useState("");
   const [taskEnvironment, setTaskEnvironment] = useState<TaskEnvironment>("local");
+  const [taskComposerOpen, setTaskComposerOpen] = useState(false);
   const [planningTask, setPlanningTask] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
@@ -76,10 +81,14 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     setOpenTabs([]);
     setFileQuery("");
     setTerminalOpen(selectedProject ? localStorage.getItem(terminalStorageKey(selectedProject.id)) === "true" : false);
+    setTaskComposerOpen(selectedProject ? localStorage.getItem(taskComposerStorageKey(selectedProject.id)) === "true" : false);
   }, [selectedProject?.id]);
   useEffect(() => {
     if (selectedProject) localStorage.setItem(terminalStorageKey(selectedProject.id), String(terminalOpen));
   }, [selectedProject?.id, terminalOpen]);
+  useEffect(() => {
+    if (selectedProject) localStorage.setItem(taskComposerStorageKey(selectedProject.id), String(taskComposerOpen));
+  }, [selectedProject?.id, taskComposerOpen]);
   useEffect(() => { if (selectedFile) setOpenTabs((current) => current.includes(selectedFile) ? current : [...current, selectedFile]); }, [selectedFile]);
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
@@ -145,12 +154,14 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     {selectedProject && <Card className="project-browser-card coding-project-browser">
        <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>Files &amp; changes</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
-      <form className="task-composer" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
-        <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>Write the outcome you want, then review it in Agent Workbench before anything runs.</p></div><span className="task-composer-badge">Local only</span></div>
-        <div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Improve the project browser" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome, constraints, and how you will verify it." rows={3} /></label></div>
-        <EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} />
-        <div className="task-composer-footer"><span>Creates a proposed local task. It does not start an agent or run tools.</span><Button variant="primary" type="submit" disabled={planningTask || !taskTitle.trim() || !taskInstruction.trim()}>{planningTask ? "Planning…" : "Add to task plan"}</Button></div>
-      </form>
+      <div className={`task-composer coding-task-composer ${taskComposerOpen ? "is-open" : ""}`}>
+        <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>{taskComposerOpen ? "Write the outcome you want, then review it in Agent Workbench before anything runs." : "Draft a reviewed local task without leaving this project."}</p></div><span className="task-composer-badge">Local only</span><Button variant="secondary" type="button" aria-expanded={taskComposerOpen} aria-controls="coding-task-brief" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Hide brief" : "Plan task"}</Button></div>
+        {taskComposerOpen && <form id="coding-task-brief" className="task-composer-form" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
+          <div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Improve the project browser" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome, constraints, and how you will verify it." rows={3} /></label></div>
+          <EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} />
+          <div className="task-composer-footer"><span>Creates a proposed local task. It does not start an agent or run tools.</span><Button variant="primary" type="submit" disabled={planningTask || !taskTitle.trim() || !taskInstruction.trim()}>{planningTask ? "Planning…" : "Add to task plan"}</Button></div>
+        </form>}
+      </div>
       <div className="project-file-layout">
         <div className="project-file-explorer"><div className="file-list-toolbar"><input ref={fileSearchRef} value={fileQuery} onChange={(event) => setFileQuery(event.target.value)} placeholder="Filter files…" aria-label="Filter project files" /><kbd>Ctrl P</kbd></div><div className="project-file-list">{projectFiles.length === 0 ? <EmptyState title="No readable files" description="Protected names and unsupported files are hidden." /> : filteredFiles.length === 0 ? <EmptyState title="No matching files" description="Try a shorter path or filename." /> : filteredFiles.map((file) => <button className={selectedFile === file.relativePath ? "is-selected" : ""} key={file.relativePath} onClick={() => openFile(file.relativePath)} type="button"><span>{file.relativePath}</span><small>{file.bytes.toLocaleString()} bytes</small></button>)}</div></div>
         <div className="file-editor-panel">

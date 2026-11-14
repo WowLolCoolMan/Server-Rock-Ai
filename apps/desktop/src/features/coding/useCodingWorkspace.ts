@@ -59,6 +59,13 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     onNavigate("coding");
   };
 
+  useEffect(() => {
+    if (connection !== "ready" || selectedProject || projects.length === 0) return;
+    const storedId = localStorage.getItem("skai.selectedProject");
+    const storedProject = storedId ? projects.find((project) => project.id === storedId) : undefined;
+    if (storedProject) void selectProject(storedProject);
+  }, [connection, projects, selectedProject]);
+
   const openProjectFile = async (relativePath: string) => {
     if (!selectedProject) return;
     setSelectedFile(relativePath); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null);
