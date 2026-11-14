@@ -9,7 +9,7 @@ public static class AgentHostLoop
 {
     private const int ProtocolVersion = 1;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private static readonly Dictionary<string, Task> ActiveTaskExecutions = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, ActiveTaskExecution> ActiveTaskExecutions = new(StringComparer.Ordinal);
     private static readonly object ActiveTaskExecutionsGate = new();
     private static readonly Dictionary<string, WorkspaceTerminalSession> TerminalSessions = new(StringComparer.Ordinal);
     private static readonly object TerminalSessionsGate = new();
@@ -266,7 +266,7 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, projects);
     }
 
-    private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
+    private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request, CancellationToken cancellationToken = default)
     {
         var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
         var model = RequiredString(request, "model");
@@ -312,7 +312,8 @@ public static class AgentHostLoop
         var airLlm = new AirLlmProvider();
         var explicitAirLlm = AirLlmProvider.IsAirLlmProvider(settings.ModelProvider);
         var usedFallback = false;
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
         try
         {
             if (explicitAirLlm)
@@ -347,6 +348,10 @@ public static class AgentHostLoop
                     }
                 }
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
@@ -663,18 +668,22 @@ public static class AgentHostLoop
             if (ActiveTaskExecutions.ContainsKey(taskId))
                 throw new InvalidOperationException("The task is already executing.");
 
-            var execution = Task.Run(() => ExecuteLocalModelTaskAsync(taskId));
+            var execution = new ActiveTaskExecution(new CancellationTokenSource());
+            execution.Task = Task.Run(() => ExecuteLocalModelTaskAsync(taskId, execution.Cancellation.Token));
             ActiveTaskExecutions[taskId] = execution;
-            _ = execution.ContinueWith(_ =>
+            _ = execution.Task.ContinueWith(_ =>
             {
-                lock (ActiveTaskExecutionsGate) ActiveTaskExecutions.Remove(taskId);
+                lock (ActiveTaskExecutionsGate)
+                {
+                    if (ActiveTaskExecutions.Remove(taskId, out var finished)) finished.Cancellation.Dispose();
+                }
             }, TaskScheduler.Default);
         }
 
         return new(ProtocolVersion, request.Id, true, new { id = taskId, status = AgentTaskStatuses.Running, execution = "local-model" });
     }
 
-    private static async Task ExecuteLocalModelTaskAsync(string taskId)
+    private static async Task ExecuteLocalModelTaskAsync(string taskId, CancellationToken cancellationToken)
     {
         var settings = CreateSettingsStore().Load();
         var executor = new AgentTaskExecutor(CreateTaskStore());
@@ -694,7 +703,7 @@ public static class AgentHostLoop
                 timeoutSeconds = 5,
                 messages,
             }, JsonOptions);
-            var response = await CompleteChatAsync(new AgentRequest(ProtocolVersion, $"task-{task.Id}", "chat.complete", parameters));
+            var response = await CompleteChatAsync(new AgentRequest(ProtocolVersion, $"task-{task.Id}", "chat.complete", parameters), cancellationToken);
             if (!response.Ok)
                 throw new InvalidOperationException(response.Error?.Message ?? "The local model could not complete the task.");
 
@@ -709,6 +718,17 @@ public static class AgentHostLoop
     {
         var id = RequiredBoundedString(request, "id", 128);
         var store = CreateTaskStore();
+        if (operation == "cancel")
+        {
+            lock (ActiveTaskExecutionsGate)
+            {
+                if (ActiveTaskExecutions.TryGetValue(id, out var active))
+                {
+                    active.Cancellation.Cancel();
+                    return new(ProtocolVersion, request.Id, true, new { id, status = AgentTaskStatuses.Running, cancellationRequested = true });
+                }
+            }
+        }
         var task = operation switch
         {
             "queue" => store.Queue(id),
@@ -719,6 +739,12 @@ public static class AgentHostLoop
             _ => throw new InvalidOperationException("Unknown task operation."),
         };
         return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });
+    }
+
+    private sealed class ActiveTaskExecution(CancellationTokenSource cancellation)
+    {
+        public CancellationTokenSource Cancellation { get; } = cancellation;
+        public Task Task { get; set; } = Task.CompletedTask;
     }
 
     private static AgentResponse ListScheduledTasks(AgentRequest request)
