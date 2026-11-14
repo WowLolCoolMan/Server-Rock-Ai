@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Model } from "../../app/types";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
+import { NavIcon, type NavIconName } from "../../components/ui/NavIcon";
 import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
 
 function modelProvider(model: string) {
@@ -38,12 +39,12 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
 
 export function MarketplacePage() {
   type Category = "All" | "LLMs" | "Voices" | "Image models" | "Skills" | "Tools";
-  const cards = [
-    { title: "LLMs", category: "LLMs" as const, description: "Download coding, chat, reasoning, and vision models.", detail: "Find local model packages and compatible runtimes, then install them into your local model directory.", icon: "◌" },
-    { title: "Voices & TTS", category: "Voices" as const, description: "Add voices for conversation and narration.", detail: "Choose speech-to-speech engines, streaming TTS voices, and voice packs for Voice Studio.", icon: "◖" },
-    { title: "Image models", category: "Image models" as const, description: "Add checkpoints, LoRAs, and workflows.", detail: "Bring new local image models and ComfyUI workflow packs into Image Studio.", icon: "▧" },
-    { title: "Skills", category: "Skills" as const, description: "Install focused instruction packs for agents.", detail: "Skills are local folders with a manifest and instructions. Review them before enabling them.", icon: "✦" },
-    { title: "Tools & integrations", category: "Tools" as const, description: "Add MCP servers and developer tools.", detail: "Connect tools explicitly, inspect their permissions, and keep ownership on your machine.", icon: "⊕" }
+  const cards: Array<{ title: string; category: Category; description: string; detail: string; icon: NavIconName; status: string; statusTone: "neutral" | "success" | "warning"; availability: string; nextStep: string }> = [
+    { title: "LLMs", category: "LLMs", description: "Review coding, chat, reasoning, and vision models.", detail: "Choose models already installed in a local runtime, or prepare a reviewed local package before it is used.", icon: "model", status: "Local source needed", statusTone: "warning", availability: "No local model catalog is connected.", nextStep: "Start a supported local runtime, then use Models to discover what is installed." },
+    { title: "Voices & TTS", category: "Voices", description: "Configure voices for local conversation and narration.", detail: "Use the operating system voice service today, with optional local model profiles when their adapters are installed.", icon: "activity", status: "Local ready", statusTone: "success", availability: "OS-native speech is available on this computer.", nextStep: "Choose a voice profile here or in Settings and preview it locally." },
+    { title: "Image models", category: "Image models", description: "Review checkpoints, LoRAs, and workflows.", detail: "Bring reviewed local image assets and ComfyUI workflow packs into Image Studio.", icon: "image", status: "Local source needed", statusTone: "warning", availability: "No local image catalog is connected.", nextStep: "Configure a local ComfyUI workflow in Image Studio before generating." },
+    { title: "Skills", category: "Skills", description: "Review focused instruction packs for agents.", detail: "Skills are local folders with a manifest and instructions. Review them before enabling them.", icon: "sparkle", status: "Local source needed", statusTone: "warning", availability: "No local skill catalog is connected.", nextStep: "Add a reviewed local skill package before activation is offered." },
+    { title: "Tools & integrations", category: "Tools", description: "Review MCP servers and local developer tools.", detail: "Connect tools explicitly, inspect their permissions, and keep ownership on this machine.", icon: "terminal", status: "Local source needed", statusTone: "warning", availability: "No local tool catalog is connected.", nextStep: "Add a reviewed local connector before permissioned activation is offered." }
   ];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("All");
@@ -58,7 +59,7 @@ export function MarketplacePage() {
   const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
 
   return <div className="feature-page">
-    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Find the models, voices, image packs, skills, and tools that power your workspace." />
+    <PageHeader eyebrow="LOCAL CATALOG" title="Extend Skai" description="Review local capabilities for models, voices, image workflows, skills, and tools. Nothing is fetched from a hosted catalog." />
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">
         <div className="marketplace-search-row">
@@ -73,16 +74,16 @@ export function MarketplacePage() {
       <div className="marketplace-layout">
         {filtered.length === 0 ? <EmptyState title="No matching categories" description="Try another search term or clear the category filter." action={<Button variant="ghost" onClick={() => { setQuery(""); setCategory("All"); }}>Clear filters</Button>} /> : <div className="marketplace-grid" aria-label="Marketplace categories">
           {filtered.map((card) => <button className={`marketplace-card${selected?.title === card.title ? " is-selected" : ""}`} key={card.title} type="button" onClick={() => setSelectedTitle(card.title)} aria-pressed={selected?.title === card.title}>
-            <span className="marketplace-card-heading"><span className="marketplace-icon">{card.icon}</span><StatusBadge>Not connected</StatusBadge></span>
+            <span className="marketplace-card-heading"><span className="marketplace-icon"><NavIcon name={card.icon} /></span><StatusBadge tone={card.statusTone}>{card.status}</StatusBadge></span>
             <strong>{card.title}</strong>
             <span>{card.description}</span>
             <small>View capability details →</small>
           </button>)}
         </div>}
         {selected && <Card className="marketplace-detail">
-          <div className="marketplace-detail-heading"><div><p className="section-kicker">SELECTED CATEGORY</p><h3>{selected.title}</h3></div><StatusBadge>Not connected</StatusBadge></div>
+          <div className="marketplace-detail-heading"><div><p className="section-kicker">SELECTED CATEGORY</p><h3>{selected.title}</h3></div><StatusBadge tone={selected.statusTone}>{selected.status}</StatusBadge></div>
           <p>{selected.detail}</p>
-          <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>Catalog connection not configured</dd></div><div><dt>Next step</dt><dd>Connect a catalog or local source in Settings.</dd></div></dl>
+          <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>{selected.availability}</dd></div><div><dt>Next step</dt><dd>{selected.nextStep}</dd></div></dl>
           {selected.category === "Voices" ? <div className="marketplace-voice-controls">
             <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Low-resource mode voice<select value={voiceSettings.lowResourceModelId} onChange={(event) => updateVoice("lowResourceModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
