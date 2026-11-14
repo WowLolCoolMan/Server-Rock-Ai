@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import type { Model, ThemeMode } from "../../app/types";
 import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
 import { isLocalProvider, localProviderOrFallback } from "../../services/localOnly";
 import { Button, Card, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 import { NavIcon, type NavIconName } from "../../components/ui/NavIcon";
 
-const categories = ["General", "Appearance", "Models & Providers", "Voice & Audio", "Image Generation", "Agents", "Integrations", "Privacy & Security", "Storage", "Updates", "Advanced"] as const;
+const categories = ["General", "Appearance", "Pet", "Models & Providers", "Voice & Audio", "Image Generation", "Agents", "Integrations", "Privacy & Security", "Storage", "Updates", "Advanced"] as const;
 type Category = typeof categories[number];
 const categoryIcons: Record<Category, NavIconName> = {
   General: "settings",
   Appearance: "sparkle",
+  Pet: "sparkle",
   "Models & Providers": "model",
   "Voice & Audio": "activity",
   "Image Generation": "image",
@@ -24,6 +25,7 @@ const categoryIcons: Record<Category, NavIconName> = {
 const categorySearchText: Record<Category, string> = {
   General: "runtime provider model answer local preferred",
   Appearance: "theme color accent density backdrop reduced motion pet companion animation",
+  Pet: "companion Percy sprite sheet character walk wander always on top overlay custom",
   "Models & Providers": "endpoint runtime model discover Ollama LM Studio AirLLM provider local",
   "Voice & Audio": "voice speech audio low resource profile preview text to speech TTS",
   "Image Generation": "image ComfyUI workflow prompt endpoint generation",
@@ -53,6 +55,8 @@ type SettingsProps = {
   reduceMotion: boolean;
   petVisible: boolean;
   petWander: boolean;
+  petCharacter: string;
+  petSpriteDataUrl: string;
   developerMode: boolean;
   memoryInjectionEnabled: boolean;
   imageEndpoint: string;
@@ -94,7 +98,9 @@ export function SettingsPage(props: SettingsProps) {
 
         {activeCategory === "General" && <><div className="settings-callout"><strong>{selectedProvider.label}</strong><span>{selectedProvider.detail}</span></div><div className="settings-field"><label>How should Skai answer?<select value={selectedProviderId} onChange={(event) => change("provider", event.target.value)}>{providerChoices.map((choice) => <option key={choice.id} value={choice.id}>{choice.label}</option>)}</select></label><label>Preferred model<select value={props.model} onChange={(event) => change("model", event.target.value)}>{props.models.length === 0 && <option value={props.model}>{props.model}</option>}{props.models.map((item) => <option key={item.model} value={item.model}>{item.model}</option>)}</select></label></div><p className="settings-help">All model runtimes run on this computer. Select a local provider and configure its loopback endpoint below.</p></>}
 
-        {activeCategory === "Appearance" && <><div className="settings-field"><label>Color theme<select value={props.themeMode} onChange={(event) => change("themeMode", event.target.value)}><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></label><label>Accent<select value={props.accentColor} onChange={(event) => change("accentColor", event.target.value)}><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="amber">Amber</option><option value="rose">Rose</option></select></label></div><div className="settings-field"><label>Interface density<select value={props.density} onChange={(event) => change("density", event.target.value)}><option value="compact">Compact</option><option value="comfortable">Comfortable</option><option value="spacious">Spacious</option></select></label><label>Backdrop<select value={props.backdrop} onChange={(event) => change("backdrop", event.target.value)}><option value="none">None</option><option value="deep-sea">Deep sea</option><option value="deep-space">Deep space</option></select></label></div><Toggle label="Reduced motion" detail="Minimize interface animations and decorative movement." checked={props.reduceMotion} onChange={(value) => change("reduceMotion", value)} /><Toggle label="Show Skai pet" detail="Keep the companion visible above the workspace." checked={props.petVisible} onChange={(value) => change("petVisible", value)} /><Toggle label="Let the pet walk around" detail="The pet wanders gently and pauses when you drag it." checked={props.petWander} onChange={(value) => change("petWander", value)} /></>}
+        {activeCategory === "Appearance" && <><div className="settings-field"><label>Color theme<select value={props.themeMode} onChange={(event) => change("themeMode", event.target.value)}><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></label><label>Accent<select value={props.accentColor} onChange={(event) => change("accentColor", event.target.value)}><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="amber">Amber</option><option value="rose">Rose</option></select></label></div><div className="settings-field"><label>Interface density<select value={props.density} onChange={(event) => change("density", event.target.value)}><option value="compact">Compact</option><option value="comfortable">Comfortable</option><option value="spacious">Spacious</option></select></label><label>Backdrop<select value={props.backdrop} onChange={(event) => change("backdrop", event.target.value)}><option value="none">None</option><option value="deep-sea">Deep sea</option><option value="deep-space">Deep space</option></select></label></div><Toggle label="Reduced motion" detail="Minimize interface animations and decorative movement." checked={props.reduceMotion} onChange={(value) => change("reduceMotion", value)} /></>}
+
+        {activeCategory === "Pet" && <PetSettings props={props} change={change} />}
 
         {activeCategory === "Models & Providers" && <><div className="settings-field"><label>Provider<select value={selectedProviderId} onChange={(event) => change("provider", event.target.value)}>{providerChoices.map((choice) => <option key={choice.id} value={choice.id}>{choice.label}</option>)}</select></label><label>Model endpoint<input value={props.endpoint} onChange={(event) => change("endpoint", event.target.value)} placeholder="http://localhost:11434/v1" /></label></div><div className="settings-model-actions"><Button variant="secondary" disabled={discoveringModels} onClick={() => void discoverModels()}>{discoveringModels ? "Discovering…" : "Discover local models"}</Button><span>AirLLM can take over when a selected model exceeds available memory.</span></div><div className="settings-provider-list">{providerChoices.map((choice) => <div className="settings-provider-row" key={choice.id}><span><strong>{choice.label}</strong><small>{choice.detail}</small></span><StatusBadge tone="neutral">Supported locally</StatusBadge></div>)}</div></>}
 
@@ -121,12 +127,32 @@ export function SettingsPage(props: SettingsProps) {
 }
 
 function categoryDescription(category: Category) {
-  const descriptions: Record<Category, string> = { General: "Choose the local runtime and model Skai should use first.", Appearance: "Tune the visual environment and companion behavior.", "Models & Providers": "Choose a model runtime already running on this computer.", "Voice & Audio": "Choose local speech behavior and preview it safely.", "Image Generation": "Configure the local image workflow used by the Images workspace.", Agents: "Control task planning, diagnostics, and memory injection.", Integrations: "Review the local services and project integrations currently connected.", "Privacy & Security": "Review the local data boundary and storage controls.", Storage: "Back up local workspace data without destructive shortcuts.", Updates: "See the release channel and update delivery status.", Advanced: "Review controls that affect diagnostics and motion." };
+  const descriptions: Record<Category, string> = { General: "Choose the local runtime and model Skai should use first.", Appearance: "Tune the visual environment without changing companion settings.", Pet: "Choose, show, and personalize Percy as a separate desktop companion window.", "Models & Providers": "Choose a model runtime already running on this computer.", "Voice & Audio": "Choose local speech behavior and preview it safely.", "Image Generation": "Configure the local image workflow used by the Images workspace.", Agents: "Control task planning, diagnostics, and memory injection.", Integrations: "Review the local services and project integrations currently connected.", "Privacy & Security": "Review the local data boundary and storage controls.", Storage: "Back up local workspace data without destructive shortcuts.", Updates: "See the release channel and update delivery status.", Advanced: "Review controls that affect diagnostics and motion." };
   return descriptions[category];
 }
 
 function Toggle({ label, detail, checked, onChange }: { label: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) {
   return <label className="settings-toggle"><span><strong>{label}</strong><small>{detail}</small></span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /></label>;
+}
+
+function PetSettings({ props, change }: { props: SettingsProps; change: (key: string, value: string | boolean) => void }) {
+  const [character, setCharacter] = useState(props.petCharacter);
+  const [sprite, setSprite] = useState(props.petSpriteDataUrl);
+  const onSpriteChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") { setSprite(reader.result); localStorage.setItem("skai.pet.sprite", reader.result); change("petSpriteDataUrl", reader.result); } };
+    reader.readAsDataURL(file);
+  };
+  return <>
+    <div className="settings-callout"><strong>Separate desktop companion</strong><span>Percy is its own transparent, always-on-top window. It can be dragged anywhere and stays independent from the Skai workspace.</span></div>
+    <Toggle label="Show Percy" detail="Open the companion above your other windows." checked={props.petVisible} onChange={(value) => change("petVisible", value)} />
+    <Toggle label="Let Percy walk around" detail="Allow gentle ambient movement while Percy is idle. Dragging always pauses movement." checked={props.petWander} onChange={(value) => change("petWander", value)} />
+    <div className="settings-field"><label>Companion<select value={character} onChange={(event) => { setCharacter(event.target.value); localStorage.setItem("skai.pet.character", event.target.value); change("petCharacter", event.target.value); }}><option value="percy">Percy · Skai wolf</option><option value="byte">Byte · neon bot</option><option value="ember">Ember · ember fox</option><option value="nova">Nova · star cat</option><option value="rocky">Rocky · pocket rock</option><option value="sprout">Sprout · tiny plant</option></select></label><div className="pet-settings-preview"><img src={sprite || `/assets/pets/${character}-idle-1.png`} alt="" /><span>{sprite ? "Custom sprite sheet" : "Built-in sprite set"}</span></div></div>
+    <div className="settings-provider-row pet-sprite-import"><span><strong>Use your own sprite sheet</strong><small>Import a PNG, WebP, or GIF up to 5 MB. Use a six-frame horizontal strip; it is stored locally in this profile.</small></span><label className="ui-button ui-button-secondary"><span>Choose image</span><input type="file" accept="image/png,image/webp,image/gif" onChange={onSpriteChange} /></label></div>
+    {sprite && <div className="settings-inline-action"><span>Your custom sprite is active.</span><Button variant="ghost" onClick={() => { setSprite(""); localStorage.removeItem("skai.pet.sprite"); change("petSpriteDataUrl", ""); }}>Use built-in sprites</Button></div>}
+  </>;
 }
 
 function Integration({ title, detail, status }: { title: string; detail: string; status: "Available" | "Needs setup" | "Planned" }) {

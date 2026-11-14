@@ -6,6 +6,14 @@ const WALK_SHEET = new URL("../../../../../assets/pets/percy-walk-frames.png", i
 const IDLE_SHEET = new URL("../../../../../assets/pets/percy-idle-frames.png", import.meta.url).href;
 const SUCCESS_SHEET = new URL("../../../../../assets/pets/percy-success-frames.png", import.meta.url).href;
 const ERROR_SHEET = new URL("../../../../../assets/pets/percy-error-frames.png", import.meta.url).href;
+const BUILTIN_SHEETS: Record<string, Record<PetPose, string>> = {
+  percy: { idle: IDLE_SHEET, walk: WALK_SHEET, success: SUCCESS_SHEET, error: ERROR_SHEET },
+  byte: { idle: new URL("../../../../../assets/pets/byte-idle-frames.png", import.meta.url).href, walk: new URL("../../../../../assets/pets/byte-walk-frames.png", import.meta.url).href, success: new URL("../../../../../assets/pets/byte-success-frames.png", import.meta.url).href, error: new URL("../../../../../assets/pets/byte-error-frames.png", import.meta.url).href },
+  ember: { idle: new URL("../../../../../assets/pets/ember-idle-frames.png", import.meta.url).href, walk: new URL("../../../../../assets/pets/ember-walk-frames.png", import.meta.url).href, success: new URL("../../../../../assets/pets/ember-success-frames.png", import.meta.url).href, error: new URL("../../../../../assets/pets/ember-error-frames.png", import.meta.url).href },
+  nova: { idle: new URL("../../../../../assets/pets/nova-idle-frames.png", import.meta.url).href, walk: new URL("../../../../../assets/pets/nova-walk-frames.png", import.meta.url).href, success: new URL("../../../../../assets/pets/nova-success-frames.png", import.meta.url).href, error: new URL("../../../../../assets/pets/nova-error-frames.png", import.meta.url).href },
+  rocky: { idle: new URL("../../../../../assets/pets/rocky-idle-frames.png", import.meta.url).href, walk: new URL("../../../../../assets/pets/rocky-walk-frames.png", import.meta.url).href, success: new URL("../../../../../assets/pets/rocky-success-frames.png", import.meta.url).href, error: new URL("../../../../../assets/pets/rocky-error-frames.png", import.meta.url).href },
+  sprout: { idle: new URL("../../../../../assets/pets/sprout-idle-frames.png", import.meta.url).href, walk: new URL("../../../../../assets/pets/sprout-walk-frames.png", import.meta.url).href, success: new URL("../../../../../assets/pets/sprout-success-frames.png", import.meta.url).href, error: new URL("../../../../../assets/pets/sprout-error-frames.png", import.meta.url).href },
+};
 
 type PetPose = "idle" | "walk" | "success" | "error";
 
@@ -14,6 +22,8 @@ export function PetWindow() {
   const [bubble, setBubble] = useState<string | null>(null);
   const [bubbleKind, setBubbleKind] = useState<PetCompletionEvent["kind"]>("success");
   const [motion, setMotion] = useState<PetMotionSettings>({ wander: true, reduceMotion: false });
+  const [character, setCharacter] = useState(() => localStorage.getItem("skai.pet.character") ?? "percy");
+  const [customSprite, setCustomSprite] = useState(() => localStorage.getItem("skai.pet.sprite") ?? "");
   const dragging = useRef(false);
   const motionRef = useRef(motion);
   const bubbleTimer = useRef<number | undefined>(undefined);
@@ -27,8 +37,10 @@ export function PetWindow() {
     document.title = "Percy · Skai companion";
     document.documentElement.dataset.petWindow = "true";
     document.body.dataset.petWindow = "true";
+    const syncSettings = () => { setCharacter(localStorage.getItem("skai.pet.character") ?? "percy"); setCustomSprite(localStorage.getItem("skai.pet.sprite") ?? ""); };
+    window.addEventListener("storage", syncSettings);
     const pet = window.serverRockAgent?.pet;
-    if (!pet) return () => { delete document.documentElement.dataset.petWindow; delete document.body.dataset.petWindow; };
+    if (!pet) return () => { window.removeEventListener("storage", syncSettings); delete document.documentElement.dataset.petWindow; delete document.body.dataset.petWindow; };
     const showCompletion = (event: PetCompletionEvent) => {
       setBubble(event.text);
       setBubbleKind(event.kind);
@@ -55,11 +67,12 @@ export function PetWindow() {
       window.clearTimeout(poseTimer.current);
       delete document.documentElement.dataset.petWindow;
       delete document.body.dataset.petWindow;
+      window.removeEventListener("storage", syncSettings);
     };
   }, []);
 
   const activePose = pose === "success" || pose === "error" ? pose : motion.wander ? "walk" : "idle";
-  const sheet = activePose === "success" ? SUCCESS_SHEET : activePose === "error" ? ERROR_SHEET : activePose === "idle" ? IDLE_SHEET : WALK_SHEET;
+  const sheet = customSprite || (BUILTIN_SHEETS[character] ?? BUILTIN_SHEETS.percy)[activePose];
   const animationPaused = motion.reduceMotion;
   const beginDrag = (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || event.target instanceof Element && event.target.closest("button")) return;
