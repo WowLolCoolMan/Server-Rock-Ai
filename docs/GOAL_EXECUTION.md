@@ -11576,6 +11576,36 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 317 — Add a durable local document corpus
+
+Status: `implemented_and_smoke_verified`
+
+The Agent Host now exposes an explicit local document corpus with bounded
+upsert, list, search, snippet, and remove operations. Documents persist in a
+separate local JSON store and are never crawled or learned implicitly. Search
+is deterministic term matching with bounded snippets, which is a safe base for
+later vector or hybrid retrieval without claiming those engines exist today.
+PDF extraction remains an explicit attachment workflow, and OCR is not
+pretended to be available.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/DocumentCorpusStore.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `scripts/smoke-agent-host.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- Agent Host build passed with zero warnings and zero errors.
+- Agent Host smoke passed corpus capability discovery, upsert, search/snippet,
+  and removal against a disposable profile.
+- Syntax and `git diff --check` passed.
+
+Remaining: connect corpus management to the renderer, then add richer local
+file ingestion, vector-ready indexing, model/voice recovery, and release gaps.
+
 ## Slice 315 — Review and commit local Git changes
 
 Status: `implemented_and_smoke_verified`

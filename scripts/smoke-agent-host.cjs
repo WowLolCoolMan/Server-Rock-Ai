@@ -18,6 +18,7 @@ const env = {
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
   SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
   SRAI_PROJECTS_PATH: path.join(tempRoot, "projects.json"),
+  SRAI_CORPUS_PATH: path.join(tempRoot, "document-corpus.json"),
 };
 spawnSync("git", ["init", "--quiet", tempRoot], { cwd: tempRoot, windowsHide: true });
 spawnSync("git", ["config", "user.email", "smoke@example.invalid"], { cwd: tempRoot, windowsHide: true });
@@ -75,7 +76,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("tasks.execute") || !health.result?.capabilities?.includes("corpus.search"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const recovered = await request("tasks.list");
   const interrupted = recovered.result?.find(task => task.id === interruptedTaskId);
@@ -92,6 +93,12 @@ async function run() {
   if (!diff.ok || typeof diff.result?.text !== "string" || diff.result.includedFiles !== 1) throw new Error("project.git.diff did not return the selected local diff.");
   const committed = await request("project.git.commit", { id: project.result.id, paths: [reviewPath], message: "Review local Git smoke" });
   if (!committed.ok || committed.result?.committed !== true) throw new Error("project.git.commit did not create the reviewed local commit.");
+  const corpusDocument = await request("corpus.upsert", { title: "Local retrieval smoke", source: "smoke://document", content: "Skai retrieves explicit local documents with bounded snippets.", tags: ["local", "retrieval"] });
+  if (!corpusDocument.ok || typeof corpusDocument.result?.id !== "string") throw new Error("corpus.upsert did not persist a local document.");
+  const corpusSearch = await request("corpus.search", { query: "bounded snippets" });
+  if (!corpusSearch.ok || corpusSearch.result?.[0]?.document?.id !== corpusDocument.result.id || !corpusSearch.result?.[0]?.snippet?.includes("bounded")) throw new Error("corpus.search did not return a matching bounded snippet.");
+  const corpusRemoved = await request("corpus.remove", { id: corpusDocument.result.id });
+  if (!corpusRemoved.ok || corpusRemoved.result?.removed !== true) throw new Error("corpus.remove did not remove the local document.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");

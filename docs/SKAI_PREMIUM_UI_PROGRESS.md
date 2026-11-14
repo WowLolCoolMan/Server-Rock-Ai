@@ -12,6 +12,18 @@ width.
 Evidence: `npm run desktop:build`, `npm run package:electron`, and
 `npm run smoke:electron:overflow` passed (`9 routes × 5 viewport widths`).
 
+## Slice 317 — Durable local document corpus boundary
+
+The isolated Agent Host now provides explicit local corpus operations for
+listing, bounded upsert, deterministic term search with snippets, and removal.
+The corpus is persisted separately from memory and does not crawl or learn
+from files implicitly. This establishes a truthful local retrieval boundary
+for the renderer and future vector/hybrid indexing work.
+
+Evidence: Agent Host build and disposable protocol smoke passed, including
+corpus capability discovery, round-trip persistence, matching search results,
+and removal.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution

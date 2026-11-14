@@ -61,7 +61,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -97,6 +97,10 @@ public static class AgentHostLoop
             "memory.remove" => RemoveMemory(request),
             "memory.enabled" => SetMemoryEnabled(request),
             "memory.export" => ExportMemory(request),
+            "corpus.list" => ListCorpus(request),
+            "corpus.search" => SearchCorpus(request),
+            "corpus.upsert" => UpsertCorpus(request),
+            "corpus.remove" => RemoveCorpus(request),
             "workspace.attachment.extract" => ExtractPdfAttachment(request),
             "chat.queue.list" => ListQueuedMessages(request),
             "chat.queue.enqueue" => EnqueueChatMessage(request),
@@ -839,6 +843,9 @@ public static class AgentHostLoop
     private static MemoryStore CreateMemoryStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_MEMORY_PATH"));
 
+    private static DocumentCorpusStore CreateCorpusStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_CORPUS_PATH"));
+
     private static ChatMessageQueueStore CreateChatQueueStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_CHAT_QUEUE_PATH"));
 
@@ -880,6 +887,25 @@ public static class AgentHostLoop
 
     private static AgentResponse ExportMemory(AgentRequest request) =>
         new(ProtocolVersion, request.Id, true, new { fileName = "skai-memory-backup.json", json = CreateMemoryStore().ExportJson() });
+
+    private static AgentResponse ListCorpus(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, CreateCorpusStore().Load());
+
+    private static AgentResponse SearchCorpus(AgentRequest request) =>
+        new(ProtocolVersion, request.Id, true, CreateCorpusStore().Search(OptionalString(request, "query"), OptionalInt(request, "limit") ?? 12));
+
+    private static AgentResponse UpsertCorpus(AgentRequest request)
+    {
+        var store = CreateCorpusStore();
+        var document = store.Upsert(OptionalString(request, "id"), RequiredBoundedString(request, "title", DocumentCorpusStore.MaxTitleCharacters), RequiredBoundedString(request, "source", DocumentCorpusStore.MaxSourceCharacters), RequiredBoundedString(request, "content", DocumentCorpusStore.MaxContentCharacters), OptionalStringList(request, "tags", 16, 64));
+        return new(ProtocolVersion, request.Id, true, document);
+    }
+
+    private static AgentResponse RemoveCorpus(AgentRequest request)
+    {
+        CreateCorpusStore().Remove(RequiredBoundedString(request, "id", 128));
+        return new(ProtocolVersion, request.Id, true, new { removed = true });
+    }
 
     private static AgentResponse GetSettings(AgentRequest request)
     {
