@@ -10323,3 +10323,23 @@ show the repository root together with the branch and target path.
 
 Evidence: `991ec42`; desktop typecheck, production build, and `git diff --check`
 passed.
+
+## Slice — Surface reviewable agent workspace proposals
+
+Status: `implemented_host_renderer_build_smoke_verified`
+
+Local task results now parse bounded `<workspace-change>` and
+`<workspace-command>` blocks into durable task artifacts. Workbench renders
+the file paths, proposed contents, command directories, commands, and bounded
+timeouts in collapsible review sections. The machine-readable blocks are
+removed from the human-facing result summary and provenance labels record when
+the model returned file or command proposals.
+
+This is intentionally review-only. No proposal is applied, no command is run,
+and no task result can silently mutate the repository. The next slice must add
+explicit per-proposal approval, optimistic file hashes, undo receipts,
+command-output capture, and process isolation inside a retained worktree.
+
+Evidence: `e2dbf8d`; Core tests, Agent Host build/smoke, desktop typecheck/build,
+future-feature audit, Electron runtime audit, local-only audit, syntax checks,
+and `git diff --check` passed.

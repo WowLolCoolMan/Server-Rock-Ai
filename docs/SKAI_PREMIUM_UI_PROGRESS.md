@@ -692,3 +692,22 @@ root alongside the branch and target path.
 
 Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
 `git diff --check` passed. Commit: `991ec42`.
+
+## Slice — Surface reviewable agent workspace proposals
+
+Status: `implemented_host_renderer_build_smoke_verified`
+
+Local task results now parse bounded `<workspace-change>` and
+`<workspace-command>` blocks into durable task artifacts. Agent Workbench
+renders those proposals in collapsible review sections, preserving the full
+file content and command metadata within the existing task limits. The result
+summary removes the machine-readable blocks and adds provenance labels when
+proposals are present. No proposal is applied or executed automatically.
+
+Evidence: Core tests, Agent Host build and smoke, desktop typecheck/build,
+future-feature, Electron runtime, local-only, syntax, and diff checks passed.
+Commit: `e2dbf8d`.
+
+Remaining: add explicit per-proposal apply/run approval flows inside a retained
+worktree, with optimistic hashes, undo receipts, command output capture, and
+process isolation before claiming coding-agent edits are complete.
