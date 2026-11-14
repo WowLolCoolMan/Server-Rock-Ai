@@ -15,7 +15,7 @@ export function PetWindow() {
   const poseTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    document.title = "Skai companion";
+    document.title = "Percy · Skai companion";
     document.documentElement.dataset.petWindow = "true";
     document.body.dataset.petWindow = "true";
     const pet = window.serverRockAgent?.pet;
@@ -58,10 +58,9 @@ export function PetWindow() {
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     window.serverRockAgent?.pet?.endDrag();
   };
-  return <main className="pet-window-root" aria-label="Skai companion" onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+  return <main className="pet-window-root" aria-label="Percy desktop companion. Drag to move." onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
     {bubble && <div className="pet-window-bubble" role="status">{bubble}</div>}
-    <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Skai companion">×</button>
-    <div className={`pet-window-sprite pet-window-sprite-${pose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Skai companion" />
-    <span className="pet-window-caption">{pose === "success" ? "Finished" : motion.wander && !motion.reduceMotion ? "Walking around" : "Drag me"}</span>
+    <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Percy companion">×</button>
+    <div className={`pet-window-sprite pet-window-sprite-${pose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Percy companion" />
   </main>;
 }

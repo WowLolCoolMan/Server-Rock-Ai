@@ -25,7 +25,14 @@ let mainWindow;
 let petWindow;
 let petReady = false;
 let petDragOffset = null;
+let petWanderTarget = null;
+let petWanderPauseTimer;
+let petWanderStepTimer;
+let petWanderMoving = false;
+let petMotion = { wander: true, reduceMotion: false };
 const pendingPetMessages = [];
+const PET_WINDOW_WIDTH = 220;
+const PET_WINDOW_HEIGHT = 190;
 const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
 const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
 const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
@@ -47,11 +54,67 @@ function readPetState() {
 
 function petBounds() {
   const stored = readPetState().bounds;
-  const width = 190;
-  const height = 170;
+  const width = PET_WINDOW_WIDTH;
+  const height = PET_WINDOW_HEIGHT;
   if (stored && [stored.x, stored.y].every(Number.isFinite)) return { x: stored.x, y: stored.y, width, height };
   const workArea = screen.getPrimaryDisplay().workArea;
   return { x: workArea.x + workArea.width - width - 28, y: workArea.y + workArea.height - height - 28, width, height };
+}
+
+function stopPetWander() {
+  if (petWanderPauseTimer) clearTimeout(petWanderPauseTimer);
+  if (petWanderStepTimer) clearTimeout(petWanderStepTimer);
+  petWanderPauseTimer = undefined;
+  petWanderStepTimer = undefined;
+  petWanderTarget = null;
+  petWanderMoving = false;
+}
+
+function petWorkArea() {
+  if (!petWindow || petWindow.isDestroyed()) return screen.getPrimaryDisplay().workArea;
+  const bounds = petWindow.getBounds();
+  return screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }).workArea;
+}
+
+function schedulePetWander() {
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
+  if (petWanderPauseTimer || petWanderStepTimer) return;
+  petWanderPauseTimer = setTimeout(() => {
+    petWanderPauseTimer = undefined;
+    if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
+    const area = petWorkArea();
+    const bounds = petWindow.getBounds();
+    const minX = area.x + 16;
+    const maxX = Math.max(minX, area.x + area.width - PET_WINDOW_WIDTH - 16);
+    const y = Math.min(Math.max(bounds.y, area.y + 16), area.y + area.height - PET_WINDOW_HEIGHT - 16);
+    let x = Math.round(minX + Math.random() * Math.max(1, maxX - minX));
+    if (Math.abs(x - bounds.x) < 96) x = bounds.x < (minX + maxX) / 2 ? maxX : minX;
+    petWanderTarget = { x, y };
+    movePetTowardTarget();
+  }, 1800 + Math.round(Math.random() * 2600));
+}
+
+function movePetTowardTarget() {
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petWanderTarget || !petMotion.wander || petMotion.reduceMotion || petDragOffset) {
+    petWanderStepTimer = undefined;
+    petWanderMoving = false;
+    return;
+  }
+  const bounds = petWindow.getBounds();
+  const dx = petWanderTarget.x - bounds.x;
+  const dy = petWanderTarget.y - bounds.y;
+  if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) {
+    petWindow.setPosition(petWanderTarget.x, petWanderTarget.y);
+    petWanderTarget = null;
+    petWanderStepTimer = undefined;
+    petWanderMoving = false;
+    schedulePetWander();
+    return;
+  }
+  const step = Math.min(3, Math.max(Math.abs(dx), Math.abs(dy)));
+  petWanderMoving = true;
+  petWindow.setPosition(Math.round(bounds.x + Math.sign(dx) * Math.min(Math.abs(dx), step)), Math.round(bounds.y + Math.sign(dy) * Math.min(Math.abs(dy), step)));
+  petWanderStepTimer = setTimeout(movePetTowardTarget, 55);
 }
 
 function persistPetState() {
@@ -68,8 +131,13 @@ function sendPetVisibility(visible) {
 
 function setPetVisible(visible) {
   if (!petWindow || petWindow.isDestroyed()) return;
-  if (visible) petWindow.showInactive();
-  else petWindow.hide();
+  if (visible) {
+    petWindow.showInactive();
+    schedulePetWander();
+  } else {
+    stopPetWander();
+    petWindow.hide();
+  }
   if (visible && petReady) flushPetMessages();
   persistPetState();
   sendPetVisibility(visible);
@@ -143,7 +211,7 @@ function createPetWindow() {
     },
   });
   petWindow.setAlwaysOnTop(true, "floating");
-  petWindow.on("moved", persistPetState);
+  petWindow.on("moved", () => { if (!petWanderMoving) persistPetState(); });
   petWindow.webContents.on("did-finish-load", () => {
     petReady = true;
     flushPetMessages();
@@ -157,7 +225,12 @@ function createPetWindow() {
   } else {
     void petWindow.loadFile(path.join(rendererRoot, "dist", "index.html"), { query: { pet: "1" } });
   }
-  petWindow.once("ready-to-show", () => { if (savedState.visible !== false) petWindow?.showInactive(); });
+  petWindow.once("ready-to-show", () => {
+    if (savedState.visible !== false) {
+      petWindow?.showInactive();
+      schedulePetWander();
+    }
+  });
   return petWindow;
 }
 const allowedMethods = new Set([
@@ -358,11 +431,14 @@ app.whenReady().then(() => {
   });
   ipcMain.on("pet:set-motion", (event, settings) => {
     if (!BrowserWindow.fromWebContents(event.sender) || !settings || typeof settings !== "object") return;
-    const motion = { wander: Boolean(settings.wander), reduceMotion: Boolean(settings.reduceMotion) };
-    petWindow?.webContents.send("pet:motion", motion);
+    petMotion = { wander: Boolean(settings.wander), reduceMotion: Boolean(settings.reduceMotion) };
+    stopPetWander();
+    petWindow?.webContents.send("pet:motion", petMotion);
+    schedulePetWander();
   });
   ipcMain.on("pet:drag-start", (event, point) => {
     if (BrowserWindow.fromWebContents(event.sender) !== petWindow || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+    stopPetWander();
     const bounds = petWindow.getBounds();
     petDragOffset = { x: point.x - bounds.x, y: point.y - bounds.y };
   });
@@ -374,6 +450,7 @@ app.whenReady().then(() => {
     if (BrowserWindow.fromWebContents(event.sender) !== petWindow) return;
     petDragOffset = null;
     persistPetState();
+    schedulePetWander();
   });
   createWindow();
   createPetWindow();
@@ -389,6 +466,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  stopPetWander();
   if (petWindow && !petWindow.isDestroyed()) petWindow.destroy();
   stopAgentHost();
 });

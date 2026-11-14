@@ -3,6 +3,49 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 261 — Make Percy a true desktop companion overlay
+
+Status: `implemented_native_wander_live_electron_verified`
+
+Percy now behaves as a real desktop companion rather than a sprite that only
+animates in place. The existing transparent Electron child window remains
+separate from the Skai workspace, while the native main process gives it a
+bounded, gentle horizontal wander loop inside the current monitor work area.
+Manual dragging cancels the active walk target, persists the dropped position,
+and resumes wandering after release. Reduced motion and the existing “Let the
+pet walk around” preference both stop native movement as well as the sprite
+animation. The sprite overlay no longer shows a permanent caption or panel;
+only the completion bubble and an unobtrusive hide control are visible when
+needed.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run typecheck` — passed.
+- `npm run build` — passed; the Percy walk and success six-frame strips were
+  emitted as production assets.
+- `node --check electron/main.cjs` — passed.
+- `node --check electron/preload.cjs` — passed.
+- `git diff --check` — passed.
+- Live Electron AX state exposed a separate `Percy · Skai companion` window
+  with the accessible “Percy desktop companion. Drag to move.” surface.
+- Native window bounds changed from `875,826` to `1112,826` during a five
+  second idle observation, proving the overlay moved independently of the main
+  window.
+
+The completion-message bridge remains local-only: successful agent-host
+requests are queued to the standalone pet window and rendered as a short
+status bubble. No cloud transport or cloud execution was introduced.
+
+Remaining: run a live successful local provider request to capture the bubble
+in Electron, and add a native UI harness for drag/drop bounds if the desktop
+test harness is expanded.
+
 ## Slice 260 — Dock the Electron Chat composer
 
 Status: `implemented_renderer_chat_viewport_live_electron_verified`
