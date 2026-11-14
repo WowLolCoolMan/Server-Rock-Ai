@@ -50,22 +50,26 @@ async function evaluate(target, expression) {
 
 async function main() {
   const deadline = Date.now() + timeoutMs;
-  let target;
+  let mainTarget;
+  let petTarget;
   while (Date.now() < deadline) {
     try {
       const targets = await fetchJson(`http://127.0.0.1:${port}/json/list`);
-      target = targets.find((item) => item.type === "page");
-      if (target?.title?.includes("Skai Desktop")) break;
+      mainTarget = targets.find((item) => item.type === "page" && !item.url.includes("#pet"));
+      petTarget = targets.find((item) => item.type === "page" && item.url.includes("#pet"));
+      if (mainTarget?.title?.includes("Skai Desktop") && petTarget?.title?.includes("Skai Desktop")) break;
     } catch { /* The packaged window is still starting. */ }
     await sleep(250);
   }
-  if (!target) throw new Error(`Packaged Electron did not expose a page before timeout. Output: ${output.slice(-2_000)}`);
-  console.log(`Packaged target: ${JSON.stringify({ title: target.title, url: target.url, type: target.type, websocket: Boolean(target.webSocketDebuggerUrl) })}`);
-  const result = await evaluate(target, "(async () => { const health = await window.serverRockAgent.request('runtime.health'); return JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), pet: Boolean(document.querySelector('[aria-label=\\\"Skai pet. Drag to move, or use arrow keys.\\\"]')), credentialsBridge: health.ok && health.result.capabilities.includes('credentials.status') }); })()");
-  if (typeof result !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify(result)} for ${target.url}`);
-  const state = JSON.parse(result);
-  if (!state.title.includes("Skai Desktop") || !state.settings || !state.pet || !state.credentialsBridge) throw new Error(`Packaged Electron rendered an incomplete shell or bridge: ${result}`);
-  console.log(`Packaged Electron smoke passed: ${state.title}; settings, pet, and credential bridge rendered.`);
+  if (!mainTarget || !petTarget) throw new Error(`Packaged Electron did not expose both main and pet windows before timeout. Output: ${output.slice(-2_000)}`);
+  console.log(`Packaged targets: ${JSON.stringify([mainTarget, petTarget].map((target) => ({ title: target.title, url: target.url, type: target.type, websocket: Boolean(target.webSocketDebuggerUrl) })))} `);
+  const mainResult = await evaluate(mainTarget, "(async () => { const health = await window.serverRockAgent.request('runtime.health'); const settingsButton = [...document.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Settings'); settingsButton?.click(); await new Promise((resolve) => setTimeout(resolve, 100)); const petButton = [...document.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Pet'); petButton?.click(); await new Promise((resolve) => setTimeout(resolve, 100)); return JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), petSettings: document.body.innerText.includes('Separate always-on-top window') && document.body.innerText.includes('Choose animation manifest'), credentialsBridge: health.ok && health.result.capabilities.includes('credentials.status') }); })()");
+  const petResult = await evaluate(petTarget, "JSON.stringify({ title: document.title, pet: Boolean(document.querySelector('[aria-label=\\\"Skai pet. Drag to move.\\\"]')), transparent: getComputedStyle(document.body).backgroundColor === 'rgba(0, 0, 0, 0)' || document.body.classList.contains('pet-window-document') })");
+  if (typeof mainResult !== "string" || typeof petResult !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify({ mainResult, petResult })}`);
+  const mainState = JSON.parse(mainResult);
+  const petState = JSON.parse(petResult);
+  if (!mainState.title.includes("Skai Desktop") || !mainState.settings || !mainState.petSettings || !mainState.credentialsBridge || !petState.title.includes("Skai Desktop") || !petState.pet || !petState.transparent) throw new Error(`Packaged Electron rendered incomplete main or pet windows: ${JSON.stringify({ mainState, petState })}`);
+  console.log(`Packaged Electron smoke passed: main settings and credential bridge; separate transparent pet window rendered.`);
 }
 
 main().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => {

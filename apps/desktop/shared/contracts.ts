@@ -92,8 +92,51 @@ export type DesktopQueuedMessage = {
   attachments?: Array<{ fileName: string; mediaType?: string | null }>;
 };
 
+export type PetActivity = "idle" | "walking" | "thinking" | "coding" | "working" | "success" | "error";
+export type PetAssetKind = "sprite" | "manifest";
+export type PetPosition = { x: number; y: number };
+export type PetManifest = {
+  frameWidth: number;
+  frameHeight: number;
+  columns: number;
+  rows: number;
+  states: Record<string, { row: number; frames: number[]; fps: number }>;
+};
+export type PetSettings = {
+  visible: boolean;
+  wander: boolean;
+  reduceMotion: boolean;
+  petId: string;
+  spritePath: string;
+  manifestPath: string;
+  position: PetPosition;
+};
+export type PetWindowConfig = PetSettings & {
+  activity: PetActivity;
+  alwaysOnTop: true;
+  customSpriteDataUrl?: string;
+  customManifest?: PetManifest;
+};
+
+export type PetAssetSelection = { path: string; fileName: string };
+
+export interface PetBridge {
+  configure(settings: PetSettings): void;
+  setActivity(activity: PetActivity): void;
+  getConfig(): Promise<PetWindowConfig>;
+  onConfig(listener: (config: PetWindowConfig) => void): () => void;
+  onPosition(listener: (position: PetPosition) => void): () => void;
+  onVisibilityChange(listener: (visible: boolean) => void): () => void;
+  pickAsset(kind: PetAssetKind): Promise<PetAssetSelection | null>;
+  dragStart(position: { screenX: number; screenY: number }): void;
+  dragMove(position: { screenX: number; screenY: number }): void;
+  dragEnd(): void;
+  hide(): void;
+}
+
 export interface AgentBridge {
   request(method: string, params?: Record<string, unknown>): Promise<AgentResponse>;
+  pet: PetBridge;
 }
 
 declare global {

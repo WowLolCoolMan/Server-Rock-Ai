@@ -56,8 +56,12 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
+            "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
+            "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
+            "marketplace.tools.list" => ListMarketplaceTools(request),
+            "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
@@ -177,6 +181,77 @@ public static class AgentHostLoop
             capabilities = model.Capabilities,
             provider = providerId,
         }).ToArray());
+    }
+
+    private static async Task<AgentResponse> SearchMarketplaceModels(AgentRequest request)
+    {
+        var query = OptionalString(request, "query") ?? string.Empty;
+        var uncensored = OptionalBoolean(request, "uncensored");
+        var models = await new ModelLibraryService().SearchHuggingFaceAsync(query, uncensored).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, models.Select(model => new
+        {
+            id = model.Id,
+            downloads = model.Downloads,
+            likes = model.Likes,
+            uncensored = model.IsUncensored,
+            tags = model.Tags ?? [],
+            url = $"https://huggingface.co/{model.Id}",
+        }).ToArray());
+    }
+
+    private static async Task<AgentResponse> SearchMarketplaceSkills(AgentRequest request)
+    {
+        var query = OptionalString(request, "query")?.Trim() ?? string.Empty;
+        if (query.Length > 128 || query.Any(char.IsControl)) throw new InvalidOperationException("The skill catalog query is invalid.");
+        var searchTerms = string.IsNullOrWhiteSpace(query) ? "agent skill" : query + " skill";
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        using var message = new HttpRequestMessage(HttpMethod.Get, new Uri("https://api.github.com/search/repositories?q=" + Uri.EscapeDataString(searchTerms) + "+in:name,description,readme&sort=stars&order=desc&per_page=30"));
+        message.Headers.Accept.ParseAdd("application/vnd.github+json");
+        message.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("skill marketplace"));
+        message.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        using var response = await client.SendAsync(message).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"GitHub skill search failed ({(int)response.StatusCode}).");
+        using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, CancellationToken.None, "GitHub skill catalog").ConfigureAwait(false);
+        if (!json.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+            return new(ProtocolVersion, request.Id, true, Array.Empty<object>());
+        var results = items.EnumerateArray().Select(item => new
+        {
+            id = item.TryGetProperty("full_name", out var fullName) ? fullName.GetString() ?? string.Empty : string.Empty,
+            name = item.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
+            description = item.TryGetProperty("description", out var description) ? description.GetString() ?? string.Empty : string.Empty,
+            stars = item.TryGetProperty("stargazers_count", out var stars) && stars.TryGetInt32(out var count) ? count : 0,
+            url = item.TryGetProperty("html_url", out var url) ? url.GetString() ?? string.Empty : string.Empty,
+            defaultBranch = item.TryGetProperty("default_branch", out var branch) ? branch.GetString() ?? "main" : "main",
+        }).Where(item => item.id.Length > 0 && item.url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase)).ToArray();
+        return new(ProtocolVersion, request.Id, true, results);
+    }
+
+    private static AgentResponse ListMarketplaceTools(AgentRequest request)
+    {
+        var tools = PluginCatalogService.Search(OptionalString(request, "query"), OptionalString(request, "category")).Select(tool => new
+        {
+            id = tool.Id,
+            name = tool.Name,
+            category = tool.Category,
+            description = tool.Description,
+            access = tool.Access,
+            status = tool.StatusLabel,
+            builtIn = tool.IsBuiltIn,
+            whereToFind = tool.WhereToFind,
+        }).ToArray();
+        return new(ProtocolVersion, request.Id, true, tools);
+    }
+
+    private static AgentResponse ListMarketplaceMcpServers(AgentRequest request)
+    {
+        var servers = new[]
+        {
+            new { id = "filesystem", name = "Filesystem", transport = "stdio", description = "Official MCP filesystem server for explicitly approved local paths.", source = "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem", status = "Cataloged; connect explicitly" },
+            new { id = "github", name = "GitHub", transport = "stdio", description = "Repository, issue, and pull-request tools with explicit credentials and approvals.", source = "https://github.com/github/github-mcp-server", status = "Cataloged; connect explicitly" },
+            new { id = "fetch", name = "Fetch", transport = "stdio", description = "Read-only web fetching for approved research workflows.", source = "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch", status = "Cataloged; connect explicitly" },
+            new { id = "memory", name = "Memory", transport = "stdio", description = "Knowledge-graph memory server for explicitly managed local context.", source = "https://github.com/modelcontextprotocol/servers/tree/main/src/memory", status = "Cataloged; connect explicitly" },
+        };
+        return new(ProtocolVersion, request.Id, true, servers);
     }
 
     private static AgentResponse ListProjects(AgentRequest request)
@@ -821,6 +896,13 @@ public static class AgentHostLoop
             cloudVoiceEnabled = settings.CloudVoiceEnabled,
             elevenLabsVoiceId = settings.ElevenLabsVoiceId,
             elevenLabsModelId = settings.ElevenLabsModelId,
+            petVisible = settings.PetVisible,
+            petWanderEnabled = settings.PetWanderEnabled,
+            petId = settings.PetId,
+            petSpritePath = settings.PetSpritePath,
+            petManifestPath = settings.PetManifestPath,
+            petPositionX = settings.PetPositionX,
+            petPositionY = settings.PetPositionY,
         });
     }
 
@@ -865,13 +947,27 @@ public static class AgentHostLoop
                 settings.MemoryInjectionEnabled = memoryInjection.GetBoolean();
             if (parameters.TryGetProperty("reduceMotion", out var reduceMotion) && reduceMotion.ValueKind is JsonValueKind.True or JsonValueKind.False)
                 settings.ReduceMotion = reduceMotion.GetBoolean();
+            if (parameters.TryGetProperty("petVisible", out var petVisible) && petVisible.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.PetVisible = petVisible.GetBoolean();
+            if (parameters.TryGetProperty("petWanderEnabled", out var petWander) && petWander.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.PetWanderEnabled = petWander.GetBoolean();
+            if (parameters.TryGetProperty("petId", out var petId) && petId.ValueKind == JsonValueKind.String)
+                settings.PetId = petId.GetString() ?? settings.PetId;
+            if (parameters.TryGetProperty("petSpritePath", out var petSpritePath) && petSpritePath.ValueKind == JsonValueKind.String)
+                settings.PetSpritePath = petSpritePath.GetString() ?? settings.PetSpritePath;
+            if (parameters.TryGetProperty("petManifestPath", out var petManifestPath) && petManifestPath.ValueKind == JsonValueKind.String)
+                settings.PetManifestPath = petManifestPath.GetString() ?? settings.PetManifestPath;
+            if (parameters.TryGetProperty("petPositionX", out var petPositionX) && petPositionX.ValueKind == JsonValueKind.Number && petPositionX.TryGetInt32(out var parsedPetPositionX))
+                settings.PetPositionX = parsedPetPositionX;
+            if (parameters.TryGetProperty("petPositionY", out var petPositionY) && petPositionY.ValueKind == JsonValueKind.Number && petPositionY.TryGetInt32(out var parsedPetPositionY))
+                settings.PetPositionY = parsedPetPositionY;
         }
         EnsureCloudRouteIsEnabled(endpoint, requestedProvider, requestedCloudRoute);
         settings.Endpoint = endpoint;
         settings.ModelProvider = requestedProvider;
         settings.CloudRouteEnabled = ProviderRoutePolicy.IsRemote(endpoint) && requestedCloudRoute;
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, cloudRouteEnabled = settings.CloudRouteEnabled, cloudVoiceEnabled = settings.CloudVoiceEnabled, elevenLabsVoiceId = settings.ElevenLabsVoiceId, elevenLabsModelId = settings.ElevenLabsModelId, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, cloudRouteEnabled = settings.CloudRouteEnabled, cloudVoiceEnabled = settings.CloudVoiceEnabled, elevenLabsVoiceId = settings.ElevenLabsVoiceId, elevenLabsModelId = settings.ElevenLabsModelId, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled, petVisible = settings.PetVisible, petWanderEnabled = settings.PetWanderEnabled, petId = settings.PetId, petSpritePath = settings.PetSpritePath, petManifestPath = settings.PetManifestPath, petPositionX = settings.PetPositionX, petPositionY = settings.PetPositionY });
     }
 
     private static AgentResponse CredentialStatus(AgentRequest request)

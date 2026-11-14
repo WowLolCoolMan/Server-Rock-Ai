@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AgentRequest } from "../../services/agentClient";
-import type { ChatAttachment, DesktopConversation, DesktopQueuedMessage } from "../../../shared/contracts";
+import type { ChatAttachment, DesktopConversation, DesktopQueuedMessage, PetActivity } from "../../../shared/contracts";
 import type { Message } from "../../app/types";
 import { speakConfiguredResponse, stopNativeSpeech, type CloudVoiceOptions } from "../../services/nativeTts";
 
@@ -13,15 +13,34 @@ type ChatWorkspaceOptions = {
   cloudRouteEnabled: boolean;
   cloudVoice: CloudVoiceOptions;
   onError: (message: string | null) => void;
+  onPetActivity: (activity: PetActivity) => void;
 };
 
-export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice, onError }: ChatWorkspaceOptions) {
+export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice, onError, onPetActivity }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [conversations, setConversations] = useState<DesktopConversation[]>([]);
   const [queuedMessages, setQueuedMessages] = useState<DesktopQueuedMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const petTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPetTimer = () => {
+    if (petTimer.current) clearTimeout(petTimer.current);
+    petTimer.current = null;
+  };
+  const transitionPet = (activity: PetActivity, returnToIdleAfterMs?: number) => {
+    clearPetTimer();
+    onPetActivity(activity);
+    if (returnToIdleAfterMs) petTimer.current = setTimeout(() => { petTimer.current = null; onPetActivity("idle"); }, returnToIdleAfterMs);
+  };
+  const startPetRequest = () => {
+    clearPetTimer();
+    onPetActivity("walking");
+    petTimer.current = setTimeout(() => { petTimer.current = null; onPetActivity("thinking"); }, 180);
+  };
+
+  useEffect(() => () => clearPetTimer(), []);
 
   useEffect(() => {
     if (connection !== "ready") return;
@@ -53,11 +72,12 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
     stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
-    setMessages(next); setAttachments([]); setBusy(true); onError(null);
+    setMessages(next); setAttachments([]); setBusy(true); onError(null); startPetRequest();
     const savedId = await saveConversation(next);
     const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: next });
     setBusy(false);
-    if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
+    if (!response.ok) { transitionPet("error", 1800); onError(response.error?.message ?? "The model request failed."); return; }
+    transitionPet("success", 1800);
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
     void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
@@ -69,10 +89,11 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     const prefix = messages.slice(0, messageIndex);
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
     stopNativeSpeech();
-    setMessages(prefix); setBusy(true); onError(null);
+    setMessages(prefix); setBusy(true); onError(null); startPetRequest();
     const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: prefix });
     setBusy(false);
-    if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
+    if (!response.ok) { setMessages(originalMessages); transitionPet("error", 1800); onError(response.error?.message ?? "The model request failed."); return; }
+    transitionPet("success", 1800);
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, conversationId);
     void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));

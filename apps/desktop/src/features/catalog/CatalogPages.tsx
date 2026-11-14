@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Model } from "../../app/types";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
@@ -11,6 +11,11 @@ function modelProvider(model: string) {
 function modelVisionLabel(vision: string) {
   return vision.toLowerCase() === "supported" ? "Vision" : "Text";
 }
+
+type MarketplaceModel = { id: string; downloads: number; likes: number; tags: string[]; url: string };
+type MarketplaceSkill = { id: string; name: string; description: string; stars: number; url: string; defaultBranch: string };
+type MarketplaceTool = { id: string; name: string; category: string; description: string; access: string; status: string; builtIn: boolean; whereToFind?: string | null };
+type MarketplaceMcp = { id: string; name: string; transport: string; description: string; source: string; status: string };
 
 export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
   const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
@@ -51,6 +56,12 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("All");
   const [selectedTitle, setSelectedTitle] = useState(cards[0].title);
+  const [models, setModels] = useState<MarketplaceModel[]>([]);
+  const [skills, setSkills] = useState<MarketplaceSkill[]>([]);
+  const [tools, setTools] = useState<MarketplaceTool[]>([]);
+  const [mcpServers, setMcpServers] = useState<MarketplaceMcp[]>([]);
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const filtered = useMemo(() => cards.filter((card) => {
     const matchesCategory = category === "All" || card.category === category;
     const haystack = `${card.title} ${card.description} ${card.detail}`.toLowerCase();
@@ -59,9 +70,29 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const selected = filtered.find((card) => card.title === selectedTitle) ?? filtered[0] ?? null;
   const [voiceSettings, setVoiceSettings] = useState(selectedVoiceSettings);
   const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
+  const refreshCatalog = async () => {
+    setCatalogBusy(true); setCatalogError(null);
+    try {
+      const request = window.serverRockAgent.request;
+      const [modelResponse, skillResponse, toolResponse, mcpResponse] = await Promise.all([
+        request("marketplace.models.search", { query }),
+        request("marketplace.skills.search", { query }),
+        request("marketplace.tools.list", { query }),
+        request("marketplace.mcp.list"),
+      ]);
+      const errors: string[] = [];
+      if (modelResponse.ok) setModels((modelResponse.result as MarketplaceModel[]) ?? []); else errors.push(`Models: ${modelResponse.error?.message ?? "unavailable"}`);
+      if (skillResponse.ok) setSkills((skillResponse.result as MarketplaceSkill[]) ?? []); else errors.push(`Skills: ${skillResponse.error?.message ?? "unavailable"}`);
+      if (toolResponse.ok) setTools((toolResponse.result as MarketplaceTool[]) ?? []); else errors.push(`Tools: ${toolResponse.error?.message ?? "unavailable"}`);
+      if (mcpResponse.ok) setMcpServers((mcpResponse.result as MarketplaceMcp[]) ?? []); else errors.push(`MCP: ${mcpResponse.error?.message ?? "unavailable"}`);
+      if (errors.length) setCatalogError(errors.join(" · ")); else setCatalogError(null);
+    } catch (error) { setCatalogError(error instanceof Error ? error.message : "The marketplace could not be loaded."); }
+    finally { setCatalogBusy(false); }
+  };
+  useEffect(() => { void refreshCatalog(); }, []);
 
   return <div className="feature-page">
-    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Find the models, voices, image packs, skills, and tools that power your workspace." />
+    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover Hugging Face models, GitHub skills, built-in tools, and permission-aware MCP server sources." actions={<Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Refreshing…" : "↻ Refresh catalogs"}</Button>} />
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">
         <div className="marketplace-search-row">
@@ -82,12 +113,13 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
             <small>{card.action} →</small>
           </button>)}
         </div>}
+        {catalogError && <div className="surface-error" role="alert"><strong>Catalog refresh failed</strong><p>{catalogError}</p><Button variant="secondary" onClick={() => void refreshCatalog()}>Retry</Button></div>}
         {selected && <Card className="marketplace-detail">
           <div className="marketplace-detail-heading"><div><p className="section-kicker">CAPABILITY</p><h3>{selected.title}</h3></div><StatusBadge tone={selected.status === "Ready" ? "success" : selected.status === "Review only" ? "warning" : "neutral"}>{selected.status}</StatusBadge></div>
           <p>{selected.detail}</p>
           <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>{selected.status === "Ready" ? "Available in this desktop build" : "Core capability present; Electron integration remains bounded"}</dd></div><div><dt>Next step</dt><dd>{selected.status === "Ready" ? `Use ${selected.action} to open the workflow.` : "Keep this capability visible until its host-backed workflow is connected."}</dd></div></dl>
           <Button variant={selected.status === "Ready" ? "primary" : "secondary"} onClick={() => onNavigate(selected.route)}>{selected.action}</Button>
-          {selected.category === "Voices" ? <div className="marketplace-voice-controls">
+          {selected.title === "LLMs" ? <CatalogList title="Hugging Face GGUF models" loading={catalogBusy} empty="No models matched. Try a broader search." items={models.map(model => ({ id: model.id, title: model.id, detail: `${model.downloads.toLocaleString()} downloads · ${model.likes.toLocaleString()} likes`, href: model.url, action: "Open on Hugging Face" }))} /> : selected.title === "Skills" ? <CatalogList title="GitHub skill repositories" loading={catalogBusy} empty="No GitHub skill repositories matched." items={skills.map(skill => ({ id: skill.id, title: skill.name, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || "No description"}`, href: skill.url, action: "Open on GitHub" }))} /> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">
             <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Low-resource mode voice<select value={voiceSettings.lowResourceModelId} onChange={(event) => updateVoice("lowResourceModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Voice profile<select value={voiceSettings.profileId} onChange={(event) => updateVoice("profileId", event.target.value)}>{voiceProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.description}</option>)}</select></label>
@@ -100,4 +132,8 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
       </div>
     </Card>
   </div>;
+}
+
+function CatalogList({ title, loading, empty, items }: { title: string; loading: boolean; empty: string; items: Array<{ id: string; title: string; detail: string; href?: string; action: string }> }) {
+  return <section className="marketplace-catalog-results"><div className="panel-heading"><div><p className="section-kicker">LIVE CATALOG</p><h3>{title}</h3></div><span className="panel-count">{loading ? "…" : items.length}</span></div>{loading ? <p className="marketplace-honesty">Loading the local catalog bridge…</p> : items.length === 0 ? <p className="marketplace-honesty">{empty}</p> : <div className="catalog-list">{items.slice(0, 30).map(item => <div className="catalog-row" key={item.id}><span className="catalog-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.href ? <a className="catalog-action" href={item.href} target="_blank" rel="noreferrer">{item.action} ↗</a> : <span className="catalog-action">{item.action}</span>}</div>)}</div>}</section>;
 }

@@ -66,6 +66,18 @@ public sealed class AppSettings
     /// <summary>Enables local-only developer diagnostics and verbose inspection surfaces.</summary>
     public bool DeveloperMode { get; set; }
     public string InterfaceDensity { get; set; } = "comfortable";
+    /// <summary>Whether the separate always-on-top companion window is visible.</summary>
+    public bool PetVisible { get; set; } = true;
+    /// <summary>Whether the companion may wander inside the main workspace bounds.</summary>
+    public bool PetWanderEnabled { get; set; } = true;
+    /// <summary>Built-in companion id or custom when user assets are selected.</summary>
+    public string PetId { get; set; } = "byte";
+    /// <summary>Copied local sprite asset path, never a remote URL.</summary>
+    public string PetSpritePath { get; set; } = "";
+    /// <summary>Copied local animation manifest path, never a remote URL.</summary>
+    public string PetManifestPath { get; set; } = "";
+    public int PetPositionX { get; set; } = -1;
+    public int PetPositionY { get; set; } = -1;
     public string HostLabel { get; set; } = "This device";
     /// <summary>Optional explicit value used only when a reviewed prompt contains {{USER_NAME}}.</summary>
     public string PromptUserName { get; set; } = "";

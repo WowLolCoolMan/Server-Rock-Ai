@@ -1,64 +1,89 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type PointerEvent } from "react";
+import type { PetActivity, PetManifest, PetWindowConfig } from "../../../shared/contracts";
 
-const WALK_FRAME = new URL("../../../../../assets/pets/byte-walk-1.png", import.meta.url).href;
-const POSITION_KEY = "skai.pet.position";
-type Position = { x: number; y: number };
+const defaultManifest: PetManifest = {
+  frameWidth: 256,
+  frameHeight: 256,
+  columns: 6,
+  rows: 8,
+  states: {
+    idle: { row: 0, frames: [0, 1, 2, 3, 4, 5], fps: 2 },
+    thinking: { row: 1, frames: [0, 1, 2, 3, 4, 5], fps: 8 },
+    coding: { row: 2, frames: [0, 1, 2, 3, 4, 5], fps: 10 },
+    working: { row: 2, frames: [0, 1, 2, 3, 4, 5], fps: 10 },
+    error: { row: 6, frames: [0, 1, 2, 3, 4, 5], fps: 4 },
+    success: { row: 5, frames: [0, 1, 2, 3, 4, 5], fps: 6 },
+    walking: { row: 7, frames: [0, 1, 2, 3, 4, 5], fps: 8 },
+  },
+};
 
-function clampPosition(position: Position): Position {
-  const width = typeof window === "undefined" ? 1200 : window.innerWidth;
-  const height = typeof window === "undefined" ? 800 : window.innerHeight;
-  return { x: Math.max(12, Math.min(position.x, width - 96)), y: Math.max(12, Math.min(position.y, height - 110)) };
+const builtInSheets: Record<string, string> = {
+  byte: new URL("../../../../../assets/pets/byte-animation-sprite-sheet.png", import.meta.url).href,
+  percy: new URL("../../../../../assets/pets/percy-animation-sprite-sheet.png", import.meta.url).href,
+  rocky: new URL("../../../../../assets/pets/rocky-animation-sprite-sheet.png", import.meta.url).href,
+  sprout: new URL("../../../../../assets/pets/sprout-animation-sprite-sheet.png", import.meta.url).href,
+  nova: new URL("../../../../../assets/pets/nova-animation-sprite-sheet.png", import.meta.url).href,
+  ember: new URL("../../../../../assets/pets/ember-animation-sprite-sheet.png", import.meta.url).href,
+};
+
+const activityLabels: Record<PetActivity, string> = {
+  idle: "Idle",
+  walking: "Walking",
+  thinking: "Thinking",
+  coding: "Coding",
+  working: "Working",
+  success: "Done",
+  error: "Needs attention",
+};
+
+function stateForActivity(activity: PetActivity, manifest: PetManifest) {
+  return manifest.states[activity] ?? manifest.states.idle ?? { row: 0, frames: [0], fps: 2 };
 }
 
-function initialPosition(): Position {
-  try {
-    const stored = JSON.parse(localStorage.getItem(POSITION_KEY) ?? "null") as Position | null;
-    if (stored && Number.isFinite(stored.x) && Number.isFinite(stored.y)) return clampPosition(stored);
-  } catch { /* Fall back to the lower-right corner. */ }
-  return clampPosition({ x: (typeof window === "undefined" ? 1100 : window.innerWidth) - 118, y: (typeof window === "undefined" ? 700 : window.innerHeight) - 132 });
+function PetSprite({ config, frame }: { config: PetWindowConfig; frame: number }) {
+  const manifest = config.customManifest ?? defaultManifest;
+  const state = stateForActivity(config.activity, manifest);
+  if (config.customSpriteDataUrl && !config.customManifest) return <img className="pet-window-custom-sprite" src={config.customSpriteDataUrl} alt="" draggable="false" />;
+  const displaySize = 96;
+  const frameIndex = state.frames[frame % state.frames.length] ?? 0;
+  return <span className="pet-window-sprite" aria-hidden="true" style={{ width: displaySize, height: displaySize, backgroundImage: `url(${config.customSpriteDataUrl ?? builtInSheets[config.petId] ?? builtInSheets.byte})`, backgroundSize: `${manifest.columns * displaySize}px ${manifest.rows * displaySize}px`, backgroundPosition: `-${frameIndex * displaySize}px -${state.row * displaySize}px` }} />;
 }
 
-export function PetCompanion({ visible, wander, reduceMotion, onHide }: { visible: boolean; wander: boolean; reduceMotion: boolean; onHide: () => void }) {
-  const [position, setPosition] = useState(initialPosition);
+export function PetCompanion({ config, onHide }: { config: PetWindowConfig; onHide: () => void }) {
+  const manifest = config.customManifest ?? defaultManifest;
+  const state = stateForActivity(config.activity, manifest);
+  const [frame, setFrame] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-  const target = useRef<Position | null>(null);
+  const framesPerSecond = state.fps;
 
-  useEffect(() => { localStorage.setItem(POSITION_KEY, JSON.stringify(position)); }, [position]);
+  useEffect(() => { setFrame(0); }, [config.activity, config.petId, config.customSpriteDataUrl, config.customManifest]);
   useEffect(() => {
-    const onResize = () => setPosition((current) => clampPosition(current));
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  useEffect(() => {
-    if (!visible || !wander || reduceMotion || dragging) return;
-    const timer = window.setInterval(() => {
-      if (!target.current || Math.hypot(target.current.x - position.x, target.current.y - position.y) < 14) {
-        target.current = { x: 30 + Math.random() * Math.max(30, window.innerWidth - 150), y: 70 + Math.random() * Math.max(30, window.innerHeight - 190) };
-      }
-      setPosition((current) => {
-        const nextTarget = target.current;
-        if (!nextTarget) return current;
-        const distance = Math.max(1, Math.hypot(nextTarget.x - current.x, nextTarget.y - current.y));
-        return clampPosition({ x: current.x + ((nextTarget.x - current.x) / distance) * 2.2, y: current.y + ((nextTarget.y - current.y) / distance) * 1.3 });
-      });
-    }, 120);
+    if (config.reduceMotion || state.frames.length < 2) return;
+    const timer = window.setInterval(() => setFrame((current) => (current + 1) % state.frames.length), 1_000 / framesPerSecond);
     return () => window.clearInterval(timer);
-  }, [visible, wander, reduceMotion, dragging, position.x, position.y]);
+  }, [config.reduceMotion, framesPerSecond, state.frames.length]);
 
-  if (!visible) return null;
-  const moveWithKeyboard = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const distance = event.shiftKey ? 28 : 10;
-    const delta = event.key === "ArrowLeft" ? { x: -distance, y: 0 } : event.key === "ArrowRight" ? { x: distance, y: 0 } : event.key === "ArrowUp" ? { x: 0, y: -distance } : event.key === "ArrowDown" ? { x: 0, y: distance } : null;
-    if (!delta) return;
-    event.preventDefault();
-    setPosition((current) => clampPosition({ x: current.x + delta.x, y: current.y + delta.y }));
+  const hint = useMemo(() => config.wander && config.activity === "idle" ? "Walking around" : activityLabels[config.activity], [config.activity, config.wander]);
+  const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(true);
+    window.serverRockAgent.pet.dragStart({ screenX: event.screenX, screenY: event.screenY });
   };
-  return <div className={`pet-companion${dragging ? " is-dragging" : ""}`} style={{ left: position.x, top: position.y }}>
-    <button className="pet-companion-dismiss" type="button" onClick={onHide} aria-label="Hide Skai pet">×</button>
-    <button className="pet-companion-button" type="button" aria-label="Skai pet. Drag to move, or use arrow keys." onKeyDown={moveWithKeyboard} onPointerDown={(event) => { const bounds = event.currentTarget.getBoundingClientRect(); dragOffset.current = { x: event.clientX - bounds.left, y: event.clientY - bounds.top }; event.currentTarget.setPointerCapture(event.pointerId); setDragging(true); target.current = null; }} onPointerMove={(event) => { if (dragging) setPosition(clampPosition({ x: event.clientX - dragOffset.current.x, y: event.clientY - dragOffset.current.y })); }} onPointerUp={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false); }} onPointerCancel={() => setDragging(false)}>
-      <img className="pet-companion-image" src={WALK_FRAME} alt="" draggable="false" />
+  const onPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    window.serverRockAgent.pet.dragMove({ screenX: event.screenX, screenY: event.screenY });
+  };
+  const endDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    setDragging(false);
+    window.serverRockAgent.pet.dragEnd();
+  };
+
+  return <div className={`pet-window-shell${dragging ? " is-dragging" : ""}`}>
+    <button className="pet-window-dismiss" type="button" onClick={onHide} aria-label="Hide Skai pet">×</button>
+    <button className="pet-window-button" type="button" aria-label="Skai pet. Drag to move." onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={() => { setDragging(false); window.serverRockAgent.pet.dragEnd(); }}>
+      <PetSprite config={config} frame={frame} />
     </button>
-    <span className="pet-companion-hint">{dragging ? "Drop me anywhere" : wander && !reduceMotion ? "Walking around" : "Drag me"}</span>
+    <span className="pet-window-hint">{hint}</span>
   </div>;
 }

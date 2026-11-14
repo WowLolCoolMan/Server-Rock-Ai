@@ -69,6 +69,15 @@ public sealed class JsonSettingsStore
         settings.VoiceProfileId = VoiceProfileCatalog.Resolve(settings.VoiceProfiles, settings.VoiceProfileId).Id;
         settings.ElevenLabsVoiceId = NormalizeRequired(settings.ElevenLabsVoiceId, defaults.ElevenLabsVoiceId, 128);
         settings.ElevenLabsModelId = NormalizeRequired(settings.ElevenLabsModelId, defaults.ElevenLabsModelId, 128);
+        settings.PetId = settings.PetId?.Trim().ToLowerInvariant() switch
+        {
+            "byte" or "percy" or "rocky" or "sprout" or "nova" or "ember" or "custom" => settings.PetId.Trim().ToLowerInvariant(),
+            _ => defaults.PetId,
+        };
+        settings.PetSpritePath = NormalizeOptional(settings.PetSpritePath, 1_024) ?? defaults.PetSpritePath;
+        settings.PetManifestPath = NormalizeOptional(settings.PetManifestPath, 1_024) ?? defaults.PetManifestPath;
+        settings.PetPositionX = settings.PetPositionX is < -1 or > 100_000 ? defaults.PetPositionX : settings.PetPositionX;
+        settings.PetPositionY = settings.PetPositionY is < -1 or > 100_000 ? defaults.PetPositionY : settings.PetPositionY;
         settings.VoiceProfiles ??= [];
         settings.VoiceProfiles = settings.VoiceProfiles
             .Where(profile => profile is not null)

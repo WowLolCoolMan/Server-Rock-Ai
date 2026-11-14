@@ -3,7 +3,6 @@ import { useDesktopWorkspace } from "./app/useDesktopWorkspace";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Toolbar } from "./components/layout/Toolbar";
 import { CommandPalette } from "./components/overlays/CommandPalette";
-import { PetCompanion } from "./components/overlays/PetCompanion";
 
 export default function App() {
   const workspace = useDesktopWorkspace();
@@ -13,7 +12,6 @@ export default function App() {
       <Toolbar route={workspace.route} connection={workspace.connection} onBack={() => window.history.back()} onForward={() => window.history.forward()} onSettings={() => workspace.onNavigate("settings")} />
       <div className="app-content"><AppRouteView state={workspace.routeState} actions={workspace.routeActions} />{workspace.error && <p className="global-error" role="alert">{workspace.error}</p>}{workspace.health && <span className="sr-only">{workspace.health.service} protocol {workspace.health.protocolVersion}</span>}</div>
     </main>
-    <PetCompanion visible={workspace.petVisible} wander={workspace.petWander} reduceMotion={workspace.routeState.reduceMotion} onHide={() => workspace.setPetVisible(false)} />
     <CommandPalette open={workspace.commandOpen} onClose={workspace.closeCommandPalette} onNavigate={workspace.onNavigate} />
   </div>;
 }

@@ -1,4 +1,4 @@
-import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, ScheduledTaskDraft, TaskEnvironment } from "../../shared/contracts";
+import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, PetAssetKind, ScheduledTaskDraft, TaskEnvironment } from "../../shared/contracts";
 import type { MemoryEntry, Message, Model, Route, ThemeMode } from "./types";
 import { ChatPage } from "../features/chat/ChatPage";
 import { CodingPage } from "../features/coding/CodingPage";
@@ -39,6 +39,9 @@ export type AppRouteState = {
   reduceMotion: boolean;
   petVisible: boolean;
   petWander: boolean;
+  petId: string;
+  petSpritePath: string;
+  petManifestPath: string;
   developerMode: boolean;
   memoryInjectionEnabled: boolean;
   endpoint: string;
@@ -97,6 +100,8 @@ export type AppRouteActions = {
   onDiscoverModels: () => void;
   onSaveCredential: (provider: string, apiKey: string) => Promise<boolean>;
   onClearCredential: (provider: string) => Promise<boolean>;
+  onPickPetAsset: (kind: PetAssetKind) => Promise<void>;
+  onResetPetAssets: () => void;
   onImageChange: (key: "endpoint" | "prompt" | "workflow", value: string) => void;
   onSelectModel: (model: string) => void;
   onGenerateImage: () => void;
@@ -117,7 +122,7 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   const { route } = state;
   if (route === "chat") return <ChatPage provider={state.provider} model={state.model} models={state.models} messages={state.messages} busy={state.busy} taskBusy={state.taskBusy} attachments={state.attachments} queuedMessages={state.queuedMessages} conversationId={state.conversationId} conversationTitle={state.conversationTitle} pinned={state.pinned} archived={state.archived} onSend={actions.onSend} onQueue={actions.onQueue} onRemoveQueued={actions.onRemoveQueued} onAttach={actions.onAttach} onRemoveAttachment={actions.onRemoveAttachment} onModelChange={actions.onModelChange} onNavigate={actions.onNavigate} onPlanTask={actions.onPlanTask} onExport={actions.onExportConversations} onFork={actions.onFork} onForkFromMessage={actions.onForkFromMessage} onRetryMessage={actions.onRetryMessage} onTogglePinned={actions.onTogglePinned} onArchive={actions.onArchive} onRenameConversation={actions.onRenameConversation} />;
   if (route === "coding") return <CodingPage projects={state.projects} selectedProject={state.selectedProject} projectFiles={state.projectFiles} selectedFile={state.selectedFile} fileDraft={state.fileDraft} fileOriginal={state.fileOriginal} fileSummary={state.fileSummary} fileBusy={state.fileBusy} terminalBusy={state.terminalBusy} terminalOutput={state.terminalOutput} terminalExitCode={state.terminalExitCode} onPickFolder={actions.onPickFolder} onSaveProject={actions.onSaveProject} onOpenProject={actions.onOpenProject} onOpenFile={actions.onOpenFile} onCloseFile={actions.onCloseFile} onDraftChange={actions.onDraftChange} onSaveFile={actions.onSaveFile} onUndoFile={actions.onUndoFile} onRunTerminal={actions.onRunTerminal} onPlanTask={actions.onPlanTask} onNavigate={actions.onNavigate} />;
-  if (route === "settings") return <SettingsPage provider={state.provider} endpoint={state.endpoint} model={state.model} models={state.models} cloudRouteEnabled={state.cloudRouteEnabled} cloudVoiceEnabled={state.cloudVoiceEnabled} elevenLabsVoiceId={state.elevenLabsVoiceId} elevenLabsModelId={state.elevenLabsModelId} credentialConfigured={state.credentialConfigured} credentialStorageAvailable={state.credentialStorageAvailable} elevenLabsCredentialConfigured={state.elevenLabsCredentialConfigured} elevenLabsCredentialStorageAvailable={state.elevenLabsCredentialStorageAvailable} themeMode={state.themeMode} accentColor={state.accentColor} density={state.density} backdrop={state.backdrop} reduceMotion={state.reduceMotion} petVisible={state.petVisible} petWander={state.petWander} developerMode={state.developerMode} memoryInjectionEnabled={state.memoryInjectionEnabled} imageEndpoint={state.imageEndpoint} imageWorkflow={state.imageWorkflow} onChange={actions.onSettingsChange} onSave={actions.onSaveSettings} onDiscoverModels={actions.onDiscoverModels} onSaveCredential={actions.onSaveCredential} onClearCredential={actions.onClearCredential} onImageChange={actions.onImageChange} onExportMemory={actions.onExportMemory} />;
+  if (route === "settings") return <SettingsPage provider={state.provider} endpoint={state.endpoint} model={state.model} models={state.models} cloudRouteEnabled={state.cloudRouteEnabled} cloudVoiceEnabled={state.cloudVoiceEnabled} elevenLabsVoiceId={state.elevenLabsVoiceId} elevenLabsModelId={state.elevenLabsModelId} credentialConfigured={state.credentialConfigured} credentialStorageAvailable={state.credentialStorageAvailable} elevenLabsCredentialConfigured={state.elevenLabsCredentialConfigured} elevenLabsCredentialStorageAvailable={state.elevenLabsCredentialStorageAvailable} themeMode={state.themeMode} accentColor={state.accentColor} density={state.density} backdrop={state.backdrop} reduceMotion={state.reduceMotion} petVisible={state.petVisible} petWander={state.petWander} petId={state.petId} petSpritePath={state.petSpritePath} petManifestPath={state.petManifestPath} developerMode={state.developerMode} memoryInjectionEnabled={state.memoryInjectionEnabled} imageEndpoint={state.imageEndpoint} imageWorkflow={state.imageWorkflow} onChange={actions.onSettingsChange} onSave={actions.onSaveSettings} onDiscoverModels={actions.onDiscoverModels} onSaveCredential={actions.onSaveCredential} onClearCredential={actions.onClearCredential} onPickPetAsset={actions.onPickPetAsset} onResetPetAssets={actions.onResetPetAssets} onImageChange={actions.onImageChange} onExportMemory={actions.onExportMemory} />;
   if (route === "models") return <ModelsPage models={state.models} onDiscover={actions.onDiscoverModels} onSelect={actions.onSelectModel} />;
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;
   if (route === "marketplace") return <MarketplacePage onNavigate={actions.onNavigate} />;
