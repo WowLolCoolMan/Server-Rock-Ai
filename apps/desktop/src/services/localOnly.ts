@@ -26,4 +26,3 @@ export function isLocalEndpoint(value: string) {
 export function localEndpointOrFallback(value: string | null | undefined, fallback: string) {
   return value && isLocalEndpoint(value) ? value : fallback;
 }
-
