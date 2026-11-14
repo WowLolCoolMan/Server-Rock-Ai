@@ -225,11 +225,12 @@ function petTaskLabel(method) {
     "memory.save": "The approved memory note",
     "image.generate": "The local image workflow",
   };
-  return labels[method] ?? "The local agent task";
+  return labels[method] ?? null;
 }
 
 function petCompletionText(method, response) {
   const task = petTaskLabel(method);
+  if (!task) return null;
   if (!response?.ok) return { text: `${task} needs attention. Open Skai for details.`, kind: "error" };
   const messages = {
     "chat.complete": "Finished your local reply.",
@@ -344,6 +345,8 @@ function startAgentHost() {
     hostReader?.close();
     for (const entry of pending.values()) {
       clearTimeout(entry.timer);
+      const completion = petCompletionText(entry.method, error);
+      if (completion) sendPetMessage(completion.text, completion.kind);
       entry.resolve(error);
     }
     pending.clear();
@@ -392,7 +395,10 @@ function requestAgent(method, params) {
     return Promise.resolve({ v: 1, ok: false, error: { code: "INVALID_PARAMS", message: "Agent parameters must be an object." } });
   }
   if (!host || host.stdin.destroyed) {
-    return Promise.resolve({ v: 1, ok: false, error: { code: "HOST_UNAVAILABLE", message: "Agent host is not running." } });
+    const response = { v: 1, ok: false, error: { code: "HOST_UNAVAILABLE", message: "Agent host is not running." } };
+    const completion = petCompletionText(method, response);
+    if (completion) sendPetMessage(completion.text, completion.kind);
+    return Promise.resolve(response);
   }
   const id = `desktop-${nextRequestId++}`;
   const requestParams = method === "chat.complete"
@@ -403,7 +409,10 @@ function requestAgent(method, params) {
     const timer = setTimeout(() => {
       if (!pending.has(id)) return;
       pending.delete(id);
-      resolve({ v: 1, ok: false, error: { code: "HOST_TIMEOUT", message: `The local agent host did not answer ${method} within the allowed time.` } });
+      const response = { v: 1, ok: false, error: { code: "HOST_TIMEOUT", message: `The local agent host did not answer ${method} within the allowed time.` } };
+      const completion = petCompletionText(method, response);
+      if (completion) sendPetMessage(completion.text, completion.kind);
+      resolve(response);
       restartAgentHost();
     }, timeoutMs);
     pending.set(id, { resolve, timer, method });
@@ -412,7 +421,10 @@ function requestAgent(method, params) {
     } catch {
       clearTimeout(timer);
       pending.delete(id);
-      resolve({ v: 1, ok: false, error: { code: "HOST_WRITE_FAILED", message: "The local agent host could not accept the request." } });
+      const response = { v: 1, ok: false, error: { code: "HOST_WRITE_FAILED", message: "The local agent host could not accept the request." } };
+      const completion = petCompletionText(method, response);
+      if (completion) sendPetMessage(completion.text, completion.kind);
+      resolve(response);
     }
   });
 }

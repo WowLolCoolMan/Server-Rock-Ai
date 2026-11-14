@@ -78,8 +78,8 @@ export function PetWindow() {
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     window.serverRockAgent?.pet?.endDrag();
   };
-  return <main className="pet-window-root" aria-label="Percy desktop companion. Drag to move." onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-    {bubble && <div className={`pet-window-bubble pet-window-bubble-${bubbleKind}`} role="status">{bubble}</div>}
+  return <main className="pet-window-root" aria-label="Percy desktop companion. Drag to move." data-pose={activePose} onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+    {bubble && <div className={`pet-window-bubble pet-window-bubble-${bubbleKind}`} role="status" aria-live="polite">{bubble}</div>}
     <button className="pet-window-hide" type="button" onClick={() => window.serverRockAgent?.pet?.hide()} aria-label="Hide Percy companion"><NavIcon name="close" /></button>
     <div className={`pet-window-sprite pet-window-sprite-${activePose}${animationPaused ? " is-paused" : ""}`} style={{ backgroundImage: `url(${sheet})` }} role="img" aria-label="Animated Percy companion" />
   </main>;

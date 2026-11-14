@@ -4,6 +4,12 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Current checkpoint
 
+Percy’s separate transparent companion now keeps completion feedback truthful
+even when a local request cannot finish: host-unavailable, timeout, process-exit,
+and write-failure paths produce a brief error bubble and error pose. Its live
+status is announced accessibly while the six-frame sprite remains independently
+draggable and outside the main app window.
+
 Renderer routing now has a typed history state shared by the app shell and
 toolbar. Back/Forward controls are disabled when no browser-style entry is
 available, duplicate route selections do not add history noise, and Electron

@@ -3,6 +3,47 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 284 — Make Percy’s desktop feedback resilient
+
+Status: `implemented_companion_failure_feedback_packaged_verified`
+
+Percy remains a standalone transparent, always-on-top Electron window rather
+than an element of the Skai page. Its six-frame transparent strips continue to
+drive walk, idle, success, and error poses; completion bubbles now also appear
+when a local agent request fails because the host is unavailable, times out,
+exits, or rejects the write. The renderer marks the companion pose for visual
+inspection and exposes completion text as a polite live status. No cloud
+transport or cross-window filesystem access was added.
+
+Changed files:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/src/styles.css`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/CAPABILITY_MATRIX.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed; transparent Percy walk, idle, success,
+  and error strips were bundled.
+- `npm run check:syntax` — passed.
+- `git diff --check` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run package:electron` — passed; the self-contained Agent Host and
+  renderer were staged in `dist/electron/win-x64`.
+- `npm run smoke:electron:artifact` — passed; main and Percy rendered as
+  separate packaged Electron targets.
+- Live Windows inspection — passed; `Percy · Skai companion` exposed its
+  separate accessible companion surface with an animated sprite and no opaque
+  page background.
+
+Remaining: continue the active goal’s broader UI, routing, and workflow
+slices; the full handoff remains incomplete.
+
 ## Slice 283 — Make renderer route history file-safe
 
 Status: `implemented_renderer_navigation_live_and_packaged_verified`
