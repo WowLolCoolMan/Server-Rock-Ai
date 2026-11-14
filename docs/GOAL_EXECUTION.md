@@ -3,6 +3,40 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 294 — Make composer commands keyboard-complete
+
+Status: `implemented_composer_command_accessibility_typechecked`
+
+The Chat composer’s slash-command surface now exposes the active command via
+`aria-activedescendant`, declares its listbox relationship while suggestions
+are open, scrolls the selected option into view, and wraps ArrowUp/ArrowDown
+navigation. Home and End jump to the first and last command. The command menu
+still uses the existing local command catalog and selection handlers.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/ChatComposer.tsx`
+- `apps/desktop/src/components/ui/ComposerCommandMenu.tsx`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run check:syntax` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; the packaged main and separate
+  Percy companion surfaces still rendered.
+- `git diff --check` — passed.
+- Electron runtime audit now requires the active-option and wrapped-navigation
+  contract.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 293 — Make integration readiness truthful
 
 Status: `implemented_integration_readiness_honesty_typechecked`

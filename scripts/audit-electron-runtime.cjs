@@ -29,6 +29,7 @@ expect(!preload.includes("require(\"node:fs\")"), "preload must not expose files
 expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
 expect(main.includes('"workspace.importDroppedFiles"') && main.includes("decodeDroppedAttachment"), "Electron bridge must validate dropped chat files at the local boundary");
 expect(chatComposer.includes("onDrop={handleDrop}") && chatComposer.includes("Drop files to attach"), "Chat composer must expose a visible drag-and-drop attachment state");
+expect(chatComposer.includes("aria-activedescendant={commandQuery !== null ? activeCommandId : undefined}") && chatComposer.includes("(index + 1) % commandMatches.length"), "Chat composer commands must expose the active option and wrap keyboard navigation");
 expect(chatWorkspace.includes("importDroppedFiles") && chatWorkspace.includes("workspace.importDroppedFiles"), "Chat workspace must route dropped files through the guarded Electron method");
 expect(navigation.includes("NavigationState") && navigation.includes("HISTORY_KEY"), "Renderer navigation must keep typed app history state");
 expect(navigation.includes('window.location.protocol === "file:"') && navigation.includes("#/${route}"), "Electron navigation must use reload-safe hash routes for file URLs");

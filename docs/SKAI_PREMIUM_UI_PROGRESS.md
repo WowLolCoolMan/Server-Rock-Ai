@@ -2,6 +2,13 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Composer command-menu accessibility
+
+The slash-command menu now exposes its highlighted option through the composer
+textarea’s listbox relationship, keeps the active option scrolled into view,
+and supports wrapped ArrowUp/ArrowDown plus Home/End navigation. Commands
+remain local and use the same selection behavior as before.
+
 ## Current slice — Honest integration readiness
 
 Settings no longer presents GitHub as connected in the Electron surface when no
