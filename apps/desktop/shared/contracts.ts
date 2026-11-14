@@ -51,6 +51,14 @@ export type DesktopGitStatus = {
   changes: DesktopGitChange[];
 };
 
+export type DesktopGitDiff = {
+  repository: string;
+  text: string;
+  includedFiles: number;
+  redactedFiles: number;
+  truncated: boolean;
+};
+
 export type DesktopConversation = {
   id: string;
   title: string;

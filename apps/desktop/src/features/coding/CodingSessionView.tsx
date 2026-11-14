@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { DesktopGitStatus, DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
+import type { DesktopGitDiff, DesktopGitStatus, DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
 import { Button, Card, EmptyState } from "../../components/ui/Primitives";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { NavIcon } from "../../components/ui/NavIcon";
@@ -48,6 +48,9 @@ type CodingSessionViewProps = {
   terminalExitCode: number | null;
   gitStatus: DesktopGitStatus | null;
   gitBusy: boolean;
+  gitDiff: DesktopGitDiff | null;
+  gitDiffBusy: boolean;
+  gitCommitBusy: boolean;
   onOpenProject: (project: DesktopProject) => void;
   onOpenFile: (relativePath: string) => void;
   onCloseFile: () => void;
@@ -56,11 +59,13 @@ type CodingSessionViewProps = {
   onUndoFile: () => void;
   onRunTerminal: (projectId: string, command: string, cwd: string) => void;
   onRefreshGitStatus: () => void;
+  onLoadGitDiff: () => void;
+  onCommitGitChanges: (message: string) => Promise<boolean>;
   onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, onRefreshGitStatus, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
+export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, onRefreshGitStatus, onLoadGitDiff, onCommitGitChanges, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [fileQuery, setFileQuery] = useState("");
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -70,6 +75,7 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
   const [taskComposerOpen, setTaskComposerOpen] = useState(false);
   const [planningTask, setPlanningTask] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
+  const [gitMessage, setGitMessage] = useState("Update local project");
   const loadedTabsProjectRef = useRef<string | null>(null);
   const skipTabPersistenceRef = useRef(false);
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
@@ -174,7 +180,7 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
     <div className="coding-session-grid"><Card className="project-browser-card coding-project-browser">
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>Files &amp; changes</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
-      {gitStatus && <div className={`git-change-summary${gitStatus.hasConflicts ? " has-conflicts" : ""}`} aria-label="Local Git changes"><div><p className="section-kicker">LOCAL GIT REVIEW</p><strong>{gitStatus.changes.length ? `${gitStatus.changes.length} changed file${gitStatus.changes.length === 1 ? "" : "s"}` : "Working tree clean"}</strong><span>{gitStatus.commitsAhead} ahead · {gitStatus.commitsBehind} behind · {gitStatus.repository}</span></div>{gitStatus.changes.length > 0 && <ul>{gitStatus.changes.slice(0, 8).map((change) => <li key={`${change.status}-${change.path}`}><b>{change.status}</b><span>{change.path}</span></li>)}</ul>}{gitStatus.changes.length > 8 && <small>Showing the first 8 changes. Full staging and commit review is not connected yet.</small>}{gitStatus.hasConflicts && <small role="alert">Conflicts need review before any commit workflow can proceed.</small>}</div>}
+      {gitStatus && <div className={`git-change-summary${gitStatus.hasConflicts ? " has-conflicts" : ""}`} aria-label="Local Git changes"><div><p className="section-kicker">LOCAL GIT REVIEW</p><strong>{gitStatus.changes.length ? `${gitStatus.changes.length} changed file${gitStatus.changes.length === 1 ? "" : "s"}` : "Working tree clean"}</strong><span>{gitStatus.commitsAhead} ahead · {gitStatus.commitsBehind} behind · {gitStatus.repository}</span></div>{gitStatus.changes.length > 0 && <ul>{gitStatus.changes.slice(0, 8).map((change) => <li key={`${change.status}-${change.path}`}><b>{change.status}</b><span>{change.path}</span></li>)}</ul>}{gitStatus.changes.length > 8 && <small>Showing the first 8 changes. Review is bounded to 24 files per operation.</small>}{gitStatus.hasConflicts && <small role="alert">Conflicts need review before any commit workflow can proceed.</small>}{gitStatus.changes.length > 0 && <div className="git-review-actions"><Button variant="secondary" disabled={gitDiffBusy || gitStatus.hasConflicts} onClick={onLoadGitDiff}>{gitDiffBusy ? "Loading diff…" : gitDiff ? "Refresh diff" : "Review diff"}</Button><input value={gitMessage} onChange={(event) => setGitMessage(event.target.value)} aria-label="Local Git commit message" maxLength={256} placeholder="Commit message" /><Button variant="primary" disabled={gitCommitBusy || gitStatus.hasConflicts || !gitMessage.trim()} onClick={() => void onCommitGitChanges(gitMessage)}>{gitCommitBusy ? "Committing…" : "Commit changes"}</Button></div>}{gitDiff && <pre className="git-diff-preview" aria-label="Local Git diff preview">{gitDiff.text}</pre>}</div>}
       <div className={`task-composer coding-task-composer ${taskComposerOpen ? "is-open" : ""}`}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>{taskComposerOpen ? "Write the outcome you want, then review it in Agent Workbench before anything runs." : "Draft a reviewed local task without leaving this project."}</p></div><span className="task-composer-badge">Local only</span><Button variant="secondary" type="button" aria-expanded={taskComposerOpen} aria-controls="coding-task-brief" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Hide brief" : "Plan task"}</Button></div>
         {taskComposerOpen && <form id="coding-task-brief" className="task-composer-form" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>

@@ -290,6 +290,9 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .git-change-summary li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .git-change-summary.has-conflicts { border-color: color-mix(in srgb, var(--skai-color-danger) 40%, var(--skai-color-border)); }
 .git-change-summary.has-conflicts li b, .git-change-summary.has-conflicts > small { color: var(--skai-color-danger); }
+.git-review-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.git-review-actions input { flex: 1 1 190px; min-width: 0; padding: 7px 9px; border: 1px solid var(--skai-color-border); border-radius: 7px; color: var(--skai-color-text); background: var(--skai-color-surface); font-size: 10px; }
+.git-diff-preview { max-height: 220px; margin: 0; padding: 10px; overflow: auto; border: 1px solid var(--skai-color-border); border-radius: 7px; color: var(--skai-color-text-muted); background: var(--skai-color-canvas); font-family: var(--skai-font-mono); font-size: 9px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width:900px) { .coding-project-context { align-items: stretch; flex-direction: column; }.coding-project-context-actions { justify-content: stretch; flex-wrap: wrap; }.git-summary { flex: 1 1 180px; }.coding-project-context select { flex: 1 1 190px; width: auto; max-width: none; } }
 @media (max-width:640px) { .coding-project-context select { width: 100%; }.coding-project-context-actions .ui-button { flex: 1 1 auto; }.git-summary { flex-basis: 100%; border-right: 0; border-bottom: 1px solid var(--skai-color-border); padding: 0 0 8px; } }
 .workbench-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }

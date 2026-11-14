@@ -61,7 +61,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -71,6 +71,8 @@ public static class AgentHostLoop
             "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
             "project.git.status" => GetProjectGitStatusAsync(request).GetAwaiter().GetResult(),
+            "project.git.diff" => GetProjectGitDiffAsync(request).GetAwaiter().GetResult(),
+            "project.git.commit" => CommitProjectGitChangesAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -409,6 +411,38 @@ public static class AgentHostLoop
             hasConflicts = GitHubWorkspaceService.HasConflicts(status.Changes),
             changes = status.Changes.Select(change => new { status = change.Status, path = change.Path, originalPath = change.OriginalPath }).ToArray(),
         });
+    }
+
+    private static async Task<AgentResponse> GetProjectGitDiffAsync(AgentRequest request)
+    {
+        var (project, root, changes) = await ResolveProjectGitSelectionAsync(request).ConfigureAwait(false);
+        var preview = await new GitHubWorkspaceService().GetDiffPreviewAsync(root, changes, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { repository = project.Name, text = preview.Text, includedFiles = preview.IncludedFiles, redactedFiles = preview.RedactedFiles, truncated = preview.IsTruncated });
+    }
+
+    private static async Task<AgentResponse> CommitProjectGitChangesAsync(AgentRequest request)
+    {
+        var (project, root, changes) = await ResolveProjectGitSelectionAsync(request).ConfigureAwait(false);
+        var message = RequiredBoundedString(request, "message", 256);
+        var commit = await new GitHubWorkspaceService().CommitSelectedLocallyAsync(root, changes, message, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { repository = project.Name, committed = true, output = commit });
+    }
+
+    private static async Task<(LocalProject Project, string Root, IReadOnlyList<GitWorkspaceFileChange> Changes)> ResolveProjectGitSelectionAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault()
+            ?? throw new InvalidOperationException("Select a project folder before using Git review.");
+        var status = await new GitHubWorkspaceService().GetLocalStatusAsync(root, CancellationToken.None).ConfigureAwait(false);
+        if (request.Params is not { } parameters || !parameters.TryGetProperty("paths", out var paths) || paths.ValueKind != JsonValueKind.Array)
+            throw new InvalidOperationException("Git review requires a paths array.");
+        var selectedPaths = paths.EnumerateArray().Select(path => path.GetString()).Where(path => !string.IsNullOrWhiteSpace(path)).Cast<string>().Distinct(StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
+        if (selectedPaths.Count == 0 || selectedPaths.Count > 24) throw new InvalidOperationException("Select between 1 and 24 changed files for Git review.");
+        var selected = status.Changes.Where(change => selectedPaths.Contains(change.Path) || change.OriginalPath is not null && selectedPaths.Contains(change.OriginalPath)).ToArray();
+        if (selected.Length != selectedPaths.Count) throw new InvalidOperationException("The workspace changed since review. Refresh Git status and select the current files again.");
+        return (project, root, selected);
     }
 
     private static AgentResponse ListTasks(AgentRequest request)

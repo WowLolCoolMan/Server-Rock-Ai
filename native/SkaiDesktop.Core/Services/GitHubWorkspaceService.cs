@@ -97,7 +97,7 @@ public sealed class GitHubWorkspaceService
         var selected = selectedChanges.Distinct().ToArray();
         if (selected.Length == 0) return new("No files selected for diff preview.", 0, 0, false);
         if (selected.Length > MaxDiffFiles) throw new InvalidOperationException($"Select at most {MaxDiffFiles} files for a bounded diff preview.");
-        var status = await GetStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var status = await GetLocalStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
         var currentByIdentity = status.Changes.ToDictionary(ChangeIdentity, StringComparer.Ordinal);
         var builder = new StringBuilder();
         var included = 0;
@@ -137,10 +137,25 @@ public sealed class GitHubWorkspaceService
         return new(builder.ToString(), included, redacted, truncated);
     }
 
-    private async Task<string> CommitSelectedCoreAsync(string repositoryPath, IReadOnlyCollection<GitWorkspaceFileChange> selectedChanges, string message,
-        string accessToken, CancellationToken cancellationToken)
+    /// <summary>Commits explicitly selected local changes without contacting GitHub.</summary>
+    public async Task<string> CommitSelectedLocallyAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges, string message,
+        CancellationToken cancellationToken = default)
     {
-        ValidateAccessToken(accessToken);
+        ArgumentNullException.ThrowIfNull(selectedChanges);
+        var selected = selectedChanges.Distinct().ToArray();
+        if (selected.Length == 0) throw new InvalidOperationException("Select at least one safe file to commit.");
+        var status = await GetLocalStatusAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var currentByIdentity = status.Changes.ToDictionary(ChangeIdentity, StringComparer.Ordinal);
+        var currentSelection = selected.Select(requested => currentByIdentity.TryGetValue(ChangeIdentity(requested), out var current)
+            ? current
+            : throw new InvalidOperationException($"The workspace changed since review. Reopen the Git review before committing {DisplayPath(requested)}.")).ToArray();
+        return await CommitSelectedCoreAsync(repositoryPath, currentSelection, message, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<string> CommitSelectedCoreAsync(string repositoryPath, IReadOnlyCollection<GitWorkspaceFileChange> selectedChanges, string message,
+        string? accessToken, CancellationToken cancellationToken)
+    {
+        if (accessToken is not null) ValidateAccessToken(accessToken);
         message = (message ?? "").Trim();
         if (message.Length is < 1 or > 256 || message.Any(character => char.IsControl(character) && character is not '\n' and not '\r' and not '\t'))
             throw new ArgumentException("Enter a commit message between 1 and 256 characters.", nameof(message));

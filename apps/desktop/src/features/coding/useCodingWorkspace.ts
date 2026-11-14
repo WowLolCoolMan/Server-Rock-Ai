@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DesktopGitStatus, DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
+import type { DesktopGitDiff, DesktopGitStatus, DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
 import type { AgentRequest } from "../../services/agentClient";
 
 type CodingWorkspaceOptions = {
@@ -25,6 +25,9 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [terminalExitCode, setTerminalExitCode] = useState<number | null>(null);
   const [gitStatus, setGitStatus] = useState<DesktopGitStatus | null>(null);
   const [gitBusy, setGitBusy] = useState(false);
+  const [gitDiff, setGitDiff] = useState<DesktopGitDiff | null>(null);
+  const [gitDiffBusy, setGitDiffBusy] = useState(false);
+  const [gitCommitBusy, setGitCommitBusy] = useState(false);
 
   useEffect(() => {
     if (connection !== "ready") return;
@@ -52,7 +55,7 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
 
   const selectProject = async (project: DesktopProject) => {
     localStorage.setItem("skai.selectedProject", project.id);
-    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null); setGitStatus(null);
+    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null); setGitStatus(null); setGitDiff(null);
     const response = await request("project.files", { id: project.id });
     if (!response.ok) { onError(response.error?.message ?? "Project browser failed."); return; }
     const result = response.result as { files: DesktopProjectFile[]; protectedFilesSkipped: number; hitEntryLimit: boolean };
@@ -70,6 +73,28 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     if (!response.ok) { setGitStatus(null); onError(response.error?.message ?? "Git status could not be loaded."); return; }
     setGitStatus(response.result as DesktopGitStatus);
     onError(null);
+  };
+
+  const loadGitDiff = async () => {
+    if (!selectedProject || !gitStatus?.changes.length || gitDiffBusy) return;
+    setGitDiffBusy(true);
+    const response = await request("project.git.diff", { id: selectedProject.id, paths: gitStatus.changes.map((change) => change.path) });
+    setGitDiffBusy(false);
+    if (!response.ok) { onError(response.error?.message ?? "Git diff could not be loaded."); return; }
+    setGitDiff(response.result as DesktopGitDiff);
+    onError(null);
+  };
+
+  const commitGitChanges = async (message: string) => {
+    if (!selectedProject || !gitStatus?.changes.length || !message.trim() || gitCommitBusy) return false;
+    setGitCommitBusy(true);
+    const response = await request("project.git.commit", { id: selectedProject.id, paths: gitStatus.changes.map((change) => change.path), message: message.trim() });
+    setGitCommitBusy(false);
+    if (!response.ok) { onError(response.error?.message ?? "Local Git commit was rejected."); return false; }
+    setGitDiff(null);
+    await refreshGitStatus(selectedProject.id);
+    onError(null);
+    return true;
   };
 
   useEffect(() => {
@@ -120,5 +145,5 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalExitCode(result.exitCode);
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus };
+  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus, loadGitDiff, commitGitChanges };
 }

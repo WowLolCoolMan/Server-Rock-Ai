@@ -27,6 +27,11 @@ paths, ahead/behind counts, and conflict state through a dedicated host method.
 The UI exposes refreshable status and a bounded change list, while clearly
 labeling stage/commit/push as not yet connected.
 
+The same review surface now loads a bounded local diff and supports an explicit
+local commit after the user enters a message. Protected paths and conflicts
+remain fail-closed; push and pull-request work are still separate because they
+need explicit remote-state and credential review.
+
 ## Current slice — Packaged appearance acceptance
 
 The packaged Electron acceptance harness now drives the real Appearance

@@ -11546,6 +11546,26 @@ smoke all pass, including a disposable local Git repository.
 Remaining: implement reviewed diff selection and stage/commit/push actions
 without weakening protected-path or remote-state safeguards.
 
+## Slice 315 — Review and commit local Git changes
+
+Status: `implemented_and_smoke_verified`
+
+Coding Workspace now supports a bounded local diff preview and an explicit
+commit action for the currently reported changed paths. The Agent Host
+re-reads Git state before each operation, refuses stale selections, caps the
+review to 24 files, and preserves protected-path redaction and conflict
+blocking. The commit message is user-entered and the operation never contacts
+GitHub.
+
+Evidence:
+
+- The disposable Agent Host smoke initializes a local repository, reads status,
+  previews one changed file, and creates a reviewed local commit.
+- Renderer typecheck, Agent Host build, and syntax checks pass.
+
+Remaining: add safe push/remote-state review and pull-request support, then
+continue the RAG, model/voice, packaging, and overflow gaps.
+
 ## Slice 313 — Reconcile interrupted local tasks on host restart
 
 Status: `implemented_and_smoke_verified`

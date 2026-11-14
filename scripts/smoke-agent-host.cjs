@@ -20,6 +20,11 @@ const env = {
   SRAI_PROJECTS_PATH: path.join(tempRoot, "projects.json"),
 };
 spawnSync("git", ["init", "--quiet", tempRoot], { cwd: tempRoot, windowsHide: true });
+spawnSync("git", ["config", "user.email", "smoke@example.invalid"], { cwd: tempRoot, windowsHide: true });
+spawnSync("git", ["config", "user.name", "Skai smoke"], { cwd: tempRoot, windowsHide: true });
+fs.writeFileSync(path.join(tempRoot, ".gitkeep"), "smoke\n");
+spawnSync("git", ["add", ".gitkeep"], { cwd: tempRoot, windowsHide: true });
+spawnSync("git", ["commit", "--quiet", "-m", "Initial smoke state"], { cwd: tempRoot, windowsHide: true });
 const interruptedTaskId = "interrupted-smoke-task";
 fs.writeFileSync(env.SRAI_TASKS_PATH, JSON.stringify([{
   id: interruptedTaskId,
@@ -81,6 +86,12 @@ async function run() {
   const gitStatus = await request("project.git.status", { id: project.result.id });
   if (!gitStatus.ok || gitStatus.result?.repository !== "local repository" || typeof gitStatus.result?.branch !== "string" || !Array.isArray(gitStatus.result?.changes))
     throw new Error("project.git.status did not return bounded local Git state.");
+  const reviewPath = gitStatus.result.changes[0]?.path;
+  if (!reviewPath) throw new Error("project.git.status did not report the disposable repository changes.");
+  const diff = await request("project.git.diff", { id: project.result.id, paths: [reviewPath] });
+  if (!diff.ok || typeof diff.result?.text !== "string" || diff.result.includedFiles !== 1) throw new Error("project.git.diff did not return the selected local diff.");
+  const committed = await request("project.git.commit", { id: project.result.id, paths: [reviewPath], message: "Review local Git smoke" });
+  if (!committed.ok || committed.result?.committed !== true) throw new Error("project.git.commit did not create the reviewed local commit.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");

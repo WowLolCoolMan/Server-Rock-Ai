@@ -324,7 +324,7 @@ function createPetWindow() {
 }
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
-  "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "project.git.status", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
+  "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "project.git.status", "project.git.diff", "project.git.commit", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
   "settings.save", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop",
   "workspace.pickFolder",
 ]);
