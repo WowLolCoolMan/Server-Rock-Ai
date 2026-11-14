@@ -369,7 +369,7 @@ const requiredPercyContracts = [
   ["Official Percy companion choice", 'new("percy", "Percy"'],
   ["Percy default companion", 'string PetId = "percy"'],
   ["Percy allowed companion ID", '"percy", "rocky"'],
-  ["Official wolf icon source", "UnoIconBackgroundFile>Assets\\Icons\\skaiwolficon.png"],
+  ["Official wolf icon source", "UnoIconBackgroundFile>Assets/Icons/skaiwolficon.png"],
 ];
 const requiredPercyFiles = [
   "assets/branding/skaiwolficon.png",
