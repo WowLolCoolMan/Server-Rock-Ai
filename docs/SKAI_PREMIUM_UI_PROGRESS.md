@@ -2,6 +2,14 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Honest integration readiness
+
+Settings no longer presents GitHub as connected in the Electron surface when no
+GitHub bridge or sign-in flow is exposed there. GitHub is marked as needing
+setup, while local model, voice, and image services are marked available only
+when the selected local route supports them. The shared settings shell remains
+functional without adding a fake connection action.
+
 ## Current slice — Scheduled work state clarity
 
 Scheduled local tasks now present semantic status badges, readable due times,

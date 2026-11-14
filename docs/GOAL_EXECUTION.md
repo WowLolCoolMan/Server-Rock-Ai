@@ -3,6 +3,34 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 293 — Make integration readiness truthful
+
+Status: `implemented_integration_readiness_honesty_typechecked`
+
+Settings → Integrations no longer labels the Electron GitHub workflow as
+“Ready” when this renderer has no GitHub connection bridge or sign-in action.
+GitHub now shows “Needs setup” with an explicit explanation, while local
+services use the selected local route to determine whether they are available.
+The page does not add a decorative or nonfunctional connect button.
+
+Changed files:
+
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run audit:local-only` — passed.
+- The existing Electron bridge method allow-list contains no GitHub operation,
+  so the previous “Ready” label was not supported by a renderer capability.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 292 — Clarify scheduled task state
 
 Status: `implemented_scheduled_state_presentation_packaged_verified`
