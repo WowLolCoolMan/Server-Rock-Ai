@@ -3,6 +3,38 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 295 — Keep model selection keyboard-safe
+
+Status: `implemented_model_picker_focus_typechecked`
+
+The local model picker now behaves as a bounded desktop popover. Tab and
+Shift+Tab wrap through the search and available actions, focused options update
+the highlighted model, and the search combobox exposes the active option by
+ID. Existing selection, Escape, arrow, Home/End, and outside-click behavior is
+preserved.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/ModelPicker.tsx`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run check:syntax` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; the packaged main and separate
+  Percy companion surfaces still rendered.
+- `git diff --check` — passed.
+- Electron runtime audit now requires the bounded model-picker focus contract.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 294 — Make composer commands keyboard-complete
 
 Status: `implemented_composer_command_accessibility_typechecked`

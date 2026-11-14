@@ -2,6 +2,13 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Model picker focus discipline
+
+The local model picker now keeps Tab focus inside its open popover, updates the
+highlight when an option receives focus, and exposes the active option through
+the search combobox relationship. Escape, arrow navigation, selection, and
+outside-click behavior remain intact.
+
 ## Current slice — Composer command-menu accessibility
 
 The slash-command menu now exposes its highlighted option through the composer
