@@ -10382,3 +10382,24 @@ Evidence: `npm run desktop:typecheck`, `npm run desktop:build`, and
 `git diff --check` passed after the refinement. The Electron window was opened
 from the rebuilt renderer and inspected through its accessibility tree and
 screenshot before commit.
+
+## Slice — Pin and review authored GitHub skills
+
+Status: `implemented_host_renderer_build_verified`
+
+The Marketplace skill detail flow now supports authored entries shaped as
+`owner/repository#path`. Inspection reads the manifest and instructions from the
+reviewed full GitHub commit, and remote preview/install materializes only the
+bounded `skill.json` plus `SKILL.md` pair into a temporary directory before
+passing it through the existing package verifier. The renderer presents the
+source pin, digest, permissions, and install review; install requires the
+preview digest and records the pinned source while preserving the existing
+disabled-by-default behavior.
+
+This is deliberately not an arbitrary repository executor: no remote scripts,
+tools, or extra package files are fetched or run. A repository without a valid
+manifest and readable instructions remains review-only.
+
+Evidence: Core checks, Agent Host build/smoke, desktop typecheck/build,
+future-feature, Electron runtime, local-only, native UI, release workflow,
+syntax, hygiene, and `git diff --check` passed.

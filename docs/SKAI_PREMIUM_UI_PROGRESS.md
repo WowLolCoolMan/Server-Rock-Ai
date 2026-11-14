@@ -750,3 +750,24 @@ Evidence: live Electron AX/screenshot inspection, `npm run desktop:typecheck`,
 `npm run desktop:build`, and `git diff --check` passed. The source reference
 pack remains design guidance; marketplace results are live provider data while
 install actions remain explicitly user-approved.
+
+## Slice — Pin and review authored GitHub skills
+
+Status: `implemented_host_renderer_build_verified`
+
+Authored GitHub skill entries can now identify a nested skill path, inspect the
+manifest and `SKILL.md` at the current full commit, and expose a real pinned
+install path when both files are valid. Review stages only those two Markdown
+package files in a temporary directory, reuses the existing digest and
+permission validation, requires the preview SHA during install, records a
+repository-at-commit source reference, and leaves the installed skill disabled
+by default. Repositories without a valid pair remain review-only.
+
+The Marketplace detail view now shows the selected path, pin, install boundary,
+and a `Review pinned install` action. The installation review is the same
+user-visible approval surface as local packages, and successful installs land
+in My library rather than silently enabling a capability.
+
+Evidence: Agent Host build, Core checks, Agent Host smoke, desktop typecheck and
+production build, syntax/hygiene/future-feature/Electron/local-only/native UI/
+release audits, and `git diff --check` passed.

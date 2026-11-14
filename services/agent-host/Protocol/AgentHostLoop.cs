@@ -58,12 +58,14 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.worktree.release", "tasks.worktree.change.apply", "tasks.worktree.change.undo", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.skills.remote.preview", "marketplace.skills.remote.install", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.worktree.release", "tasks.worktree.change.apply", "tasks.worktree.change.undo", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
             "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
             "marketplace.skills.inspect" => InspectMarketplaceSkillAsync(request).GetAwaiter().GetResult(),
+            "marketplace.skills.remote.preview" => PreviewRemoteSkillAsync(request).GetAwaiter().GetResult(),
+            "marketplace.skills.remote.install" => InstallRemoteSkillAsync(request).GetAwaiter().GetResult(),
             "marketplace.tools.list" => ListMarketplaceTools(request),
             "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
             "skills.installed.list" => ListInstalledSkills(request),
@@ -377,7 +379,9 @@ public static class AgentHostLoop
     private static async Task<AgentResponse> InspectMarketplaceSkillAsync(AgentRequest request)
     {
         var requestedRepository = RequiredBoundedString(request, "repository", 220);
-        var repository = requestedRepository.Split('#', 2)[0];
+        var repositoryParts = requestedRepository.Split('#', 2);
+        var repository = repositoryParts[0];
+        var skillPath = repositoryParts.Length == 2 ? ValidateGitHubSkillPath(repositoryParts[1]) : string.Empty;
         if (!Regex.IsMatch(repository, "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))
             throw new InvalidOperationException("repository must be an owner/name GitHub repository identifier.");
 
@@ -398,9 +402,8 @@ public static class AgentHostLoop
         if (string.IsNullOrWhiteSpace(revision) || !Regex.IsMatch(revision, "^[0-9a-fA-F]{40}$"))
             throw new InvalidDataException("GitHub returned an invalid repository revision.");
 
-        var refValue = Uri.EscapeDataString(revision);
-        var manifestText = await ReadGitHubContentAsync(client, $"{repositoryUrl}/contents/skill.json?ref={refValue}", "GitHub skill manifest").ConfigureAwait(false);
-        var instructions = await ReadGitHubContentAsync(client, $"{repositoryUrl}/contents/SKILL.md?ref={refValue}", "GitHub skill instructions").ConfigureAwait(false);
+        var manifestText = await ReadGitHubContentAsync(client, BuildGitHubContentUrl(repository, skillPath, "skill.json", revision), "GitHub skill manifest").ConfigureAwait(false);
+        var instructions = await ReadGitHubContentAsync(client, BuildGitHubContentUrl(repository, skillPath, "SKILL.md", revision), "GitHub skill instructions").ConfigureAwait(false);
         JsonElement? manifest = null;
         var manifestStatus = "missing";
         if (!string.IsNullOrWhiteSpace(manifestText))
@@ -418,6 +421,7 @@ public static class AgentHostLoop
         var license = root.TryGetProperty("license", out var licenseValue) && licenseValue.ValueKind == JsonValueKind.Object
             ? ReadBoundedJsonString(licenseValue, "spdx_id", 128) ?? ReadBoundedJsonString(licenseValue, "name", 256)
             : null;
+        var remoteInstallAvailable = manifest is { ValueKind: JsonValueKind.Object } && !string.IsNullOrWhiteSpace(instructions);
         return new(ProtocolVersion, request.Id, true, new
         {
             id = repository,
@@ -429,6 +433,7 @@ public static class AgentHostLoop
             sourceUrl,
             defaultBranch,
             revision,
+            skillPath,
             license,
             skillMarkdown = instructions,
             manifest,
@@ -438,10 +443,130 @@ public static class AgentHostLoop
             declaredTools = ReadManifestStringList(manifest, "tools", "declaredTools"),
             requiredPermissions = ReadManifestStringList(manifest, "requiredPermissions", "permissions"),
             compatibility = ReadManifestStringList(manifest, "platforms", "compatibility"),
-            remoteInstallAvailable = false,
-            installBoundary = "Remote GitHub packages remain review-only; choose a local validated folder to install.",
+            remoteInstallAvailable,
+            installBoundary = remoteInstallAvailable
+                ? "The pinned commit can be staged as a Markdown-only package, verified by digest, and installed disabled by default."
+                : "Remote installation requires both a valid skill.json and a readable SKILL.md at the reviewed path.",
         });
     }
+
+    private static async Task<AgentResponse> PreviewRemoteSkillAsync(AgentRequest request)
+    {
+        var repository = ValidateGitHubRepository(RequiredBoundedString(request, "repository", 160));
+        var revision = ValidateGitHubRevision(RequiredBoundedString(request, "revision", 64));
+        var skillPath = ValidateGitHubSkillPath(OptionalString(request, "skillPath"));
+        var package = await MaterializeRemoteSkillPackageAsync(repository, revision, skillPath).ConfigureAwait(false);
+        try
+        {
+            var preview = CreateSkillInstaller().Preview(package.DirectoryPath);
+            return new(ProtocolVersion, request.Id, true, new
+            {
+                id = preview.Id,
+                name = preview.Name,
+                version = preview.Version,
+                publisher = preview.Publisher,
+                packageSha256 = preview.PackageSha256,
+                requiredPermissions = preview.RequiredPermissions,
+                isUpdate = preview.IsUpdate,
+                existingVersion = preview.ExistingVersion,
+                existingPackageSha256 = preview.ExistingPackageSha256,
+                sourceRef = package.SourceRef,
+                repository,
+                revision,
+                skillPath,
+            });
+        }
+        finally
+        {
+            DeleteRemoteSkillDirectory(package.DirectoryPath);
+        }
+    }
+
+    private static async Task<AgentResponse> InstallRemoteSkillAsync(AgentRequest request)
+    {
+        var repository = ValidateGitHubRepository(RequiredBoundedString(request, "repository", 160));
+        var revision = ValidateGitHubRevision(RequiredBoundedString(request, "revision", 64));
+        var skillPath = ValidateGitHubSkillPath(OptionalString(request, "skillPath"));
+        var expectedPackageSha256 = OptionalString(request, "expectedPackageSha256");
+        var package = await MaterializeRemoteSkillPackageAsync(repository, revision, skillPath).ConfigureAwait(false);
+        try
+        {
+            var installer = CreateSkillInstaller();
+            var installed = installer.Install(package.DirectoryPath, package.SourceRef, expectedPackageSha256);
+            return InstalledSkillResponse(request, installed, installer);
+        }
+        finally
+        {
+            DeleteRemoteSkillDirectory(package.DirectoryPath);
+        }
+    }
+
+    private static async Task<RemoteSkillPackage> MaterializeRemoteSkillPackageAsync(string repository, string revision, string skillPath)
+    {
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        var manifest = await ReadGitHubContentAsync(client, BuildGitHubContentUrl(repository, skillPath, "skill.json", revision), "GitHub skill manifest").ConfigureAwait(false)
+            ?? throw new InvalidDataException("The pinned GitHub skill does not publish a skill.json manifest at the selected path.");
+        var instructions = await ReadGitHubContentAsync(client, BuildGitHubContentUrl(repository, skillPath, "SKILL.md", revision), "GitHub skill instructions").ConfigureAwait(false)
+            ?? throw new InvalidDataException("The pinned GitHub skill does not publish a readable SKILL.md at the selected path.");
+        var directory = Path.Combine(Path.GetTempPath(), "skai-remote-skill-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "skill.json"), manifest);
+            File.WriteAllText(Path.Combine(directory, "SKILL.md"), instructions);
+            return new RemoteSkillPackage(directory, $"https://github.com/{repository}@{revision}");
+        }
+        catch
+        {
+            DeleteRemoteSkillDirectory(directory);
+            throw;
+        }
+    }
+
+    private static string BuildGitHubContentUrl(string repository, string skillPath, string fileName, string revision)
+    {
+        var segments = (string.IsNullOrWhiteSpace(skillPath) ? Array.Empty<string>() : skillPath.Split('/')).Append(fileName)
+            .Select(Uri.EscapeDataString);
+        return $"https://api.github.com/repos/{repository}/contents/{string.Join('/', segments)}?ref={Uri.EscapeDataString(revision)}";
+    }
+
+    private static string ValidateGitHubRepository(string repository)
+    {
+        var value = repository.Trim();
+        if (!Regex.IsMatch(value, "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))
+            throw new InvalidOperationException("repository must be an owner/name GitHub repository identifier.");
+        return value;
+    }
+
+    private static string ValidateGitHubRevision(string revision)
+    {
+        var value = revision.Trim();
+        if (!Regex.IsMatch(value, "^[0-9a-fA-F]{40}$"))
+            throw new InvalidOperationException("A remote skill must use a full 40-character Git commit revision.");
+        return value;
+    }
+
+    private static string ValidateGitHubSkillPath(string? skillPath)
+    {
+        var value = skillPath?.Trim().Trim('/') ?? string.Empty;
+        if (value.Length == 0) return string.Empty;
+        var segments = value.Split('/');
+        if (segments.Length > 16 || segments.Any(segment => segment.Length == 0 || segment is "." or ".." || !Regex.IsMatch(segment, "^[A-Za-z0-9_.-]+$")))
+            throw new InvalidOperationException("The remote skill path contains an unsafe segment.");
+        return string.Join('/', segments);
+    }
+
+    private static void DeleteRemoteSkillDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private sealed record RemoteSkillPackage(string DirectoryPath, string SourceRef);
 
     private static async Task<JsonDocument?> ReadGitHubJsonAsync(HttpClient client, string url, string label)
     {
