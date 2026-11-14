@@ -62,6 +62,10 @@ Discovery status is announced through the shared status region and the active
 button exposes `aria-busy`, so keyboard and assistive-technology users receive
 the same progress and recovery signal as visual users.
 
+Task environment radios now use an instance-scoped group name and describe the
+local-only execution boundary directly from the control, avoiding collisions
+when more than one composer is mounted.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

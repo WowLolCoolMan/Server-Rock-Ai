@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { TaskEnvironment } from "../../../shared/contracts";
 
 type EnvironmentPickerProps = {
@@ -11,15 +12,17 @@ const environments: Array<{ id: TaskEnvironment; label: string; description: str
 ];
 
 export function EnvironmentPicker({ value, onChange }: EnvironmentPickerProps) {
+  const groupId = useId();
+  const noteId = `${groupId}-note`;
   return <fieldset className="environment-picker">
-    <legend>Run this task in</legend>
+    <legend id={`${groupId}-legend`}>Run this task in</legend>
     <div className="environment-options">
       {environments.map((environment) => <label className={`environment-option ${value === environment.id ? "is-selected" : ""} ${!environment.available ? "is-unavailable" : ""}`} key={environment.id}>
-        <input type="radio" name="task-environment" value={environment.id} checked={value === environment.id} disabled={!environment.available} onChange={() => onChange(environment.id)} />
+        <input type="radio" name={groupId} value={environment.id} checked={value === environment.id} disabled={!environment.available} aria-describedby={noteId} onChange={() => onChange(environment.id)} />
         <span className="environment-option-copy"><strong>{environment.label}</strong><small>{environment.description}</small></span>
         {!environment.available && <span className="environment-status">Unavailable</span>}
       </label>)}
     </div>
-    <p className="environment-note">Local is the only configured execution environment. Selecting it keeps the task plan bounded to this project.</p>
+    <p className="environment-note" id={noteId}>Local is the only configured execution environment. Selecting it keeps the task plan bounded to this project.</p>
   </fieldset>;
 }

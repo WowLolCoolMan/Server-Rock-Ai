@@ -11447,6 +11447,32 @@ Evidence:
 Remaining: continue the shared utility and overlay interaction slices; the
 overall premium rebuild remains active.
 
+## Slice 309 — Isolate task environment radio groups
+
+Status: `implemented_renderer_typechecked`
+
+The shared task environment picker now generates an instance-scoped radio
+group and connects each option to the local-only execution note with
+`aria-describedby`. Multiple mounted task composers no longer share browser
+radio state, while Worktree remains visibly unavailable until its backend is
+implemented.
+
+Changed files:
+
+- `apps/desktop/src/components/ui/EnvironmentPicker.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- The picker preserves the existing Local default and unavailable Worktree
+  guard while making the grouping and boundary explicit to assistive tech.
+- Renderer typecheck and production build are the acceptance gate for this
+  shared control slice.
+
+Remaining: continue the shared utility and overlay interaction slices; the
+overall premium rebuild remains active.
+
 ## Slice 308 — Announce local model discovery state
 
 Status: `implemented_renderer_typechecked`
