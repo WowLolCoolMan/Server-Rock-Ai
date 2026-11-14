@@ -361,3 +361,19 @@ Remaining: the desktop computer-use inspection was stopped by the Escape-key
 guard before these three newly added routes could be visually captured. A
 follow-up live interaction pass should cover the three routes at desktop and
 narrow widths; the production build and TypeScript route coverage are green.
+
+## Slice — Add a live coding activity inspector
+
+Status: `implemented_build_verified`
+
+The coding workspace now mirrors the reference editor composition more closely
+with a right-side Workspace Activity inspector beside the file explorer/editor.
+Its progress, file context, terminal state, and review requirement are derived
+from the current project session, so it remains useful when the Agent Host is
+idle and never invents task telemetry.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.

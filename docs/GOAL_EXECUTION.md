@@ -8214,6 +8214,11 @@ Verification: `npm run desktop:typecheck`, `npm run desktop:build`, and
 computer-use surface was stopped by the Escape-key guard before the new routes
 could be captured.
 
+The coding workspace also gained a live Workspace Activity inspector beside
+the explorer/editor. Its four milestones are derived from selected project,
+file, terminal, and unsaved-diff state, preserving the reference composition
+without fabricating agent activity.
+
 ## Slice — Align shell continuity and model manager
 
 Status: `implemented_build_visual_verified`
