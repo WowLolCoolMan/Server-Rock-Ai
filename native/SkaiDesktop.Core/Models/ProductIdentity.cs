@@ -19,8 +19,6 @@ public static class ProductIdentity
     // future rebrand does not strand existing protected GitHub credentials or keyring entries.
     public const string GitHubCredentialEntropy = "Server Rock AI GitHub credential v1";
     public const string GitHubCredentialLabel = "Server Rock AI GitHub";
-    public const string ProviderCredentialEntropy = "Server Rock AI provider credential v1";
-    public const string ProviderCredentialLabel = "Server Rock AI provider";
 
     /// <summary>Safe lower-case filename stem derived from the current short product name.</summary>
     public static string FileNameStem => new string(ShortName

@@ -10,11 +10,10 @@ type ChatWorkspaceOptions = {
   provider: string;
   endpoint: string;
   model: string;
-  cloudRouteEnabled: boolean;
   onError: (message: string | null) => void;
 };
 
-export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, onError }: ChatWorkspaceOptions) {
+export function useChatWorkspace({ request, connection, provider, endpoint, model, onError }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -50,11 +49,12 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
 
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
+    if (["OpenAI API", "ChatGPT", "Custom"].includes(provider)) { onError("This cloud provider is not connected in the current release. Choose Local models in Settings."); return; }
     stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null);
     const savedId = await saveConversation(next);
-    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: next });
+    const response = await request("chat.complete", { provider, endpoint, model, messages: next });
     setBusy(false);
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
@@ -64,12 +64,13 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
 
   const retryMessage = async (messageIndex: number) => {
     if (busy || !conversationId) return;
+    if (["OpenAI API", "ChatGPT", "Custom"].includes(provider)) { onError("This cloud provider is not connected in the current release. Choose Local models in Settings."); return; }
     const originalMessages = messages;
     const prefix = messages.slice(0, messageIndex);
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
     stopNativeSpeech();
     setMessages(prefix); setBusy(true); onError(null);
-    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: prefix });
+    const response = await request("chat.complete", { provider, endpoint, model, messages: prefix });
     setBusy(false);
     if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
