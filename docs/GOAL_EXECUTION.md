@@ -3,6 +3,39 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 273 — Make packaged Electron acceptance window-aware
+
+Status: `implemented_packaged_electron_smoke_verified`
+
+The packaged Electron smoke harness now distinguishes the primary Skai page
+from the separate Percy companion page instead of evaluating whichever DevTools
+target happens to be listed first. It verifies the main navigation and Settings
+surface independently, then verifies Percy’s accessible companion root and
+sprite surface. This makes the release gate truthful for the two-window
+desktop product.
+
+Changed file:
+
+- `scripts/smoke-electron-artifact.cjs`
+- `scripts/audit-electron-runtime.cjs`
+
+Evidence:
+
+- `npm --prefix apps/desktop ci --ignore-scripts` — passed.
+- `npm run desktop:build` — passed.
+- `npm run package:electron` — passed; self-contained Windows Agent Host was
+  staged in the portable artifact.
+- `npm run smoke:electron:artifact` — passed against the portable artifact;
+  main target `Skai Desktop · marketplace` and Percy target `Percy · Skai
+  companion` were both inspected.
+- `npm run audit:electron-runtime` — passed after the audit contract was
+  updated to require the main/Percy target-aware checks.
+- The prior harness failure was reproduced and fixed: it selected Percy first
+  and incorrectly reported the main shell as incomplete.
+
+Remaining: continue packaged visual comparison at target window sizes and the
+remaining interaction-depth gaps; the active goal remains incomplete.
+
 ## Slice 272 — Expose active navigation state semantically
 
 Status: `implemented_live_electron_verified`

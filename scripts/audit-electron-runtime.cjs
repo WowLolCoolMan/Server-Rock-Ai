@@ -34,7 +34,7 @@ expect(main.includes("packagedRuntime") && main.includes("process.resourcesPath"
 expect(main.includes("packagedHost") && main.includes("ServerRock.AgentHost"), "Electron must launch a bundled Agent Host when packaged");
 expect(packageScript.includes("dotnet\", [\"publish\"") && packageScript.includes("PublishSingleFile=true"), "Electron packaging must publish a self-contained Agent Host");
 expect(packageScript.includes("electronDist") && packageScript.includes("const appRoot = path.join(outputRoot, \"resources\", \"app\")"), "Electron packaging must stage the renderer and runtime files");
-expect(smokeScript.includes("remote-debugging-port") && smokeScript.includes("Settings") && smokeScript.includes("Skai pet"), "Electron packaged smoke must inspect the rendered settings and pet surfaces");
+expect(smokeScript.includes("remote-debugging-port") && smokeScript.includes("mainTarget") && smokeScript.includes("petTarget") && smokeScript.includes("Primary navigation") && smokeScript.includes("Percy desktop companion") && smokeScript.includes("pet-window-sprite"), "Electron packaged smoke must inspect the main navigation, Settings, and separate Percy surfaces");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");

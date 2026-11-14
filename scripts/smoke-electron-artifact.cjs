@@ -50,22 +50,30 @@ async function evaluate(target, expression) {
 
 async function main() {
   const deadline = Date.now() + timeoutMs;
-  let target;
+  let mainTarget;
+  let petTarget;
   while (Date.now() < deadline) {
     try {
       const targets = await fetchJson(`http://127.0.0.1:${port}/json/list`);
-      target = targets.find((item) => item.type === "page");
-      if (target?.title?.includes("Skai Desktop")) break;
+      const pages = targets.filter((item) => item.type === "page");
+      mainTarget = pages.find((item) => item.title?.includes("Skai Desktop") && !item.url?.includes("?pet=1"));
+      petTarget = pages.find((item) => item.title?.includes("Percy") || item.url?.includes("?pet=1"));
+      if (mainTarget && petTarget) break;
     } catch { /* The packaged window is still starting. */ }
     await sleep(250);
   }
-  if (!target) throw new Error(`Packaged Electron did not expose a page before timeout. Output: ${output.slice(-2_000)}`);
-  console.log(`Packaged target: ${JSON.stringify({ title: target.title, url: target.url, type: target.type, websocket: Boolean(target.webSocketDebuggerUrl) })}`);
-  const result = await evaluate(target, "JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), pet: Boolean(document.querySelector('[aria-label=\\\"Skai pet. Drag to move, or use arrow keys.\\\"]')) })");
-  if (typeof result !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify(result)} for ${target.url}`);
-  const state = JSON.parse(result);
-  if (!state.title.includes("Skai Desktop") || !state.settings || !state.pet) throw new Error(`Packaged Electron rendered an incomplete shell: ${result}`);
-  console.log(`Packaged Electron smoke passed: ${state.title}; settings and pet surfaces rendered.`);
+  if (!mainTarget || !petTarget) throw new Error(`Packaged Electron did not expose both main and Percy pages before timeout. Output: ${output.slice(-2_000)}`);
+  console.log(`Packaged main target: ${JSON.stringify({ title: mainTarget.title, url: mainTarget.url, type: mainTarget.type, websocket: Boolean(mainTarget.webSocketDebuggerUrl) })}`);
+  console.log(`Packaged Percy target: ${JSON.stringify({ title: petTarget.title, url: petTarget.url, type: petTarget.type, websocket: Boolean(petTarget.webSocketDebuggerUrl) })}`);
+  const mainResult = await evaluate(mainTarget, "JSON.stringify({ title: document.title, settings: document.body.innerText.includes('Settings'), navigation: Boolean(document.querySelector('[aria-label=\\\"Primary navigation\\\"]')) })");
+  const petResult = await evaluate(petTarget, "JSON.stringify({ title: document.title, companion: Boolean(document.querySelector('[aria-label=\\\"Percy desktop companion. Drag to move.\\\"]')), sprite: Boolean(document.querySelector('.pet-window-sprite')) })");
+  if (typeof mainResult !== "string" || typeof petResult !== "string") throw new Error(`Packaged Electron returned an unexpected evaluation value: ${JSON.stringify({ mainResult, petResult })}`);
+  const mainState = JSON.parse(mainResult);
+  const petState = JSON.parse(petResult);
+  if (!mainState.title.includes("Skai Desktop") || !mainState.settings || !mainState.navigation || !petState.title.includes("Percy") || !petState.companion || !petState.sprite) {
+    throw new Error(`Packaged Electron rendered incomplete surfaces: ${JSON.stringify({ mainState, petState })}`);
+  }
+  console.log(`Packaged Electron smoke passed: ${mainState.title}; main navigation, Settings, and Percy companion surfaces rendered.`);
 }
 
 main().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => {

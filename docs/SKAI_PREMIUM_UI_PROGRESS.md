@@ -4,6 +4,8 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — fixed packaged Electron smoke target selection so the release gate verifies the main Skai window and separate Percy companion independently; portable Windows artifact packaging and smoke validation passed.
+
 - Current checkpoint — shared sidebar routes now expose semantic `aria-current="page"` state alongside their visual active styling; the rebuilt Chat shell was inspected live in Electron.
 
 - Current checkpoint — standardized high-frequency navigation, sidebar, Models, command-palette, companion, and attachment controls on the shared typed SVG icon system; live Electron verification confirmed the refreshed Chat and Models surfaces.
@@ -108,6 +110,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Memory action-safety check: passed edit/save feedback, canceling removal, confirming removal, persistence refresh, no Cloud UI, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-memory-confirmation.png`.
 - Terminal empty-state check: passed no-project capability messaging, hidden Run action until a project exists, Coding Workspace handoff, no Cloud UI, no duplicate panel title, and no horizontal overflow at 1280px. Screenshot: `output/playwright/skai-terminal-empty.png`.
 - Electron launch/bridge check: passed visible launch from the built Electron binary, secure context-isolated renderer loading, and the `tasks.plan` bridge allowlist update.
+- Packaged Electron artifact check: passed portable Windows artifact staging with a self-contained Agent Host, then verified the main Skai navigation/Settings surface and the separate Percy companion/sprite surface through DevTools.
 - Image Studio live Electron check: passed fresh renderer launch, local readiness state rendering, prompt recipe application, workflow-required gating, and no Cloud UI. The generate action remains disabled until all real local inputs are present.
 - Models focused UI check: passed model discovery, provider/capability metadata rendering, discovered status, exact navigation selection, screenshot capture, and no Cloud UI. Screenshot: `output/playwright/skai-models-provider-status.png`.
 - Branded shell check: passed tracked wolf asset loading with preserved transparency, accessible decorative-image treatment, responsive shell rendering, and no Cloud UI. Screenshot: `output/playwright/skai-branded-shell.png`.
