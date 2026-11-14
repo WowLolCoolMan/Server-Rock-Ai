@@ -10,13 +10,20 @@ type TerminalPanelProps = {
   exitCode: number | null;
   compact?: boolean;
   onRun: (projectId: string, command: string, cwd: string) => void;
+  sessionId?: string | null;
+  screen?: string | null;
+  onStartSession?: (projectId: string, cwd: string) => Promise<boolean>;
+  onWriteSession?: (text: string) => Promise<boolean>;
+  onRefreshSession?: () => Promise<boolean>;
+  onCloseSession?: () => Promise<boolean>;
   onOpenCoding?: () => void;
 };
 
-export function TerminalPanel({ projects, initialProjectId, busy, output, exitCode, compact = false, onRun, onOpenCoding }: TerminalPanelProps) {
+export function TerminalPanel({ projects, initialProjectId, busy, output, exitCode, sessionId, screen, compact = false, onRun, onStartSession, onWriteSession, onRefreshSession, onCloseSession, onOpenCoding }: TerminalPanelProps) {
   const [projectId, setProjectId] = useState(initialProjectId ?? projects[0]?.id ?? "");
   const [cwd, setCwd] = useState(".");
   const [command, setCommand] = useState("");
+  const [sessionInput, setSessionInput] = useState("");
 
   useEffect(() => {
     if (initialProjectId) setProjectId(initialProjectId);
@@ -27,6 +34,8 @@ export function TerminalPanel({ projects, initialProjectId, busy, output, exitCo
     if (!command.trim() || !projectId || busy) return;
     onRun(projectId, command.trim(), cwd.trim() || ".");
   };
+  const startSession = () => { if (projectId && onStartSession) void onStartSession(projectId, cwd.trim() || "."); };
+  const sendSessionInput = async () => { if (!sessionInput || !sessionId || !onWriteSession) return; if (await onWriteSession(sessionInput + (sessionInput.endsWith("\n") ? "" : "\r\n"))) setSessionInput(""); };
 
   return <Card className={compact ? "terminal-card terminal-panel" : "terminal-card"}>
     {compact && <div className="terminal-panel-heading">
@@ -43,5 +52,6 @@ export function TerminalPanel({ projects, initialProjectId, busy, output, exitCo
       <Button variant="primary" disabled={busy || !command.trim() || !projectId} onClick={run}>{busy ? "Running…" : "Run command"}</Button>
     </div>
     {output !== null && <pre className={exitCode === 0 ? "terminal-result" : "terminal-result terminal-failure"}><span>exit {exitCode}</span>{output}</pre>}</>}
+    {projects.length > 0 && onStartSession && <div className="terminal-session"><div className="terminal-session-heading"><div><p className="section-kicker">PERSISTENT PTY</p><h3>{sessionId ? "Session connected" : "Keep a shell open"}</h3></div><span className="terminal-safety-note">{sessionId ? "Local session" : "Not started"}</span></div>{sessionId ? <><pre className="terminal-result terminal-screen" aria-live="polite">{screen || "Starting shell…"}</pre><div className="terminal-command-row"><input value={sessionInput} onChange={(event) => setSessionInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void sendSessionInput(); }} placeholder="Type shell input…" aria-label="Persistent terminal input" /><Button variant="secondary" disabled={!sessionInput} onClick={() => void sendSessionInput()}>Send</Button><Button variant="ghost" onClick={() => void onRefreshSession?.()}>Refresh</Button><Button variant="danger" onClick={() => void onCloseSession?.()}>Close</Button></div></> : <div className="form-footer"><span>Interactive input persists between commands while this workspace is open.</span><Button variant="secondary" disabled={busy || !projectId} onClick={startSession}>Start persistent session</Button></div>}</div>}
   </Card>;
 }

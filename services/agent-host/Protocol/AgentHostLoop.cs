@@ -11,6 +11,8 @@ public static class AgentHostLoop
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly Dictionary<string, Task> ActiveTaskExecutions = new(StringComparer.Ordinal);
     private static readonly object ActiveTaskExecutionsGate = new();
+    private static readonly Dictionary<string, WorkspaceTerminalSession> TerminalSessions = new(StringComparer.Ordinal);
+    private static readonly object TerminalSessionsGate = new();
 
     public static async Task RunAsync(Stream input, Stream output, CancellationToken cancellationToken = default)
     {
@@ -48,6 +50,7 @@ public static class AgentHostLoop
 
             await writer.WriteLineAsync(JsonSerializer.Serialize(response, JsonOptions));
         }
+        await DisposeTerminalSessionsAsync().ConfigureAwait(false);
     }
 
     private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice)
@@ -61,7 +64,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -70,6 +73,10 @@ public static class AgentHostLoop
             "project.file.write" => WriteProjectFile(request),
             "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
+            "project.terminal.start" => StartProjectTerminalAsync(request).GetAwaiter().GetResult(),
+            "project.terminal.read" => ReadProjectTerminal(request),
+            "project.terminal.write" => WriteProjectTerminalAsync(request).GetAwaiter().GetResult(),
+            "project.terminal.close" => CloseProjectTerminalAsync(request).GetAwaiter().GetResult(),
             "project.git.status" => GetProjectGitStatusAsync(request).GetAwaiter().GetResult(),
             "project.git.diff" => GetProjectGitDiffAsync(request).GetAwaiter().GetResult(),
             "project.git.commit" => CommitProjectGitChangesAsync(request).GetAwaiter().GetResult(),
@@ -399,6 +406,57 @@ public static class AgentHostLoop
             outputTruncated = result.OutputTruncated,
             workingDirectory = result.WorkingDirectory,
         });
+    }
+
+    private static async Task<AgentResponse> StartProjectTerminalAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault() ?? throw new InvalidOperationException("Select a project folder before starting a terminal.");
+        var sessionId = $"terminal-{Guid.NewGuid():N}";
+        var session = new WorkspaceTerminalSession(OptionalInt(request, "columns") ?? 100, OptionalInt(request, "rows") ?? 26);
+        await session.StartAsync(root, OptionalString(request, "relativeWorkingDirectory") ?? ".", cancellationToken: CancellationToken.None).ConfigureAwait(false);
+        lock (TerminalSessionsGate) TerminalSessions[sessionId] = session;
+        return new(ProtocolVersion, request.Id, true, new { sessionId, screen = session.ScreenText, exitCode = session.ExitCode, workingDirectory = root });
+    }
+
+    private static AgentResponse ReadProjectTerminal(AgentRequest request)
+    {
+        var session = GetTerminalSession(RequiredBoundedString(request, "sessionId", 128));
+        return new(ProtocolVersion, request.Id, true, new { screen = session.ScreenText, exitCode = session.ExitCode });
+    }
+
+    private static async Task<AgentResponse> WriteProjectTerminalAsync(AgentRequest request)
+    {
+        var session = GetTerminalSession(RequiredBoundedString(request, "sessionId", 128));
+        var text = RequiredTerminalText(request, "text", 16_000);
+        await session.SendTextAsync(text, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { accepted = true, screen = session.ScreenText, exitCode = session.ExitCode });
+    }
+
+    private static async Task<AgentResponse> CloseProjectTerminalAsync(AgentRequest request)
+    {
+        var sessionId = RequiredBoundedString(request, "sessionId", 128);
+        WorkspaceTerminalSession? session;
+        lock (TerminalSessionsGate) { TerminalSessions.Remove(sessionId, out session); }
+        if (session is not null) await session.DisposeAsync().ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { closed = true });
+    }
+
+    private static WorkspaceTerminalSession GetTerminalSession(string sessionId)
+    {
+        lock (TerminalSessionsGate)
+        {
+            if (TerminalSessions.TryGetValue(sessionId, out var session)) return session;
+        }
+        throw new KeyNotFoundException("The terminal session does not exist or has expired.");
+    }
+
+    private static async Task DisposeTerminalSessionsAsync()
+    {
+        WorkspaceTerminalSession[] sessions;
+        lock (TerminalSessionsGate) { sessions = TerminalSessions.Values.ToArray(); TerminalSessions.Clear(); }
+        foreach (var session in sessions) await session.DisposeAsync().ConfigureAwait(false);
     }
 
     private static async Task<AgentResponse> GetProjectGitStatusAsync(AgentRequest request)
@@ -1023,6 +1081,14 @@ public static class AgentHostLoop
         var value = RequiredString(request, name);
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
         return value.Trim();
+    }
+
+    private static string RequiredTerminalText(AgentRequest request, string name, int maxLength)
+    {
+        var value = RequiredString(request, name);
+        if (value.Length > maxLength || value.Any(character => char.IsControl(character) && character is not ('\r' or '\n' or '\t' or '\u001b')))
+            throw new InvalidOperationException($"{name} exceeds its safety limit.");
+        return value;
     }
 
     private static string RequiredLocalEndpoint(AgentRequest request, string name, int maxLength)

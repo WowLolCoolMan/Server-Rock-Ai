@@ -11576,6 +11576,28 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 324 — Wire persistent PTY terminal sessions
+
+Status: `implemented_renderer_and_packaged_verified`
+
+The existing bounded `WorkspaceTerminalSession` now runs through the Agent
+Host with explicit start/read/write/close capabilities. Terminal sessions are
+scoped to a selected project, use the local shell, retain a VT screen buffer,
+and are disposed when the host exits. The Terminal workspace exposes start,
+input, refresh, and close controls while preserving the existing one-shot
+command path.
+
+Evidence:
+
+- Agent Host build passed with zero warnings and zero errors.
+- Disposable smoke passed persistent PTY start → input → rendered output →
+  close on Windows.
+- Renderer typecheck/build and syntax checks passed.
+- Packaged Electron overflow acceptance passed 9 routes × 5 viewport widths.
+
+Remaining: add renderer interaction screenshot coverage, then continue agent
+tool/file execution, PR support, model/voice recovery, and release gates.
+
 ## Slice 323 — Expose guarded local Git push
 
 Status: `implemented_renderer_typechecked`

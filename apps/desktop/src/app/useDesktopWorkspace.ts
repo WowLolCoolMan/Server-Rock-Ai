@@ -178,6 +178,10 @@ export function useDesktopWorkspace(): DesktopWorkspace {
 
   routeActions.onImportCorpus = () => void importCorpus();
   routeActions.onPushGitChanges = coding.pushGitChanges;
+  routeActions.onStartTerminalSession = coding.startTerminalSession;
+  routeActions.onWriteTerminalSession = coding.writeTerminalSession;
+  routeActions.onRefreshTerminalSession = coding.refreshTerminalSession;
+  routeActions.onCloseTerminalSession = coding.closeTerminalSession;
   routeActions.onDiscoverModels = discoverModels;
   return { routeState, routeActions, route, connection, health, error, conversations: chat.conversations, conversationQuery, setConversationQuery, sidebarCollapsed, sidebarWidth, toggleSidebar, resizeSidebar, commandOpen, openCommandPalette, closeCommandPalette, startNewChat, selectConversation: chat.selectConversation, updateConversationMetadata: (id, patch) => chat.updateConversationMetadata(patch, id), onNavigate, canGoBack: navigation.index > 0, canGoForward: navigation.index < navigation.length - 1, goBack, goForward, petVisible, petWander, setPetVisible, setPetWander };
 }

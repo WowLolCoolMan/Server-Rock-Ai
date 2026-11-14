@@ -23,6 +23,8 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [terminalBusy, setTerminalBusy] = useState(false);
   const [terminalOutput, setTerminalOutput] = useState<string | null>(null);
   const [terminalExitCode, setTerminalExitCode] = useState<number | null>(null);
+  const [terminalSessionId, setTerminalSessionId] = useState<string | null>(null);
+  const [terminalScreen, setTerminalScreen] = useState<string | null>(null);
   const [gitStatus, setGitStatus] = useState<DesktopGitStatus | null>(null);
   const [gitBusy, setGitBusy] = useState(false);
   const [gitDiff, setGitDiff] = useState<DesktopGitDiff | null>(null);
@@ -157,5 +159,37 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalExitCode(result.exitCode);
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus, loadGitDiff, commitGitChanges, pushGitChanges };
+  const startTerminalSession = async (projectId: string, cwd: string) => {
+    setTerminalBusy(true);
+    const response = await request("project.terminal.start", { id: projectId, relativeWorkingDirectory: cwd || ".", columns: 100, rows: 26 });
+    setTerminalBusy(false);
+    if (!response.ok) { onError(response.error?.message ?? "Persistent terminal could not start."); return false; }
+    const result = response.result as { sessionId: string; screen: string; exitCode?: number | null };
+    setTerminalSessionId(result.sessionId); setTerminalScreen(result.screen); setTerminalExitCode(result.exitCode ?? null); onError(null); return true;
+  };
+
+  const writeTerminalSession = async (text: string) => {
+    if (!terminalSessionId || !text) return false;
+    const response = await request("project.terminal.write", { sessionId: terminalSessionId, text });
+    if (!response.ok) { onError(response.error?.message ?? "Terminal input could not be sent."); return false; }
+    const result = response.result as { screen: string; exitCode?: number | null };
+    setTerminalScreen(result.screen); setTerminalExitCode(result.exitCode ?? null); return true;
+  };
+
+  const refreshTerminalSession = async () => {
+    if (!terminalSessionId) return false;
+    const response = await request("project.terminal.read", { sessionId: terminalSessionId });
+    if (!response.ok) { onError(response.error?.message ?? "Terminal screen could not be read."); return false; }
+    const result = response.result as { screen: string; exitCode?: number | null };
+    setTerminalScreen(result.screen); setTerminalExitCode(result.exitCode ?? null); return true;
+  };
+
+  const closeTerminalSession = async () => {
+    if (!terminalSessionId) return true;
+    const response = await request("project.terminal.close", { sessionId: terminalSessionId });
+    if (!response.ok) { onError(response.error?.message ?? "Terminal session could not be closed."); return false; }
+    setTerminalSessionId(null); setTerminalScreen(null); setTerminalExitCode(null); return true;
+  };
+
+  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, terminalSessionId, terminalScreen, gitStatus, gitBusy, gitDiff, gitDiffBusy, gitCommitBusy, gitPushBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, startTerminalSession, writeTerminalSession, refreshTerminalSession, closeTerminalSession, refreshGitStatus, loadGitDiff, commitGitChanges, pushGitChanges };
 }

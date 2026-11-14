@@ -78,6 +78,16 @@ credentials are never accepted or embedded.
 Evidence: Agent Host build, disposable local-remote push smoke, renderer
 typecheck/build, syntax checks, and diff validation passed.
 
+## Slice 324 — Persistent PTY terminal workspace
+
+The Terminal workspace now exposes a real local PTY session backed by the
+existing bounded workspace terminal implementation. Users can start a shell,
+send input, refresh the VT screen, and close the session; one-shot commands
+remain available as a separate explicit action.
+
+Evidence: Agent Host PTY smoke, renderer typecheck/build, and packaged overflow
+acceptance passed.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution

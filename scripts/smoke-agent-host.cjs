@@ -86,6 +86,15 @@ async function run() {
     throw new Error("Agent Host did not reconcile an interrupted task after restart.");
   const project = await request("project.save", { name: "Git status smoke", folderPaths: [tempRoot] });
   if (!project.ok || typeof project.result?.id !== "string") throw new Error("project.save did not create the Git status smoke project.");
+  const terminal = await request("project.terminal.start", { id: project.result.id, relativeWorkingDirectory: ".", columns: 80, rows: 24 });
+  if (!terminal.ok || typeof terminal.result?.sessionId !== "string") throw new Error("project.terminal.start did not create a persistent PTY session.");
+  const terminalWrite = await request("project.terminal.write", { sessionId: terminal.result.sessionId, text: "echo terminal-smoke\r\n" });
+  if (!terminalWrite.ok) throw new Error(`project.terminal.write did not accept input: ${JSON.stringify(terminalWrite)}`);
+  await new Promise(resolve => setTimeout(resolve, 1_500));
+  const terminalRead = await request("project.terminal.read", { sessionId: terminal.result.sessionId });
+  if (!terminalRead.ok || !String(terminalRead.result?.screen ?? "").toLowerCase().includes("terminal-smoke")) throw new Error(`project.terminal.read did not render the PTY response: ${JSON.stringify(terminalRead)}`);
+  const terminalClosed = await request("project.terminal.close", { sessionId: terminal.result.sessionId });
+  if (!terminalClosed.ok || terminalClosed.result?.closed !== true) throw new Error("project.terminal.close did not close the persistent session.");
   const gitStatus = await request("project.git.status", { id: project.result.id });
   if (!gitStatus.ok || gitStatus.result?.repository !== "local repository" || typeof gitStatus.result?.branch !== "string" || !Array.isArray(gitStatus.result?.changes))
     throw new Error("project.git.status did not return bounded local Git state.");
