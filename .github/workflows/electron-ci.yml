@@ -48,6 +48,15 @@ jobs:
       - name: Stage packaged Electron artifact
         run: npm run package:electron
 
+      - name: Prepare Linux Electron sandbox
+        shell: bash
+        run: |
+          set -euo pipefail
+          sandbox="$GITHUB_WORKSPACE/dist/electron/linux-x64/chrome-sandbox"
+          sudo chown root:root "$sandbox"
+          sudo chmod 4755 "$sandbox"
+          stat -c '%U:%G %a %n' "$sandbox"
+
       - name: Smoke packaged Electron artifact
         run: npm run smoke:electron:artifact
 
