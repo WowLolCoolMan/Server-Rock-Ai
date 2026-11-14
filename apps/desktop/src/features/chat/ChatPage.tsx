@@ -7,6 +7,11 @@ import { ModalDialog } from "../../components/ui/ModalDialog";
 import { MessageContent } from "./MessageContent";
 
 const SKAI_WOLF_ICON = new URL("../../../../../assets/branding/skaiwolficon.png", import.meta.url).href;
+const CHAT_SCROLL_KEY_PREFIX = "skai.chat.scroll.";
+
+function chatScrollKey(conversationId: string | null) {
+  return `${CHAT_SCROLL_KEY_PREFIX}${conversationId ?? "new"}`;
+}
 
 type ChatPageProps = { provider: string; model: string; models: Model[]; messages: Message[]; busy: boolean; taskBusy: string | null; attachments: ChatAttachment[]; queuedMessages: DesktopQueuedMessage[]; conversationId: string | null; conversationTitle: string; pinned: boolean; archived: boolean; onSend: (text: string, attachments: ChatAttachment[]) => void; onQueue: (text: string, attachments: ChatAttachment[]) => void; onRemoveQueued: (index: number) => void; onAttach: () => void; onRemoveAttachment: (index: number) => void; onModelChange: (model: string) => void; onNavigate: (route: "coding" | "images" | "marketplace" | "workbench") => void; onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>; onExport: () => void; onFork: () => void; onForkFromMessage: (index: number) => void; onRetryMessage: (index: number) => void; onTogglePinned: () => void; onArchive: () => void; onRenameConversation: (title: string) => Promise<boolean> };
 
@@ -21,9 +26,29 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const [renameBusy, setRenameBusy] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const previousConversationIdRef = useRef(conversationId);
+  const restoreScrollPendingRef = useRef(false);
   useEffect(() => { localStorage.setItem("skai.chat.draft", draft); }, [draft]);
   useEffect(() => { if (!renameOpen) setRenameDraft(conversationTitle); }, [conversationTitle, renameOpen]);
-  useEffect(() => { messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages.length, busy]);
+  useEffect(() => {
+    const key = chatScrollKey(conversationId);
+    return () => { localStorage.setItem(key, String(Math.max(0, Math.round(window.scrollY)))); };
+  }, [conversationId]);
+  useEffect(() => {
+    const conversationChanged = previousConversationIdRef.current !== conversationId;
+    if (conversationChanged) {
+      previousConversationIdRef.current = conversationId;
+      restoreScrollPendingRef.current = true;
+    }
+    if (conversationChanged || restoreScrollPendingRef.current) {
+      restoreScrollPendingRef.current = false;
+      const saved = Number(localStorage.getItem(chatScrollKey(conversationId)) ?? "0");
+      const top = Number.isFinite(saved) ? Math.max(0, saved) : 0;
+      window.requestAnimationFrame(() => window.scrollTo({ top, behavior: "auto" }));
+      return;
+    }
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [conversationId, messages.length, busy]);
   const submit = () => {
     const text = draft.trim();
     if ((!text && attachments.length === 0)) return;
