@@ -84,6 +84,42 @@ Remaining: verify the same bounded behavior with a real connected folder and
 an opened file at constrained desktop widths, then continue the shared
 keyboard-focus and secondary-workspace audit.
 
+## Slice 263 — Bound the Agent Workbench viewport
+
+Status: `implemented_renderer_workbench_viewport_live_electron_verified`
+
+The Agent Workbench now has an independent desktop route viewport instead of
+expanding into one long page. Its summary, filters, and page header remain
+stable while the task list and selected-task detail panels scroll independently;
+the board view and scheduled-run panel are bounded as well. Narrow windows keep
+the natural single-column document flow so the route remains usable without
+introducing a second desktop layout.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- Source audit confirmed the live Workbench rendered task activity, selected
+  task detail, and scheduled runs as one unbounded route.
+- Live Electron at the normal 1440×900 desktop size showed the Workbench with
+  six tasks and three scheduled runs; the list/detail surface extended below
+  the first viewport before this change.
+- The rebuilt Electron list view now keeps the task list and selected-task
+  detail in independent scroll regions, with the scheduled-run card visible as
+  its own bounded surface below them.
+- The rebuilt Electron board view keeps its eight status columns in a bounded
+  board region and preserves the scheduled-run surface below it.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `git diff --check` — passed.
+
 ## Slice 260 — Dock the Electron Chat composer
 
 Status: `implemented_renderer_chat_viewport_live_electron_verified`
