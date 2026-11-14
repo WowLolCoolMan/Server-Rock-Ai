@@ -56,10 +56,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
       - name: Publish self-contained native app
         shell: bash
         run: >-
