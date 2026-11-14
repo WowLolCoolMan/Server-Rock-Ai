@@ -2,6 +2,21 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Chat and Coding composition
+
+Chat now uses a fluid conversation canvas with semantic message rows rather
+than a pale oversized card. User messages are visually secondary, assistant
+content remains easy to scan, and the composer is a contained sticky surface
+at the end of the conversation flow. Coding’s empty-project overview now
+uses the available workspace height for its project and workflow surfaces,
+reducing the dashboard-like dead space while preserving the local project
+creation and handoff actions.
+
+The slice was typechecked, production-built, packaged, smoke-tested, and
+inspected in the running Electron app. The app remains local-only; no cloud
+route or hosted provider behavior was introduced. The overall premium rebuild
+continues.
+
 ## Current checkpoint
 
 Percy’s separate transparent companion now keeps completion feedback truthful

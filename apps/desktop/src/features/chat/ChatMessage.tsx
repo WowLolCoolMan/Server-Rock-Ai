@@ -35,7 +35,7 @@ export function ChatMessage({ message, index, model, busy, conversationId, copie
     if (saved) setEditing(false);
   };
 
-  return <article className={`message-bubble ${message.role}`}>
+  return <article className={`message-bubble chat-message ${message.role}`}>
     <div className="message-meta"><span>{message.role === "user" ? "You" : model}</span><div className="message-actions">
       <Button variant="ghost" onClick={() => onCopy(message.content, index)}>{copied ? "Copied" : "Copy"}</Button>
       {message.role === "user" && <Button variant="ghost" disabled={busy || !conversationId || saving} onClick={() => setEditing(true)}>Edit</Button>}

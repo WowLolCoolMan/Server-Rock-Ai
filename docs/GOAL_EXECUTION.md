@@ -3,6 +3,53 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 285 — Recompose Chat and Coding workspace surfaces
+
+Status: `implemented_premium_workspace_composition_packaged_verified`
+
+Chat now reads as a continuous conversation canvas instead of a large bordered
+dashboard card. User turns use a restrained inline treatment, assistant turns
+retain readable full-width content with actions revealed on interaction, and
+the composer is a contained sticky surface that stays with the conversation.
+The empty state is centered within the conversation area rather than inside a
+page-sized card. Coding’s project overview now stretches its two primary
+surfaces across the available workspace height so the empty-project workflow
+does not float above a large unused canvas.
+
+The existing local attachment, model, task-panel, project, and route controls
+remain in place. This is a composition refactor only; it adds no cloud
+transport and keeps the Electron → isolated IPC → local Agent Host boundary.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/features/chat/ChatMessage.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed (322 contracts).
+- `npm run check:hygiene` — passed (1115 tracked files).
+- `git diff --check` — passed.
+- `npm run package:electron` — passed; the local Agent Host and renderer
+  were staged in the Windows artifact.
+- `npm run smoke:electron:artifact` — passed; packaged Chat/Coding,
+  Settings, and the separate Percy companion rendered.
+- Live Electron inspection — passed; Chat and Coding route transitions,
+  semantic conversation content, composer, task-panel collapse, and the
+  separate companion surface were inspected at desktop size.
+
+Remaining: continue the active goal’s broader high-fidelity UI, workflow,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 284 — Make Percy’s desktop feedback resilient
 
 Status: `implemented_companion_failure_feedback_packaged_verified`

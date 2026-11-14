@@ -300,10 +300,22 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 @media (max-width: 1100px) { .app-content-chat .chat-rail { display: none; } }
 @media (max-width: 640px) { .app-content-chat { min-height: calc(100vh - 64px); padding-inline: 14px; }.app-content-chat .chat-layout { display: flex; flex-direction: column; }.app-content-chat .chat-column { min-height: 0; }.app-content-chat .conversation-card { height: clamp(280px, calc(100vh - 360px), 420px); min-height: 0; }.app-content-chat .message-list { min-height: 200px; } }
 .chat-page { position: relative; }
-.chat-page .chat-column { padding-bottom: 164px; }
-.chat-page .composer-card { position: fixed; z-index: 12; right: calc(clamp(22px, 4vw, 56px) + 300px); bottom: 18px; left: calc(var(--skai-sidebar-width, 276px) + clamp(22px, 4vw, 56px)); margin: 0; box-shadow: 0 18px 38px rgba(15, 20, 36, .16); }
-@media (max-width: 1100px) { .chat-page .composer-card { right: clamp(22px, 4vw, 56px); } }
-@media (max-width: 640px) { .chat-page .chat-column { padding-bottom: 150px; }.chat-page .composer-card { right: 14px; bottom: 12px; left: 14px; } }
+.chat-page .chat-column { padding-bottom: 0; }
+.chat-page .composer-card { position: sticky; z-index: 12; bottom: 12px; width: min(920px, 100%); margin: 0 auto; box-shadow: 0 18px 38px rgba(15, 20, 36, .16); }
+.app-content-chat .conversation-card.conversation-surface { width: min(920px, 100%); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.app-content-chat .conversation-surface .conversation-header { padding: 0 0 12px; border-bottom-color: color-mix(in srgb, var(--skai-color-border) 82%, transparent); }
+.app-content-chat .conversation-surface .message-list { width: 100%; margin: 0; padding: 24px 0 30px; }
+.app-content-chat .conversation-surface .chat-empty-surface { display: grid; min-height: 360px; place-items: center; }
+.app-content-chat .conversation-surface .ui-empty { width: min(420px, 100%); min-height: 0; padding: 44px 20px; border: 0; background: transparent; }
+.app-content-chat .conversation-surface .chat-message { max-width: 100%; padding: 5px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.app-content-chat .conversation-surface .chat-message.user { max-width: min(760px, 88%); margin-left: auto; padding: 13px 16px; border: 1px solid color-mix(in srgb, var(--skai-color-accent) 20%, var(--skai-color-border)); border-radius: 15px; background: color-mix(in srgb, var(--skai-color-accent) 8%, var(--skai-color-surface-soft)); }
+.app-content-chat .conversation-surface .chat-message.assistant .message-meta { margin-bottom: 5px; }
+.app-content-chat .conversation-surface .chat-message.assistant .message-actions { opacity: 0; transition: opacity var(--skai-duration-fast) var(--skai-ease-standard); }
+.app-content-chat .conversation-surface .chat-message.assistant:hover .message-actions, .app-content-chat .conversation-surface .chat-message.assistant:focus-within .message-actions { opacity: 1; }
+.app-content-chat .conversation-surface .chat-message .message-content { max-width: 780px; }
+.app-content-chat .conversation-surface .chat-message.user .message-content { color: var(--skai-color-text); }
+@media (max-width: 1100px) { .app-content-chat .conversation-surface { width: min(920px, 100%); } }
+@media (max-width: 640px) { .chat-page .composer-card { bottom: 8px; width: 100%; }.app-content-chat .conversation-surface .chat-empty-surface { min-height: 280px; }.app-content-chat .conversation-surface .chat-message.user { max-width: 94%; } }
 .overflow-menu { position: relative; }
 .overflow-menu-trigger { white-space: nowrap; }
 .overflow-menu-panel { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; display: grid; min-width: 168px; gap: 2px; padding: 5px; border: 1px solid var(--skai-color-border-strong); border-radius: 9px; background: var(--skai-color-surface); box-shadow: 0 12px 28px rgba(0,0,0,.28); }
@@ -346,6 +358,9 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .app-content-coding .coding-page-active .project-file-list, .app-content-coding .coding-page-active .file-editor-panel > textarea, .app-content-coding .coding-page-active .diff-preview { min-height: 0; max-height: none; height: 100%; overflow: auto; }
 .app-content-coding .coding-page-active .file-editor-panel > textarea { resize: none; }
 .app-content-coding .coding-page-active .project-dock { min-height: 0; max-height: min(32vh, 260px); overflow: auto; }
+.app-content-coding .coding-overview-grid { min-height: 360px; flex: 1 1 0; align-items: stretch; }
+.app-content-coding .coding-overview-grid > .ui-card { height: 100%; }
+.app-content-coding .coding-projects-panel .ui-empty { min-height: min(46vh, 430px); }
 @media (max-height: 760px) and (min-width: 641px) { .app-content-coding .coding-page-active .coding-session-grid .coding-project-browser { grid-template-rows: auto auto auto minmax(260px, 1fr) auto; }.app-content-coding .coding-page-active .project-dock { max-height: 190px; } }
 @media (max-width: 900px) { .coding-session-grid { grid-template-columns: minmax(0, 1fr); flex: none; }.coding-activity-panel { max-height: 340px; } }
 .app-content-workbench { display: flex; min-height: 0; flex-direction: column; padding-bottom: 24px; overflow: hidden; }
