@@ -43,7 +43,7 @@ async function evaluate(target, expression) {
       else resolve(message.result.result.value);
       socket.close();
     });
-    socket.send(JSON.stringify({ id, method: "Runtime.evaluate", params: { expression, returnByValue: true } }));
+      socket.send(JSON.stringify({ id, method: "Runtime.evaluate", params: { expression, returnByValue: true, awaitPromise: true } }));
   });
   return result;
 }

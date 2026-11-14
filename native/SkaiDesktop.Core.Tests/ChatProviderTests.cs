@@ -36,17 +36,18 @@ internal static class ChatProviderTests
             && profiles.Single(profile => profile.Model == "flagged-model").Vision == CapabilitySupport.Supported
             && profiles.Single(profile => profile.Model == "text-model").Vision == CapabilitySupport.Unknown,
             "model discovery parses bounded provider capability metadata");
-        try
+        string? remoteAuthorization = null;
+        var remoteProvider = new OpenAiCompatibleProvider(new HttpClient(new StubHandler((request, _) =>
         {
-            await new OpenAiCompatibleProvider(new HttpClient(new StubHandler((_, _) =>
-                throw new Exception("Remote model endpoints must be rejected before network access."))))
-                .DiscoverModelsAsync("https://openrouter.ai/api/v1", apiKey: "sk-or-v1-test");
-            throw new Exception("Expected hosted model discovery to be rejected.");
-        }
-        catch (InvalidOperationException error)
-        {
-            Check(error.Message.Contains("loopback", StringComparison.OrdinalIgnoreCase), "hosted model discovery is rejected by the local-only transport boundary");
-        }
+            Check(request.RequestUri?.AbsoluteUri == "https://openrouter.ai/api/v1/models", "cloud model discovery keeps the explicit HTTPS route");
+            remoteAuthorization = request.Headers.Authorization?.ToString();
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"data\":[{\"id\":\"remote-a\"}]}", Encoding.UTF8, "application/json")
+            });
+        })));
+        var remoteModels = await remoteProvider.DiscoverModelsAsync("https://openrouter.ai/api/v1", apiKey: "sk-or-v1-test");
+        Check(remoteModels.SequenceEqual(["remote-a"]) && remoteAuthorization == "Bearer sk-or-v1-test", "explicit HTTPS cloud model discovery uses the supplied bearer key");
 
         string? streamedPayload = null;
         var streamHandler = new StubHandler(async (request, cancellationToken) =>
@@ -236,6 +237,9 @@ internal static class ChatProviderTests
             "invalid endpoint and missing model are rejected before save");
         Check(!ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", true).IsValid,
             "local-only settings reject remote endpoints before save");
+        Check(ConnectionSettingsValidator.Validate("https://example.com/v1", "remote-a", false).IsValid
+            && !ConnectionSettingsValidator.Validate("https://example.com/v1?key=secret", "remote-a", false).IsValid,
+            "explicit cloud settings accept clean HTTPS routes and reject query-string credentials");
         Check(!ConnectionSettingsValidator.Validate("http://user:secret@localhost:11434/v1", "local-a", false).IsValid
             && !ConnectionSettingsValidator.Validate("http://localhost:11434/v1#remote", "local-a", false).IsValid,
             "settings reject embedded credentials and URL fragments even on loopback");

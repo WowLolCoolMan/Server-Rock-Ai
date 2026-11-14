@@ -11,6 +11,8 @@ type ChatWorkspaceOptions = {
   provider: string;
   endpoint: string;
   model: string;
+  cloudRouteEnabled: boolean;
+  cloudVoice: CloudVoiceOptions;
   onError: (message: string | null) => void;
 };
 
@@ -68,12 +70,12 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null);
     const savedId = await saveConversation(next);
-    const response = await request("chat.complete", { provider, endpoint, model, messages: next });
+    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: next });
     setBusy(false);
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
-    void speakNativeResponse(completed.at(-1)?.content ?? "");
+    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
   };
 
   const retryMessage = async (messageIndex: number) => {
@@ -84,12 +86,12 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
     stopNativeSpeech();
     setMessages(prefix); setBusy(true); onError(null);
-    const response = await request("chat.complete", { provider, endpoint, model, messages: prefix });
+    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: prefix });
     setBusy(false);
     if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, conversationId);
-    void speakNativeResponse(completed.at(-1)?.content ?? "");
+    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
   };
 
   const editMessage = async (messageIndex: number, content: string) => {
@@ -203,3 +205,4 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
 
   return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, editMessage, pickAttachments, importDroppedFiles, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
+

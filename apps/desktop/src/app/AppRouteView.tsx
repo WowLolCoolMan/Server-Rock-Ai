@@ -45,6 +45,14 @@ export type AppRouteState = {
   developerMode: boolean;
   memoryInjectionEnabled: boolean;
   endpoint: string;
+  cloudRouteEnabled: boolean;
+  cloudVoiceEnabled: boolean;
+  elevenLabsVoiceId: string;
+  elevenLabsModelId: string;
+  credentialConfigured: boolean;
+  credentialStorageAvailable: boolean;
+  elevenLabsCredentialConfigured: boolean;
+  elevenLabsCredentialStorageAvailable: boolean;
   imageEndpoint: string;
   imagePrompt: string;
   imageWorkflow: string;
@@ -120,3 +128,4 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} onRun={actions.onRunProjectCommand} onOpenCoding={() => actions.onNavigate("coding")} />;
 }
+

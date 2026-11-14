@@ -84,6 +84,14 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const [endpoint, setEndpoint] = useState(defaultEndpoint);
   const [model, setModel] = useState(defaultModel);
   const [provider, setProvider] = useState(defaultProvider);
+  const [cloudRouteEnabled, setCloudRouteEnabled] = useState(false);
+  const [cloudVoiceEnabled, setCloudVoiceEnabled] = useState(false);
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState("JBFqnCBsd6RMkjVDRZzb");
+  const [elevenLabsModelId, setElevenLabsModelId] = useState("eleven_multilingual_v2");
+  const [credentialConfigured, setCredentialConfigured] = useState(false);
+  const [credentialStorageAvailable, setCredentialStorageAvailable] = useState(false);
+  const [elevenLabsCredentialConfigured, setElevenLabsCredentialConfigured] = useState(false);
+  const [elevenLabsCredentialStorageAvailable, setElevenLabsCredentialStorageAvailable] = useState(false);
   const [models, setModels] = useState<Model[]>([]);
   const [tasks, setTasks] = useState<DesktopTask[]>([]);
   const [scheduledTasks, setScheduledTasks] = useState<DesktopScheduledTask[]>([]);
@@ -110,7 +118,7 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const [imageBusy, setImageBusy] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<Array<{ url: string; fileName: string }>>([]);
 
-  const chat = useChatWorkspace({ request, connection, provider, endpoint, model, onError: setError });
+  const chat = useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice: { enabled: cloudVoiceEnabled, voiceId: elevenLabsVoiceId, modelId: elevenLabsModelId }, onError: setError });
 
   const onNavigate = useCallback((nextRoute: Route) => navigate(nextRoute), []);
   const goBack = useCallback(() => { if (navigation.index > 0) window.history.back(); }, [navigation.index]);
@@ -171,3 +179,4 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   routeActions.onDiscoverModels = discoverModels;
   return { routeState, routeActions, route, connection, health, error, conversations: chat.conversations, conversationQuery, setConversationQuery, sidebarCollapsed, sidebarWidth, toggleSidebar, resizeSidebar, commandOpen, openCommandPalette, closeCommandPalette, startNewChat, selectConversation: chat.selectConversation, updateConversationMetadata: (id, patch) => chat.updateConversationMetadata(patch, id), onNavigate, canGoBack: navigation.index > 0, canGoForward: navigation.index < navigation.length - 1, goBack, goForward, petVisible, petWander, setPetVisible, setPetWander };
 }
+

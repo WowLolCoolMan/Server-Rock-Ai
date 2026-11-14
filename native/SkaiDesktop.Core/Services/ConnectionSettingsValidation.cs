@@ -1,3 +1,5 @@
+using SkaiDesktop.Core.Infrastructure;
+
 namespace SkaiDesktop.Core.Services;
 
 public sealed record ConnectionSettingsValidation(bool IsValid, string Error, bool IsLocalEndpoint);
@@ -17,8 +19,10 @@ public static class ConnectionSettingsValidator
         if (string.IsNullOrWhiteSpace(normalizedModel))
             return new(false, "Enter a model ID before saving.", uri.IsLoopback);
 
-        if (!uri.IsLoopback || !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Fragment))
-            return new(false, "Skai Desktop only supports localhost or loopback model endpoints.", false);
+        if (localOnly && !LocalEndpoint.IsLocal(normalizedEndpoint))
+            return new(false, "Choose a local model endpoint for this route.", false);
+        if (!ProviderRoutePolicy.IsAllowed(normalizedEndpoint))
+            return new(false, "Cloud routes must use HTTPS without embedded credentials, queries, or URL fragments.", false);
 
         return new(true, string.Empty, uri.IsLoopback);
     }

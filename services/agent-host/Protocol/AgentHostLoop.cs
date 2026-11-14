@@ -15,6 +15,7 @@ public static class AgentHostLoop
         using var reader = new StreamReader(input);
         await using var writer = new StreamWriter(output) { AutoFlush = true };
         using var voice = new OsNativeTtsService();
+        var cloudVoice = new ElevenLabsTtsProvider();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -29,7 +30,7 @@ public static class AgentHostLoop
                 parsedRequest = JsonSerializer.Deserialize<AgentRequest>(line, JsonOptions);
                 var request = parsedRequest
                     ?? throw new InvalidOperationException("Request body was empty.");
-                response = Handle(request, voice);
+                response = Handle(request, voice, cloudVoice);
             }
             catch (JsonException ex)
             {
@@ -44,7 +45,7 @@ public static class AgentHostLoop
         }
     }
 
-    private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice)
+    private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice, ElevenLabsTtsProvider cloudVoice)
     {
         if (request.V != ProtocolVersion)
             return new(ProtocolVersion, request.Id, false, Error: new("UNSUPPORTED_PROTOCOL", $"Protocol version {request.V} is not supported."));
@@ -93,10 +94,14 @@ public static class AgentHostLoop
             "chat.queue.remove" => RemoveQueuedMessage(request),
             "settings.get" => GetSettings(request),
             "settings.save" => SaveSettings(request),
+            "credentials.status" => CredentialStatus(request),
+            "credentials.save" => SaveCredential(request).GetAwaiter().GetResult(),
+            "credentials.clear" => ClearCredential(request).GetAwaiter().GetResult(),
             "image.generate" => GenerateImageAsync(request).GetAwaiter().GetResult(),
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             "voice.models" => ListVoiceModels(request),
             "voice.speak" => SpeakVoice(request, voice),
+            "voice.speak.cloud" => SpeakCloudVoice(request, cloudVoice),
             "voice.stop" => StopVoice(request, voice),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -125,6 +130,30 @@ public static class AgentHostLoop
         return new(ProtocolVersion, request.Id, true, new { spoken = true, engine, interruptible = true });
     }
 
+    private static AgentResponse SpeakCloudVoice(AgentRequest request, ElevenLabsTtsProvider voice)
+    {
+        var settings = CreateSettingsStore().Load();
+        if (!OptionalBoolean(request, "cloudVoiceEnabled") && !settings.CloudVoiceEnabled)
+            throw new InvalidOperationException("Cloud voice is disabled. Enable it in Voice & Audio before sending speech online.");
+        var text = RequiredSpeechText(request, "text", 4_000);
+        var voiceId = OptionalString(request, "voiceId")?.Trim() ?? settings.ElevenLabsVoiceId;
+        var modelId = OptionalString(request, "modelId")?.Trim() ?? settings.ElevenLabsModelId;
+        var explicitKey = OptionalString(request, "apiKey");
+        var key = !string.IsNullOrWhiteSpace(explicitKey)
+            ? ProviderCredentialStore.ValidateValue(explicitKey)
+            : CreateCredentialStore().ReadAsync("elevenlabs").GetAwaiter().GetResult();
+        if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Save an ElevenLabs API key in Voice & Audio before using cloud voice.");
+        var audio = voice.SynthesizeAsync(text, voiceId, modelId, key).GetAwaiter().GetResult();
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            spoken = true,
+            engine = "elevenlabs",
+            mediaType = audio.MediaType,
+            audioBase64 = Convert.ToBase64String(audio.Bytes),
+            interruptible = true,
+        });
+    }
+
     private static AgentResponse StopVoice(AgentRequest request, OsNativeTtsService voice)
     {
         voice.Stop();
@@ -133,12 +162,14 @@ public static class AgentHostLoop
 
     private static AgentResponse ListModels(AgentRequest request)
     {
-        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
-        var provider = new OpenAiCompatibleProvider();
-        var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, OptionalString(request, "apiKey"))
-            .GetAwaiter().GetResult();
+        var storedSettings = CreateSettingsStore().Load();
         var providerId = OptionalString(request, "provider")?.Trim();
-        if (string.IsNullOrWhiteSpace(providerId)) providerId = CreateSettingsStore().Load().ModelProvider;
+        if (string.IsNullOrWhiteSpace(providerId)) providerId = storedSettings.ModelProvider;
+        var endpoint = RequiredModelEndpoint(request, "endpoint", 2_000);
+        EnsureCloudRouteIsEnabled(endpoint, providerId, OptionalBoolean(request, "cloudRouteEnabled") || storedSettings.CloudRouteEnabled);
+        var provider = new OpenAiCompatibleProvider();
+        var models = provider.DiscoverModelProfilesAsync(endpoint, CancellationToken.None, ResolveProviderCredential(request, providerId, endpoint))
+            .GetAwaiter().GetResult();
         return new(ProtocolVersion, request.Id, true, models.Select(model => new
         {
             model = model.Model,
@@ -167,7 +198,12 @@ public static class AgentHostLoop
 
     private static async Task<AgentResponse> CompleteChatAsync(AgentRequest request)
     {
-        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
+        var storedSettings = CreateSettingsStore().Load();
+        var requestedProvider = OptionalString(request, "provider")?.Trim();
+        var providerId = string.IsNullOrWhiteSpace(requestedProvider) ? storedSettings.ModelProvider : requestedProvider;
+        var endpoint = RequiredModelEndpoint(request, "endpoint", 2_000);
+        EnsureCloudRouteIsEnabled(endpoint, providerId, OptionalBoolean(request, "cloudRouteEnabled") || storedSettings.CloudRouteEnabled);
+        var providerCredential = ResolveProviderCredential(request, providerId, endpoint);
         var model = RequiredString(request, "model");
         var timeoutSeconds = OptionalInt(request, "timeoutSeconds") ?? 285;
         if (timeoutSeconds is < 5 or > 285) throw new InvalidOperationException("timeoutSeconds must be between 5 and 285.");
@@ -186,13 +222,12 @@ public static class AgentHostLoop
             if (!string.IsNullOrWhiteSpace(context)) messages.Insert(0, new ChatMessage("system", context));
         }
 
-        var storedSettings = CreateSettingsStore().Load();
-        var requestedProvider = OptionalString(request, "provider")?.Trim();
         var settings = new AppSettings
         {
             Endpoint = endpoint,
             Model = model,
-            ModelProvider = string.IsNullOrWhiteSpace(requestedProvider) ? storedSettings.ModelProvider : requestedProvider,
+            ModelProvider = providerId,
+            CloudRouteEnabled = ProviderRoutePolicy.IsRemote(endpoint),
             Temperature = OptionalDouble(request, "temperature") ?? 0.7,
             AirLlmAutoFallbackEnabled = storedSettings.AirLlmAutoFallbackEnabled,
             AirLlmAllowRemoteCode = storedSettings.AirLlmAllowRemoteCode,
@@ -217,14 +252,14 @@ public static class AgentHostLoop
             if (explicitAirLlm)
             {
                 await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
-                    OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+                    OptionalInt(request, "maxTokens"), providerCredential);
             }
             else
             {
                 try
                 {
                     await new OpenAiCompatibleProvider().StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
-                        OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+                        OptionalInt(request, "maxTokens"), providerCredential);
                 }
                 catch (Exception error) when (AirLlmProvider.ShouldAutoFallback(settings, endpoint, error, airLlm.IsRuntimeAvailable(settings)))
                 {
@@ -234,7 +269,7 @@ public static class AgentHostLoop
                     try
                     {
                         await airLlm.StreamChatAsync(settings, messages, chunk => text.Append(chunk), deadline.Token,
-                            OptionalInt(request, "maxTokens"), OptionalString(request, "apiKey"));
+                            OptionalInt(request, "maxTokens"), providerCredential);
                     }
                     catch (OperationCanceledException) when (deadline.IsCancellationRequested)
                     {
@@ -771,12 +806,12 @@ public static class AgentHostLoop
         var settings = CreateSettingsStore().Load();
         return new(ProtocolVersion, request.Id, true, new
         {
-            // A settings file may have been written by the legacy surface before
-            // the local-only policy was introduced. Never echo that stale value
-            // back into the Electron runtime as an apparent usable route.
-            endpoint = LocalEndpoint.IsLocal(settings.Endpoint) ? settings.Endpoint : "http://localhost:11434/v1",
+            // Only return a remote endpoint after the user explicitly enabled its cloud route.
+            endpoint = LocalEndpoint.IsLocal(settings.Endpoint) || (ProviderRoutePolicy.IsRemote(settings.Endpoint) && settings.CloudRouteEnabled)
+                ? settings.Endpoint : "http://localhost:11434/v1",
             model = settings.Model,
             provider = settings.ModelProvider,
+            cloudRouteEnabled = ProviderRoutePolicy.IsRemote(settings.Endpoint) && settings.CloudRouteEnabled,
             themeMode = settings.ThemeMode,
             accentColor = settings.AccentColor,
             interfaceDensity = settings.InterfaceDensity,
@@ -784,6 +819,9 @@ public static class AgentHostLoop
             reduceMotion = settings.ReduceMotion,
             developerMode = settings.DeveloperMode,
             memoryInjectionEnabled = settings.MemoryInjectionEnabled,
+            cloudVoiceEnabled = settings.CloudVoiceEnabled,
+            elevenLabsVoiceId = settings.ElevenLabsVoiceId,
+            elevenLabsModelId = settings.ElevenLabsModelId,
         });
     }
 
@@ -791,20 +829,29 @@ public static class AgentHostLoop
     {
         var store = CreateSettingsStore();
         var settings = store.Load();
-        settings.Endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
+        var endpoint = RequiredModelEndpoint(request, "endpoint", 2_000);
         settings.Model = RequiredBoundedString(request, "model", 256);
+        var requestedProvider = settings.ModelProvider;
+        var requestedCloudRoute = false;
         if (request.Params is { } parameters)
         {
             if (parameters.TryGetProperty("provider", out var provider) && provider.ValueKind == JsonValueKind.String)
             {
-                var requestedProvider = provider.GetString();
-                if (!string.IsNullOrWhiteSpace(requestedProvider))
+                var requestedProviderValue = provider.GetString();
+                if (!string.IsNullOrWhiteSpace(requestedProviderValue))
                 {
-                    if (requestedProvider.Length > 128 || requestedProvider.Any(char.IsControl))
+                    if (requestedProviderValue.Length > 128 || requestedProviderValue.Any(char.IsControl))
                         throw new InvalidOperationException("provider exceeds the safety limit.");
-                    settings.ModelProvider = requestedProvider.Trim();
+                    requestedProvider = requestedProviderValue.Trim();
                 }
             }
+            requestedCloudRoute = OptionalBoolean(parameters, "cloudRouteEnabled");
+            if (parameters.TryGetProperty("cloudVoiceEnabled", out var cloudVoice) && cloudVoice.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                settings.CloudVoiceEnabled = cloudVoice.GetBoolean();
+            if (parameters.TryGetProperty("elevenLabsVoiceId", out var voiceId) && voiceId.ValueKind == JsonValueKind.String)
+                settings.ElevenLabsVoiceId = voiceId.GetString() ?? settings.ElevenLabsVoiceId;
+            if (parameters.TryGetProperty("elevenLabsModelId", out var modelId) && modelId.ValueKind == JsonValueKind.String)
+                settings.ElevenLabsModelId = modelId.GetString() ?? settings.ElevenLabsModelId;
             if (parameters.TryGetProperty("themeMode", out var theme) && theme.ValueKind == JsonValueKind.String)
                 settings.ThemeMode = theme.GetString() ?? settings.ThemeMode;
             if (parameters.TryGetProperty("accentColor", out var accent) && accent.ValueKind == JsonValueKind.String)
@@ -820,8 +867,41 @@ public static class AgentHostLoop
             if (parameters.TryGetProperty("reduceMotion", out var reduceMotion) && reduceMotion.ValueKind is JsonValueKind.True or JsonValueKind.False)
                 settings.ReduceMotion = reduceMotion.GetBoolean();
         }
+        EnsureCloudRouteIsEnabled(endpoint, requestedProvider, requestedCloudRoute);
+        settings.Endpoint = endpoint;
+        settings.ModelProvider = requestedProvider;
+        settings.CloudRouteEnabled = ProviderRoutePolicy.IsRemote(endpoint) && requestedCloudRoute;
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, cloudRouteEnabled = settings.CloudRouteEnabled, cloudVoiceEnabled = settings.CloudVoiceEnabled, elevenLabsVoiceId = settings.ElevenLabsVoiceId, elevenLabsModelId = settings.ElevenLabsModelId, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
+    }
+
+    private static AgentResponse CredentialStatus(AgentRequest request)
+    {
+        var provider = RequiredBoundedString(request, "provider", 128);
+        var providerId = CredentialId(provider);
+        var store = CreateCredentialStore();
+        var status = store.GetStatus();
+        var configured = status.Available && store.ExistsAsync(providerId).GetAwaiter().GetResult();
+        return new(ProtocolVersion, request.Id, true, new { provider, configured, available = status.Available, method = status.Method, message = status.Message });
+    }
+
+    private static async Task<AgentResponse> SaveCredential(AgentRequest request)
+    {
+        var provider = RequiredBoundedString(request, "provider", 128);
+        var key = RequiredString(request, "apiKey");
+        var store = CreateCredentialStore();
+        await store.WriteAsync(CredentialId(provider), key).ConfigureAwait(false);
+        var status = store.GetStatus();
+        return new(ProtocolVersion, request.Id, true, new { provider, configured = true, available = status.Available, method = status.Method, message = status.Message });
+    }
+
+    private static async Task<AgentResponse> ClearCredential(AgentRequest request)
+    {
+        var provider = RequiredBoundedString(request, "provider", 128);
+        var store = CreateCredentialStore();
+        await store.DeleteAsync(CredentialId(provider)).ConfigureAwait(false);
+        var status = store.GetStatus();
+        return new(ProtocolVersion, request.Id, true, new { provider, configured = false, available = status.Available, method = status.Method, message = status.Message });
     }
 
     private static async Task<AgentResponse> GenerateImageAsync(AgentRequest request)
@@ -870,15 +950,55 @@ public static class AgentHostLoop
     private static string RequiredLocalEndpoint(AgentRequest request, string name, int maxLength)
     {
         var endpoint = RequiredBoundedString(request, name, maxLength);
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
-            || uri is null
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
-            || !uri.IsLoopback
-            || !string.IsNullOrEmpty(uri.UserInfo)
-            || !string.IsNullOrEmpty(uri.Fragment))
+        if (!LocalEndpoint.IsLocal(endpoint))
             throw new InvalidOperationException("Skai Desktop only connects to a local loopback model endpoint without embedded credentials or a URL fragment.");
         return endpoint;
     }
+
+    private static string RequiredModelEndpoint(AgentRequest request, string name, int maxLength)
+    {
+        var endpoint = RequiredBoundedString(request, name, maxLength);
+        if (!ProviderRoutePolicy.IsAllowed(endpoint))
+            throw new InvalidOperationException("Model routes must be local loopback URLs or explicit HTTPS cloud URLs without credentials, queries, or fragments.");
+        return endpoint;
+    }
+
+    private static void EnsureCloudRouteIsEnabled(string endpoint, string? provider, bool cloudRouteEnabled)
+    {
+        if (!ProviderRoutePolicy.IsRemote(endpoint))
+        {
+            if (!LocalEndpoint.IsLocal(endpoint)) throw new InvalidOperationException("The selected model endpoint is not allowed.");
+            return;
+        }
+        if (!cloudRouteEnabled)
+            throw new InvalidOperationException("Cloud routing is disabled. Enable the cloud route in Settings before sending data online.");
+        if (ProviderRoutePolicy.IsLocalProvider(provider))
+            throw new InvalidOperationException("Local providers must use a loopback model endpoint.");
+        if (provider?.Equals("ChatGPT", StringComparison.OrdinalIgnoreCase) == true)
+            throw new InvalidOperationException("ChatGPT sign-in is not connected yet. Use OpenAI API or Another cloud service with an API key.");
+    }
+
+    private static string? ResolveProviderCredential(AgentRequest request, string? provider, string endpoint)
+    {
+        var explicitKey = OptionalString(request, "apiKey");
+        if (!ProviderRoutePolicy.IsRemote(endpoint)) return explicitKey;
+        if (provider?.Equals("ChatGPT", StringComparison.OrdinalIgnoreCase) == true)
+            throw new InvalidOperationException("ChatGPT sign-in is not connected yet. Use OpenAI API or Another cloud service with an API key.");
+        if (!string.IsNullOrWhiteSpace(explicitKey)) return ProviderCredentialStore.ValidateValue(explicitKey);
+        var stored = CreateCredentialStore().ReadAsync(CredentialId(provider)).GetAwaiter().GetResult();
+        if (string.IsNullOrWhiteSpace(stored))
+            throw new InvalidOperationException("Save an API key for this provider in Settings before using the cloud route.");
+        return stored;
+    }
+
+    private static string CredentialId(string? provider) => provider?.Trim().ToLowerInvariant() switch
+    {
+        "openai api" or "openai" => "openai-api",
+        "chatgpt" => "chatgpt",
+        "elevenlabs" => "elevenlabs",
+        "custom" or "another cloud service" => "custom",
+        _ => "custom",
+    };
 
     private static string RequiredSpeechText(AgentRequest request, string name, int maxLength)
     {
@@ -894,6 +1014,12 @@ public static class AgentHostLoop
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException("Metadata value exceeds the safety limit.");
         return value.Trim();
     }
+
+    private static bool OptionalBoolean(AgentRequest request, string name) =>
+        request.Params is { } parameters && OptionalBoolean(parameters, name);
+
+    private static bool OptionalBoolean(JsonElement parameters, string name) =>
+        parameters.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True && value.GetBoolean();
 
     private static string? OptionalString(AgentRequest request, string name) =>
         request.Params is { } parameters && parameters.TryGetProperty(name, out var value) ? value.GetString() : null;

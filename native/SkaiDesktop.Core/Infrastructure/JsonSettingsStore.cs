@@ -40,11 +40,17 @@ public sealed class JsonSettingsStore
         settings.Endpoint ??= defaults.Endpoint;
         settings.Model ??= defaults.Model;
         settings.ModelProvider ??= defaults.ModelProvider;
-        if (!LocalEndpoint.IsLocal(settings.Endpoint))
+        settings.ModelProvider = NormalizeProviderName(settings.ModelProvider);
+        if (!ProviderRoutePolicy.IsAllowed(settings.Endpoint) || (ProviderRoutePolicy.IsRemote(settings.Endpoint) && !settings.CloudRouteEnabled))
         {
             settings.Endpoint = defaults.Endpoint;
+            settings.CloudRouteEnabled = false;
             if (!settings.ModelProvider.Equals("AirLLM", StringComparison.OrdinalIgnoreCase))
                 settings.ModelProvider = defaults.ModelProvider;
+        }
+        else if (LocalEndpoint.IsLocal(settings.Endpoint))
+        {
+            settings.CloudRouteEnabled = false;
         }
         settings.RequireLocalModelEndpoints = true;
         settings.VisionApiFormat ??= defaults.VisionApiFormat;
@@ -61,6 +67,8 @@ public sealed class JsonSettingsStore
         settings.VoicePrimaryModelId = VoiceModelCatalog.Resolve(settings.VoicePrimaryModelId).Id;
         settings.VoiceLowResourceModelId = VoiceModelCatalog.Resolve(settings.VoiceLowResourceModelId).Id;
         settings.VoiceProfileId = VoiceProfileCatalog.Resolve(settings.VoiceProfiles, settings.VoiceProfileId).Id;
+        settings.ElevenLabsVoiceId = NormalizeRequired(settings.ElevenLabsVoiceId, defaults.ElevenLabsVoiceId, 128);
+        settings.ElevenLabsModelId = NormalizeRequired(settings.ElevenLabsModelId, defaults.ElevenLabsModelId, 128);
         settings.VoiceProfiles ??= [];
         settings.VoiceProfiles = settings.VoiceProfiles
             .Where(profile => profile is not null)
@@ -135,11 +143,26 @@ public sealed class JsonSettingsStore
         return settings;
     }
 
+    private static string NormalizeProviderName(string provider)
+    {
+        var trimmed = provider.Trim();
+        if (trimmed.Equals("OpenAI", StringComparison.OrdinalIgnoreCase)) return "OpenAI API";
+        if (trimmed.Equals("Another cloud service", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Custom endpoint", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Hosted compatible", StringComparison.OrdinalIgnoreCase)) return "Custom";
+        return trimmed;
+    }
+
     private static string? NormalizeOptional(string? value, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)) return null;
         return value.Trim();
     }
+
+    private static string NormalizeRequired(string? value, string fallback, int maxLength) =>
+        string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl)
+            ? fallback
+            : value.Trim();
 
     public void Save(AppSettings settings)
     {
