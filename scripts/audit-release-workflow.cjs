@@ -29,8 +29,17 @@ requireContract("Windows signature evidence", /SIGNATURES-win-x64\.txt/);
 requireContract("Linux signing material", /RELEASE_GPG_PRIVATE_KEY/);
 requireContract("Linux detached signature", /--detach-sign/);
 requireContract("Linux signature evidence", /SIGNATURES-linux-x64\.txt/);
+requireContract("Electron release packaging job", /\n  electron:\s*\n\s+name:\s+Package Electron/);
+requireContract("Electron Windows and Linux matrix", /rid:\s+win-x64[\s\S]*rid:\s+linux-x64/);
+requireContract("Electron packaged smoke gate", /smoke:electron:artifact/);
+requireContract("Electron Windows signature evidence", /SIGNATURES-electron-win-x64\.txt/);
+requireContract("Electron Linux signature evidence", /SIGNATURES-electron-linux-x64\.txt/);
+requireContract("Electron release readiness gate", /ELECTRON_PACKAGED_READY/);
+requireContract("Release waits for Electron packaging", /needs:\s*\[package,\s*electron\]/);
+requireContract("Release downloads Electron artifacts", /pattern:\s+Skai-Desktop-\*/);
 requireContract("release signature evidence gate", /Require signed artifact evidence/);
-requireContract("non-empty signature evidence check", /-size \+0c/);
+requireContract("non-empty signature evidence check", /if \[ ! -s "\$signature" \]/);
+requireContract("every-artifact signature evidence check", /required_signatures=\([\s\S]*SIGNATURES-electron-linux-x64\.txt[\s\S]*if \[ ! -s "\$signature" \]/);
 requireContract("release contents write permission", /contents:\s*write/);
 requireContract("checksum generation", /sha256sum/);
 

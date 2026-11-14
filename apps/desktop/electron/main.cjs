@@ -1,11 +1,18 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { spawn } = require("node:child_process");
+const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const readline = require("node:readline");
 
 const repoRoot = path.resolve(__dirname, "../../..");
 const hostProject = path.join(repoRoot, "services", "agent-host", "ServerRock.AgentHost.csproj");
+const hostBinary = process.platform === "win32" ? "ServerRock.AgentHost.exe" : "ServerRock.AgentHost";
+const packagedRoot = path.join(process.resourcesPath, "app");
+const packagedHost = path.join(process.resourcesPath, "agent-host", hostBinary);
+const packagedRuntime = fsSync.existsSync(path.join(packagedRoot, "dist", "index.html")) && fsSync.existsSync(packagedHost);
+const runtimeRoot = packagedRuntime ? packagedRoot : repoRoot;
+const rendererRoot = packagedRuntime ? runtimeRoot : path.join(runtimeRoot, "apps", "desktop");
 let host;
 let hostReader;
 let nextRequestId = 1;
@@ -27,8 +34,10 @@ const allowedMethods = new Set([
 ]);
 
 function startAgentHost() {
-  host = spawn("dotnet", ["run", "--project", hostProject, "--no-launch-profile", "--", "--stdio"], {
-    cwd: repoRoot,
+  const command = packagedRuntime ? packagedHost : "dotnet";
+  const args = packagedRuntime ? ["--stdio"] : ["run", "--project", hostProject, "--no-launch-profile", "--", "--stdio"];
+  host = spawn(command, args, {
+    cwd: packagedRuntime ? path.dirname(packagedHost) : repoRoot,
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
@@ -148,7 +157,7 @@ function createWindow() {
 
   const devUrl = process.env.SERVER_ROCK_RENDERER_URL;
   if (devUrl) window.loadURL(devUrl);
-  else window.loadFile(path.join(repoRoot, "apps", "desktop", "dist", "index.html"));
+  else window.loadFile(path.join(rendererRoot, "dist", "index.html"));
 }
 
 function applyProductionContentSecurityPolicy() {

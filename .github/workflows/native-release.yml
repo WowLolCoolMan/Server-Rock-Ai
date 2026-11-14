@@ -56,10 +56,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
       - name: Publish self-contained native app
         shell: bash
         run: >-
@@ -157,9 +153,130 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  electron:
+    name: Package Electron ${{ matrix.rid }}
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            rid: win-x64
+            executable: Skai Desktop.exe
+          - os: ubuntu-24.04
+            rid: linux-x64
+            executable: Skai Desktop
+    runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_SIGNING_READY: ${{ vars.RELEASE_SIGNING_READY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install Electron dependencies
+        run: npm ci --prefix apps/desktop
+      - name: Ensure Electron runtime payload
+        run: node apps/desktop/node_modules/electron/install.js
+      - name: Typecheck and build Electron renderer
+        run: |
+          npm run desktop:typecheck
+          npm run desktop:build
+      - name: Stage packaged Electron artifact
+        run: npm run package:electron
+      - name: Prepare Linux Electron sandbox
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sandbox="$GITHUB_WORKSPACE/dist/electron/linux-x64/chrome-sandbox"
+          sudo chown root:root "$sandbox"
+          sudo chmod 4755 "$sandbox"
+          stat -c '%U:%G %a %n' "$sandbox"
+      - name: Smoke-test exact packaged Electron artifact
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: npm run smoke:electron:artifact
+      - name: Smoke-test exact packaged Electron artifact on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb
+          xvfb-run -a npm run smoke:electron:artifact
+      - name: Sign Windows Electron executable
+        if: runner.os == 'Windows' && env.RELEASE_SIGNING_READY == 'true'
+        shell: pwsh
+        env:
+          WINDOWS_CODESIGN_CERT_BASE64: ${{ secrets.WINDOWS_CODESIGN_CERT_BASE64 }}
+          WINDOWS_CODESIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_CERT_PASSWORD }}
+          WINDOWS_CODESIGN_TIMESTAMP_URL: ${{ vars.WINDOWS_CODESIGN_TIMESTAMP_URL }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_CERT_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_CERT_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CODESIGN_TIMESTAMP_URL)) { throw 'Windows signing is enabled but certificate, password, or timestamp URL is missing.' }
+          $publish = Join-Path $env:GITHUB_WORKSPACE 'dist/electron/win-x64'
+          $cert = Join-Path $env:RUNNER_TEMP 'skai-electron-signing.pfx'
+          [IO.File]::WriteAllBytes($cert, [Convert]::FromBase64String($env:WINDOWS_CODESIGN_CERT_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Filter signtool.exe -Recurse | Where-Object FullName -Match '\\x64\\signtool.exe$' | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { throw 'signtool.exe was not found on the Windows runner.' }
+          & $signtool.FullName sign /fd SHA256 /f $cert /p $env:WINDOWS_CODESIGN_CERT_PASSWORD /tr $env:WINDOWS_CODESIGN_TIMESTAMP_URL /td SHA256 (Join-Path $publish 'Skai Desktop.exe')
+          if ($LASTEXITCODE -ne 0) { throw 'Electron Authenticode signing failed.' }
+          Get-AuthenticodeSignature (Join-Path $publish 'Skai Desktop.exe') | Format-List | Out-File -Encoding utf8 (Join-Path $env:RUNNER_TEMP 'SIGNATURES-electron-win-x64.txt')
+      - name: Sign Linux Electron archive
+        if: runner.os == 'Linux' && env.RELEASE_SIGNING_READY == 'true'
+        shell: bash
+        env:
+          RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_GPG_PRIVATE_KEY" ]; then echo 'Linux signing is enabled but RELEASE_GPG_PRIVATE_KEY is missing.' >&2; exit 1; fi
+          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+      - name: Archive Windows Electron artifact
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'serverrock-electron'
+          $publish = Join-Path $env:GITHUB_WORKSPACE 'dist/electron/win-x64'
+          New-Item -ItemType Directory -Force $root | Out-Null
+          Copy-Item 'docs/ELECTRON_DEFAULT_RUNTIME.md' $publish
+          Compress-Archive -Path (Join-Path $publish '*') -DestinationPath (Join-Path $root 'Skai-Desktop-electron-win-x64.zip')
+          (Get-FileHash -Algorithm SHA256 (Join-Path $root 'Skai-Desktop-electron-win-x64.zip')).Hash.ToLowerInvariant() + '  Skai-Desktop-electron-win-x64.zip' | Set-Content -Encoding ascii (Join-Path $root 'SHA256SUMS-electron-win-x64.txt')
+          if (Test-Path (Join-Path $env:RUNNER_TEMP 'SIGNATURES-electron-win-x64.txt')) { Copy-Item (Join-Path $env:RUNNER_TEMP 'SIGNATURES-electron-win-x64.txt') $root }
+      - name: Archive and sign Linux Electron artifact
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/serverrock-electron"
+          publish="$GITHUB_WORKSPACE/dist/electron/linux-x64"
+          mkdir -p "$root"
+          cp docs/ELECTRON_DEFAULT_RUNTIME.md "$publish/"
+          tar -czf "$root/Skai-Desktop-electron-linux-x64.tar.gz" -C "$publish" .
+          sha256sum "$root/Skai-Desktop-electron-linux-x64.tar.gz" > "$root/SHA256SUMS-electron-linux-x64.txt"
+          if [ "${RELEASE_SIGNING_READY:-}" = 'true' ]; then
+            gpg --batch --yes --armor --detach-sign --output "$root/Skai-Desktop-electron-linux-x64.tar.gz.asc" "$root/Skai-Desktop-electron-linux-x64.tar.gz"
+            gpg --batch --list-secret-keys --with-colons | awk -F: '$1 == "sec" { print "keyid=" $5; exit }' > "$root/SIGNATURES-electron-linux-x64.txt"
+            printf 'signature=Skai-Desktop-electron-linux-x64.tar.gz.asc\n' >> "$root/SIGNATURES-electron-linux-x64.txt"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Skai-Desktop-electron-${{ matrix.rid }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/serverrock-electron/Skai-Desktop-electron-*
+            ${{ runner.temp }}/serverrock-electron/SIGNATURES-electron-*.txt
+            ${{ runner.temp }}/serverrock-electron/SHA256SUMS-electron-*.txt
+          if-no-files-found: error
+          retention-days: 14
+
   release:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [package]
+    needs: [package, electron]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -169,9 +286,10 @@ jobs:
           NATIVE_MIGRATION_COMPLETE: ${{ vars.NATIVE_MIGRATION_COMPLETE }}
           RELEASE_SIGNING_READY: ${{ vars.RELEASE_SIGNING_READY }}
           PACKAGED_SMOKE_READY: ${{ vars.PACKAGED_SMOKE_READY }}
+          ELECTRON_PACKAGED_READY: ${{ vars.ELECTRON_PACKAGED_READY }}
         run: |
           set -euo pipefail
-          for gate in NATIVE_MIGRATION_COMPLETE RELEASE_SIGNING_READY PACKAGED_SMOKE_READY; do
+          for gate in NATIVE_MIGRATION_COMPLETE RELEASE_SIGNING_READY PACKAGED_SMOKE_READY ELECTRON_PACKAGED_READY; do
             if [ "${!gate}" != "true" ]; then
               echo "Release gate ${gate} must be repository variable 'true'." >&2
               exit 1
@@ -180,19 +298,26 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
-          pattern: Skai-Desktop-native-*
+          pattern: Skai-Desktop-*
           merge-multiple: true
       - name: Generate release checksums
-        run: find release-assets -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS.txt
+        run: find release-assets -type f ! -name 'SHA256SUMS*.txt' ! -name 'SIGNATURES*.txt' -print0 | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS.txt
       - name: Require signed artifact evidence
         run: |
           set -euo pipefail
-          signatures=$(find release-assets -maxdepth 1 -type f -name 'SIGNATURES-*.txt' -size +0c -print)
-          if [ -z "$signatures" ]; then
-            echo "Release blocked: no per-artifact signing evidence was produced." >&2
-            exit 1
-          fi
-          cat $signatures > release-assets/SIGNATURES.txt
+          required_signatures=(
+            release-assets/SIGNATURES-win-x64.txt
+            release-assets/SIGNATURES-linux-x64.txt
+            release-assets/SIGNATURES-electron-win-x64.txt
+            release-assets/SIGNATURES-electron-linux-x64.txt
+          )
+          for signature in "${required_signatures[@]}"; do
+            if [ ! -s "$signature" ]; then
+              echo "Release blocked: missing signing evidence $signature." >&2
+              exit 1
+            fi
+          done
+          cat "${required_signatures[@]}" > release-assets/SIGNATURES.txt
       - uses: softprops/action-gh-release@v2
         with:
           files: release-assets/*
