@@ -2,6 +2,14 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Packaged appearance acceptance
+
+The packaged Electron acceptance harness now drives the real Appearance
+controls for dark, light, and system theme modes plus Deep Sea and Deep Space
+backdrops. It checks the resulting semantic theme tokens, verifies no
+horizontal overflow at normal and constrained widths, and captures each state
+under `.tmp/theme-acceptance/` for visual review.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

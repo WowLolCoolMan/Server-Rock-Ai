@@ -3,6 +3,44 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 297 — Verify packaged appearance combinations
+
+Status: `implemented_packaged_theme_acceptance_verified`
+
+Added a packaged Electron appearance harness that opens Settings and changes
+the actual React Appearance selects. It exercises dark/none, light/Deep Sea,
+and system/Deep Space at the normal desktop viewport, then checks light/Deep
+Space again at a constrained 960px viewport. Each state must expose the
+expected semantic theme/backdrop tokens, retain canvas and accent values, and
+avoid horizontal overflow. PNG captures are written to the ignored `.tmp`
+acceptance folder for visual review.
+
+Changed files:
+
+- `scripts/smoke-electron-themes.cjs`
+- `package.json`
+- `scripts/audit-electron-runtime.cjs`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run check:syntax` — passed, including the new harness.
+- `npm run audit:electron-runtime` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:themes` — passed for all three normal states and
+  the constrained state; all reported `overflow: true`.
+- `npm run smoke:electron:artifact` — passed; main and Percy still rendered
+  as separate packaged surfaces.
+- `git diff --check` — passed.
+- Visual review — passed for the captured Light/Deep Sea and
+  System/Deep Space Settings states in `.tmp/theme-acceptance/`; the shared
+  shell, sidebar, controls, and settings panel remained coherent.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 296 — Close menus cleanly on Tab
 
 Status: `implemented_menu_tab_exit_typechecked`

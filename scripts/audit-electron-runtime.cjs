@@ -15,6 +15,7 @@ const chatWorkspace = fs.readFileSync(path.join(root, "apps", "desktop", "src", 
 const navigation = fs.readFileSync(path.join(root, "apps", "desktop", "src", "app", "navigation.ts"), "utf8");
 const packageScript = fs.readFileSync(path.join(root, "scripts", "package-electron.cjs"), "utf8");
 const smokeScript = fs.readFileSync(path.join(root, "scripts", "smoke-electron-artifact.cjs"), "utf8");
+const themeSmokeScript = fs.readFileSync(path.join(root, "scripts", "smoke-electron-themes.cjs"), "utf8");
 
 const failures = [];
 const expect = (condition, message) => { if (!condition) failures.push(message); };
@@ -59,6 +60,7 @@ expect(main.includes("packagedHost") && main.includes("ServerRock.AgentHost"), "
 expect(packageScript.includes("dotnet\", [\"publish\"") && packageScript.includes("PublishSingleFile=true"), "Electron packaging must publish a self-contained Agent Host");
 expect(packageScript.includes("electronDist") && packageScript.includes("const appRoot = path.join(outputRoot, \"resources\", \"app\")"), "Electron packaging must stage the renderer and runtime files");
 expect(smokeScript.includes("remote-debugging-port") && smokeScript.includes("mainTarget") && smokeScript.includes("petTarget") && smokeScript.includes("Primary navigation") && smokeScript.includes("Percy desktop companion") && smokeScript.includes("pet-window-sprite"), "Electron packaged smoke must inspect the main navigation, Settings, and separate Percy surfaces");
+expect(packageJson.scripts["smoke:electron:themes"] === "node scripts/smoke-electron-themes.cjs" && themeSmokeScript.includes("Emulation.setDeviceMetricsOverride") && themeSmokeScript.includes("Page.captureScreenshot") && themeSmokeScript.includes("deep-space"), "Packaged Electron theme acceptance must exercise constrained rendering and capture appearance states");
 
 if (failures.length) {
   console.error("Electron replacement audit failed:");
