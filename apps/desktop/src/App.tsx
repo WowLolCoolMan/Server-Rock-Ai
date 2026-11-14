@@ -10,7 +10,7 @@ export default function App() {
   const workspace = useDesktopWorkspace();
   const shellStyle = { "--skai-sidebar-width": `${workspace.sidebarWidth}px` } as CSSProperties;
   return <div className={`app-shell ${workspace.sidebarCollapsed ? "sidebar-collapsed" : ""}`} style={shellStyle}>
-    <GlobalRail route={workspace.route} onNavigate={workspace.onNavigate} />
+    <GlobalRail route={workspace.route} onNavigate={workspace.onNavigate} onOpenLauncher={workspace.openCommandPalette} />
     <Sidebar className="thread-sidebar" route={workspace.route} onNavigate={workspace.onNavigate} conversations={workspace.conversations} projects={workspace.routeState.projects} query={workspace.conversationQuery} collapsed={workspace.sidebarCollapsed} sidebarWidth={workspace.sidebarWidth} onSidebarWidthChange={workspace.resizeSidebar} onQueryChange={workspace.setConversationQuery} onToggleCollapsed={workspace.toggleSidebar} onNewChat={workspace.startNewChat} onOpenProject={workspace.routeActions.onOpenProject} onSelectConversation={workspace.selectConversation} onConversationMetadata={workspace.updateConversationMetadata} />
     <main className="app-main">
       <Toolbar route={workspace.route} connection={workspace.connection} canGoBack={workspace.canGoBack} canGoForward={workspace.canGoForward} onBack={workspace.goBack} onForward={workspace.goForward} onSettings={() => workspace.onNavigate("settings")} />
