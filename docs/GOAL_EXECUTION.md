@@ -3,6 +3,51 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 277 — Make the Chat composer a reusable dropzone
+
+Status: `implemented_live_and_packaged_verified`
+
+The composer is now an independent Chat feature component instead of a large
+inline fragment in `ChatPage`. It retains the local draft, queue, attachment,
+slash-command, and submit behavior while adding a visible drag-and-drop state.
+Dropped files are converted locally and sent through a dedicated Electron
+boundary that validates names, extensions, signatures, byte limits, and
+combined budgets before PDF extraction or attachment state changes. The
+feature remains local-only and does not grant the renderer filesystem access.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/ChatComposer.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/features/chat/useChatWorkspace.ts`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/styles.css`
+- `scripts/audit-electron-runtime.cjs`
+
+Evidence:
+
+- Live Electron Chat inspection — passed; the running desktop composer showed
+  the new `/` command menu and the drop-files affordance without changing the
+  existing conversation shell.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:electron-runtime` — passed, including the new drop boundary
+  and composer contracts.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed.
+- `npm test` — passed; native core checks completed successfully.
+- `npm run package:electron` — passed.
+- `npm run smoke:electron:artifact` — passed; packaged main and Percy
+  surfaces rendered.
+- `git diff --check` — passed.
+
+Remaining: continue primary-workflow fidelity and live visual comparison; the
+active goal remains incomplete.
+
 ## Slice 276 — Add keyboard-first slash commands to the Chat composer
 
 Status: `implemented_packaged_verified`

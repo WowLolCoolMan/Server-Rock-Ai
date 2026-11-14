@@ -4,6 +4,11 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Chat’s composer is now an independent reusable feature
+  with a visible drag-and-drop attachment state. Dropped files use the same
+  guarded local validation and PDF extraction boundary as picker attachments;
+  no renderer filesystem access or cloud route was added.
+
 - Current checkpoint — Chat’s composer now has a keyboard-first local slash
   command menu with filtering, pointer and ArrowUp/ArrowDown selection,
   Escape dismissal, local route handoffs, and a review-first `/goal` task

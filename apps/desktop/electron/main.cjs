@@ -40,6 +40,27 @@ const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowe
 const isPng = (bytes) => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
 const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
 
+function decodeDroppedAttachment(attachment) {
+  if (!attachment || typeof attachment.fileName !== "string" || typeof attachment.content !== "string") throw new Error("Dropped files must include a name and content.");
+  const rawName = attachment.fileName.trim();
+  const fileName = path.basename(rawName).slice(0, 240);
+  if (!fileName || fileName !== rawName || isBlockedAttachmentName(fileName)) throw new Error(`That file name cannot be attached: ${rawName.slice(0, 80)}.`);
+  if (attachment.content.length > 28_000_000 || attachment.content.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(attachment.content)) throw new Error(`The dropped file is not a valid local payload: ${fileName}`);
+  const extension = path.extname(fileName).toLowerCase();
+  const imageType = extension === ".png" ? "image/png" : [".jpg", ".jpeg"].includes(extension) ? "image/jpeg" : null;
+  const isPdf = extension === ".pdf";
+  if (!imageType && !isPdf && !attachmentTextExtensions.has(extension)) throw new Error(`That file type cannot be attached: ${fileName}`);
+  const bytes = Buffer.from(attachment.content, "base64");
+  if (bytes.length > (isPdf ? 20 * 1024 * 1024 : 2 * 1024 * 1024)) throw new Error(`The dropped file is too large: ${fileName}`);
+  if (imageType) {
+    if (!(imageType === "image/png" ? isPng(bytes) : isJpeg(bytes))) throw new Error(`The dropped image is not valid: ${fileName}`);
+    return { fileName, mediaType: imageType, content: bytes.toString("base64"), byteLength: bytes.length, textLength: 0 };
+  }
+  if (isPdf) return { fileName, mediaType: null, content: bytes.toString("base64"), byteLength: bytes.length, textLength: 0 };
+  const content = bytes.toString("utf8").slice(0, 16_000);
+  return { fileName, mediaType: null, content, byteLength: bytes.length, textLength: content.length };
+}
+
 function petStatePath() {
   return path.join(app.getPath("userData"), "pet-window.json");
 }
@@ -444,6 +465,22 @@ app.whenReady().then(() => {
           if (textCharacters > 48_000) throw new Error("Selected text files exceed the combined character limit.");
           attachments.push({ fileName, mediaType: null, content });
         }
+      }
+      return { v: 1, ok: true, result: { attachments } };
+    }
+    if (method === "workspace.importDroppedFiles") {
+      if (!params || !Array.isArray(params.attachments)) throw new Error("Dropped attachments were not provided.");
+      const attachments = [];
+      let textCharacters = 0;
+      let imageBytes = 0;
+      for (const candidate of params.attachments.slice(0, 5)) {
+        const attachment = decodeDroppedAttachment(candidate);
+        textCharacters += attachment.textLength;
+        imageBytes += attachment.mediaType ? attachment.byteLength : 0;
+        if (textCharacters > 48_000) throw new Error("Dropped text files exceed the combined character limit.");
+        if (imageBytes > 6 * 1024 * 1024) throw new Error("Dropped images exceed the combined size limit.");
+        const { byteLength, textLength, ...safeAttachment } = attachment;
+        attachments.push(safeAttachment);
       }
       return { v: 1, ok: true, result: { attachments } };
     }

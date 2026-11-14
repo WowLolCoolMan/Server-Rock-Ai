@@ -14,6 +14,19 @@ type ChatWorkspaceOptions = {
   onError: (message: string | null) => void;
 };
 
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result ?? "");
+      const separator = value.indexOf(",");
+      resolve(separator >= 0 ? value.slice(separator + 1) : value);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error(`Could not read ${file.name}.`));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function useChatWorkspace({ request, connection, provider, endpoint, model, onError }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -113,6 +126,29 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     setAttachments((current) => [...current, ...extracted].slice(0, 5));
   };
 
+  const importDroppedFiles = async (files: File[]) => {
+    const selected = files.slice(0, 5);
+    if (selected.length === 0) return;
+    try {
+      const attachments = await Promise.all(selected.map(async (file) => ({ fileName: file.name, mediaType: file.type || null, content: await readFileAsBase64(file) })));
+      const response = await request("workspace.importDroppedFiles", { attachments });
+      if (!response.ok) { onError(response.error?.message ?? "Dropped files could not be attached."); return; }
+      const imported = (response.result as { attachments: ChatAttachment[] }).attachments ?? [];
+      const extracted: ChatAttachment[] = [];
+      for (const attachment of imported) {
+        if (attachment.fileName.toLowerCase().endsWith(".pdf")) {
+          const extraction = await request("workspace.attachment.extract", { fileName: attachment.fileName, content: attachment.content });
+          if (!extraction.ok) { onError(extraction.error?.message ?? `Could not read ${attachment.fileName}.`); return; }
+          extracted.push(extraction.result as ChatAttachment);
+        } else extracted.push(attachment);
+      }
+      setAttachments((current) => [...current, ...extracted].slice(0, 5));
+      onError(null);
+    } catch {
+      onError("Dropped files could not be read locally.");
+    }
+  };
+
   const queueMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
     const response = await request("chat.queue.enqueue", { text: text || "Attached files", attachments: messageAttachments });
     if (!response.ok) { onError(response.error?.message ?? "Message could not be queued."); return; }
@@ -165,5 +201,5 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, editMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, editMessage, pickAttachments, importDroppedFiles, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }

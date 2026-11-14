@@ -7,6 +7,8 @@ const desktopPackage = JSON.parse(fs.readFileSync(path.join(root, "apps", "deskt
 const main = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "main.cjs"), "utf8");
 const preload = fs.readFileSync(path.join(root, "apps", "desktop", "electron", "preload.cjs"), "utf8");
 const petWindow = fs.readFileSync(path.join(root, "apps", "desktop", "src", "components", "overlays", "PetWindow.tsx"), "utf8");
+const chatComposer = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "ChatComposer.tsx"), "utf8");
+const chatWorkspace = fs.readFileSync(path.join(root, "apps", "desktop", "src", "features", "chat", "useChatWorkspace.ts"), "utf8");
 const packageScript = fs.readFileSync(path.join(root, "scripts", "package-electron.cjs"), "utf8");
 const smokeScript = fs.readFileSync(path.join(root, "scripts", "smoke-electron-artifact.cjs"), "utf8");
 
@@ -24,6 +26,9 @@ expect(main.includes("sandbox: true"), "renderer sandbox must remain enabled");
 expect(preload.includes("contextBridge.exposeInMainWorld"), "renderer communication must use preload");
 expect(!preload.includes("require(\"node:fs\")"), "preload must not expose filesystem access");
 expect(main.includes('"tasks.plan"'), "Electron bridge must expose the review-first local task planning method");
+expect(main.includes('"workspace.importDroppedFiles"') && main.includes("decodeDroppedAttachment"), "Electron bridge must validate dropped chat files at the local boundary");
+expect(chatComposer.includes("onDrop={handleDrop}") && chatComposer.includes("Drop files to attach"), "Chat composer must expose a visible drag-and-drop attachment state");
+expect(chatWorkspace.includes("importDroppedFiles") && chatWorkspace.includes("workspace.importDroppedFiles"), "Chat workspace must route dropped files through the guarded Electron method");
 for (const method of ["scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow"]) {
   expect(main.includes(`"${method}"`), `Electron bridge must expose the local scheduled method ${method}`);
 }
