@@ -9,14 +9,14 @@ export const workbenchGroups = [
   { key: "cancelled", label: "Cancelled" },
 ] as const;
 
-export type WorkbenchTaskTransition = (id: string, operation: "queue" | "cancel" | "retry") => void;
+export type WorkbenchTaskTransition = (id: string, operation: "queue" | "approve" | "deny" | "cancel" | "retry") => void;
 
 export function nextStepFor(status: string) {
   switch (status) {
     case "proposed": return { label: "Ready to queue", description: "Review the brief, then queue this local task when you are ready for execution." };
     case "queued": return { label: "Ready for local execution", description: "This task is queued for the local model. Run it when you are ready; no cloud model or remote execution is used." };
     case "running": return { label: "Execution in progress", description: "The local agent is working. Results will appear here when the host reports completion." };
-    case "awaiting_approval": return { label: "Approval requires host support", description: "The current host does not expose approval controls, so this task remains informational until that capability exists." };
+    case "awaiting_approval": return { label: "Approval required", description: "Review the task brief before allowing the local executor to start." };
     case "blocked": return { label: "Retry is available", description: "Resolve the blocking condition, then retry to place this task back in the local queue." };
     case "failed": return { label: "Review and re-plan", description: "The current host does not expose failed-task retry. Review the result and create a new local plan from Chat or Coding Workspace." };
     case "completed": return { label: "Task complete", description: "The recorded result is preserved here for review." };

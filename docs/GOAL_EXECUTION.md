@@ -11576,6 +11576,25 @@ Evidence:
 Remaining: continue closing the local RAG, agent execution, model/voice,
 release, and integration gaps; this goal remains active.
 
+## Slice 320 — Implement durable task approval gates
+
+Status: `implemented_and_smoke_verified`
+
+Tasks can now be planned with an explicit approval requirement. Queueing such a
+task moves it to durable `awaiting_approval` state; Approve transitions it to
+the local queue, while Deny cancels it with a recorded reason. The Workbench
+controls now call these host operations instead of presenting an informational
+placeholder. No task can execute until the approval transition succeeds.
+
+Evidence:
+
+- Agent Host build passed with zero warnings and zero errors.
+- Protocol smoke passed proposed → awaiting approval → approved → queued.
+- Renderer typecheck and diff validation passed.
+
+Remaining: extend approval gates to file/tool operations and add explicit
+verification/retry artifacts before claiming the agent loop complete.
+
 ## Slice 319 — Import local text and PDF documents into corpus
 
 Status: `implemented_renderer_and_packaged_verified`

@@ -123,6 +123,12 @@ async function run() {
   if (!restoredSettings.ok) throw new Error("settings.save could not restore the disposable local profile.");
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
   if (!planned.ok || planned.result?.status !== "proposed") throw new Error("tasks.plan did not create a proposed local task.");
+  const approvalTask = await request("tasks.plan", { title: "Approval smoke task", instruction: "Wait for explicit approval.", environment: "local", requiresApproval: true });
+  if (!approvalTask.ok || approvalTask.result?.status !== "proposed" || approvalTask.result?.requiresApproval !== true) throw new Error("tasks.plan did not persist the approval requirement.");
+  const queuedApproval = await request("tasks.queue", { id: approvalTask.result.id });
+  if (!queuedApproval.ok || queuedApproval.result?.status !== "awaiting_approval") throw new Error("tasks.queue did not stop at the approval gate.");
+  const approved = await request("tasks.approve", { id: approvalTask.result.id });
+  if (!approved.ok || approved.result?.status !== "queued") throw new Error("tasks.approve did not release the task to the local queue.");
   const tasks = await request("tasks.list");
   const plannedTask = tasks.result?.find(task => task.id === planned.result.id);
   if (!tasks.ok || plannedTask?.title !== "Protocol smoke task" || plannedTask.instruction !== "Review the local task workflow." || !Array.isArray(plannedTask.artifactLabels)) throw new Error("tasks.plan persistence round-trip failed.");

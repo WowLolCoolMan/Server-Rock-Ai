@@ -29,7 +29,7 @@ export function TaskDetails({ task, openByDefault = false }: { task: DesktopTask
       <div><dt>Artifacts</dt><dd>{task.artifactLabels?.length ? task.artifactLabels.join(" · ") : "None recorded"}</dd></div>
       <div><dt>Result</dt><dd>{task.resultSummary || "No result recorded yet."}</dd></div>
     </dl>
-    {task.status === "awaiting_approval" && <p className="task-capability-note">Approval controls are not exposed by the current host, so this task remains informational.</p>}
+    {task.status === "awaiting_approval" && <p className="task-capability-note">This task is paused until you explicitly approve or deny local execution.</p>}
     {task.status === "failed" && <p className="task-capability-note">Retry is only supported for blocked tasks in the current host. Review the result and create a new plan if needed.</p>}
   </details>;
 }
@@ -38,6 +38,7 @@ export function TaskActions({ task, busyTask, onTransition, onExecute }: { task:
   return <div className="task-card-actions">
     {task.status === "proposed" && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "queue")}>Queue</Button>}
     {task.status === "queued" && onExecute && <Button variant="primary" disabled={busyTask === task.id} onClick={() => onExecute(task.id)}>Run locally</Button>}
+    {task.status === "awaiting_approval" && <><Button variant="primary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "approve")}>Approve local run</Button><Button variant="danger" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "deny")}>Deny</Button></>}
     {(task.status === "proposed" || task.status === "queued") && <Button variant="ghost" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "cancel")}>Cancel</Button>}
     {task.status === "blocked" && <Button variant="secondary" disabled={busyTask === task.id} onClick={() => onTransition(task.id, "retry")}>Retry</Button>}
   </div>;

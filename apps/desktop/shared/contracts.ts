@@ -38,6 +38,7 @@ export type DesktopProjectFile = {
 
 export type DesktopGitChange = {
   status: string;
+  requiresApproval?: boolean;
   path: string;
   originalPath?: string | null;
 };

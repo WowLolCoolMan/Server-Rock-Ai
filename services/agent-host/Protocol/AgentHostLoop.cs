@@ -76,6 +76,8 @@ public static class AgentHostLoop
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
+            "tasks.approve" => TransitionTask(request, "approve"),
+            "tasks.deny" => TransitionTask(request, "deny"),
             "tasks.execute" => StartTaskExecution(request),
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
@@ -463,6 +465,7 @@ public static class AgentHostLoop
                 resultSummary = task.ResultSummary,
                 artifactLabels = task.ArtifactLabels,
                 dependsOn = task.DependsOn,
+                requiresApproval = task.RequiresApproval,
                 updatedAt = task.UpdatedAtUtc,
             })
             .ToArray();
@@ -478,12 +481,14 @@ public static class AgentHostLoop
         var task = CreateTaskStore().Create(
             RequiredBoundedString(request, "title", AgentTaskArtifactStore.MaxTitleCharacters),
             RequiredBoundedString(request, "instruction", AgentTaskArtifactStore.MaxInstructionCharacters),
-            OptionalString(request, "role") ?? "specialist");
+            OptionalString(request, "role") ?? "specialist",
+            requiresApproval: request.Params?.TryGetProperty("requiresApproval", out var requiresApproval) == true && requiresApproval.ValueKind == JsonValueKind.True);
         return new(ProtocolVersion, request.Id, true, new
         {
             id = task.Id,
             title = task.Title,
             status = task.Status,
+            requiresApproval = task.RequiresApproval,
             updatedAt = task.UpdatedAtUtc,
         });
     }
@@ -551,6 +556,8 @@ public static class AgentHostLoop
             "queue" => store.Queue(id),
             "cancel" => store.CancelPlanned(id),
             "retry" => store.RetryBlocked(id),
+            "approve" => store.Approve(id),
+            "deny" => store.Deny(id),
             _ => throw new InvalidOperationException("Unknown task operation."),
         };
         return new(ProtocolVersion, request.Id, true, new { id = task.Id, status = task.Status, updatedAt = task.UpdatedAtUtc, resultSummary = task.ResultSummary });

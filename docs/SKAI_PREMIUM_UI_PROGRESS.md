@@ -44,6 +44,14 @@ The workflow is explicit and local-only.
 Evidence: renderer typecheck/build and packaged Electron overflow acceptance
 passed after the import control was added.
 
+## Slice 320 — Real Workbench approval controls
+
+Approval-gated tasks now persist `awaiting_approval` state in the local Agent
+Host. Workbench actions can approve a task into the local queue or deny it with
+a durable cancellation reason; execution remains blocked until approval.
+
+Evidence: Agent Host build/protocol smoke and renderer typecheck passed.
+
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
 ## Current slice — Explicit local task execution
