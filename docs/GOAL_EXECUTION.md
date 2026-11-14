@@ -8201,6 +8201,37 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice — Immutable GitHub skill inspection
+
+Status: `implemented_build_smoke_verified`
+
+The Marketplace Skills workflow now supports an explicit inspect action for
+curated GitHub repositories. The host validates the `owner/name` identifier,
+resolves the default branch to an immutable commit SHA, and reads only bounded
+GitHub API metadata, `skill.json`, and `SKILL.md` content. The renderer exposes
+the review metadata and trust boundary in the v4 dark graphite hierarchy:
+publisher, license, source, revision, manifest status, dependencies, declared
+tools, required permissions, compatibility, and scrollable instructions. The
+surface clearly states that remote repositories are review-only and that a
+local validated folder is required for installation.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- Isolated Agent Host build — passed with 0 warnings and 0 errors.
+- `npm run smoke:agent-host` — passed, including unsafe GitHub repository
+  rejection and existing skill lifecycle checks.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: GitHub data is fetched through the official API
+with bounded response handling and no credentials; manifest fields are treated
+as untrusted metadata and no remote scripts are executed. No remote skill is
+installed by this change.
+
+Remaining: publisher trust/signature policy, remote pinned installation, and
+packaged Windows acceptance remain open.
+
 ## Marketplace model-provider expansion
 
 Marketplace model search now accepts `all`, `huggingface`, and `modelscope`

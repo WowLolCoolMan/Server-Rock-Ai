@@ -227,3 +227,29 @@ Evidence:
 
 Remaining: a live model transfer requires a running compatible LM Studio or
 Ollama runtime; no external model was downloaded during this verification.
+
+## Slice — Add immutable GitHub skill inspection
+
+Status: `implemented_build_smoke_verified`
+
+Curated GitHub skill rows now open a host-backed review surface instead of
+jumping directly to a source link. The Agent Host resolves repository metadata,
+license, default branch, and the current 40-character commit SHA, then reads
+bounded `skill.json` and `SKILL.md` content at that immutable revision. The UI
+shows publisher, license, revision, manifest/instruction status, dependencies,
+declared tools, required permissions, compatibility, and the reviewed
+instructions as untrusted text. Remote GitHub installation remains explicitly
+review-only; local validated-folder installation is still the only install path.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- Isolated Agent Host build — passed with 0 warnings and 0 errors.
+- Disposable Agent Host smoke — passed capability advertisement and unsafe
+  repository rejection for `marketplace.skills.inspect`.
+- `git diff --check` — passed.
+
+Remaining: publisher trust/signature policy and remote pinned package
+installation remain intentionally open; no remote package is executed or
+installed by this slice.

@@ -19,6 +19,28 @@ type MarketplaceMcp = { id: string; name: string; transport: string; description
 type InstalledSkill = { id: string; name: string; version: string; publisher: string; sourceRef: string; packageSha256: string; requiredPermissions: string[]; enabled: boolean; canRollback: boolean };
 type SkillPreview = { id: string; name: string; version: string; publisher: string; packageSha256: string; requiredPermissions: string[]; isUpdate: boolean; existingVersion?: string | null; existingPackageSha256?: string | null; sourceRef: string };
 type SkillInspection = InstalledSkill & { instructions: string };
+type RemoteSkillDetails = {
+  id: string;
+  name: string;
+  publisher: string;
+  description: string;
+  stars: number;
+  forks: number;
+  sourceUrl: string;
+  defaultBranch: string;
+  revision: string;
+  license?: string | null;
+  skillMarkdown?: string | null;
+  manifest?: Record<string, unknown> | null;
+  manifestStatus: string;
+  skillStatus: string;
+  dependencies: string[];
+  declaredTools: string[];
+  requiredPermissions: string[];
+  compatibility: string[];
+  remoteInstallAvailable: boolean;
+  installBoundary: string;
+};
 
 export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
   const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
@@ -63,6 +85,7 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [selectedTitle, setSelectedTitle] = useState(cards[0].title);
   const [models, setModels] = useState<MarketplaceModel[]>([]);
   const [skills, setSkills] = useState<MarketplaceSkill[]>([]);
+  const [skillDetails, setSkillDetails] = useState<RemoteSkillDetails | null>(null);
   const [tools, setTools] = useState<MarketplaceTool[]>([]);
   const [mcpServers, setMcpServers] = useState<MarketplaceMcp[]>([]);
   const [installedSkills, setInstalledSkills] = useState<InstalledSkill[]>([]);
@@ -192,6 +215,15 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
     } catch (error) { setSkillError(error instanceof Error ? error.message : "The installed skill could not be inspected."); }
     finally { setSkillBusy(false); }
   };
+  const inspectSkillRepository = async (skill: MarketplaceSkill) => {
+    setSkillBusy(true); setSkillError(null); setSkillDetails(null);
+    try {
+      const response = await window.serverRockAgent.request("marketplace.skills.inspect", { repository: skill.id });
+      if (!response.ok) throw new Error(response.error?.message ?? "The GitHub skill could not be inspected.");
+      setSkillDetails(response.result as RemoteSkillDetails);
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The GitHub skill could not be inspected."); }
+    finally { setSkillBusy(false); }
+  };
   const removeInstalledSkill = async (skill: InstalledSkill) => {
     setSkillBusy(true); setSkillError(null);
     try {
@@ -253,8 +285,9 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
             {skillError && <div className="surface-error" role="alert"><strong>Skill library needs attention</strong><p>{skillError}</p></div>}
             {skillPreview && <div className="skill-review-card"><div><p className="section-kicker">INSTALLATION REVIEW</p><h4>{skillPreview.name} <span>v{skillPreview.version}</span></h4><p>{skillPreview.publisher} · {skillPreview.isUpdate ? `updates ${skillPreview.existingVersion ?? "the installed copy"}` : "new local package"}</p></div><dl><div><dt>Permissions</dt><dd>{skillPreview.requiredPermissions.length ? skillPreview.requiredPermissions.join(" · ") : "None declared"}</dd></div><div><dt>SHA-256</dt><dd>{skillPreview.packageSha256}</dd></div><div><dt>Source</dt><dd>{skillPreview.sourceRef}</dd></div></dl><div className="marketplace-skill-actions"><Button variant="ghost" onClick={() => { setSkillPreview(null); setSkillSourceDirectory(null); }} disabled={skillBusy}>Cancel</Button><Button variant="primary" onClick={() => void installPreviewedSkill()} disabled={skillBusy}>{skillBusy ? "Installing…" : skillPreview.isUpdate ? "Install update" : "Install skill"}</Button></div></div>}
             {skillInspection && <div className="skill-inspection-card"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">INSTALLED SKILL</p><h4>{skillInspection.name} <span>v{skillInspection.version}</span></h4><small>{skillInspection.publisher} · {skillInspection.sourceRef}</small></div><Button variant="ghost" onClick={() => setSkillInspection(null)}>Close</Button></div><dl><div><dt>SHA-256</dt><dd>{skillInspection.packageSha256}</dd></div><div><dt>Permissions</dt><dd>{skillInspection.requiredPermissions.length ? skillInspection.requiredPermissions.join(" · ") : "None declared"}</dd></div></dl><pre aria-label={`${skillInspection.name} instructions`}>{skillInspection.instructions}</pre></div>}
+            {skillDetails && <div className="skill-details-card"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">REMOTE SKILL REVIEW</p><h4>{skillDetails.name} <span>{skillDetails.publisher}</span></h4><small>{skillDetails.description || "No repository description published."}</small></div><Button variant="ghost" onClick={() => setSkillDetails(null)}>Close</Button></div><div className="skill-details-status"><StatusBadge tone={skillDetails.remoteInstallAvailable ? "success" : "warning"}>{skillDetails.remoteInstallAvailable ? "Install available" : "Review only"}</StatusBadge><span>{skillDetails.installBoundary}</span></div><dl className="skill-details-list"><div><dt>Publisher</dt><dd>{skillDetails.publisher}</dd></div><div><dt>License</dt><dd>{skillDetails.license || "Not published"}</dd></div><div><dt>Source</dt><dd><a href={skillDetails.sourceUrl} target="_blank" rel="noreferrer">{skillDetails.sourceUrl} ↗</a></dd></div><div><dt>Revision</dt><dd title={skillDetails.revision}>{skillDetails.revision.slice(0, 12)}… · {skillDetails.defaultBranch}</dd></div><div><dt>Repository signal</dt><dd>{skillDetails.stars.toLocaleString()} stars · {skillDetails.forks.toLocaleString()} forks</dd></div><div><dt>Manifest</dt><dd>{skillDetails.manifestStatus}</dd></div><div><dt>SKILL.md</dt><dd>{skillDetails.skillStatus}</dd></div><div><dt>Dependencies</dt><dd>{skillDetails.dependencies.length ? skillDetails.dependencies.join(" · ") : "None declared"}</dd></div><div><dt>Declared tools</dt><dd>{skillDetails.declaredTools.length ? skillDetails.declaredTools.join(" · ") : "None declared"}</dd></div><div><dt>Required permissions</dt><dd>{skillDetails.requiredPermissions.length ? skillDetails.requiredPermissions.join(" · ") : "None declared"}</dd></div><div><dt>Compatibility</dt><dd>{skillDetails.compatibility.length ? skillDetails.compatibility.join(" · ") : "Not declared"}</dd></div></dl><div><p className="section-kicker">REVIEWED INSTRUCTIONS</p>{skillDetails.skillMarkdown ? <pre className="skill-details-markdown" aria-label={`${skillDetails.name} SKILL.md`}>{skillDetails.skillMarkdown}</pre> : <p className="marketplace-honesty">This repository does not publish a readable <code>SKILL.md</code> at the reviewed revision.</p>}</div></div>}
             {installedSkills.length > 0 && <div className="installed-skill-list"><div className="panel-heading"><div><p className="section-kicker">INSTALLED LIBRARY</p><h3>Managed skills</h3></div><span className="panel-count">{installedSkills.length}</span></div>{installedSkills.map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>{skill.publisher} · v{skill.version} · {skill.sourceRef}</small><span>{skill.requiredPermissions.length ? `Permissions: ${skill.requiredPermissions.join(" · ")}` : "No permissions declared"}</span></div><div className="marketplace-skill-actions"><StatusBadge tone={skill.enabled ? "success" : "neutral"}>{skill.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" onClick={() => void inspectInstalledSkill(skill)} disabled={skillBusy}>Inspect</Button><Button variant="ghost" onClick={() => void setSkillEnabled(skill)} disabled={skillBusy}>{skill.enabled ? "Disable" : "Enable"}</Button>{skill.canRollback && <Button variant="ghost" onClick={() => void rollbackSkill(skill)} disabled={skillBusy}>Rollback</Button>}{skillRemovalId === skill.id ? <><Button variant="danger" onClick={() => void removeInstalledSkill(skill)} disabled={skillBusy}>Confirm remove</Button><Button variant="ghost" onClick={() => setSkillRemovalId(null)} disabled={skillBusy}>Keep</Button></> : <Button variant="danger" onClick={() => setSkillRemovalId(skill.id)} disabled={skillBusy}>Remove</Button>}</div></div>)}</div>}
-            <CatalogList title="GitHub skill repositories · curated lanes" loading={catalogBusy} empty="No curated GitHub skills matched. Try All lanes or a broader search." items={skills.map(skill => ({ id: skill.id, title: `${skill.name} · ${skill.lane}`, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || skill.laneDescription}`, href: skill.url, action: "Review on GitHub" }))} />
+            <CatalogList title="GitHub skill repositories · curated lanes" loading={catalogBusy} empty="No curated GitHub skills matched. Try All lanes or a broader search." items={skills.map(skill => ({ id: skill.id, title: `${skill.name} · ${skill.lane}`, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || skill.laneDescription}`, href: skill.url, action: "Inspect skill", onAction: () => void inspectSkillRepository(skill) }))} />
             </div>
           </> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" || selected.title === "Coding tools" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">
             <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
@@ -272,5 +305,5 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
 }
 
 function CatalogList({ title, loading, empty, items }: { title: string; loading: boolean; empty: string; items: Array<{ id: string; title: string; detail: string; href?: string; action: string; onAction?: () => void }> }) {
-  return <section className="marketplace-catalog-results"><div className="panel-heading"><div><p className="section-kicker">LIVE CATALOG</p><h3>{title}</h3></div><span className="panel-count">{loading ? "…" : items.length}</span></div>{loading ? <p className="marketplace-honesty">Loading the local catalog bridge…</p> : items.length === 0 ? <p className="marketplace-honesty">{empty}</p> : <div className="catalog-list">{items.slice(0, 30).map(item => <div className="catalog-row" key={item.id}><span className="catalog-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.onAction ? <button className="catalog-action catalog-action-button" type="button" onClick={item.onAction}>{item.action}</button> : item.href ? <a className="catalog-action" href={item.href} target="_blank" rel="noreferrer">{item.action} ↗</a> : <span className="catalog-action">{item.action}</span>}</div>)}</div>}</section>;
+  return <section className="marketplace-catalog-results"><div className="panel-heading"><div><p className="section-kicker">LIVE CATALOG</p><h3>{title}</h3></div><span className="panel-count">{loading ? "…" : items.length}</span></div>{loading ? <p className="marketplace-honesty">Loading the local catalog bridge…</p> : items.length === 0 ? <p className="marketplace-honesty">{empty}</p> : <div className="catalog-list">{items.slice(0, 30).map(item => <div className="catalog-row" key={item.id}><span className="catalog-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.onAction ? <span className="catalog-row-actions"><button className="catalog-action catalog-action-button" type="button" onClick={item.onAction}>{item.action}</button>{item.href && <a className="catalog-action catalog-source-link" href={item.href} target="_blank" rel="noreferrer">Source ↗</a>}</span> : item.href ? <a className="catalog-action" href={item.href} target="_blank" rel="noreferrer">{item.action} ↗</a> : <span className="catalog-action">{item.action}</span>}</div>)}</div>}</section>;
 }

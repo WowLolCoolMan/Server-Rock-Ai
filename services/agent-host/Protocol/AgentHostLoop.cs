@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SkaiDesktop.Core.Infrastructure;
@@ -57,11 +58,12 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
             "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
+            "marketplace.skills.inspect" => InspectMarketplaceSkillAsync(request).GetAwaiter().GetResult(),
             "marketplace.tools.list" => ListMarketplaceTools(request),
             "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
             "skills.installed.list" => ListInstalledSkills(request),
@@ -344,6 +346,138 @@ public static class AgentHostLoop
         }));
         var unique = laneResults.SelectMany(items => items).GroupBy(item => item.GetType().GetProperty("id")?.GetValue(item)?.ToString(), StringComparer.OrdinalIgnoreCase).Select(group => group.First()).Take(CuratedSkillCatalog.MaxResults).ToArray();
         return new(ProtocolVersion, request.Id, true, unique);
+    }
+
+    private static async Task<AgentResponse> InspectMarketplaceSkillAsync(AgentRequest request)
+    {
+        var repository = RequiredBoundedString(request, "repository", 200);
+        if (!Regex.IsMatch(repository, "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"))
+            throw new InvalidOperationException("repository must be an owner/name GitHub repository identifier.");
+
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        var repositoryUrl = $"https://api.github.com/repos/{repository}";
+        using var repositoryJson = await ReadGitHubJsonAsync(client, repositoryUrl, "GitHub repository metadata").ConfigureAwait(false)
+            ?? throw new KeyNotFoundException("The GitHub skill repository could not be found.");
+        var root = repositoryJson.RootElement;
+        var defaultBranch = ReadBoundedJsonString(root, "default_branch", 256) ?? "main";
+        var publisher = root.TryGetProperty("owner", out var owner) && owner.ValueKind == JsonValueKind.Object
+            ? ReadBoundedJsonString(owner, "login", 128) ?? repository.Split('/')[0]
+            : repository.Split('/')[0];
+        var sourceUrl = ReadBoundedJsonString(root, "html_url", 512) ?? $"https://github.com/{repository}";
+        var revisionUrl = $"{repositoryUrl}/commits/{Uri.EscapeDataString(defaultBranch)}";
+        using var revisionJson = await ReadGitHubJsonAsync(client, revisionUrl, "GitHub repository revision").ConfigureAwait(false)
+            ?? throw new InvalidDataException("GitHub did not return a current repository revision.");
+        var revision = ReadBoundedJsonString(revisionJson.RootElement, "sha", 64);
+        if (string.IsNullOrWhiteSpace(revision) || !Regex.IsMatch(revision, "^[0-9a-fA-F]{40}$"))
+            throw new InvalidDataException("GitHub returned an invalid repository revision.");
+
+        var refValue = Uri.EscapeDataString(revision);
+        var manifestText = await ReadGitHubContentAsync(client, $"{repositoryUrl}/contents/skill.json?ref={refValue}", "GitHub skill manifest").ConfigureAwait(false);
+        var instructions = await ReadGitHubContentAsync(client, $"{repositoryUrl}/contents/SKILL.md?ref={refValue}", "GitHub skill instructions").ConfigureAwait(false);
+        JsonElement? manifest = null;
+        var manifestStatus = "missing";
+        if (!string.IsNullOrWhiteSpace(manifestText))
+        {
+            try
+            {
+                using var manifestDocument = JsonDocument.Parse(manifestText, new JsonDocumentOptions { MaxDepth = 16 });
+                manifest = manifestDocument.RootElement.Clone();
+                manifestStatus = manifest.Value.ValueKind == JsonValueKind.Object ? "valid" : "invalid";
+                if (manifest.Value.ValueKind != JsonValueKind.Object) manifest = null;
+            }
+            catch (JsonException) { manifestStatus = "invalid"; }
+        }
+
+        var license = root.TryGetProperty("license", out var licenseValue) && licenseValue.ValueKind == JsonValueKind.Object
+            ? ReadBoundedJsonString(licenseValue, "spdx_id", 128) ?? ReadBoundedJsonString(licenseValue, "name", 256)
+            : null;
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = repository,
+            name = ReadBoundedJsonString(root, "name", 200) ?? repository.Split('/')[1],
+            publisher,
+            description = ReadBoundedJsonString(root, "description", 2_000) ?? string.Empty,
+            stars = ReadJsonInt(root, "stargazers_count"),
+            forks = ReadJsonInt(root, "forks_count"),
+            sourceUrl,
+            defaultBranch,
+            revision,
+            license,
+            skillMarkdown = instructions,
+            manifest,
+            manifestStatus,
+            skillStatus = instructions is null ? "missing" : "available",
+            dependencies = ReadManifestStringList(manifest, "dependencies", "toolDependencies"),
+            declaredTools = ReadManifestStringList(manifest, "tools", "declaredTools"),
+            requiredPermissions = ReadManifestStringList(manifest, "requiredPermissions", "permissions"),
+            compatibility = ReadManifestStringList(manifest, "platforms", "compatibility"),
+            remoteInstallAvailable = false,
+            installBoundary = "Remote GitHub packages remain review-only; choose a local validated folder to install.",
+        });
+    }
+
+    private static async Task<JsonDocument?> ReadGitHubJsonAsync(HttpClient client, string url, string label)
+    {
+        using var message = CreateGitHubRequest(url);
+        using var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        if ((int)response.StatusCode == 404) return null;
+        response.EnsureSuccessStatusCode();
+        return await BoundedHttpContent.ReadJsonAsync(response.Content, CancellationToken.None, label).ConfigureAwait(false);
+    }
+
+    private static async Task<string?> ReadGitHubContentAsync(HttpClient client, string url, string label)
+    {
+        using var message = CreateGitHubRequest(url);
+        using var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        if ((int)response.StatusCode == 404) return null;
+        response.EnsureSuccessStatusCode();
+        using var json = await BoundedHttpContent.ReadJsonAsync(response.Content, CancellationToken.None, label).ConfigureAwait(false);
+        var content = json.RootElement.TryGetProperty("content", out var contentValue) ? contentValue.GetString() : null;
+        var encoding = json.RootElement.TryGetProperty("encoding", out var encodingValue) ? encodingValue.GetString() : null;
+        if (string.IsNullOrWhiteSpace(content) || !string.Equals(encoding, "base64", StringComparison.OrdinalIgnoreCase)) return null;
+        var compact = string.Concat(content.Where(character => !char.IsWhiteSpace(character)));
+        if (compact.Length > 350_000) throw new InvalidDataException($"{label} exceeds the 256 KiB limit.");
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(compact); }
+        catch (FormatException error) { throw new InvalidDataException($"{label} returned invalid base64.", error); }
+        if (bytes.Length > 256 * 1024) throw new InvalidDataException($"{label} exceeds the 256 KiB limit.");
+        return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true).GetString(bytes);
+    }
+
+    private static HttpRequestMessage CreateGitHubRequest(string url)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Get, new Uri(url));
+        message.Headers.Accept.ParseAdd("application/vnd.github+json");
+        message.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent("skill marketplace"));
+        message.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        return message;
+    }
+
+    private static string? ReadBoundedJsonString(JsonElement value, string name, int maxLength)
+    {
+        if (!value.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String) return null;
+        return OptionalBoundedValue(property.GetString(), maxLength);
+    }
+
+    private static int ReadJsonInt(JsonElement value, string name) =>
+        value.TryGetProperty(name, out var property) && property.TryGetInt32(out var result) ? Math.Max(0, result) : 0;
+
+    private static string[] ReadManifestStringList(JsonElement? manifest, params string[] names)
+    {
+        if (manifest is not { ValueKind: JsonValueKind.Object } root) return [];
+        foreach (var name in names)
+        {
+            if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Array) continue;
+            return value.EnumerateArray()
+                .Where(item => item.ValueKind == JsonValueKind.String)
+                .Select(item => item.GetString())
+                .Where(item => !string.IsNullOrWhiteSpace(item) && item!.Length <= 128 && !item.Any(char.IsControl))
+                .Select(item => item!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(32)
+                .ToArray();
+        }
+        return [];
     }
 
     private static AgentResponse ListMarketplaceTools(AgentRequest request)
