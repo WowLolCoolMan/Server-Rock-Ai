@@ -3,6 +3,52 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 259 — Wire Electron chat grounding controls through the host
+
+Status: `implemented_host_renderer_build_tests_visual_verified`
+
+Electron chat now makes the existing Core grounding features usable. The
+composer's Chat Tools panel exposes documents-only mode, opt-in web research,
+full-text attachment context, and response effort. Agents settings stores the
+durable defaults. The renderer forwards the selected values through the
+sandboxed request, and Agent Host builds the bounded prompt context, applies
+effort token budgets, injects only untrusted attachment/project/search context,
+and returns explicit mode metadata. Documents-only requests require a text or
+PDF attachment and suppress web, project, and memory context.
+
+Changed files:
+
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/features/chat/useChatWorkspace.ts`
+- `apps/desktop/src/features/settings/SettingsPage.tsx`
+- `apps/desktop/src/styles.css`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm test` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- Live Electron inspection verified the Chat Tools panel, the documents-only
+  safety behavior, and the Agents settings controls.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: web research remains opt-in and bounded. The host
+does not claim to open search result pages, documents-only mode blocks external
+research, and attachment/project content remains subject to existing provider
+and endpoint consent policies.
+
+Rollback: revert this slice's renderer wiring, Chat Tools styles, settings
+fields, and host prompt assembly; existing chat requests continue to use the
+prior default behavior.
+
+Remaining: source cards, full tool/task execution parity, narrow-window
+screenshots, and release packaging remain open migration gates.
+
 ## Slice 258 — Add opt-in Electron memory injection
 
 Status: `implemented_host_renderer_opt_in_memory_smoke_verified`

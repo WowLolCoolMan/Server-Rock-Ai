@@ -498,3 +498,33 @@ Evidence:
 Remaining: the broader migration gates in `docs/ELECTRON_MIGRATION_CUTOVER.md`
 remain open for full host-backed feature parity, narrow-window screenshots,
 and release packaging validation.
+
+## Slice — Expose chat grounding and response controls end to end
+
+Status: `implemented_host_renderer_build_tests_visual_verified`
+
+The migrated Electron chat now exposes the Core capabilities that were already
+implemented but unreachable from the UI: response effort budgets, bounded
+full-text attachment context, opt-in web research, and documents-only
+grounding. Chat Tools provides the per-request controls, Agents settings
+provides durable defaults, and the typed renderer request forwards every choice
+through the sandboxed Agent Host boundary. Documents-only mode requires a text
+or PDF attachment, suppresses project/memory context, and always disables web
+research. Web snippets are bounded and explicitly marked as untrusted context.
+
+Evidence:
+
+- `npm test` — passed (native Core suite, including attachment, prompt, and web-search contracts).
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- Live Electron inspection verified the Chat Tools panel, documents-only safety note, and Agents settings controls.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: web research remains opt-in, uses bounded public
+search snippets, and cannot run in documents-only mode. Attachment and project
+content stays behind the existing provider and local-route consent boundary.
+
+Remaining: streamed source cards and full task/tool execution parity are still
+separate migration slices; this change does not pretend web pages were opened
+or tools were executed.

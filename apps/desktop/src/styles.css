@@ -428,3 +428,17 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
   .conversation-canvas .message-list { padding-inline: 8px; }
   .composer-card { position: sticky; bottom: 8px; border-radius: 12px; }
 }
+
+/* Chat tools are intentionally compact: the controls stay close to the
+   composer while the settings page remains the durable source of defaults. */
+.chat-tools-panel { display: grid; gap: 0; margin: 0 auto 10px; padding: 10px 12px; border: 1px solid #34363a; border-radius: 12px; background: #191a1c; box-shadow: 0 14px 28px rgba(0,0,0,.18); }
+.chat-tools-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 8px; color: #f0efef; font-size: 11px; font-weight: 650; }
+.chat-tools-heading small { color: #777a82; font-size: 9px; font-weight: 450; }
+.chat-tool-toggle, .chat-tool-select { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-width: 0; padding: 9px 0; border-top: 1px solid #2d2f33; }
+.chat-tool-toggle > span, .chat-tool-select > span { display: grid; min-width: 0; gap: 3px; }
+.chat-tool-toggle strong, .chat-tool-select strong { color: #c5c5ca; font-size: 10px; font-weight: 600; }
+.chat-tool-toggle small, .chat-tool-select small, .chat-tools-note { color: #777a82; font-size: 9px; line-height: 1.35; }
+.chat-tool-toggle input { flex: 0 0 auto; width: 32px; height: 18px; accent-color: #b6a5f5; }
+.chat-tool-select select { min-width: 108px; padding: 6px 8px; border: 1px solid #34363a; border-radius: 7px; color: #f0efef; background: #222326; font-size: 10px; }
+.chat-tool-select select:focus, .chat-tool-toggle input:focus-visible { outline: 2px solid rgba(182,165,245,.35); outline-offset: 1px; }
+.chat-tools-note { margin: 5px 0 0; padding: 8px 9px; border: 1px solid rgba(182,165,245,.18); border-radius: 7px; color: #a0a2a8; background: rgba(182,165,245,.06); }

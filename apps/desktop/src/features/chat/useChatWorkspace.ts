@@ -11,18 +11,23 @@ type ChatWorkspaceOptions = {
   endpoint: string;
   model: string;
   cloudRouteEnabled: boolean;
+  projectId: string | null;
+  effortMode: string;
+  webSearchEnabled: boolean;
+  fullTextContextInjectionEnabled: boolean;
   cloudVoice: CloudVoiceOptions;
   onError: (message: string | null) => void;
   onPetActivity: (activity: PetActivity) => void;
 };
 
-export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice, onError, onPetActivity }: ChatWorkspaceOptions) {
+export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, projectId, effortMode, webSearchEnabled, fullTextContextInjectionEnabled, cloudVoice, onError, onPetActivity }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [conversations, setConversations] = useState<DesktopConversation[]>([]);
   const [queuedMessages, setQueuedMessages] = useState<DesktopQueuedMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [documentsOnlyMode, setDocumentsOnlyMode] = useState(false);
   const petTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearPetTimer = () => {
@@ -69,12 +74,13 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     return savedId;
   };
 
+  const completeRequest = (nextMessages: Message[]) => ({ provider, endpoint, model, cloudRouteEnabled, projectId: projectId ?? undefined, messages: nextMessages, documentsOnly: documentsOnlyMode, webSearch: webSearchEnabled && !documentsOnlyMode, effortMode, fullTextContextInjectionEnabled });
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
     stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null); startPetRequest();
     const savedId = await saveConversation(next);
-    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: next });
+    const response = await request("chat.complete", completeRequest(next));
     setBusy(false);
     if (!response.ok) { transitionPet("error", 1800); onError(response.error?.message ?? "The model request failed."); return; }
     transitionPet("success", 1800);
@@ -90,7 +96,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
     stopNativeSpeech();
     setMessages(prefix); setBusy(true); onError(null); startPetRequest();
-    const response = await request("chat.complete", { provider, endpoint, model, cloudRouteEnabled, messages: prefix });
+    const response = await request("chat.complete", completeRequest(prefix));
     setBusy(false);
     if (!response.ok) { setMessages(originalMessages); transitionPet("error", 1800); onError(response.error?.message ?? "The model request failed."); return; }
     transitionPet("success", 1800);
@@ -166,6 +172,6 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, documentsOnlyMode, setDocumentsOnlyMode, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
 

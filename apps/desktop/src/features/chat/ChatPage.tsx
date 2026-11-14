@@ -36,12 +36,18 @@ type ChatPageProps = {
   conversationTitle: string;
   pinned: boolean;
   archived: boolean;
+  effortMode: string;
+  fullTextContextInjectionEnabled: boolean;
+  webSearchEnabled: boolean;
+  documentsOnlyMode: boolean;
   onSend: (text: string, attachments: ChatAttachment[]) => void;
   onQueue: (text: string, attachments: ChatAttachment[]) => void;
   onRemoveQueued: (index: number) => void;
   onAttach: () => void;
   onRemoveAttachment: (index: number) => void;
   onModelChange: (model: string) => void;
+  onSettingChange: (key: string, value: string | boolean) => void;
+  onDocumentsOnlyChange: (value: boolean) => void;
   onNavigate: (
     route: "coding" | "images" | "marketplace" | "workbench",
   ) => void;
@@ -74,12 +80,18 @@ export function ChatPage({
   conversationTitle,
   pinned,
   archived,
+  effortMode,
+  fullTextContextInjectionEnabled,
+  webSearchEnabled,
+  documentsOnlyMode,
   onSend,
   onQueue,
   onRemoveQueued,
   onAttach,
   onRemoveAttachment,
   onModelChange,
+  onSettingChange,
+  onDocumentsOnlyChange,
   onNavigate,
   onPlanTask,
   onExport,
@@ -103,6 +115,7 @@ export function ChatPage({
   const [taskEnvironment, setTaskEnvironment] =
     useState<TaskEnvironment>("local");
   const [contextOpen, setContextOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(conversationTitle);
   const [renameBusy, setRenameBusy] = useState(false);
@@ -172,6 +185,7 @@ export function ChatPage({
   const submit = () => {
     const text = draft.trim();
     if (!text && attachments.length === 0) return;
+    if (documentsOnlyMode && attachments.length === 0) return;
     if (busy) onQueue(text, attachments);
     else onSend(text, attachments);
     setDraft("");
@@ -407,6 +421,40 @@ export function ChatPage({
               aria-label="Message your model"
               rows={3}
             />
+            {toolsOpen && (
+              <div className="chat-tools-panel" role="region" aria-label="Chat tools">
+                <div className="chat-tools-heading">
+                  <div>
+                    <p className="section-kicker">CHAT TOOLS</p>
+                    <strong>Shape this request</strong>
+                  </div>
+                  <span className="chat-tools-scope">Local preference</span>
+                </div>
+                <label className="chat-tool-toggle">
+                  <span><strong>Documents only</strong><small>Ground the answer only in attached documents.</small></span>
+                  <input type="checkbox" checked={documentsOnlyMode} onChange={(event) => onDocumentsOnlyChange(event.target.checked)} />
+                </label>
+                <label className="chat-tool-toggle">
+                  <span><strong>Web research</strong><small>Include bounded search snippets when answering.</small></span>
+                  <input type="checkbox" checked={webSearchEnabled} disabled={documentsOnlyMode} onChange={(event) => onSettingChange("webSearchEnabled", event.target.checked)} />
+                </label>
+                <label className="chat-tool-toggle">
+                  <span><strong>Full-text attachments</strong><small>Use full bounded text instead of ranked chunks.</small></span>
+                  <input type="checkbox" checked={fullTextContextInjectionEnabled} onChange={(event) => onSettingChange("fullTextContextInjectionEnabled", event.target.checked)} />
+                </label>
+                <label className="chat-tool-select">
+                  <span><strong>Response effort</strong><small>Sets a bounded local output budget.</small></span>
+                  <select value={effortMode} onChange={(event) => onSettingChange("effortMode", event.target.value)} aria-label="Response effort">
+                    <option value="adaptive">Adaptive</option>
+                    <option value="light">Light</option>
+                    <option value="standard">Standard</option>
+                    <option value="high">High</option>
+                    <option value="ultra">Ultra</option>
+                  </select>
+                </label>
+                {documentsOnlyMode && <p className="chat-tools-note">Attach at least one text or PDF document before sending. Web research is disabled in this mode.</p>}
+              </div>
+            )}
             <div className="composer-actions">
               <Button
                 variant="ghost"
@@ -415,6 +463,15 @@ export function ChatPage({
                 disabled={attachments.length >= 5}
               >
                 Attach
+              </Button>
+              <Button
+                variant="ghost"
+                type="button"
+                aria-expanded={toolsOpen}
+                aria-pressed={toolsOpen}
+                onClick={() => setToolsOpen((open) => !open)}
+              >
+                Tools
               </Button>
               <div>
                 <span className="composer-hint">
