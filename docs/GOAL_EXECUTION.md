@@ -8215,6 +8215,15 @@ Agent Host build, and disposable protocol smoke coverage for provider filter
 validation. Download/import actions remain gated behind the selected local
 runtime adapter rather than being presented as generic remote downloads.
 
+## Marketplace local skill management controls
+
+The installed Skills library now supports bounded in-app instruction inspection
+and an explicit remove flow alongside enable/disable, update, and rollback.
+Agent Host reads only the installed Markdown instructions and removes only the
+owned active package and backups after the user confirms. Core tests and the
+disposable host smoke cover the complete preview → install → enable → update →
+rollback → inspect → remove lifecycle.
+
 ## Marketplace local skill library management
 
 The Marketplace Skills surface now exposes a usable local-folder workflow

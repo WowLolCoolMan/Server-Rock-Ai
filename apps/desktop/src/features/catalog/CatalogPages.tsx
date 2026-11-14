@@ -18,6 +18,7 @@ type MarketplaceTool = { id: string; name: string; category: string; description
 type MarketplaceMcp = { id: string; name: string; transport: string; description: string; source: string; status: string };
 type InstalledSkill = { id: string; name: string; version: string; publisher: string; sourceRef: string; packageSha256: string; requiredPermissions: string[]; enabled: boolean; canRollback: boolean };
 type SkillPreview = { id: string; name: string; version: string; publisher: string; packageSha256: string; requiredPermissions: string[]; isUpdate: boolean; existingVersion?: string | null; existingPackageSha256?: string | null; sourceRef: string };
+type SkillInspection = InstalledSkill & { instructions: string };
 
 export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
   const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
@@ -66,7 +67,9 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [mcpServers, setMcpServers] = useState<MarketplaceMcp[]>([]);
   const [installedSkills, setInstalledSkills] = useState<InstalledSkill[]>([]);
   const [skillPreview, setSkillPreview] = useState<SkillPreview | null>(null);
+  const [skillInspection, setSkillInspection] = useState<SkillInspection | null>(null);
   const [skillSourceDirectory, setSkillSourceDirectory] = useState<string | null>(null);
+  const [skillRemovalId, setSkillRemovalId] = useState<string | null>(null);
   const [skillBusy, setSkillBusy] = useState(false);
   const [skillError, setSkillError] = useState<string | null>(null);
   const [catalogBusy, setCatalogBusy] = useState(false);
@@ -155,6 +158,24 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
     } catch (error) { setSkillError(error instanceof Error ? error.message : "The skill could not be rolled back."); }
     finally { setSkillBusy(false); }
   };
+  const inspectInstalledSkill = async (skill: InstalledSkill) => {
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const response = await window.serverRockAgent.request("skills.installed.inspect", { id: skill.id });
+      if (!response.ok) throw new Error(response.error?.message ?? "The installed skill could not be inspected.");
+      setSkillInspection(response.result as SkillInspection);
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The installed skill could not be inspected."); }
+    finally { setSkillBusy(false); }
+  };
+  const removeInstalledSkill = async (skill: InstalledSkill) => {
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const response = await window.serverRockAgent.request("skills.installed.remove", { id: skill.id });
+      if (!response.ok) throw new Error(response.error?.message ?? "The installed skill could not be removed.");
+      setSkillRemovalId(null); setSkillInspection(null); await loadInstalledSkills();
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The installed skill could not be removed."); }
+    finally { setSkillBusy(false); }
+  };
   useEffect(() => { void refreshCatalog(); void loadInstalledSkills(); }, []);
 
   const selectedModels = models.filter(model => model.kind === (selected?.title === "Voices & TTS" ? "voice" : selected?.title === "Image Studio" ? "image" : "llm"));
@@ -205,7 +226,8 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
             <div className="marketplace-skill-management"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">LOCAL LIBRARY</p><strong>Install a reviewed Markdown skill</strong><small>Choose a local folder containing <code>skill.json</code> and <code>SKILL.md</code>. Skai validates the package, records a digest, and never executes package files.</small></div><div className="marketplace-skill-actions"><Button variant="secondary" onClick={() => void previewLocalSkill()} disabled={skillBusy}>{skillBusy ? "Checking…" : "Review local package"}</Button><Button variant="ghost" onClick={() => void loadInstalledSkills()} disabled={skillBusy}>Refresh library</Button></div></div>
             {skillError && <div className="surface-error" role="alert"><strong>Skill library needs attention</strong><p>{skillError}</p></div>}
             {skillPreview && <div className="skill-review-card"><div><p className="section-kicker">INSTALLATION REVIEW</p><h4>{skillPreview.name} <span>v{skillPreview.version}</span></h4><p>{skillPreview.publisher} · {skillPreview.isUpdate ? `updates ${skillPreview.existingVersion ?? "the installed copy"}` : "new local package"}</p></div><dl><div><dt>Permissions</dt><dd>{skillPreview.requiredPermissions.length ? skillPreview.requiredPermissions.join(" · ") : "None declared"}</dd></div><div><dt>SHA-256</dt><dd>{skillPreview.packageSha256}</dd></div><div><dt>Source</dt><dd>{skillPreview.sourceRef}</dd></div></dl><div className="marketplace-skill-actions"><Button variant="ghost" onClick={() => { setSkillPreview(null); setSkillSourceDirectory(null); }} disabled={skillBusy}>Cancel</Button><Button variant="primary" onClick={() => void installPreviewedSkill()} disabled={skillBusy}>{skillBusy ? "Installing…" : skillPreview.isUpdate ? "Install update" : "Install skill"}</Button></div></div>}
-            {installedSkills.length > 0 && <div className="installed-skill-list"><div className="panel-heading"><div><p className="section-kicker">INSTALLED LIBRARY</p><h3>Managed skills</h3></div><span className="panel-count">{installedSkills.length}</span></div>{installedSkills.map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>{skill.publisher} · v{skill.version} · {skill.sourceRef}</small><span>{skill.requiredPermissions.length ? `Permissions: ${skill.requiredPermissions.join(" · ")}` : "No permissions declared"}</span></div><div className="marketplace-skill-actions"><StatusBadge tone={skill.enabled ? "success" : "neutral"}>{skill.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" onClick={() => void setSkillEnabled(skill)} disabled={skillBusy}>{skill.enabled ? "Disable" : "Enable"}</Button>{skill.canRollback && <Button variant="ghost" onClick={() => void rollbackSkill(skill)} disabled={skillBusy}>Rollback</Button>}</div></div>)}</div>}
+            {skillInspection && <div className="skill-inspection-card"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">INSTALLED SKILL</p><h4>{skillInspection.name} <span>v{skillInspection.version}</span></h4><small>{skillInspection.publisher} · {skillInspection.sourceRef}</small></div><Button variant="ghost" onClick={() => setSkillInspection(null)}>Close</Button></div><dl><div><dt>SHA-256</dt><dd>{skillInspection.packageSha256}</dd></div><div><dt>Permissions</dt><dd>{skillInspection.requiredPermissions.length ? skillInspection.requiredPermissions.join(" · ") : "None declared"}</dd></div></dl><pre aria-label={`${skillInspection.name} instructions`}>{skillInspection.instructions}</pre></div>}
+            {installedSkills.length > 0 && <div className="installed-skill-list"><div className="panel-heading"><div><p className="section-kicker">INSTALLED LIBRARY</p><h3>Managed skills</h3></div><span className="panel-count">{installedSkills.length}</span></div>{installedSkills.map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>{skill.publisher} · v{skill.version} · {skill.sourceRef}</small><span>{skill.requiredPermissions.length ? `Permissions: ${skill.requiredPermissions.join(" · ")}` : "No permissions declared"}</span></div><div className="marketplace-skill-actions"><StatusBadge tone={skill.enabled ? "success" : "neutral"}>{skill.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" onClick={() => void inspectInstalledSkill(skill)} disabled={skillBusy}>Inspect</Button><Button variant="ghost" onClick={() => void setSkillEnabled(skill)} disabled={skillBusy}>{skill.enabled ? "Disable" : "Enable"}</Button>{skill.canRollback && <Button variant="ghost" onClick={() => void rollbackSkill(skill)} disabled={skillBusy}>Rollback</Button>}{skillRemovalId === skill.id ? <><Button variant="danger" onClick={() => void removeInstalledSkill(skill)} disabled={skillBusy}>Confirm remove</Button><Button variant="ghost" onClick={() => setSkillRemovalId(null)} disabled={skillBusy}>Keep</Button></> : <Button variant="danger" onClick={() => setSkillRemovalId(skill.id)} disabled={skillBusy}>Remove</Button>}</div></div>)}</div>}
             <CatalogList title="GitHub skill repositories · curated lanes" loading={catalogBusy} empty="No curated GitHub skills matched. Try All lanes or a broader search." items={skills.map(skill => ({ id: skill.id, title: `${skill.name} · ${skill.lane}`, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || skill.laneDescription}`, href: skill.url, action: "Review on GitHub" }))} />
             </div>
           </> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" || selected.title === "Coding tools" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">

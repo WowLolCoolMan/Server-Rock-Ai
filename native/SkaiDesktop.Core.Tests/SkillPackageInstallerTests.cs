@@ -26,6 +26,8 @@ internal static class SkillPackageInstallerTests
         TestSupport.Check(installer.ListInstalled().Single().Version == "1.0.0", "skill update atomically activates the replacement");
         var rolledBack = installer.Rollback("review-skill");
         TestSupport.Check(rolledBack.SourceRef.Contains("@abc123", StringComparison.Ordinal) && rolledBack.Enabled, "skill rollback restores the previous pinned package and grant");
+        installer.Uninstall("review-skill");
+        TestSupport.Check(installer.ListInstalled().Count == 0 && !installer.CanRollback("review-skill"), "skill uninstall removes only the owned active package and backups");
         File.WriteAllText(Path.Combine(source, "run.ps1"), "Write-Output unsafe");
         try { installer.Install(source, "https://github.com/example/review-skill@bad123"); throw new Exception("Expected executable skill content to be rejected."); }
         catch (InvalidDataException) { TestSupport.Check(true, "skill installer rejects executable package content"); }

@@ -183,3 +183,24 @@ Evidence:
 Remaining: model download/import actions are still runtime-specific and must be
 surfaced only when the selected local Ollama or LM Studio adapter is available;
 remote catalogs currently remain safe discovery/source-link surfaces.
+
+## Slice — Complete local skill management controls
+
+Status: `implemented_build_smoke_verified`
+
+The installed Skills library now supports in-app instruction inspection and an
+explicit remove flow in addition to enable/disable, update, and rollback. The
+Agent Host reads only the bounded Markdown instruction file, exposes it as
+review text, and removes only the owned active package and its owned backups
+after the user confirms removal.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- Isolated Agent Host build — passed with 0 warnings and 0 errors.
+- Full Core tests — passed, including owned-package uninstall coverage.
+- Disposable Agent Host smoke — passed through preview, install, enable,
+  update, rollback, inspect, remove, and final empty-library verification.
+
+Remaining: remote pinned GitHub acquisition, publisher trust/signature policy,
+and packaged Windows acceptance remain intentionally open.

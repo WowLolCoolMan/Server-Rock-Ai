@@ -57,13 +57,15 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
             "marketplace.tools.list" => ListMarketplaceTools(request),
             "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
             "skills.installed.list" => ListInstalledSkills(request),
+            "skills.installed.inspect" => InspectInstalledSkill(request),
+            "skills.installed.remove" => RemoveInstalledSkill(request),
             "skills.local.preview" => PreviewLocalSkill(request),
             "skills.local.install" => InstallLocalSkill(request),
             "skills.enabled.set" => SetSkillEnabled(request),
@@ -351,6 +353,34 @@ public static class AgentHostLoop
             enabled = skill.Enabled,
             canRollback = installer.CanRollback(skill.Id),
         }).ToArray());
+    }
+
+    private static AgentResponse InspectInstalledSkill(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 80);
+        var installer = CreateSkillInstaller();
+        var skill = installer.ListInstalled().SingleOrDefault(item => item.Id.Equals(id, StringComparison.Ordinal));
+        if (skill is null) throw new InvalidOperationException("The installed skill is no longer available.");
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = skill.Id,
+            name = skill.Name,
+            version = skill.Version,
+            publisher = skill.Publisher,
+            sourceRef = skill.SourceRef,
+            packageSha256 = skill.PackageSha256,
+            requiredPermissions = skill.RequiredPermissions,
+            enabled = skill.Enabled,
+            canRollback = installer.CanRollback(skill.Id),
+            instructions = installer.ReadInstructions(skill.Id),
+        });
+    }
+
+    private static AgentResponse RemoveInstalledSkill(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 80);
+        CreateSkillInstaller().Uninstall(id);
+        return new(ProtocolVersion, request.Id, true, new { id, removed = true });
     }
 
     private static AgentResponse PreviewLocalSkill(AgentRequest request)

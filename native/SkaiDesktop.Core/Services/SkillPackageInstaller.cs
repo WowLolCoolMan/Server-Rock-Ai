@@ -147,6 +147,16 @@ public sealed class SkillPackageInstaller
         }
     }
 
+    public void Uninstall(string id)
+    {
+        ValidateId(id);
+        var active = Path.Combine(_root, "active", id);
+        if (!Directory.Exists(active)) throw new InvalidOperationException("The installed skill is no longer available.");
+        Directory.Delete(active, recursive: true);
+        var backups = Path.Combine(_root, "backups", id);
+        if (Directory.Exists(backups)) Directory.Delete(backups, recursive: true);
+    }
+
     private static List<PackageFile> ReadPackageFiles(string source)
     {
         var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories).ToArray();

@@ -57,7 +57,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.rollback"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.installed.inspect") || !health.result?.capabilities?.includes("skills.installed.remove") || !health.result?.capabilities?.includes("skills.rollback"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const tools = await request("marketplace.tools.list");
   if (!tools.ok || !Array.isArray(tools.result) || !tools.result.some(item => item.id === "github" && item.builtIn === true)) throw new Error("marketplace.tools.list did not return the built-in tool catalog.");
@@ -83,6 +83,12 @@ async function run() {
   if (!updatedSkill.ok || updatedSkill.result?.version !== "2.0.0" || updatedSkill.result?.canRollback !== true) throw new Error("skills.local.install did not activate the update with rollback metadata.");
   const rolledBackSkill = await request("skills.rollback", { id: "review-skill" });
   if (!rolledBackSkill.ok || rolledBackSkill.result?.version !== "1.0.0" || rolledBackSkill.result?.enabled !== true) throw new Error("skills.rollback did not restore the prior enabled package.");
+  const inspectedSkill = await request("skills.installed.inspect", { id: "review-skill" });
+  if (!inspectedSkill.ok || !inspectedSkill.result?.instructions?.includes("Read-only review instructions")) throw new Error("skills.installed.inspect did not return bounded instructions.");
+  const removedSkill = await request("skills.installed.remove", { id: "review-skill" });
+  if (!removedSkill.ok || removedSkill.result?.removed !== true) throw new Error("skills.installed.remove did not remove the owned package.");
+  const finalSkills = await request("skills.installed.list");
+  if (!finalSkills.ok || finalSkills.result.length !== 0) throw new Error("skills.installed.remove left an installed package behind.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");
