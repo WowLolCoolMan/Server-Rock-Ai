@@ -58,7 +58,7 @@ export function MarketplacePage() {
   const [voiceSettings, setVoiceSettings] = useState(selectedVoiceSettings);
   const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
 
-  return <div className="feature-page">
+  return <div className="feature-page marketplace-page">
     <PageHeader eyebrow="LOCAL CATALOG" title="Extend Skai" description="Review local capabilities for models, voices, image workflows, skills, and tools. Nothing is fetched from a hosted catalog." />
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">

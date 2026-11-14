@@ -8516,6 +8516,32 @@ Evidence:
 - The renderer exposes the drag surface and the main process accepts screen-coordinate drag IPC; the CUA harness could not complete a transparent cross-window drag because its screenshot-region binding rejected the window crop.
 - Completion routing and success/bubble state remain wired through the local agent response path; no cloud service or unrestricted renderer API was added.
 
+## Slice 269 — Bound the Marketplace catalog workspace
+
+Status: `implemented_live_electron_verified`
+
+Marketplace now uses the same bounded desktop workspace pattern as the primary
+surfaces. The page header and search/filter controls stay stable while the
+category results and selected-category detail pane own their own overflow. On
+narrow windows it falls back to natural page flow instead of trapping content
+inside a clipped split pane.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/catalog/CatalogPages.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Rebuilt Electron Marketplace rendered as a full-width bounded catalog workspace.
+- Search and category controls stayed in the stable toolbar while the category region remained scrollable.
+- Clicking the Voices filter updated the catalog to one result and changed the selected detail state; selecting Tools & integrations updated the detail pane and selection state as well.
+- The shared desktop shell now stays viewport-bounded, with the navigation and header fixed while the Marketplace grid exposes its own scrollbar.
+- Narrow-window flow remains handled by the <=900px fallback.
+- `npm run build`, `npm run typecheck`, `npm run check:syntax`, `npm run audit:local-only`, `npm run audit:electron-runtime`, `npm run check:hygiene`, and `git diff --check` pass.
+
 ## Slice 199 — Restore stable package identifiers after rebrand
 
 Status: `implemented_release_gate_verified`
