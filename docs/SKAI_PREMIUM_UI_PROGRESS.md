@@ -587,3 +587,25 @@ Evidence:
 
 Remaining: approved tasks still produce a read-only model plan/result; reviewed
 worktree-backed file edits, terminal actions, and process isolation remain open.
+
+## Slice — Keep Agent Workbench state live
+
+Status: `implemented_renderer_typecheck_verified`
+
+The Workbench now performs a silent three-second refresh while it is open. Task
+approval, execution, cancellation, retry, and scheduled-run changes made by the
+host or another surface appear without navigating away or flashing the initial
+loading state. Explicit retry continues to surface errors; background refreshes
+preserve the last usable UI state when a transient host request fails.
+
+Changed files:
+
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `git diff --check` — passed.
+
+Remaining: task execution still produces a read-only model plan/result; reviewed
+worktree-backed file edits, terminal actions, and process isolation remain open.
