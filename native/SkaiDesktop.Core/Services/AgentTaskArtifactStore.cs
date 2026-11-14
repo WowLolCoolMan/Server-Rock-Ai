@@ -144,6 +144,41 @@ public sealed class AgentTaskArtifactStore
         return Copy(task);
     }
 
+    public AgentTaskArtifact MarkWorkspaceChangeApplied(string id, int proposalIndex, string appliedHash, string? undoId = null)
+    {
+        if (proposalIndex < 0) throw new ArgumentOutOfRangeException(nameof(proposalIndex));
+        var normalizedHash = NormalizeHash(appliedHash, "applied workspace change hash");
+        var normalizedUndoId = NormalizeOptional(undoId, 128, "workspace change undo ID");
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status == AgentTaskStatuses.Running) throw new InvalidOperationException("A running task cannot apply a reviewed workspace change.");
+        if (proposalIndex >= task.WorkspaceChanges.Count) throw new ArgumentOutOfRangeException(nameof(proposalIndex), "The workspace change proposal does not exist.");
+        var change = task.WorkspaceChanges[proposalIndex];
+        if (change.AppliedHash is not null) throw new InvalidOperationException("This workspace change proposal has already been applied.");
+        change.AppliedHash = normalizedHash;
+        change.UndoId = normalizedUndoId;
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
+    public AgentTaskArtifact MarkWorkspaceChangeUndone(string id, int proposalIndex, string undoId)
+    {
+        if (proposalIndex < 0) throw new ArgumentOutOfRangeException(nameof(proposalIndex));
+        var normalizedUndoId = Normalize(undoId, 128, "workspace change undo ID");
+        var tasks = Load().ToList();
+        var task = tasks.SingleOrDefault(item => item.Id == id) ?? throw new KeyNotFoundException("The agent task does not exist.");
+        if (task.Status == AgentTaskStatuses.Running) throw new InvalidOperationException("A running task cannot undo a reviewed workspace change.");
+        if (proposalIndex >= task.WorkspaceChanges.Count) throw new ArgumentOutOfRangeException(nameof(proposalIndex), "The workspace change proposal does not exist.");
+        var change = task.WorkspaceChanges[proposalIndex];
+        if (!string.Equals(change.UndoId, normalizedUndoId, StringComparison.Ordinal)) throw new InvalidOperationException("The undo receipt does not match this workspace change proposal.");
+        change.AppliedHash = null;
+        change.UndoId = null;
+        task.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Save(tasks);
+        return Copy(task);
+    }
+
     /// <summary>Cancels a proposed or queued plan before any future executor can claim it.</summary>
     public AgentTaskArtifact CancelPlanned(string id, string reason = "Cancelled before execution.")
     {
@@ -361,7 +396,10 @@ public sealed class AgentTaskArtifactStore
             .Select(change => new AgentTaskWorkspaceChange
             {
                 RelativePath = Normalize(change.RelativePath, 512, "workspace change path"),
-                Content = NormalizeContent(change.Content, "workspace change content")
+                Content = NormalizeContent(change.Content, "workspace change content"),
+                BaseHash = NormalizeHashOptional(change.BaseHash, "workspace change base hash"),
+                AppliedHash = NormalizeHashOptional(change.AppliedHash, "workspace change applied hash"),
+                UndoId = NormalizeOptional(change.UndoId, 128, "workspace change undo ID")
             })
             .ToList();
         if (result.Count > MaxWorkspaceChanges) throw new ArgumentException($"A task can have at most {MaxWorkspaceChanges} workspace changes.");
@@ -405,7 +443,7 @@ public sealed class AgentTaskArtifactStore
         DependsOn = source.DependsOn.ToList(),
         ResultSummary = source.ResultSummary,
         ArtifactLabels = source.ArtifactLabels.ToList(),
-        WorkspaceChanges = source.WorkspaceChanges.Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content }).ToList(),
+        WorkspaceChanges = source.WorkspaceChanges.Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content, BaseHash = change.BaseHash, AppliedHash = change.AppliedHash, UndoId = change.UndoId }).ToList(),
         WorkspaceCommands = source.WorkspaceCommands.Select(command => new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = command.RelativeWorkingDirectory, Command = command.Command, TimeoutSeconds = command.TimeoutSeconds }).ToList(),
         WorktreePath = source.WorktreePath,
         WorktreeBranch = source.WorktreeBranch,
@@ -413,4 +451,12 @@ public sealed class AgentTaskArtifactStore
         CreatedAtUtc = source.CreatedAtUtc,
         UpdatedAtUtc = source.UpdatedAtUtc
     };
+
+    private static string? NormalizeHashOptional(string? value, string label) => string.IsNullOrWhiteSpace(value) ? null : NormalizeHash(value, label);
+
+    private static string NormalizeHash(string value, string label)
+    {
+        if (value.Length != 64 || value.Any(character => !Uri.IsHexDigit(character))) throw new ArgumentException($"The {label} is invalid.", label);
+        return value.ToUpperInvariant();
+    }
 }

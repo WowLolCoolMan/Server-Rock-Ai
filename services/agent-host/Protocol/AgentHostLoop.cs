@@ -58,7 +58,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.worktree.release", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.worktree.release", "tasks.worktree.change.apply", "tasks.worktree.change.undo", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
@@ -88,6 +88,8 @@ public static class AgentHostLoop
             "tasks.deny" => DenyTask(request),
             "tasks.execute" => ExecuteTaskAsync(request).GetAwaiter().GetResult(),
             "tasks.worktree.release" => ReleaseTaskWorktreeAsync(request).GetAwaiter().GetResult(),
+            "tasks.worktree.change.apply" => ApplyTaskWorkspaceChange(request),
+            "tasks.worktree.change.undo" => UndoTaskWorkspaceChange(request),
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
             "scheduled.list" => ListScheduledTasks(request),
@@ -990,7 +992,7 @@ public static class AgentHostLoop
                 status = task.Status,
                 resultSummary = task.ResultSummary,
                 artifactLabels = task.ArtifactLabels,
-                workspaceChanges = task.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content }).ToArray(),
+                workspaceChanges = task.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content, applied = change.AppliedHash is not null, undoId = change.UndoId }).ToArray(),
                 workspaceCommands = task.WorkspaceCommands.Select(command => new { relativeWorkingDirectory = command.RelativeWorkingDirectory, command = command.Command, timeoutSeconds = command.TimeoutSeconds }).ToArray(),
                 worktreePath = task.WorktreePath,
                 worktreeBranch = task.WorktreeBranch,
@@ -1116,7 +1118,7 @@ public static class AgentHostLoop
                 EffortModePolicy.MaxTokens(modelSettings.EffortMode, prompt.Length));
             var fullResponse = response.ToString().Trim();
             var workspaceChanges = WorkspaceChangeProposalParser.Parse(fullResponse)
-                .Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content })
+                .Select(change => new AgentTaskWorkspaceChange { RelativePath = change.RelativePath, Content = change.Content, BaseHash = ReadProposalBaseHash(task.Environment == AgentTaskEnvironments.Worktree ? task.WorktreePath : null, change.RelativePath) })
                 .ToArray();
             var workspaceCommands = WorkspaceCommandProposalParser.Parse(fullResponse)
                 .Select(command => new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = command.RelativeWorkingDirectory, Command = command.Command, TimeoutSeconds = command.TimeoutSeconds })
@@ -1142,7 +1144,7 @@ public static class AgentHostLoop
             status = completed.Status,
             resultSummary = completed.ResultSummary,
             artifactLabels = completed.ArtifactLabels,
-            workspaceChanges = completed.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content }).ToArray(),
+            workspaceChanges = completed.WorkspaceChanges.Select(change => new { relativePath = change.RelativePath, content = change.Content, applied = change.AppliedHash is not null, undoId = change.UndoId }).ToArray(),
             workspaceCommands = completed.WorkspaceCommands.Select(command => new { relativeWorkingDirectory = command.RelativeWorkingDirectory, command = command.Command, timeoutSeconds = command.TimeoutSeconds }).ToArray(),
             environment = completed.Environment,
             worktreePath = completed.WorktreePath,
@@ -1168,6 +1170,78 @@ public static class AgentHostLoop
             resultSummary = released.ResultSummary,
             updatedAt = released.UpdatedAtUtc,
         });
+    }
+
+    private static AgentResponse ApplyTaskWorkspaceChange(AgentRequest request)
+    {
+        var taskId = RequiredBoundedString(request, "id", 128);
+        var proposalIndex = RequiredInt(request, "proposalIndex");
+        var taskStore = CreateTaskStore();
+        var task = taskStore.Get(taskId);
+        if (task.Environment != AgentTaskEnvironments.Worktree || task.WorktreePath is null)
+            throw new InvalidOperationException("Reviewed workspace changes can only be applied inside a retained task worktree.");
+        if (task.Status == AgentTaskStatuses.Running)
+            throw new InvalidOperationException("Wait for the task to finish before applying a reviewed workspace change.");
+        if (proposalIndex < 0 || proposalIndex >= task.WorkspaceChanges.Count)
+            throw new InvalidOperationException("The workspace change proposal does not exist.");
+        var proposal = task.WorkspaceChanges[proposalIndex];
+        var editor = new WorkspaceFileEditor();
+        var receipt = editor.Apply(task.WorktreePath, proposal.RelativePath, proposal.Content, proposal.BaseHash);
+        var undoId = Guid.NewGuid().ToString("N");
+        var undoStore = CreateUndoStore();
+        undoStore.Add(undoStore.Load(), new WorkspaceUndoEntry(undoId, DateTimeOffset.UtcNow, $"Agent task {task.Id}", task.WorktreePath, proposal.RelativePath, receipt.PreviousContent, receipt.AppliedHash));
+        var applied = taskStore.MarkWorkspaceChangeApplied(task.Id, proposalIndex, receipt.AppliedHash, undoId);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = applied.Id,
+            proposalIndex,
+            relativePath = proposal.RelativePath,
+            applied = true,
+            hash = receipt.AppliedHash,
+            undoId,
+            updatedAt = applied.UpdatedAtUtc,
+        });
+    }
+
+    private static AgentResponse UndoTaskWorkspaceChange(AgentRequest request)
+    {
+        var taskId = RequiredBoundedString(request, "id", 128);
+        var proposalIndex = RequiredInt(request, "proposalIndex");
+        var undoId = RequiredBoundedString(request, "undoId", 128);
+        var taskStore = CreateTaskStore();
+        var task = taskStore.Get(taskId);
+        if (task.Environment != AgentTaskEnvironments.Worktree || task.WorktreePath is null)
+            throw new InvalidOperationException("Reviewed workspace changes can only be undone inside a retained task worktree.");
+        if (task.Status == AgentTaskStatuses.Running)
+            throw new InvalidOperationException("Wait for the task to finish before undoing a reviewed workspace change.");
+        if (proposalIndex < 0 || proposalIndex >= task.WorkspaceChanges.Count)
+            throw new InvalidOperationException("The workspace change proposal does not exist.");
+        var proposal = task.WorkspaceChanges[proposalIndex];
+        if (!string.Equals(proposal.UndoId, undoId, StringComparison.Ordinal))
+            throw new InvalidOperationException("The undo receipt does not match this workspace change proposal.");
+        var undoStore = CreateUndoStore();
+        var entry = undoStore.Load().SingleOrDefault(item => item.Id == undoId)
+            ?? throw new KeyNotFoundException("The file edit is no longer available for undo.");
+        if (!string.Equals(Path.GetFullPath(entry.RootPath), Path.GetFullPath(task.WorktreePath), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) || !string.Equals(entry.RelativePath, proposal.RelativePath, StringComparison.Ordinal))
+            throw new InvalidOperationException("The undo receipt does not match the retained task worktree.");
+        undoStore.Undo(entry, new WorkspaceFileEditor());
+        undoStore.Remove(undoStore.Load(), undoId);
+        var undone = taskStore.MarkWorkspaceChangeUndone(task.Id, proposalIndex, undoId);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = undone.Id,
+            proposalIndex,
+            relativePath = proposal.RelativePath,
+            undone = true,
+            updatedAt = undone.UpdatedAtUtc,
+        });
+    }
+
+    private static string? ReadProposalBaseHash(string? worktreePath, string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(worktreePath)) return null;
+        try { return new WorkspaceFileEditor().GetCurrentHash(worktreePath, relativePath); }
+        catch (Exception error) when (error is ArgumentException or IOException or InvalidOperationException or UnauthorizedAccessException) { return null; }
     }
 
     private static string BuildAgentTaskProjectContext(string? projectId, string? contextRoot = null)
@@ -1704,6 +1778,12 @@ public static class AgentHostLoop
         var value = RequiredString(request, name);
         if (value.Length > maxLength || value.Any(char.IsControl)) throw new InvalidOperationException($"{name} exceeds its safety limit.");
         return value.Trim();
+    }
+
+    private static int RequiredInt(AgentRequest request, string name)
+    {
+        var value = OptionalInt(request, name);
+        return value ?? throw new InvalidOperationException($"{name} is required.");
     }
 
     private static string RequiredLocalEndpoint(AgentRequest request, string name, int maxLength)

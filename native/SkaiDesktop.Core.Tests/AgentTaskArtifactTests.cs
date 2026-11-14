@@ -72,9 +72,13 @@ internal static class AgentTaskArtifactTests
             Check(parsedChanges.Count == 1 && parsedChanges[0].RelativePath == "src/App.tsx" && parsedCommands.Count == 1 && parsedCommands[0].TimeoutSeconds == 45 && !WorkspaceCommandProposalParser.RemoveProposals(WorkspaceChangeProposalParser.RemoveProposals(proposalText)).Contains("workspace-", StringComparison.Ordinal), "workspace proposal parsers extract bounded file and command review blocks");
             var proposalPlan = store.Create("Persist review proposals", "Record model-generated workspace proposals.");
             store.Queue(proposalPlan.Id);
-            var proposalResult = await executor.ExecuteNextAsync((_, _) => Task.FromResult(new AgentTaskExecutionResult("Review the proposed workspace changes.", ["reviewable"], [new AgentTaskWorkspaceChange { RelativePath = "src/App.tsx", Content = "export const App = () => null;" }], [new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = ".", Command = "npm test", TimeoutSeconds = 45 }])));
+            var proposalResult = await executor.ExecuteNextAsync((_, _) => Task.FromResult(new AgentTaskExecutionResult("Review the proposed workspace changes.", ["reviewable"], [new AgentTaskWorkspaceChange { RelativePath = "src/App.tsx", Content = "export const App = () => null;", BaseHash = new string('A', 64) }], [new AgentTaskWorkspaceCommand { RelativeWorkingDirectory = ".", Command = "npm test", TimeoutSeconds = 45 }])));
             var persistedProposal = store.Get(proposalResult!.Id);
-            Check(persistedProposal.WorkspaceChanges.Count == 1 && persistedProposal.WorkspaceChanges[0].RelativePath == "src/App.tsx" && persistedProposal.WorkspaceCommands.Count == 1 && persistedProposal.WorkspaceCommands[0].Command == "npm test", "agent task artifacts persist reviewable workspace proposals");
+            Check(persistedProposal.WorkspaceChanges.Count == 1 && persistedProposal.WorkspaceChanges[0].RelativePath == "src/App.tsx" && persistedProposal.WorkspaceChanges[0].BaseHash == new string('A', 64) && persistedProposal.WorkspaceCommands.Count == 1 && persistedProposal.WorkspaceCommands[0].Command == "npm test", "agent task artifacts persist reviewable workspace proposals");
+            var appliedProposal = store.MarkWorkspaceChangeApplied(proposalResult.Id, 0, new string('B', 64), "undo-receipt");
+            Check(appliedProposal.WorkspaceChanges[0].AppliedHash == new string('B', 64) && appliedProposal.WorkspaceChanges[0].UndoId == "undo-receipt", "agent task artifacts record the applied hash and undo receipt for a reviewed file proposal");
+            var undoneProposal = store.MarkWorkspaceChangeUndone(proposalResult.Id, 0, "undo-receipt");
+            Check(undoneProposal.WorkspaceChanges[0].AppliedHash is null && undoneProposal.WorkspaceChanges[0].UndoId is null, "agent task artifacts clear the applied state after an approved undo");
             var failedPlan = store.Create("Fail bounded review", "Run a failing injected handler.");
             store.Queue(failedPlan.Id);
             var failed = await executor.ExecuteNextAsync((_, _) => throw new InvalidOperationException("handler failure"));

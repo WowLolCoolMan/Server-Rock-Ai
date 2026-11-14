@@ -711,3 +711,22 @@ Commit: `e2dbf8d`.
 Remaining: add explicit per-proposal apply/run approval flows inside a retained
 worktree, with optimistic hashes, undo receipts, command output capture, and
 process isolation before claiming coding-agent edits are complete.
+
+## Slice — Apply and undo reviewed Worktree file proposals
+
+Status: `implemented_host_renderer_build_smoke_verified`
+
+Agent Workbench now exposes an explicit per-file Apply action for completed
+isolated tasks. The host captures the current SHA-256 before proposal review,
+rejects stale files through the existing bounded WorkspaceFileEditor, persists
+the applied hash, and records a local undo receipt. The same proposal row
+exposes Undo change, which restores only when the file still matches the
+approved hash. Command proposals remain review-only and cannot execute.
+
+Evidence: Core tests, Agent Host build and smoke, desktop typecheck/build,
+future-feature, Electron runtime, local-only, native UI, release workflow,
+syntax, hygiene, and diff checks passed.
+
+Remaining: guarded command execution/output capture, stronger process
+isolation/background execution, and packaged live acceptance for the complete
+coding-agent workflow.

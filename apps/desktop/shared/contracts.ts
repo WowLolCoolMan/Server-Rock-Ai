@@ -92,7 +92,7 @@ export type DesktopTask = {
   worktreeRepositoryRoot?: string | null;
 };
 
-export type DesktopTaskWorkspaceChange = { relativePath: string; content: string };
+export type DesktopTaskWorkspaceChange = { relativePath: string; content: string; applied?: boolean; undoId?: string | null };
 export type DesktopTaskWorkspaceCommand = { relativeWorkingDirectory: string; command: string; timeoutSeconds: number };
 
 export type TaskEnvironment = "local" | "worktree";

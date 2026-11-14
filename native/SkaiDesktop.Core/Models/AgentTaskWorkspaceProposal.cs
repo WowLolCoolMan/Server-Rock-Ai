@@ -5,6 +5,9 @@ public sealed class AgentTaskWorkspaceChange
 {
     public string RelativePath { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
+    public string? BaseHash { get; set; }
+    public string? AppliedHash { get; set; }
+    public string? UndoId { get; set; }
 }
 
 /// <summary>A bounded command proposed by a local agent task for later review.</summary>

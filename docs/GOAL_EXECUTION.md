@@ -10343,3 +10343,23 @@ command-output capture, and process isolation inside a retained worktree.
 Evidence: `e2dbf8d`; Core tests, Agent Host build/smoke, desktop typecheck/build,
 future-feature audit, Electron runtime audit, local-only audit, syntax checks,
 and `git diff --check` passed.
+
+## Slice — Apply and undo reviewed Worktree file proposals
+
+Status: `implemented_host_renderer_build_smoke_verified`
+
+Completed isolated tasks now expose explicit per-file Apply and Undo change
+controls in Agent Workbench. Apply is gated to a retained Worktree, uses the
+proposal's captured SHA-256 as an optimistic concurrency check, writes only
+through the bounded WorkspaceFileEditor, and persists a local undo receipt.
+Undo removes the receipt after restoring the file only when the approved hash
+still matches. The host advertises both guarded operations and the renderer
+refreshes task state after each result. Command proposals remain review-only.
+
+Evidence: Core tests, Agent Host build/smoke, desktop typecheck/build,
+future-feature, Electron runtime, local-only, native UI, release workflow,
+syntax, hygiene, and `git diff --check` passed.
+
+Remaining: guarded command execution/output capture, stronger process
+isolation/background execution, and packaged live acceptance for the complete
+coding-agent workflow.
