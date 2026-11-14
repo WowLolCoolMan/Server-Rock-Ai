@@ -95,7 +95,13 @@ export function useDesktopWorkspace(): DesktopWorkspace {
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageWorkflow, setImageWorkflow] = useState(localStorage.getItem("skai.imageWorkflow") ?? "");
   const [imageBusy, setImageBusy] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<Array<{ url: string; fileName: string }>>([]);
+  const [generatedImages, setGeneratedImages] = useState<Array<{ url: string; fileName: string }>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("skai.imageHistory") ?? "[]") as Array<{ url?: string; fileName?: string }>;
+      return saved.filter((image): image is { url: string; fileName: string } => Boolean(image.url && image.fileName)).slice(0, 24);
+    } catch { return []; }
+  });
+  useEffect(() => { localStorage.setItem("skai.imageHistory", JSON.stringify(generatedImages.slice(0, 24))); }, [generatedImages]);
 
   const setPetActivity = useCallback((activity: PetActivity) => { window.serverRockAgent.pet.setActivity(activity); }, []);
   const chat = useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, cloudVoice: { enabled: cloudVoiceEnabled, voiceId: elevenLabsVoiceId, modelId: elevenLabsModelId }, onError: setError, onPetActivity: setPetActivity });

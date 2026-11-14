@@ -1,5 +1,5 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
-import type { DesktopScheduledTask, DesktopTask, ScheduledTaskDraft } from "../../../shared/contracts";
+import type { DesktopProject, DesktopScheduledTask, DesktopTask, ScheduledTaskDraft } from "../../../shared/contracts";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
 const groups = [
@@ -46,13 +46,16 @@ type WorkbenchPageProps = {
   busyTask: string | null;
   loading: boolean;
   error: string | null;
+  selectedProject: DesktopProject | null;
+  conversationTitle: string;
+  onNavigate: (route: "chat" | "coding") => void;
   onRetry: () => void;
   onTransition: (id: string, operation: "queue" | "cancel" | "retry") => void;
   onSchedule: (draft: ScheduledTaskDraft) => Promise<boolean>;
   onScheduledTransition: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
 };
 
-export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRetry, onTransition, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
+export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, selectedProject, conversationTitle, onNavigate, onRetry, onTransition, onSchedule, onScheduledTransition }: WorkbenchPageProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">(() => localStorage.getItem(VIEW_MODE_KEY) === "board" ? "board" : "list");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => localStorage.getItem(SELECTED_TASK_KEY));
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
@@ -96,7 +99,8 @@ export function WorkbenchPage({ tasks, scheduled, busyTask, loading, error, onRe
   const completedCount = tasks.filter((task) => task.status === "completed").length;
 
   return <div className="feature-page workbench-v4">
-    <PageHeader eyebrow="AGENT WORKBENCH" title="Plan, execute, verify" description="A clear task lifecycle for work that needs progress, approvals, and recovery." actions={<div className="workbench-view-actions"><Button variant={viewMode === "list" ? "secondary" : "ghost"} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>List view</Button><Button variant={viewMode === "board" ? "secondary" : "ghost"} aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")}>Board view</Button></div>} />
+    <PageHeader eyebrow="AGENT WORKBENCH" title="Plan, execute, verify" description="A clear task lifecycle for work that needs progress, approvals, and recovery." actions={<div className="workbench-view-actions"><Button variant="ghost" onClick={() => onNavigate("chat")}>Return to conversation</Button><Button variant={viewMode === "list" ? "secondary" : "ghost"} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>List view</Button><Button variant={viewMode === "board" ? "secondary" : "ghost"} aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")}>Board view</Button></div>} />
+    {(selectedProject || conversationTitle !== "New chat") && <Card className="workbench-context-strip"><div><span className="section-kicker">ACTIVE WORKSPACE CONTEXT</span><strong>{selectedProject?.name ?? "Personal workspace"}</strong><small>{conversationTitle !== "New chat" ? `Conversation: ${conversationTitle}` : "No conversation selected"}</small></div><Button variant="secondary" onClick={() => onNavigate(selectedProject ? "coding" : "chat")}>{selectedProject ? "Open project" : "Open chat"}</Button></Card>}
     <div className="workbench-metrics" aria-label="Agent task summary"><Card><span>Queued</span><strong>{queuedCount}</strong><small>{queuedCount ? "Waiting for execution" : "No queued work"}</small></Card><Card><span>Awaiting approval</span><strong>{awaitingApprovalCount}</strong><small>{awaitingApprovalCount ? "Review required" : "No approvals pending"}</small></Card><Card><span>In progress</span><strong>{runningCount}</strong><small>{runningCount ? "Host-reported running work" : "No active execution"}</small></Card><Card><span>Completed</span><strong>{completedCount}</strong><small>{completedCount ? "Recorded task results" : "No completed tasks"}</small></Card></div>
     {error ? <div className="surface-error workbench-error" role="alert"><strong>Agent workbench is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="workbench-loading" aria-label="Loading agent workbench">{[1, 2, 3].map((item) => <Card className="loading-card" key={item}><span /><span /><span /></Card>)}</div> : viewMode === "list" ? <div className="workbench-layout">
       <Card className="workbench-task-list"><div className="panel-heading"><div><p className="section-kicker">TASK ACTIVITY</p><h3>All tasks</h3></div><span className="panel-count">{tasks.length}</span></div>{tasks.length === 0 ? <EmptyState title="No tasks yet" description="Plan a local task from Chat or Coding Workspace to review it here." /> : <div className="workbench-task-groups">{groups.map((group) => { const items = tasks.filter((task) => task.status === group.key); return items.length ? <section className="workbench-task-group" key={group.key}><div className="workbench-task-group-heading"><span>{group.label}</span><b>{items.length}</b></div>{items.map((task) => <button className={`workbench-task-row ${selectedTaskId === task.id ? "is-selected" : ""}`} id={`workbench-task-${task.id}`} key={task.id} onClick={() => setSelectedTaskId(task.id)} onKeyDown={(event) => handleTaskKeyDown(event, task.id)} aria-keyshortcuts="ArrowUp ArrowDown Home End" type="button"><span><strong>{task.title}</strong><small>{task.role} · {timeLabel(task.updatedAt)}</small></span><StatusBadge tone={toneFor(task.status)}>{group.label}</StatusBadge></button>)}</section> : null; })}</div>}</Card>

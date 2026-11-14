@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { DesktopProject } from "../../../shared/contracts";
 import type { Model } from "../../app/types";
 import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 import { saveVoiceSetting, selectedVoiceSettings, speakNativeResponse, stopNativeSpeech, voiceModels, voiceProfiles } from "../../services/nativeTts";
@@ -74,7 +75,7 @@ export function ModelsPage({ models, selectedModel, onDiscover, onSelect }: { mo
   </div>;
 }
 
-export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange, onGenerate }: { endpoint: string; prompt: string; workflow: string; busy: boolean; images: Array<{ url: string; fileName: string }>; onChange: (key: "endpoint" | "prompt" | "workflow", value: string) => void; onGenerate: () => void }) {
+export function ImagesPage({ endpoint, prompt, workflow, busy, images, selectedProject, conversationTitle, onNavigate, onChange, onGenerate }: { endpoint: string; prompt: string; workflow: string; busy: boolean; images: Array<{ url: string; fileName: string }>; selectedProject: DesktopProject | null; conversationTitle: string; onNavigate: (route: "chat" | "coding") => void; onChange: (key: "endpoint" | "prompt" | "workflow", value: string) => void; onGenerate: () => void }) {
   const [aspectRatio, setAspectRatio] = useState("Square (1:1)");
   const [output, setOutput] = useState("1024 × 1024 · 1 image");
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -94,7 +95,7 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
           : { label: "Ready", tone: "success" as const, detail: "The local image bridge has everything it needs to run." };
 
   return <div className="feature-page image-studio-v4">
-    <PageHeader eyebrow="CREATIVE WORKSPACE" title="Create images with local models" description="Generate, compare, and refine visuals without leaving your conversations and projects. Image jobs remain local to the configured workflow." actions={<StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge>} />
+    <PageHeader eyebrow="CREATIVE WORKSPACE" title="Create images with local models" description="Generate, compare, and refine visuals without leaving your conversations and projects. Image jobs remain local to the configured workflow." actions={<div className="image-studio-header-actions">{conversationTitle !== "New chat" && <Button variant="ghost" onClick={() => onNavigate("chat")}>Return to conversation</Button>}{selectedProject && <Button variant="ghost" onClick={() => onNavigate("coding")}>Open project</Button>}<StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge></div>} />
     <div className="image-studio-v4-layout">
       <section className="image-studio-main" aria-labelledby="recent-generations-title">
         <div className="image-studio-section-heading"><div><h3 id="recent-generations-title">Recent generations</h3><p>All images · Newest first</p></div><span>{images.length ? `${images.length} output${images.length === 1 ? "" : "s"}` : "Session outputs"}</span></div>
