@@ -3,7 +3,6 @@ import type { AgentRequest } from "../../services/agentClient";
 import type { ChatAttachment, DesktopConversation, DesktopQueuedMessage } from "../../../shared/contracts";
 import type { Message } from "../../app/types";
 import { speakNativeResponse, stopNativeSpeech } from "../../services/nativeTts";
-import { isLocalEndpoint, LOCAL_ENDPOINT_ERROR } from "../../services/localOnly";
 
 type ChatWorkspaceOptions = {
   request: AgentRequest;
@@ -12,24 +11,10 @@ type ChatWorkspaceOptions = {
   endpoint: string;
   model: string;
   cloudRouteEnabled: boolean;
-  cloudVoice: CloudVoiceOptions;
   onError: (message: string | null) => void;
 };
 
-function readFileAsBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const value = String(reader.result ?? "");
-      const separator = value.indexOf(",");
-      resolve(separator >= 0 ? value.slice(separator + 1) : value);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error(`Could not read ${file.name}.`));
-    reader.readAsDataURL(file);
-  });
-}
-
-export function useChatWorkspace({ request, connection, provider, endpoint, model, onError }: ChatWorkspaceOptions) {
+export function useChatWorkspace({ request, connection, provider, endpoint, model, cloudRouteEnabled, onError }: ChatWorkspaceOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -65,7 +50,6 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
 
   const sendMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
-    if (!isLocalEndpoint(endpoint)) { onError(LOCAL_ENDPOINT_ERROR); return; }
     stopNativeSpeech();
     const next = [...messages, { role: "user" as const, content: text || "Attached files", attachments: messageAttachments.length ? messageAttachments : undefined }];
     setMessages(next); setAttachments([]); setBusy(true); onError(null);
@@ -75,12 +59,11 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (!response.ok) { onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, savedId);
-    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
+    void speakNativeResponse(completed.at(-1)?.content ?? "");
   };
 
   const retryMessage = async (messageIndex: number) => {
     if (busy || !conversationId) return;
-    if (!isLocalEndpoint(endpoint)) { onError(LOCAL_ENDPOINT_ERROR); return; }
     const originalMessages = messages;
     const prefix = messages.slice(0, messageIndex);
     if (messages[messageIndex]?.role !== "assistant" || !prefix.some((message) => message.role === "user")) return;
@@ -91,26 +74,7 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The model request failed."); return; }
     const completed = [...prefix, { role: "assistant" as const, content: (response.result as { content: string }).content }];
     setMessages(completed); await saveConversation(completed, conversationId);
-    void speakConfiguredResponse(completed.at(-1)?.content ?? "", cloudVoice).catch((error: unknown) => onError(error instanceof Error ? error.message : "Voice output failed."));
-  };
-
-  const editMessage = async (messageIndex: number, content: string) => {
-    if (busy || !conversationId || !content.trim()) return false;
-    if (messages[messageIndex]?.role !== "user") return false;
-    if (!isLocalEndpoint(endpoint)) { onError(LOCAL_ENDPOINT_ERROR); return false; }
-    const originalMessages = messages;
-    const prefix = messages.slice(0, messageIndex);
-    const edited = { ...messages[messageIndex], content: content.trim() };
-    const next = [...prefix, edited];
-    stopNativeSpeech();
-    setMessages(next); setBusy(true); onError(null);
-    const response = await request("chat.complete", { provider, endpoint, model, messages: next });
-    setBusy(false);
-    if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The edited message could not be completed."); return false; }
-    const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
-    setMessages(completed); await saveConversation(completed, conversationId);
     void speakNativeResponse(completed.at(-1)?.content ?? "");
-    return true;
   };
 
   const pickAttachments = async () => {
@@ -126,29 +90,6 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
       } else extracted.push(attachment);
     }
     setAttachments((current) => [...current, ...extracted].slice(0, 5));
-  };
-
-  const importDroppedFiles = async (files: File[]) => {
-    const selected = files.slice(0, 5);
-    if (selected.length === 0) return;
-    try {
-      const attachments = await Promise.all(selected.map(async (file) => ({ fileName: file.name, mediaType: file.type || null, content: await readFileAsBase64(file) })));
-      const response = await request("workspace.importDroppedFiles", { attachments });
-      if (!response.ok) { onError(response.error?.message ?? "Dropped files could not be attached."); return; }
-      const imported = (response.result as { attachments: ChatAttachment[] }).attachments ?? [];
-      const extracted: ChatAttachment[] = [];
-      for (const attachment of imported) {
-        if (attachment.fileName.toLowerCase().endsWith(".pdf")) {
-          const extraction = await request("workspace.attachment.extract", { fileName: attachment.fileName, content: attachment.content });
-          if (!extraction.ok) { onError(extraction.error?.message ?? `Could not read ${attachment.fileName}.`); return; }
-          extracted.push(extraction.result as ChatAttachment);
-        } else extracted.push(attachment);
-      }
-      setAttachments((current) => [...current, ...extracted].slice(0, 5));
-      onError(null);
-    } catch {
-      onError("Dropped files could not be read locally.");
-    }
   };
 
   const queueMessage = async (text: string, messageAttachments: ChatAttachment[]) => {
@@ -203,6 +144,6 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, editMessage, pickAttachments, importDroppedFiles, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
 

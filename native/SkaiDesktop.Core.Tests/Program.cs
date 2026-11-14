@@ -4,7 +4,6 @@
 await DiagnosticsTests.RunAsync();
 ProductIdentityTests.Run();
 VoiceModelTests.Run();
-await ElevenLabsTests.RunAsync();
 CatalogTests.Run();
 await ProjectHealthTests.RunAsync();
 await ModelLibraryTests.RunAsync();

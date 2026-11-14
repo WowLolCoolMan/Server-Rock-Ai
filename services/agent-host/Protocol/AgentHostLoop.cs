@@ -15,7 +15,6 @@ public static class AgentHostLoop
         using var reader = new StreamReader(input);
         await using var writer = new StreamWriter(output) { AutoFlush = true };
         using var voice = new OsNativeTtsService();
-        var cloudVoice = new ElevenLabsTtsProvider();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -30,7 +29,7 @@ public static class AgentHostLoop
                 parsedRequest = JsonSerializer.Deserialize<AgentRequest>(line, JsonOptions);
                 var request = parsedRequest
                     ?? throw new InvalidOperationException("Request body was empty.");
-                response = Handle(request, voice, cloudVoice);
+                response = Handle(request, voice);
             }
             catch (JsonException ex)
             {
@@ -45,7 +44,7 @@ public static class AgentHostLoop
         }
     }
 
-    private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice, ElevenLabsTtsProvider cloudVoice)
+    private static AgentResponse Handle(AgentRequest request, OsNativeTtsService voice)
     {
         if (request.V != ProtocolVersion)
             return new(ProtocolVersion, request.Id, false, Error: new("UNSUPPORTED_PROTOCOL", $"Protocol version {request.V} is not supported."));
@@ -56,7 +55,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -101,7 +100,6 @@ public static class AgentHostLoop
             "chat.complete" => CompleteChatAsync(request).GetAwaiter().GetResult(),
             "voice.models" => ListVoiceModels(request),
             "voice.speak" => SpeakVoice(request, voice),
-            "voice.speak.cloud" => SpeakCloudVoice(request, cloudVoice),
             "voice.stop" => StopVoice(request, voice),
             _ => new(ProtocolVersion, request.Id, false, Error: new("METHOD_NOT_FOUND", $"Unknown method '{request.Method}'.")),
         };
@@ -128,30 +126,6 @@ public static class AgentHostLoop
         if (rate is < 0.5 or > 2) throw new InvalidOperationException("rate must be between 0.5 and 2.");
         var engine = voice.Speak(text, rate);
         return new(ProtocolVersion, request.Id, true, new { spoken = true, engine, interruptible = true });
-    }
-
-    private static AgentResponse SpeakCloudVoice(AgentRequest request, ElevenLabsTtsProvider voice)
-    {
-        var settings = CreateSettingsStore().Load();
-        if (!OptionalBoolean(request, "cloudVoiceEnabled") && !settings.CloudVoiceEnabled)
-            throw new InvalidOperationException("Cloud voice is disabled. Enable it in Voice & Audio before sending speech online.");
-        var text = RequiredSpeechText(request, "text", 4_000);
-        var voiceId = OptionalString(request, "voiceId")?.Trim() ?? settings.ElevenLabsVoiceId;
-        var modelId = OptionalString(request, "modelId")?.Trim() ?? settings.ElevenLabsModelId;
-        var explicitKey = OptionalString(request, "apiKey");
-        var key = !string.IsNullOrWhiteSpace(explicitKey)
-            ? ProviderCredentialStore.ValidateValue(explicitKey)
-            : CreateCredentialStore().ReadAsync("elevenlabs").GetAwaiter().GetResult();
-        if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Save an ElevenLabs API key in Voice & Audio before using cloud voice.");
-        var audio = voice.SynthesizeAsync(text, voiceId, modelId, key).GetAwaiter().GetResult();
-        return new(ProtocolVersion, request.Id, true, new
-        {
-            spoken = true,
-            engine = "elevenlabs",
-            mediaType = audio.MediaType,
-            audioBase64 = Convert.ToBase64String(audio.Bytes),
-            interruptible = true,
-        });
     }
 
     private static AgentResponse StopVoice(AgentRequest request, OsNativeTtsService voice)
@@ -431,7 +405,6 @@ public static class AgentHostLoop
                 role = task.Role,
                 status = task.Status,
                 resultSummary = task.ResultSummary,
-                artifactLabels = task.ArtifactLabels,
                 dependsOn = task.DependsOn,
                 updatedAt = task.UpdatedAtUtc,
             })
@@ -819,9 +792,6 @@ public static class AgentHostLoop
             reduceMotion = settings.ReduceMotion,
             developerMode = settings.DeveloperMode,
             memoryInjectionEnabled = settings.MemoryInjectionEnabled,
-            cloudVoiceEnabled = settings.CloudVoiceEnabled,
-            elevenLabsVoiceId = settings.ElevenLabsVoiceId,
-            elevenLabsModelId = settings.ElevenLabsModelId,
         });
     }
 
@@ -846,12 +816,6 @@ public static class AgentHostLoop
                 }
             }
             requestedCloudRoute = OptionalBoolean(parameters, "cloudRouteEnabled");
-            if (parameters.TryGetProperty("cloudVoiceEnabled", out var cloudVoice) && cloudVoice.ValueKind is JsonValueKind.True or JsonValueKind.False)
-                settings.CloudVoiceEnabled = cloudVoice.GetBoolean();
-            if (parameters.TryGetProperty("elevenLabsVoiceId", out var voiceId) && voiceId.ValueKind == JsonValueKind.String)
-                settings.ElevenLabsVoiceId = voiceId.GetString() ?? settings.ElevenLabsVoiceId;
-            if (parameters.TryGetProperty("elevenLabsModelId", out var modelId) && modelId.ValueKind == JsonValueKind.String)
-                settings.ElevenLabsModelId = modelId.GetString() ?? settings.ElevenLabsModelId;
             if (parameters.TryGetProperty("themeMode", out var theme) && theme.ValueKind == JsonValueKind.String)
                 settings.ThemeMode = theme.GetString() ?? settings.ThemeMode;
             if (parameters.TryGetProperty("accentColor", out var accent) && accent.ValueKind == JsonValueKind.String)
@@ -872,7 +836,7 @@ public static class AgentHostLoop
         settings.ModelProvider = requestedProvider;
         settings.CloudRouteEnabled = ProviderRoutePolicy.IsRemote(endpoint) && requestedCloudRoute;
         store.Save(settings);
-        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, cloudRouteEnabled = settings.CloudRouteEnabled, cloudVoiceEnabled = settings.CloudVoiceEnabled, elevenLabsVoiceId = settings.ElevenLabsVoiceId, elevenLabsModelId = settings.ElevenLabsModelId, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
+        return new(ProtocolVersion, request.Id, true, new { endpoint = settings.Endpoint, model = settings.Model, provider = settings.ModelProvider, cloudRouteEnabled = settings.CloudRouteEnabled, themeMode = settings.ThemeMode, accentColor = settings.AccentColor, interfaceDensity = settings.InterfaceDensity, backdropPreset = settings.BackdropPreset, reduceMotion = settings.ReduceMotion, developerMode = settings.DeveloperMode, memoryInjectionEnabled = settings.MemoryInjectionEnabled });
     }
 
     private static AgentResponse CredentialStatus(AgentRequest request)
@@ -924,6 +888,9 @@ public static class AgentHostLoop
 
     private static ScheduledTaskStore CreateScheduledTaskStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_SCHEDULED_TASKS_PATH"));
+
+    private static ProviderCredentialStore CreateCredentialStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_PROVIDER_CREDENTIALS_PATH"), Environment.GetEnvironmentVariable("SRAI_SECRET_TOOL_PATH"));
 
     private static ProjectStore CreateProjectStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_PROJECTS_PATH"));

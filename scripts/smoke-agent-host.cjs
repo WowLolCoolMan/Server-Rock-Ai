@@ -52,15 +52,13 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");
   const invalidSpeech = await request("voice.speak", { text: "   " });
   if (invalidSpeech.ok) throw new Error("voice.speak accepted empty text.");
-  const invalidCloudSpeech = await request("voice.speak.cloud", { text: "   ", cloudVoiceEnabled: true });
-  if (invalidCloudSpeech.ok) throw new Error("voice.speak.cloud accepted empty text.");
   const stoppedVoice = await request("voice.stop");
   if (!stoppedVoice.ok || stoppedVoice.result?.stopped !== true) throw new Error("voice.stop did not acknowledge the idle interruption request.");
   const before = await request("conversations.list");

@@ -44,12 +44,6 @@ public sealed class AppSettings
     /// <summary>Bounded split-chat ratios keyed by workspace and project context.</summary>
     public Dictionary<string, double> SplitChatRatios { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool VoiceOutputEnabled { get; set; }
-    /// <summary>Explicit consent to send spoken-reply text to the configured cloud voice provider.</summary>
-    public bool CloudVoiceEnabled { get; set; }
-    /// <summary>ElevenLabs voice identifier used when cloud voice is enabled.</summary>
-    public string ElevenLabsVoiceId { get; set; } = "JBFqnCBsd6RMkjVDRZzb";
-    /// <summary>ElevenLabs model identifier used when cloud voice is enabled.</summary>
-    public string ElevenLabsModelId { get; set; } = "eleven_multilingual_v2";
     /// <summary>Voice runtime used by normal conversational replies.</summary>
     public string VoicePrimaryModelId { get; set; } = "os-native";
     /// <summary>Voice runtime selected for constrained/low-resource mode.</summary>

@@ -25,14 +25,6 @@ const primaryModelKey = "skai.voice.primaryModel";
 const lowResourceModelKey = "skai.voice.lowResourceModel";
 const lowResourceModeKey = "skai.voice.lowResourceMode";
 const voiceOutputKey = "skai.voice.outputEnabled";
-let activeCloudAudio: HTMLAudioElement | null = null;
-let activeCloudAudioUrl: string | null = null;
-
-export type CloudVoiceOptions = {
-  enabled: boolean;
-  voiceId: string;
-  modelId: string;
-};
 
 export function selectedVoiceSettings() {
   return {
@@ -52,45 +44,12 @@ export function saveVoiceSetting(key: "profileId" | "primaryModelId" | "lowResou
 export function stopNativeSpeech() {
   void window.serverRockAgent?.request("voice.stop");
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  if (activeCloudAudio) {
-    activeCloudAudio.pause();
-    activeCloudAudio.currentTime = 0;
-    activeCloudAudio = null;
-  }
-  if (activeCloudAudioUrl) {
-    URL.revokeObjectURL(activeCloudAudioUrl);
-    activeCloudAudioUrl = null;
-  }
 }
 
-export async function speakConfiguredResponse(text: string, cloudVoice: CloudVoiceOptions, force = false) {
+export async function speakNativeResponse(text: string, force = false) {
   if (!text.trim()) return false;
   const settings = selectedVoiceSettings();
   if (!force && !settings.voiceOutputEnabled) return false;
-  if (cloudVoice.enabled) {
-    const response = await window.serverRockAgent?.request("voice.speak.cloud", {
-      text,
-      voiceId: cloudVoice.voiceId,
-      modelId: cloudVoice.modelId,
-      cloudVoiceEnabled: true,
-    });
-    if (!response?.ok) throw new Error(response?.error?.message ?? "Cloud voice could not generate audio.");
-    const result = response.result as { audioBase64?: string; mediaType?: string } | undefined;
-    if (!result?.audioBase64) throw new Error("Cloud voice returned no audio.");
-    stopNativeSpeech();
-    const binary = atob(result.audioBase64);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-    activeCloudAudioUrl = URL.createObjectURL(new Blob([bytes], { type: result.mediaType ?? "audio/mpeg" }));
-    activeCloudAudio = new Audio(activeCloudAudioUrl);
-    activeCloudAudio.addEventListener("ended", () => {
-      if (activeCloudAudioUrl) URL.revokeObjectURL(activeCloudAudioUrl);
-      activeCloudAudio = null;
-      activeCloudAudioUrl = null;
-    }, { once: true });
-    await activeCloudAudio.play();
-    return true;
-  }
   const profile = voiceProfiles.find((item) => item.id === settings.profileId) ?? voiceProfiles[0];
   try {
     const native = await window.serverRockAgent?.request("voice.speak", { text, profileId: profile.id, rate: profile.rate });
@@ -103,8 +62,4 @@ export async function speakConfiguredResponse(text: string, cloudVoice: CloudVoi
   utterance.pitch = profile.pitch;
   window.speechSynthesis.speak(utterance);
   return true;
-}
-
-export async function speakNativeResponse(text: string, force = false) {
-  return speakConfiguredResponse(text, { enabled: false, voiceId: "", modelId: "" }, force);
 }
