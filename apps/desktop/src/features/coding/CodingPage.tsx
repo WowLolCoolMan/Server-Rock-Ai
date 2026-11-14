@@ -157,7 +157,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, gitStatus,
       <form className="task-composer" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>Write the outcome you want, then review it in Agent Workbench before anything runs.</p></div><span className="task-composer-badge">Local only</span></div>
         <div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Improve the project browser" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome, constraints, and how you will verify it." rows={3} /></label></div>
-        <EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} />
+        <EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} hasProject={Boolean(selectedProject)} />
         <div className="task-composer-footer"><span>Creates a proposed local task. It does not start an agent or run tools.</span><Button variant="primary" type="submit" disabled={planningTask || !taskTitle.trim() || !taskInstruction.trim()}>{planningTask ? "Planning…" : "Add to task plan"}</Button></div>
       </form>
       <div className="project-workspace-layout"><div className="project-file-layout">

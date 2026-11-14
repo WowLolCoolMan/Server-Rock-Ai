@@ -604,6 +604,7 @@ export function ChatPage({
                   <EnvironmentPicker
                     value={taskEnvironment}
                     onChange={setTaskEnvironment}
+                    hasProject={Boolean(selectedProject)}
                   />
                   <div className="task-composer-footer">
                     <span>Creates a proposed task. Nothing runs yet.</span>

@@ -87,6 +87,7 @@ export type DesktopTask = {
   artifactLabels?: string[];
   worktreePath?: string | null;
   worktreeBranch?: string | null;
+  worktreeRepositoryRoot?: string | null;
 };
 
 export type TaskEnvironment = "local" | "worktree";
