@@ -213,3 +213,14 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 @media (max-width:900px) { .workbench-layout { grid-template-columns: 1fr; }.workbench-task-detail { order: -1; }.workbench-board { grid-template-columns: repeat(3,minmax(170px,1fr)); }.memory-layout { grid-template-columns: 1fr; } }
 @media (max-width:640px) { .workbench-view-actions { width: 100%; }.workbench-view-actions .ui-button { flex: 1; }.workbench-board { grid-template-columns: repeat(2,minmax(150px,1fr)); }.terminal-controls { grid-template-columns: 1fr; }.terminal-command-row { display: grid; }.project-file-layout { grid-template-columns: 1fr; }.project-file-list { max-height: 220px; }.task-composer-fields, .environment-options { grid-template-columns: 1fr; }.task-composer-footer { display: grid; justify-items: start; }.schedule-form { grid-template-columns: 1fr; }.scheduled-row { display: grid; } }
 .ui-empty-visual { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 14px; border: 1px solid color-mix(in srgb, var(--skai-color-accent) 28%, var(--skai-color-border)); border-radius: 16px; background: color-mix(in srgb, var(--skai-color-accent) 8%, var(--skai-color-surface-soft)); }.ui-empty-visual img { display: block; width: 44px; height: 44px; object-fit: contain; }
+
+/* The shell keeps its proportions while letting users give the workspace more or less room. */
+.app-shell { grid-template-columns: var(--skai-sidebar-width, 276px) minmax(0, 1fr); }
+.app-sidebar { position: relative; min-width: 0; }
+.sidebar-resize-handle { position: absolute; z-index: 3; top: 0; right: -5px; bottom: 0; width: 10px; cursor: col-resize; }
+.sidebar-resize-handle::after { position: absolute; top: 0; bottom: 0; left: 4px; width: 2px; background: transparent; content: ""; transition: background var(--skai-duration-fast) var(--skai-ease-standard); }
+.sidebar-resize-handle:hover::after, .sidebar-resize-handle:focus-visible::after, .app-sidebar.is-resizing .sidebar-resize-handle::after { background: var(--skai-color-accent); }
+.sidebar-resize-handle:focus-visible { outline: 2px solid var(--skai-color-accent); outline-offset: -2px; }
+.app-sidebar.is-resizing { user-select: none; }
+.app-sidebar.is-collapsed .sidebar-resize-handle { display: none; }
+@media (max-width:900px) and (min-width:641px) { .app-shell:not(.sidebar-collapsed) { grid-template-columns: minmax(220px, var(--skai-sidebar-width, 220px)) minmax(0,1fr); } }
