@@ -10247,3 +10247,27 @@ queued task records remain compatible.
 Evidence: Core task tests, `npm run smoke:agent-host`, desktop typecheck,
 desktop build, host build, syntax, runtime-boundary, local-only, future-feature,
 and repository-hygiene checks passed.
+
+## Slice — Attach project context and keep task state live
+
+Chat/Coding task plans now persist an optional selected project identity. When a
+user explicitly executes a task, the local model receives only a bounded,
+read-only sample of that project as untrusted reference material. The Electron
+Agent Workbench silently refreshes task and scheduled-run state every three
+seconds while open, preserving usable state across transient refresh failures.
+
+Evidence: `f727afa`; native core checks, desktop typecheck/build, Agent Host
+build, and disposable Agent Host smoke passed.
+
+## Slice — Surface local Git review state in Coding
+
+The Electron Coding Workspace now shows local Git branch, ahead/behind counts,
+changed paths, conflict signals, and protected-path signals through the typed
+Agent Host contract `project.git.status`. It is read-only, does not require a
+GitHub origin or credential, and reports an honest unavailable state for folders
+that are not local repositories. No commit, push, checkout, or remote mutation
+was added.
+
+Evidence: `b63f232`; Core checks, desktop typecheck/build, Agent Host build,
+`scripts/smoke-agent-host.cjs`, future-feature audit, Electron runtime audit,
+local-only audit, repository hygiene, and `git diff --check` passed.
