@@ -11,6 +11,8 @@ import { ChatComposer } from "./ChatComposer";
 
 const SKAI_WOLF_ICON = new URL("../../../../../assets/branding/skaiwolficon.png", import.meta.url).href;
 const CHAT_SCROLL_KEY_PREFIX = "skai.chat.scroll.";
+const CHAT_DRAFT_KEY_PREFIX = "skai.chat.draft.";
+const LEGACY_CHAT_DRAFT_KEY = "skai.chat.draft";
 const CHAT_TASK_PREFILL_KEY = "skai.chat.taskPrefill";
 
 type ChatTaskPrefill = { title: string; instruction: string; environment: TaskEnvironment };
@@ -30,6 +32,23 @@ function takeTaskPrefill(): ChatTaskPrefill | null {
 
 function chatScrollKey(conversationId: string | null) {
   return `${CHAT_SCROLL_KEY_PREFIX}${conversationId ?? "new"}`;
+}
+
+function chatDraftKey(conversationId: string | null) {
+  return `${CHAT_DRAFT_KEY_PREFIX}${conversationId ?? "new"}`;
+}
+
+function readChatDraft(conversationId: string | null) {
+  const scopedKey = chatDraftKey(conversationId);
+  const scoped = localStorage.getItem(scopedKey);
+  if (scoped !== null) return scoped;
+  const legacy = localStorage.getItem(LEGACY_CHAT_DRAFT_KEY);
+  if (legacy !== null) {
+    localStorage.setItem(scopedKey, legacy);
+    localStorage.removeItem(LEGACY_CHAT_DRAFT_KEY);
+    return legacy;
+  }
+  return "";
 }
 
 type ChatPageProps = {
@@ -66,7 +85,7 @@ type ChatPageProps = {
 
 export function ChatPage({ provider, model, models, messages, busy, taskBusy, attachments, queuedMessages, conversationId, conversationTitle, pinned, archived, onSend, onQueue, onRemoveQueued, onAttach, onFilesDropped, onRemoveAttachment, onModelChange, onNavigate, onPlanTask, onExport, onFork, onForkFromMessage, onRetryMessage, onEditMessage, onTogglePinned, onArchive, onRenameConversation }: ChatPageProps) {
   const [taskPrefill] = useState<ChatTaskPrefill | null>(takeTaskPrefill);
-  const [draft, setDraft] = useState(() => localStorage.getItem("skai.chat.draft") ?? "");
+  const [draft, setDraft] = useState(() => readChatDraft(conversationId));
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
   const [taskTitle, setTaskTitle] = useState(() => taskPrefill?.title ?? "");
   const [taskInstruction, setTaskInstruction] = useState(() => taskPrefill?.instruction ?? "");
@@ -81,7 +100,15 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const previousConversationIdRef = useRef(conversationId);
   const restoreScrollPendingRef = useRef(false);
   const stickToLatestRef = useRef(true);
-  useEffect(() => { localStorage.setItem("skai.chat.draft", draft); }, [draft]);
+  const draftConversationRef = useRef(conversationId);
+  useEffect(() => {
+    if (draftConversationRef.current !== conversationId) {
+      draftConversationRef.current = conversationId;
+      setDraft(readChatDraft(conversationId));
+      return;
+    }
+    localStorage.setItem(chatDraftKey(conversationId), draft);
+  }, [conversationId, draft]);
   useEffect(() => { localStorage.setItem("skai.chat.taskComposerOpen", String(taskComposerOpen)); }, [taskComposerOpen]);
   useEffect(() => { if (!renameOpen) setRenameDraft(conversationTitle); }, [conversationTitle, renameOpen]);
   useEffect(() => {
@@ -170,8 +197,7 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
     </div>
     <div className="chat-layout">
       <main className="chat-column">
-        <section className="ui-card conversation-card conversation-surface" aria-label="Conversation">
-          <div className="conversation-header"><span className="conversation-context">LOCAL CHAT</span><span className="conversation-count">{messages.length} messages</span></div>
+        <section className="conversation-surface" aria-label="Conversation">
           {messages.length === 0 ? <div className="chat-empty-surface"><EmptyState visual={<img src={SKAI_WOLF_ICON} alt="" />} title="Start a conversation" description="Ask a question, attach a file, or jump into a coding workspace." /></div> : <><div className="message-list" ref={messageListRef}>{messages.map((message, index) => <ChatMessage key={`${message.role}-${index}`} message={message} index={index} model={model} busy={busy} conversationId={conversationId} copied={copiedMessage === index} onCopy={(content, itemIndex) => void copyMessage(content, itemIndex)} onRetry={onRetryMessage} onFork={onForkFromMessage} onEdit={onEditMessage} />)}{busy && <article className="message-bubble chat-message assistant"><div className="message-meta"><span>{model}</span></div><p className="typing">Thinking…</p></article>}</div>{showJumpToLatest && <div className="chat-latest-action"><Button variant="secondary" type="button" onClick={jumpToLatest}>Jump to latest ↓</Button></div>}</>}
         </section>
         <ChatComposer draft={draft} busy={busy} attachments={attachments} queuedMessages={queuedMessages} onDraftChange={setDraft} onSubmit={submit} onQueueRemove={onRemoveQueued} onAttach={onAttach} onFilesDropped={onFilesDropped} onRemoveAttachment={onRemoveAttachment} onNavigate={onNavigate} onOpenTaskPlanner={() => setTaskComposerOpen(true)} />

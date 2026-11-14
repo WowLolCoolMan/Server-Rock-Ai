@@ -13,6 +13,19 @@ Evidence: desktop typecheck and production build passed. Packaged theme
 acceptance passed for dark/light/system states, and packaged overflow
 acceptance passed across 10 routes × 5 viewport widths.
 
+## Slice 326 — Conversation-scoped drafts and open message canvas
+
+Chat drafts now persist under the active conversation identity, with a bounded
+one-time migration from the legacy shared draft key. Switching threads no
+longer leaks a draft into another conversation or new-chat context. The chat
+message surface no longer uses the obsolete bordered conversation-card shell;
+the message column is an open readable canvas while the composer remains a
+bottom-anchored, keyboard-accessible surface with attachments, queueing, slash
+commands, and drag-and-drop intact.
+
+Evidence: desktop typecheck/build, packaged Electron build, overflow acceptance
+across 10 routes × 5 viewport widths, and diff validation passed.
+
 ## Slice 316 — Packaged Electron overflow acceptance matrix
 
 The packaged Electron smoke suite now checks every primary route at five
