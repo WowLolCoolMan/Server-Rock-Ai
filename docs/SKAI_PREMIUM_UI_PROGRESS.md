@@ -143,7 +143,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 
 1. Keep the truthful per-task environment selector and task-oriented composer local-only; Local is functional today, while Worktree must remain visibly unavailable until supported. Hosted model routes and cloud execution are out of scope.
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
-3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
+3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; task approval is host-backed, and selected-project tasks now carry bounded read-only project context into local execution. Reviewed worktree-backed edits and terminal actions remain separate approval boundaries.
 4. Extend the keyboard-focus pass from the shared modal surfaces and new workspace shortcuts to remaining overlay and menu surfaces, including more real Electron interaction capture.
 5. Extend the theme audit from Settings to every major route, including system appearance, density, reduced motion, and backdrop combinations.
 6. Connect Marketplace installation and activation only when real local runtime capabilities exist; keep the current local discovery shell honest and do not fabricate integrations.
@@ -554,3 +554,36 @@ Evidence:
 
 Remaining: connect approved task execution to reviewed worktree-backed file
 changes and terminal actions before the workbench can execute coding edits.
+
+## Slice — Attach bounded project context to local agent tasks
+
+Status: `implemented_host_renderer_build_smoke_verified`
+
+Tasks planned from Chat or Coding now persist the selected project identity.
+When a user approves and explicitly runs one of those tasks, the Agent Host
+loads only the selected project's bounded, text-only context sample and sends
+it to the local model as untrusted reference material. Protected names,
+dependency/build directories, linked paths, and file-size limits remain
+enforced by the existing `WorkspaceFileContext` boundary. The executor still
+cannot write files, run commands, or silently route to a remote model.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Models/AgentTaskArtifact.cs`
+- `native/SkaiDesktop.Core/Services/AgentTaskArtifactStore.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/agents/WorkbenchPage.tsx`
+- `native/SkaiDesktop.Core.Tests/AgentTaskArtifactTests.cs`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-launch-profile` — passed.
+- `npm run desktop:typecheck` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore -p:BaseOutputPath=bin\\VerifyAgentHost2\\ -p:IntermediateOutputPath=obj\\VerifyAgentHost2\\` — passed with 0 warnings and 0 errors.
+- `SRAI_AGENT_HOST_OUTPUT=services/agent-host/bin/VerifyAgentHost2/Debug/net10.0 node scripts/smoke-agent-host.cjs` — passed, including project-linked task persistence.
+
+Remaining: approved tasks still produce a read-only model plan/result; reviewed
+worktree-backed file edits, terminal actions, and process isolation remain open.

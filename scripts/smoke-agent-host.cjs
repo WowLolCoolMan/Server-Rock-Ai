@@ -17,12 +17,14 @@ const env = {
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
   SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
+  SRAI_PROJECTS_PATH: path.join(tempRoot, "projects.json"),
   SRAI_SKILLS_PATH: path.join(tempRoot, "installed-skills"),
 };
 const skillSource = path.join(tempRoot, "review-skill");
 fs.mkdirSync(skillSource, { recursive: true });
 fs.writeFileSync(path.join(skillSource, "skill.json"), JSON.stringify({ id: "review-skill", name: "Review skill", version: "1.0.0", publisher: "Smoke publisher", requiredPermissions: ["project.read"] }));
 fs.writeFileSync(path.join(skillSource, "SKILL.md"), "# Review\n\nRead-only review instructions.");
+fs.writeFileSync(path.join(tempRoot, "task-context.md"), "Bounded task context fixture.\n");
 const hostOutput = process.env.SRAI_AGENT_HOST_OUTPUT || path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
 const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
 const hostArgs = process.platform === "win32" ? ["--stdio"] : [path.join(hostOutput, "ServerRock.AgentHost.dll"), "--stdio"];
@@ -117,10 +119,12 @@ async function run() {
   if (!remoteSettings.ok || remoteSettings.result?.cloudRouteEnabled !== true) throw new Error("settings.save did not preserve an explicitly enabled HTTPS cloud route.");
   const restoredSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model, provider: "Ollama" });
   if (!restoredSettings.ok) throw new Error("settings.save could not restore the disposable local profile.");
-  const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });
+  const project = await request("project.save", { name: "Task context fixture", instructions: "Use the fixture only as read-only reference.", folderPaths: [tempRoot] });
+  if (!project.ok || typeof project.result?.id !== "string") throw new Error("project.save did not return a disposable project identity.");
+  const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local", projectId: project.result.id });
   if (!planned.ok || planned.result?.status !== "awaiting_approval") throw new Error("tasks.plan did not create an approval-gated local task.");
   const tasks = await request("tasks.list");
-  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].status !== "awaiting_approval" || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow.") throw new Error("tasks.plan persistence round-trip failed.");
+  if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].status !== "awaiting_approval" || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow." || tasks.result[0].projectId !== project.result.id) throw new Error("tasks.plan persistence round-trip failed.");
   const approved = await request("tasks.approve", { id: planned.result.id, approvalId: "smoke-user" });
   if (!approved.ok || approved.result?.status !== "queued") throw new Error("tasks.approve did not release the task to the explicit queue.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });

@@ -61,6 +61,7 @@ export type DesktopTask = {
   title: string;
   instruction: string;
   role: string;
+  projectId?: string | null;
   status: string;
   resultSummary?: string | null;
   dependsOn: string[];

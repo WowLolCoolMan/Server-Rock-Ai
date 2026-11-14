@@ -17,6 +17,7 @@ public sealed class AgentTaskArtifactStore
     public const int MaxArtifactLabels = 8;
     public const int MaxWorktreePathCharacters = 4_096;
     public const int MaxWorktreeBranchCharacters = 256;
+    public const int MaxProjectIdCharacters = 128;
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web) { WriteIndented = true, MaxDepth = 12 };
     private readonly string _path;
 
@@ -40,7 +41,7 @@ public sealed class AgentTaskArtifactStore
         }
     }
 
-    public AgentTaskArtifact Create(string title, string instruction, string role = "specialist", string? parentRunId = null, IEnumerable<string>? dependsOn = null)
+    public AgentTaskArtifact Create(string title, string instruction, string role = "specialist", string? parentRunId = null, IEnumerable<string>? dependsOn = null, string? projectId = null)
     {
         var now = DateTimeOffset.UtcNow;
         var task = new AgentTaskArtifact
@@ -49,6 +50,7 @@ public sealed class AgentTaskArtifactStore
             Instruction = Normalize(instruction, MaxInstructionCharacters, "task instruction"),
             Role = Normalize(role, MaxRoleCharacters, "task role"),
             ParentRunId = NormalizeOptional(parentRunId, 128, "parent run ID"),
+            ProjectId = NormalizeOptional(projectId, MaxProjectIdCharacters, "project ID"),
             DependsOn = NormalizeIds(dependsOn),
             CreatedAtUtc = now,
             UpdatedAtUtc = now
@@ -294,6 +296,7 @@ public sealed class AgentTaskArtifactStore
             Normalize(task.Instruction, MaxInstructionCharacters, "task instruction");
             Normalize(task.Role, MaxRoleCharacters, "task role");
             NormalizeOptional(task.ParentRunId, 128, "parent run ID");
+            NormalizeOptional(task.ProjectId, MaxProjectIdCharacters, "project ID");
             NormalizeIds(task.DependsOn);
             if (task.DependsOn.Any(id => !ids.Contains(id)) || task.DependsOn.Contains(task.Id, StringComparer.Ordinal)) throw new InvalidDataException("The agent task store contains an invalid dependency.");
             if (task.Status is not (AgentTaskStatuses.Proposed or AgentTaskStatuses.AwaitingApproval or AgentTaskStatuses.Queued or AgentTaskStatuses.Running or AgentTaskStatuses.Completed or AgentTaskStatuses.Failed or AgentTaskStatuses.Cancelled or AgentTaskStatuses.Blocked)) throw new InvalidDataException("The agent task store contains an invalid status.");
@@ -339,6 +342,7 @@ public sealed class AgentTaskArtifactStore
     {
         Id = source.Id,
         ParentRunId = source.ParentRunId,
+        ProjectId = source.ProjectId,
         Title = source.Title,
         Instruction = source.Instruction,
         Role = source.Role,

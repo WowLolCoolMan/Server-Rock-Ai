@@ -20,6 +20,8 @@ public sealed class AgentTaskArtifact
     public string Title { get; set; } = string.Empty;
     public string Instruction { get; set; } = string.Empty;
     public string Role { get; set; } = "specialist";
+    /// <summary>Optional selected project identity whose bounded read-only context may be supplied at execution time.</summary>
+    public string? ProjectId { get; set; }
     public string Status { get; set; } = AgentTaskStatuses.Proposed;
     public List<string> DependsOn { get; set; } = [];
     public string? ResultSummary { get; set; }
