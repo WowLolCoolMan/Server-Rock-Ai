@@ -92,8 +92,31 @@ export type DesktopQueuedMessage = {
   attachments?: Array<{ fileName: string; mediaType?: string | null }>;
 };
 
+export type PetMotionSettings = {
+  wander: boolean;
+  reduceMotion: boolean;
+};
+
+export type PetCompletionEvent = {
+  text: string;
+  at: number;
+};
+
+export interface PetBridge {
+  setVisible(visible: boolean): void;
+  setMotion(settings: PetMotionSettings): void;
+  beginDrag(point: { x: number; y: number }): void;
+  moveDrag(point: { x: number; y: number }): void;
+  endDrag(): void;
+  hide(): void;
+  onMessage(handler: (event: PetCompletionEvent) => void): () => void;
+  onVisibilityChange(handler: (visible: boolean) => void): () => void;
+  onMotionChange(handler: (settings: PetMotionSettings) => void): () => void;
+}
+
 export interface AgentBridge {
   request(method: string, params?: Record<string, unknown>): Promise<AgentResponse>;
+  pet?: PetBridge;
 }
 
 declare global {

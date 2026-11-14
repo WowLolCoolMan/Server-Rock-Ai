@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, screen, session } = require("electron");
 const { spawn } = require("node:child_process");
 const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
@@ -21,11 +21,142 @@ const standardRequestTimeoutMs = 30_000;
 const chatRequestTimeoutMs = 5 * 60_000;
 const chatHostDeadlineSeconds = 285;
 let isQuitting = false;
+let mainWindow;
+let petWindow;
+let petReady = false;
+let petDragOffset = null;
+const pendingPetMessages = [];
 const attachmentTextExtensions = new Set([".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".yaml", ".yml", ".toml", ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx", ".cs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".hpp", ".sh", ".sql", ".log"]);
 const blockedAttachmentNames = new Set([".env", ".env.local", ".env.production", "id_rsa", "id_ed25519", "credentials", "secrets"]);
 const isBlockedAttachmentName = (name) => blockedAttachmentNames.has(name.toLowerCase()) || name.toLowerCase().includes(".env.");
 const isPng = (bytes) => bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
 const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+
+function petStatePath() {
+  return path.join(app.getPath("userData"), "pet-window.json");
+}
+
+function readPetState() {
+  try {
+    const parsed = JSON.parse(fsSync.readFileSync(petStatePath(), "utf8"));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function petBounds() {
+  const stored = readPetState().bounds;
+  const width = 190;
+  const height = 170;
+  if (stored && [stored.x, stored.y].every(Number.isFinite)) return { x: stored.x, y: stored.y, width, height };
+  const workArea = screen.getPrimaryDisplay().workArea;
+  return { x: workArea.x + workArea.width - width - 28, y: workArea.y + workArea.height - height - 28, width, height };
+}
+
+function persistPetState() {
+  if (!petWindow || petWindow.isDestroyed()) return;
+  const state = readPetState();
+  state.visible = petWindow.isVisible();
+  state.bounds = petWindow.getBounds();
+  void fs.mkdir(app.getPath("userData"), { recursive: true }).then(() => fs.writeFile(petStatePath(), JSON.stringify(state, null, 2), "utf8")).catch(() => {});
+}
+
+function sendPetVisibility(visible) {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("pet:visibility", visible);
+}
+
+function setPetVisible(visible) {
+  if (!petWindow || petWindow.isDestroyed()) return;
+  if (visible) petWindow.showInactive();
+  else petWindow.hide();
+  if (visible && petReady) flushPetMessages();
+  persistPetState();
+  sendPetVisibility(visible);
+}
+
+function flushPetMessages() {
+  if (!petWindow || petWindow.isDestroyed() || !petReady || !petWindow.isVisible()) return;
+  for (const event of pendingPetMessages.splice(0)) petWindow.webContents.send("pet:message", event);
+}
+
+function sendPetMessage(text) {
+  if (!petWindow || petWindow.isDestroyed()) return;
+  const event = { text, at: Date.now() };
+  if (!petReady) {
+    pendingPetMessages.push(event);
+    while (pendingPetMessages.length > 3) pendingPetMessages.shift();
+    return;
+  }
+  if (!petWindow.isVisible()) {
+    pendingPetMessages.push(event);
+    while (pendingPetMessages.length > 3) pendingPetMessages.shift();
+    return;
+  }
+  petWindow.webContents.send("pet:message", event);
+}
+
+function petCompletionText(method, response) {
+  if (!response?.ok) return null;
+  const messages = {
+    "chat.complete": "Finished your local reply.",
+    "project.save": "Saved the local project.",
+    "project.file.write": "Saved the reviewed file.",
+    "project.file.undo": "Restored the previous file version.",
+    "project.command.run": "Finished the local project command.",
+    "tasks.plan": "Created a local task plan.",
+    "tasks.queue": "Queued the local task.",
+    "tasks.cancel": "Stopped the local task.",
+    "scheduled.create": "Scheduled the local task for review.",
+    "scheduled.cancel": "Canceled the scheduled local task.",
+    "memory.save": "Saved the approved memory note.",
+    "image.generate": "Finished the local image workflow.",
+  };
+  return messages[method] ?? null;
+}
+
+function createPetWindow() {
+  if (petWindow && !petWindow.isDestroyed()) return petWindow;
+  const savedState = readPetState();
+  petReady = false;
+  petWindow = new BrowserWindow({
+    ...petBounds(),
+    transparent: true,
+    frame: false,
+    resizable: false,
+    movable: true,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    hasShadow: false,
+    backgroundColor: "#00000000",
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      preload: path.join(__dirname, "preload.cjs"),
+    },
+  });
+  petWindow.setAlwaysOnTop(true, "floating");
+  petWindow.on("moved", persistPetState);
+  petWindow.webContents.on("did-finish-load", () => {
+    petReady = true;
+    flushPetMessages();
+  });
+  petWindow.on("closed", () => { petReady = false; petWindow = undefined; });
+  const devUrl = process.env.SERVER_ROCK_RENDERER_URL;
+  if (devUrl) {
+    const url = new URL(devUrl);
+    url.searchParams.set("pet", "1");
+    void petWindow.loadURL(url.toString());
+  } else {
+    void petWindow.loadFile(path.join(rendererRoot, "dist", "index.html"), { query: { pet: "1" } });
+  }
+  petWindow.once("ready-to-show", () => { if (savedState.visible !== false) petWindow?.showInactive(); });
+  return petWindow;
+}
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
@@ -55,6 +186,8 @@ function startAgentHost() {
     if (!entry) return;
     pending.delete(message.id);
     clearTimeout(entry.timer);
+    const completion = petCompletionText(entry.method, message);
+    if (completion) sendPetMessage(completion);
     entry.resolve(message);
   });
 
@@ -129,7 +262,7 @@ function requestAgent(method, params) {
       resolve({ v: 1, ok: false, error: { code: "HOST_TIMEOUT", message: `The local agent host did not answer ${method} within the allowed time.` } });
       restartAgentHost();
     }, timeoutMs);
-    pending.set(id, { resolve, timer });
+    pending.set(id, { resolve, timer, method });
     try {
       host.stdin.write(`${JSON.stringify({ v: 1, id, method, params: requestParams })}\n`);
     } catch {
@@ -141,7 +274,7 @@ function requestAgent(method, params) {
 }
 
 function createWindow() {
-  const window = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 960,
@@ -156,8 +289,9 @@ function createWindow() {
   });
 
   const devUrl = process.env.SERVER_ROCK_RENDERER_URL;
-  if (devUrl) window.loadURL(devUrl);
-  else window.loadFile(path.join(rendererRoot, "dist", "index.html"));
+  if (devUrl) mainWindow.loadURL(devUrl);
+  else mainWindow.loadFile(path.join(rendererRoot, "dist", "index.html"));
+  mainWindow.on("closed", () => { mainWindow = undefined; if (petWindow && !petWindow.isDestroyed()) petWindow.close(); });
 }
 
 function applyProductionContentSecurityPolicy() {
@@ -216,7 +350,30 @@ app.whenReady().then(() => {
     }
     return requestAgent(method, params);
   });
+  ipcMain.on("pet:set-visible", (event, visible) => {
+    if (BrowserWindow.fromWebContents(event.sender)) setPetVisible(Boolean(visible));
+  });
+  ipcMain.on("pet:set-motion", (event, settings) => {
+    if (!BrowserWindow.fromWebContents(event.sender) || !settings || typeof settings !== "object") return;
+    const motion = { wander: Boolean(settings.wander), reduceMotion: Boolean(settings.reduceMotion) };
+    petWindow?.webContents.send("pet:motion", motion);
+  });
+  ipcMain.on("pet:drag-start", (event, point) => {
+    if (BrowserWindow.fromWebContents(event.sender) !== petWindow || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+    const bounds = petWindow.getBounds();
+    petDragOffset = { x: point.x - bounds.x, y: point.y - bounds.y };
+  });
+  ipcMain.on("pet:drag-move", (event, point) => {
+    if (BrowserWindow.fromWebContents(event.sender) !== petWindow || !petDragOffset || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+    petWindow.setPosition(Math.round(point.x - petDragOffset.x), Math.round(point.y - petDragOffset.y));
+  });
+  ipcMain.on("pet:drag-end", (event) => {
+    if (BrowserWindow.fromWebContents(event.sender) !== petWindow) return;
+    petDragOffset = null;
+    persistPetState();
+  });
   createWindow();
+  createPetWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -229,5 +386,6 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  if (petWindow && !petWindow.isDestroyed()) petWindow.destroy();
   stopAgentHost();
 });
