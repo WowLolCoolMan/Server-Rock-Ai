@@ -11312,3 +11312,33 @@ file contents, credentials, network route, or host permission changed.
 
 Remaining: continue the local project review flow and keyboard-focus coverage;
 the comprehensive premium rebuild remains active.
+
+## Slice 302 — Make editor undo availability truthful
+
+Status: `implemented_renderer_typechecked`
+
+The Coding Workspace now carries the existing local undo-receipt state through
+the route contract. The editor disables Undo until a saved edit has produced a
+real receipt, and its title explains why the action is unavailable. This
+removes an actionable-looking control that previously did nothing when no
+reversible edit existed.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/useCodingWorkspace.ts`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Renderer typecheck and production build passed after threading the state
+  through the typed route contract.
+- The disabled state is derived from the real `fileUndoId`, not from a visual
+  approximation.
+
+Remaining: continue the editor review and remaining local workflow/accessibility
+slices; the complete premium rebuild remains active.

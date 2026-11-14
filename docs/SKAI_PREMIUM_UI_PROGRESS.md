@@ -35,6 +35,10 @@ list. Switching projects no longer destroys the user's working set, while file
 contents are still re-read through the guarded project-file handler when a tab
 is opened.
 
+The editor's Undo action now reflects the actual local undo receipt. It is
+disabled, with an explanatory title, until a saved edit provides a reversible
+operation.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to
