@@ -3,7 +3,7 @@ const { spawn } = require("node:child_process");
 
 const executable = path.resolve(process.argv[2] || path.join(__dirname, "..", "dist", "electron", "win-x64", process.platform === "win32" ? "Skai Desktop.exe" : "Skai Desktop"));
 const port = 19324;
-const routes = ["chat", "coding", "settings", "models", "images", "marketplace", "workbench", "terminal", "memory"];
+const routes = ["chat", "coding", "settings", "models", "images", "marketplace", "workbench", "terminal", "memory", "usage"];
 const widths = [1920, 1440, 1280, 960, 640];
 const child = spawn(executable, [`--remote-debugging-port=${port}`, "--disable-gpu"], { cwd: path.dirname(executable), windowsHide: true, stdio: "ignore" });
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));

@@ -18,7 +18,7 @@ export function routeFromLocation(): Route {
 }
 
 export function isRoute(value: string): value is Route {
-  return ["chat", "coding", "settings", "models", "images", "marketplace", "workbench", "terminal", "memory"].includes(value);
+  return ["chat", "coding", "settings", "models", "images", "marketplace", "workbench", "terminal", "memory", "usage"].includes(value);
 }
 
 function readHistoryState(): NavigationState | null {

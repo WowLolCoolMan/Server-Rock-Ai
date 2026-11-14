@@ -9,6 +9,7 @@ import { MemoryPage } from "../features/memory/MemoryPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { TerminalPage } from "../features/terminal/TerminalPage";
 import { WorkbenchPage } from "../features/agents/WorkbenchPage";
+import { UsagePage } from "../features/usage/UsagePage";
 
 export type AppRouteState = {
   route: Route;
@@ -148,5 +149,6 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "marketplace") return <MarketplacePage />;
   if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onNavigate={(route) => actions.onNavigate(route)} onTransition={actions.onTransitionTask} onExecuteTask={actions.onExecuteTask} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} corpusDocuments={state.corpusDocuments} corpusLoading={state.corpusLoading} corpusError={state.corpusError} onSearchCorpus={actions.onSearchCorpus ?? (() => undefined)} onSaveCorpus={actions.onSaveCorpus ?? (async () => false)} onRemoveCorpus={actions.onRemoveCorpus ?? (async () => false)} onImportCorpus={actions.onImportCorpus ?? (() => undefined)} />;
+  if (route === "usage") return <UsagePage />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} sessionId={state.terminalSessionId ?? null} screen={state.terminalScreen ?? null} onRun={actions.onRunProjectCommand} onStartSession={actions.onStartTerminalSession ?? (async () => false)} onWriteSession={actions.onWriteTerminalSession ?? (async () => false)} onRefreshSession={actions.onRefreshTerminalSession ?? (async () => false)} onCloseSession={actions.onCloseTerminalSession ?? (async () => true)} onOpenCoding={() => actions.onNavigate("coding")} />;
 }

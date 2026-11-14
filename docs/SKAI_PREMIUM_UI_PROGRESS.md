@@ -1,5 +1,18 @@
 # Skai Premium UI Transformation
 
+## Slice 325 — Universal destination rail and honest Usage surface
+
+The Electron shell now presents a compact global destination rail for Home,
+Image Gen, Usage, and Settings, with additional tools available from the same
+rail. The existing sidebar is visually scoped to threads, projects, search,
+and workspace continuity instead of duplicating the full application route
+list. A dedicated Usage route now reports the actual telemetry boundary rather
+than inventing token, cost, latency, or GPU measurements.
+
+Evidence: desktop typecheck and production build passed. Packaged theme
+acceptance passed for dark/light/system states, and packaged overflow
+acceptance passed across 10 routes × 5 viewport widths.
+
 ## Slice 316 — Packaged Electron overflow acceptance matrix
 
 The packaged Electron smoke suite now checks every primary route at five
