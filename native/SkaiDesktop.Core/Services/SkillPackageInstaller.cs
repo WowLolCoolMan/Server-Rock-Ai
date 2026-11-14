@@ -37,6 +37,13 @@ public sealed class SkillPackageInstaller
         return result.OrderBy(item => item.Id, StringComparer.Ordinal).ToArray();
     }
 
+    public bool CanRollback(string id)
+    {
+        ValidateId(id);
+        var backups = Path.Combine(_root, "backups", id);
+        return Directory.Exists(backups) && Directory.EnumerateDirectories(backups).Any();
+    }
+
     public string ReadInstructions(string id)
     {
         ValidateId(id);

@@ -17,8 +17,13 @@ const env = {
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
   SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
+  SRAI_SKILLS_PATH: path.join(tempRoot, "installed-skills"),
 };
-const hostOutput = path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
+const skillSource = path.join(tempRoot, "review-skill");
+fs.mkdirSync(skillSource, { recursive: true });
+fs.writeFileSync(path.join(skillSource, "skill.json"), JSON.stringify({ id: "review-skill", name: "Review skill", version: "1.0.0", publisher: "Smoke publisher", requiredPermissions: ["project.read"] }));
+fs.writeFileSync(path.join(skillSource, "SKILL.md"), "# Review\n\nRead-only review instructions.");
+const hostOutput = process.env.SRAI_AGENT_HOST_OUTPUT || path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
 const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
 const hostArgs = process.platform === "win32" ? ["--stdio"] : [path.join(hostOutput, "ServerRock.AgentHost.dll"), "--stdio"];
 const child = spawn(hostProgram, hostArgs, {
@@ -52,12 +57,28 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.skills.search"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.rollback"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const tools = await request("marketplace.tools.list");
   if (!tools.ok || !Array.isArray(tools.result) || !tools.result.some(item => item.id === "github" && item.builtIn === true)) throw new Error("marketplace.tools.list did not return the built-in tool catalog.");
   const mcp = await request("marketplace.mcp.list");
   if (!mcp.ok || !Array.isArray(mcp.result) || !mcp.result.some(item => item.id === "filesystem" && item.transport === "stdio")) throw new Error("marketplace.mcp.list did not return the MCP server catalog.");
+  const emptySkills = await request("skills.installed.list");
+  if (!emptySkills.ok || !Array.isArray(emptySkills.result) || emptySkills.result.length !== 0) throw new Error("Disposable skill library was not empty.");
+  const skillPreview = await request("skills.local.preview", { sourceDirectory: skillSource });
+  if (!skillPreview.ok || skillPreview.result?.isUpdate || skillPreview.result?.requiredPermissions?.[0] !== "project.read" || skillPreview.result?.packageSha256?.length !== 64) throw new Error("skills.local.preview did not return a bounded package review.");
+  const installedSkill = await request("skills.local.install", { sourceDirectory: skillSource, expectedPackageSha256: skillPreview.result.packageSha256 });
+  if (!installedSkill.ok || installedSkill.result?.enabled !== false || installedSkill.result?.sourceRef !== "local-folder:review-skill") throw new Error("skills.local.install did not require explicit enablement or preserve local provenance.");
+  const enabledSkill = await request("skills.enabled.set", { id: "review-skill", enabled: true });
+  if (!enabledSkill.ok || enabledSkill.result?.enabled !== true) throw new Error("skills.enabled.set did not enable the installed skill.");
+  fs.writeFileSync(path.join(skillSource, "skill.json"), JSON.stringify({ id: "review-skill", name: "Review skill", version: "2.0.0", publisher: "Smoke publisher", requiredPermissions: ["project.read"] }));
+  fs.writeFileSync(path.join(skillSource, "SKILL.md"), "# Review v2\n\nUpdated read-only review instructions.");
+  const updatePreview = await request("skills.local.preview", { sourceDirectory: skillSource });
+  if (!updatePreview.ok || updatePreview.result?.isUpdate !== true || updatePreview.result?.existingVersion !== "1.0.0") throw new Error("skills.local.preview did not identify a skill update.");
+  const updatedSkill = await request("skills.local.install", { sourceDirectory: skillSource, expectedPackageSha256: updatePreview.result.packageSha256 });
+  if (!updatedSkill.ok || updatedSkill.result?.version !== "2.0.0" || updatedSkill.result?.canRollback !== true) throw new Error("skills.local.install did not activate the update with rollback metadata.");
+  const rolledBackSkill = await request("skills.rollback", { id: "review-skill" });
+  if (!rolledBackSkill.ok || rolledBackSkill.result?.version !== "1.0.0" || rolledBackSkill.result?.enabled !== true) throw new Error("skills.rollback did not restore the prior enabled package.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");

@@ -8201,6 +8201,17 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Marketplace local skill library management
+
+The Marketplace Skills surface now exposes a usable local-folder workflow
+backed by Agent Host methods for installed listing, package preview,
+digest-pinned install, explicit enable/disable, and rollback. The hardened
+Markdown-only `SkillPackageInstaller` remains the trust boundary; GitHub
+discovery stays review-only until pinned package acquisition and publisher
+trust policy exist. Renderer typecheck/build, the full Core suite, an isolated
+Agent Host build, and the disposable host smoke all passed, including
+preview → install → enable → update → rollback.
+
 ## Slice 199 — Restore stable package identifiers after rebrand
 
 Status: `implemented_release_gate_verified`

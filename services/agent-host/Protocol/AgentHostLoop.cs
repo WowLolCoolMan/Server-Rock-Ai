@@ -56,12 +56,17 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
             "marketplace.tools.list" => ListMarketplaceTools(request),
             "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
+            "skills.installed.list" => ListInstalledSkills(request),
+            "skills.local.preview" => PreviewLocalSkill(request),
+            "skills.local.install" => InstallLocalSkill(request),
+            "skills.enabled.set" => SetSkillEnabled(request),
+            "skills.rollback" => RollbackSkill(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
@@ -275,6 +280,94 @@ public static class AgentHostLoop
             new { id = "memory", name = "Memory", transport = "stdio", description = "Knowledge-graph memory server for explicitly managed local context.", source = "https://github.com/modelcontextprotocol/servers/tree/main/src/memory", status = "Cataloged; connect explicitly" },
         };
         return new(ProtocolVersion, request.Id, true, servers);
+    }
+
+    private static AgentResponse ListInstalledSkills(AgentRequest request)
+    {
+        var installer = CreateSkillInstaller();
+        return new(ProtocolVersion, request.Id, true, installer.ListInstalled().Select(skill => new
+        {
+            id = skill.Id,
+            name = skill.Name,
+            version = skill.Version,
+            publisher = skill.Publisher,
+            sourceRef = skill.SourceRef,
+            packageSha256 = skill.PackageSha256,
+            requiredPermissions = skill.RequiredPermissions,
+            enabled = skill.Enabled,
+            canRollback = installer.CanRollback(skill.Id),
+        }).ToArray());
+    }
+
+    private static AgentResponse PreviewLocalSkill(AgentRequest request)
+    {
+        var sourceDirectory = RequiredBoundedString(request, "sourceDirectory", 2_000);
+        var installer = CreateSkillInstaller();
+        var preview = installer.Preview(sourceDirectory, OptionalString(request, "expectedPackageSha256"));
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            id = preview.Id,
+            name = preview.Name,
+            version = preview.Version,
+            publisher = preview.Publisher,
+            packageSha256 = preview.PackageSha256,
+            requiredPermissions = preview.RequiredPermissions,
+            isUpdate = preview.IsUpdate,
+            existingVersion = preview.ExistingVersion,
+            existingPackageSha256 = preview.ExistingPackageSha256,
+            sourceRef = LocalSkillSourceReference(sourceDirectory),
+        });
+    }
+
+    private static AgentResponse InstallLocalSkill(AgentRequest request)
+    {
+        var sourceDirectory = RequiredBoundedString(request, "sourceDirectory", 2_000);
+        var installer = CreateSkillInstaller();
+        var installed = installer.Install(sourceDirectory, LocalSkillSourceReference(sourceDirectory), OptionalString(request, "expectedPackageSha256"));
+        return InstalledSkillResponse(request, installed, installer);
+    }
+
+    private static AgentResponse SetSkillEnabled(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 80);
+        if (request.Params is not { } parameters || !parameters.TryGetProperty("enabled", out var enabled) || enabled.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new InvalidOperationException("enabled must be a boolean.");
+        var installer = CreateSkillInstaller();
+        return InstalledSkillResponse(request, installer.SetEnabled(id, enabled.GetBoolean()), installer);
+    }
+
+    private static AgentResponse RollbackSkill(AgentRequest request)
+    {
+        var installer = CreateSkillInstaller();
+        return InstalledSkillResponse(request, installer.Rollback(RequiredBoundedString(request, "id", 80)), installer);
+    }
+
+    private static AgentResponse InstalledSkillResponse(AgentRequest request, InstalledSkill skill, SkillPackageInstaller installer) =>
+        new(ProtocolVersion, request.Id, true, new
+        {
+            id = skill.Id,
+            name = skill.Name,
+            version = skill.Version,
+            publisher = skill.Publisher,
+            sourceRef = skill.SourceRef,
+            packageSha256 = skill.PackageSha256,
+            requiredPermissions = skill.RequiredPermissions,
+            enabled = skill.Enabled,
+            canRollback = installer.CanRollback(skill.Id),
+        });
+
+    private static SkillPackageInstaller CreateSkillInstaller()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable("SRAI_SKILLS_PATH");
+        return new SkillPackageInstaller(string.IsNullOrWhiteSpace(configuredRoot) ? null : configuredRoot);
+    }
+
+    private static string LocalSkillSourceReference(string sourceDirectory)
+    {
+        var sourceName = Path.GetFileName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(sourceDirectory)));
+        if (string.IsNullOrWhiteSpace(sourceName)) sourceName = "imported";
+        var safeName = new string(sourceName.Where(character => char.IsLetterOrDigit(character) || character is '-' or '_' or '.').ToArray());
+        return "local-folder:" + (string.IsNullOrWhiteSpace(safeName) ? "imported" : safeName[..Math.Min(safeName.Length, 80)]);
     }
 
     private static AgentResponse ListProjects(AgentRequest request)

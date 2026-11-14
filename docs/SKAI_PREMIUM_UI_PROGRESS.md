@@ -102,6 +102,39 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Visual checkpoints: `output/playwright/skai-image-studio-after.png` and `output/playwright/skai-chat-after.png`.
 - Live Electron window: verified open as `Skai Desktop · chat`. The Windows screenshot provider returned Brave pixels while the Electron accessibility surface reported the correct window; this capture mismatch remains unverified and must not be treated as visual acceptance.
 
+## Slice — Connect Marketplace local skill library management
+
+Status: `implemented_build_smoke_verified`
+
+The Marketplace Skills surface now has a real local-library journey instead of
+stopping at GitHub discovery. Users can choose a local folder, review bounded
+metadata and required permissions, inspect the computed SHA-256 digest, install
+with pinned local provenance, explicitly enable or disable a skill, and roll an
+updated package back to its prior activation. GitHub results remain review-only;
+the host does not imply that an unpinned remote repository is safe to install.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/CatalogPages.tsx`
+- `apps/desktop/src/styles.css`
+- `apps/desktop/electron/main.cjs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `native/SkaiDesktop.Core/Services/SkillPackageInstaller.cs`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore -p:BaseOutputPath=bin\\VerifyAgentHost\\ -p:IntermediateOutputPath=obj\\VerifyAgentHost\\` — passed with 0 warnings and 0 errors.
+- `SRAI_AGENT_HOST_OUTPUT=services/agent-host/bin/VerifyAgentHost/Debug/net10.0 node scripts/smoke-agent-host.cjs` — passed, including skill preview, digest-pinned install, explicit enablement, update detection, and rollback.
+- `dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj --no-restore` — passed, including installer safety and rollback coverage.
+- `npm run audit:future-features`, `npm run audit:electron-runtime`, `npm run check:hygiene`, and `git diff --check` — passed.
+
+Remaining: authenticated GitHub acquisition, publisher trust/signature policy,
+and live packaged Windows install/enable/rollback acceptance remain open. The
+current UI labels those paths honestly and keeps remote results review-only.
+
 ## Current task
 
 Continue the premium vertical slices, prioritizing the coding workflow and shared shell before decorative polish. Route composition is isolated behind a typed `AppRouteView`; `App.tsx` composes the shell through `useDesktopWorkspace`; chat runtime behavior is behind `useChatWorkspace`; and coding/project runtime behavior is behind `useCodingWorkspace`. The command palette and Coding Workspace dialog share one verified focus/escape/restoration contract, alongside the theme/backdrop contrast pass and the first honest Marketplace discovery shell. Preserve the Electron + React + TypeScript + Vite + .NET Agent Host architecture and all unrelated native/AirLLM changes.

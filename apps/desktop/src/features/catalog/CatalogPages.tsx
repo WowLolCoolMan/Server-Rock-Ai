@@ -16,6 +16,8 @@ type MarketplaceModel = { id: string; kind: string; task: string; downloads: num
 type MarketplaceSkill = { id: string; name: string; description: string; stars: number; url: string; defaultBranch: string; lane: string; laneDescription: string };
 type MarketplaceTool = { id: string; name: string; category: string; description: string; access: string; status: string; builtIn: boolean; whereToFind?: string | null };
 type MarketplaceMcp = { id: string; name: string; transport: string; description: string; source: string; status: string };
+type InstalledSkill = { id: string; name: string; version: string; publisher: string; sourceRef: string; packageSha256: string; requiredPermissions: string[]; enabled: boolean; canRollback: boolean };
+type SkillPreview = { id: string; name: string; version: string; publisher: string; packageSha256: string; requiredPermissions: string[]; isUpdate: boolean; existingVersion?: string | null; existingPackageSha256?: string | null; sourceRef: string };
 
 export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
   const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
@@ -38,7 +40,7 @@ export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange,
           ? { label: "Workflow required", tone: "warning" as const, detail: "Paste a workflow JSON payload before generating." }
           : { label: "Ready", tone: "success" as const, detail: "The local image bridge has everything it needs to run." };
 
-  return <div className="feature-page"><PageHeader eyebrow="IMAGE STUDIO" title="Create visual work" description="A dedicated surface for local image generation, separated from conversation controls." actions={<StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge>} /><div className="image-studio-layout"><Card className="form-card image-editor-card"><div className="studio-panel-heading"><div><p className="section-kicker">LOCAL IMAGE WORKFLOW</p><h3>Build a generation</h3></div><span className="studio-bridge-label">COMFYUI BRIDGE</span></div><div className="form-grid"><label>ComfyUI endpoint<input value={endpoint} onChange={(event) => onChange("endpoint", event.target.value)} placeholder="http://127.0.0.1:8188" aria-describedby="image-endpoint-help" /><small id="image-endpoint-help">The local address where ComfyUI is listening.</small></label><label>Prompt<textarea value={prompt} onChange={(event) => onChange("prompt", event.target.value)} placeholder="Describe what you want to create…" rows={4} aria-describedby="image-prompt-help" /><small id="image-prompt-help">Use a recipe below as a starting point, then make it yours.</small></label><div className="prompt-recipes" aria-label="Prompt recipes"><span className="field-caption">START WITH A RECIPE</span><div>{promptRecipes.map((recipe) => <Button key={recipe.title} variant="ghost" className="prompt-recipe" onClick={() => onChange("prompt", recipe.prompt)}>{recipe.title}</Button>)}</div></div><label>Workflow JSON<textarea value={workflow} onChange={(event) => onChange("workflow", event.target.value)} placeholder='{"prompt":"{{prompt}}"}' rows={6} aria-describedby="image-workflow-help" /><small id="image-workflow-help">Use a ComfyUI API workflow with <code>{"{{prompt}}"}</code> where the prompt should be inserted.</small></label></div><div className="studio-readiness"><StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge><span>{readiness.detail}</span></div><div className="form-footer"><span>Outputs stay in this local workspace history.</span><Button variant="primary" disabled={busy || !endpoint.trim() || !prompt.trim() || !workflow.trim()} onClick={onGenerate}>{busy ? "Generating…" : "Generate image"}</Button></div></Card><Card className="image-history"><div className="panel-heading"><div><p className="section-kicker">GENERATION HISTORY</p><h3>Recent outputs</h3></div><span className="panel-count">{images.length}</span></div>{images.length === 0 ? <EmptyState title="No generated images" description="Your local outputs will appear here after a successful generation." /> : <div className="image-gallery">{images.map((image) => <figure key={image.url}><img src={image.url} alt={image.fileName} /><figcaption>{image.fileName}</figcaption></figure>)}</div>}</Card></div></div>;
+  return <div className="feature-page"><PageHeader eyebrow="IMAGE STUDIO" title="Create visual work" description="A dedicated surface for local image generation, separated from conversation controls." actions={<StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge>} /><div className="image-studio-layout"><Card className="form-card image-editor-card"><div className="studio-panel-heading"><div><p className="section-kicker">LOCAL IMAGE WORKFLOW</p><h3>Build a generation</h3></div><span className="studio-bridge-label">COMFYUI BRIDGE</span></div><div className="form-grid"><label>ComfyUI endpoint<input value={endpoint} onChange={(event) => onChange("endpoint", event.target.value)} placeholder="http://127.0.0.1:8188" aria-describedby="image-endpoint-help" /><small id="image-endpoint-help">The local address where ComfyUI is listening.</small></label><label>Prompt<textarea value={prompt} onChange={(event) => onChange("prompt", event.target.value)} placeholder="Describe what you want to create…" rows={4} aria-describedby="image-prompt-help" /><small id="image-prompt-help">Use a recipe below as a starting point, then make it yours.</small></label><div className="prompt-recipes" aria-label="Prompt recipes"><span className="field-caption">START WITH A RECIPE</span><div>{promptRecipes.map((recipe) => <Button key={recipe.title} variant="ghost" className="prompt-recipe" onClick={() => onChange("prompt", recipe.prompt)}>{recipe.title}</Button>)}</div></div><label>Workflow JSON<textarea value={workflow} onChange={(event) => onChange("workflow", event.target.value)} placeholder='{"prompt":"{{prompt}}"}' rows={6} aria-describedby="image-workflow-help" /><small id="image-workflow-help">Use a ComfyUI API workflow with <code>{"{{prompt}}"}</code> where the prompt should be inserted.</small></label></div><div className="studio-readiness"><StatusBadge tone={readiness.tone}>{readiness.label}</StatusBadge><span>{readiness.detail}</span></div><div className="form-footer"><span>Outputs are visible for this session; durable history is not claimed.</span><Button variant="primary" disabled={busy || !endpoint.trim() || !prompt.trim() || !workflow.trim()} onClick={onGenerate}>{busy ? "Generating…" : "Generate image"}</Button></div></Card><Card className="image-history"><div className="panel-heading"><div><p className="section-kicker">GENERATION HISTORY</p><h3>Recent outputs</h3></div><span className="panel-count">{images.length}</span></div>{images.length === 0 ? <EmptyState title="No generated images" description="Your local outputs will appear here after a successful generation." /> : <div className="image-gallery">{images.map((image) => <figure key={image.url}><img src={image.url} alt={image.fileName} /><figcaption>{image.fileName}</figcaption></figure>)}</div>}</Card></div></div>;
 }
 
 export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "coding" | "models" | "images" | "workbench" | "terminal" | "memory" | "settings") => void }) {
@@ -62,6 +64,11 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [skills, setSkills] = useState<MarketplaceSkill[]>([]);
   const [tools, setTools] = useState<MarketplaceTool[]>([]);
   const [mcpServers, setMcpServers] = useState<MarketplaceMcp[]>([]);
+  const [installedSkills, setInstalledSkills] = useState<InstalledSkill[]>([]);
+  const [skillPreview, setSkillPreview] = useState<SkillPreview | null>(null);
+  const [skillSourceDirectory, setSkillSourceDirectory] = useState<string | null>(null);
+  const [skillBusy, setSkillBusy] = useState(false);
+  const [skillError, setSkillError] = useState<string | null>(null);
   const [catalogBusy, setCatalogBusy] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [modelSize, setModelSize] = useState<ModelSize>("any");
@@ -97,9 +104,59 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
     } catch (error) { setCatalogError(error instanceof Error ? error.message : "The marketplace could not be loaded."); }
     finally { setCatalogBusy(false); }
   };
-  useEffect(() => { void refreshCatalog(); }, []);
+  const loadInstalledSkills = async () => {
+    try {
+      const response = await window.serverRockAgent.request("skills.installed.list");
+      if (!response.ok) { setSkillError(response.error?.message ?? "Installed skills could not be loaded."); return; }
+      setInstalledSkills((response.result as InstalledSkill[]) ?? []);
+      setSkillError(null);
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "Installed skills could not be loaded."); }
+  };
+  const previewLocalSkill = async () => {
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const folderResponse = await window.serverRockAgent.request("workspace.pickFolder");
+      if (!folderResponse.ok) throw new Error(folderResponse.error?.message ?? "The skill folder picker failed.");
+      const sourceDirectory = (folderResponse.result as { path?: string | null }).path;
+      if (!sourceDirectory) return;
+      const response = await window.serverRockAgent.request("skills.local.preview", { sourceDirectory });
+      if (!response.ok) throw new Error(response.error?.message ?? "The skill package could not be previewed.");
+      setSkillSourceDirectory(sourceDirectory);
+      setSkillPreview(response.result as SkillPreview);
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The skill package could not be previewed."); }
+    finally { setSkillBusy(false); }
+  };
+  const installPreviewedSkill = async () => {
+    if (!skillSourceDirectory || !skillPreview || skillBusy) return;
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const response = await window.serverRockAgent.request("skills.local.install", { sourceDirectory: skillSourceDirectory, expectedPackageSha256: skillPreview.packageSha256 });
+      if (!response.ok) throw new Error(response.error?.message ?? "The skill package could not be installed.");
+      setSkillPreview(null); setSkillSourceDirectory(null); await loadInstalledSkills();
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The skill package could not be installed."); }
+    finally { setSkillBusy(false); }
+  };
+  const setSkillEnabled = async (skill: InstalledSkill) => {
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const response = await window.serverRockAgent.request("skills.enabled.set", { id: skill.id, enabled: !skill.enabled });
+      if (!response.ok) throw new Error(response.error?.message ?? "The skill state could not be changed.");
+      await loadInstalledSkills();
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The skill state could not be changed."); }
+    finally { setSkillBusy(false); }
+  };
+  const rollbackSkill = async (skill: InstalledSkill) => {
+    setSkillBusy(true); setSkillError(null);
+    try {
+      const response = await window.serverRockAgent.request("skills.rollback", { id: skill.id });
+      if (!response.ok) throw new Error(response.error?.message ?? "The skill could not be rolled back.");
+      await loadInstalledSkills();
+    } catch (error) { setSkillError(error instanceof Error ? error.message : "The skill could not be rolled back."); }
+    finally { setSkillBusy(false); }
+  };
+  useEffect(() => { void refreshCatalog(); void loadInstalledSkills(); }, []);
 
-  const selectedModels = models.filter(model => model.kind === (selected.title === "Voices & TTS" ? "voice" : selected.title === "Image Studio" ? "image" : "llm"));
+  const selectedModels = models.filter(model => model.kind === (selected?.title === "Voices & TTS" ? "voice" : selected?.title === "Image Studio" ? "image" : "llm"));
   const sizeLabel = (bytes: number) => bytes > 0 ? `${(bytes / 1073741824).toFixed(1)} GB` : "size not published";
 
   return <div className="feature-page marketplace-v4">
@@ -143,7 +200,12 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
             <CatalogList title={`Hugging Face · ${selected.title === "LLMs" ? "GGUF LLMs" : selected.title === "Voices & TTS" ? "voice models" : "image models"}`} loading={catalogBusy} empty="No Hugging Face assets matched these filters. Try Any size or a broader search." items={selectedModels.map(model => ({ id: model.id, title: model.id, detail: `${model.task} · ${sizeLabel(model.sizeBytes)} · ${model.downloads.toLocaleString()} downloads${model.uncensored ? " · abliterated/uncensored" : ""}${model.quantizations.length ? ` · ${model.quantizations.join(", ")}` : ""}`, href: model.url, action: "Open on Hugging Face" }))} />
           </> : selected.title === "Skills" ? <>
             <div className="marketplace-filter-panel"><div><p className="section-kicker">CURATED SKILLS</p><strong>Universal workflows authored for Skai</strong><small>Skai polls multiple GitHub discovery lanes, then keeps only public, non-fork repositories with useful community signal.</small></div><label>Skill lane<select value={skillLane} onChange={(event) => setSkillLane(event.target.value)}>{skillLanes.map(lane => <option key={lane}>{lane}</option>)}</select></label><Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>Poll GitHub lanes</Button></div>
+            <div className="marketplace-skill-management"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">LOCAL LIBRARY</p><strong>Install a reviewed Markdown skill</strong><small>Choose a local folder containing <code>skill.json</code> and <code>SKILL.md</code>. Skai validates the package, records a digest, and never executes package files.</small></div><div className="marketplace-skill-actions"><Button variant="secondary" onClick={() => void previewLocalSkill()} disabled={skillBusy}>{skillBusy ? "Checking…" : "Review local package"}</Button><Button variant="ghost" onClick={() => void loadInstalledSkills()} disabled={skillBusy}>Refresh library</Button></div></div>
+            {skillError && <div className="surface-error" role="alert"><strong>Skill library needs attention</strong><p>{skillError}</p></div>}
+            {skillPreview && <div className="skill-review-card"><div><p className="section-kicker">INSTALLATION REVIEW</p><h4>{skillPreview.name} <span>v{skillPreview.version}</span></h4><p>{skillPreview.publisher} · {skillPreview.isUpdate ? `updates ${skillPreview.existingVersion ?? "the installed copy"}` : "new local package"}</p></div><dl><div><dt>Permissions</dt><dd>{skillPreview.requiredPermissions.length ? skillPreview.requiredPermissions.join(" · ") : "None declared"}</dd></div><div><dt>SHA-256</dt><dd>{skillPreview.packageSha256}</dd></div><div><dt>Source</dt><dd>{skillPreview.sourceRef}</dd></div></dl><div className="marketplace-skill-actions"><Button variant="ghost" onClick={() => { setSkillPreview(null); setSkillSourceDirectory(null); }} disabled={skillBusy}>Cancel</Button><Button variant="primary" onClick={() => void installPreviewedSkill()} disabled={skillBusy}>{skillBusy ? "Installing…" : skillPreview.isUpdate ? "Install update" : "Install skill"}</Button></div></div>}
+            {installedSkills.length > 0 && <div className="installed-skill-list"><div className="panel-heading"><div><p className="section-kicker">INSTALLED LIBRARY</p><h3>Managed skills</h3></div><span className="panel-count">{installedSkills.length}</span></div>{installedSkills.map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>{skill.publisher} · v{skill.version} · {skill.sourceRef}</small><span>{skill.requiredPermissions.length ? `Permissions: ${skill.requiredPermissions.join(" · ")}` : "No permissions declared"}</span></div><div className="marketplace-skill-actions"><StatusBadge tone={skill.enabled ? "success" : "neutral"}>{skill.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" onClick={() => void setSkillEnabled(skill)} disabled={skillBusy}>{skill.enabled ? "Disable" : "Enable"}</Button>{skill.canRollback && <Button variant="ghost" onClick={() => void rollbackSkill(skill)} disabled={skillBusy}>Rollback</Button>}</div></div>)}</div>}
             <CatalogList title="GitHub skill repositories · curated lanes" loading={catalogBusy} empty="No curated GitHub skills matched. Try All lanes or a broader search." items={skills.map(skill => ({ id: skill.id, title: `${skill.name} · ${skill.lane}`, detail: `${skill.stars.toLocaleString()} stars · ${skill.description || skill.laneDescription}`, href: skill.url, action: "Review on GitHub" }))} />
+            </div>
           </> : selected.title === "MCP & OpenAPI tools" ? <CatalogList title="MCP server catalog" loading={catalogBusy} empty="No MCP server catalog entries are available." items={mcpServers.map(server => ({ id: server.id, title: server.name, detail: `${server.transport} · ${server.status} · ${server.description}`, href: server.source, action: "View source" }))} /> : selected.title === "Agent Workbench" ? <CatalogList title="Built-in tools" loading={catalogBusy} empty="No built-in tool entries were returned." items={tools.map(tool => ({ id: tool.id, title: tool.name, detail: `${tool.category} · ${tool.status} · ${tool.description}`, href: undefined, action: tool.whereToFind ?? "Available in Skai" }))} /> : selected.category === "Voices" ? <div className="marketplace-voice-controls">
             <label>Primary conversational voice<select value={voiceSettings.primaryModelId} onChange={(event) => updateVoice("primaryModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
             <label>Low-resource mode voice<select value={voiceSettings.lowResourceModelId} onChange={(event) => updateVoice("lowResourceModelId", event.target.value)}>{voiceModels.map((voice) => <option key={voice.id} value={voice.id}>{voice.name} · {voice.size}</option>)}</select></label>
