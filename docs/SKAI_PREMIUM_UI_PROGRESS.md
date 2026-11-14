@@ -4,6 +4,11 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Coding Workspace now includes a live task-activity rail
+  beside the project/file surface, showing real local task counts and recent
+  results with a direct Agent Workbench handoff. The empty state remains
+  project-first and no unsupported agent execution is implied.
+
 - Current checkpoint — Chat’s composer is now an independent reusable feature
   with a visible drag-and-drop attachment state. Dropped files use the same
   guarded local validation and PDF extraction boundary as picker attachments;

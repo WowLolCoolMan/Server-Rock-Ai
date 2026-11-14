@@ -3,6 +3,41 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 278 — Add live activity context to Coding Workspace
+
+Status: `implemented_live_and_packaged_verified`
+
+Coding Workspace now keeps task activity beside the project/file surface
+instead of forcing the user to leave the coding session to understand local
+agent state. The contextual rail reports real active and attention-needed
+counts, shows the most recently updated task results, and opens the existing
+Agent Workbench for the full review surface. Empty projects retain the focused
+project-creation flow, while active projects gain the activity rail without
+inventing execution or approval capabilities.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingActivityPanel.tsx`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- Live Electron inspection — passed; Coding Workspace rendered its compact
+  project-first empty state with the shared shell, workflow guidance, and
+  responsive layout.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed.
+- `git diff --check` — passed.
+
+Remaining: continue active-project visual comparison and primary-workflow
+fidelity; the active goal remains incomplete.
+
 ## Slice 277 — Make the Chat composer a reusable dropzone
 
 Status: `implemented_live_and_packaged_verified`

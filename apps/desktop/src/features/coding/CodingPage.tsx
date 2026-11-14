@@ -1,10 +1,11 @@
-import type { DesktopProject, DesktopProjectFile, TaskEnvironment } from "../../../shared/contracts";
+import type { DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
 import { ModalDialog } from "../../components/ui/ModalDialog";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { NavIcon } from "../../components/ui/NavIcon";
 import { TerminalPanel } from "../terminal/TerminalPanel";
+import { CodingActivityPanel } from "./CodingActivityPanel";
 
 type DiffRow = { kind: "removed" | "added" | "unchanged"; line: string };
 
@@ -31,6 +32,7 @@ function createDiff(before: string, after: string): DiffRow[] {
 type CodingPageProps = {
   projects: DesktopProject[];
   selectedProject: DesktopProject | null;
+  tasks: DesktopTask[];
   projectFiles: DesktopProjectFile[];
   selectedFile: string | null;
   fileDraft: string;
@@ -53,7 +55,7 @@ type CodingPageProps = {
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingPage({ projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingPageProps) {
+export function CodingPage({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingPageProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -152,7 +154,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
       <Card className="workspace-side coding-flow-panel"><div className="coding-flow-heading"><div><p className="section-kicker">WORKFLOW</p><h3>From task to review</h3></div><span className="coding-flow-mark" aria-hidden="true"><NavIcon name="arrow-up-right" /></span></div><div className="flow-step"><b>01</b><span><strong>Select a project</strong><small>Keep context explicit and bounded.</small></span></div><div className="flow-step"><b>02</b><span><strong>Plan a local task</strong><small>Describe the outcome before tools run.</small></span></div><div className="flow-step"><b>03</b><span><strong>Review the diff</strong><small>Every write stays visible and reversible.</small></span></div></Card>
     </div>}
     {selectedProject && <div className="coding-project-context" aria-label="Active coding project"><div><p className="section-kicker">ACTIVE PROJECT</p><strong>{selectedProject.name}</strong><span>{selectedProject.folderPaths.length} connected folder{selectedProject.folderPaths.length === 1 ? "" : "s"} · local files only</span></div><label><span className="sr-only">Switch coding project</span><select value={selectedProject.id} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); if (project) onOpenProject(project); }} aria-label="Switch coding project">{projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label></div>}
-    {selectedProject && <Card className="project-browser-card coding-project-browser">
+    {selectedProject && <div className="coding-session-grid"><Card className="project-browser-card coding-project-browser">
        <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>Files &amp; changes</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
       <div className={`task-composer coding-task-composer ${taskComposerOpen ? "is-open" : ""}`}>
@@ -171,7 +173,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
         </div>
       </div>
       {terminalOpen && <div className="project-dock"><TerminalPanel projects={projects} initialProjectId={selectedProject.id} busy={terminalBusy} output={terminalOutput} exitCode={terminalExitCode} compact onRun={onRunTerminal} /></div>}
-    </Card>}
+    </Card><CodingActivityPanel tasks={tasks} onOpenWorkbench={() => onNavigate("workbench")} /></div>}
     <ModalDialog open={dialogOpen} onClose={() => setDialogOpen(false)} titleId="new-project-title" initialFocusRef={projectNameRef}><form onSubmit={(event) => { event.preventDefault(); void createProject(); }}><div className="dialog-heading"><div><p className="section-kicker">NEW PROJECT</p><h3 id="new-project-title">Connect a workspace</h3><p>Only the folders you select are exposed to the project.</p></div><button type="button" onClick={() => setDialogOpen(false)} aria-label="Close dialog">×</button></div><label>Project name<input ref={projectNameRef} value={name} onChange={(event) => setName(event.target.value)} placeholder="My project" /></label><label>Instructions<textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} placeholder="Optional instructions for this project" rows={3} /></label><div className="dialog-folders"><div className="dialog-folders-heading"><span>Connected folders</span><Button variant="secondary" type="button" onClick={() => void addFolder()}>Add folder</Button></div>{folders.length === 0 ? <p>No folders connected yet.</p> : folders.map((folder) => <div className="dialog-folder" key={folder}><span>{folder}</span><button type="button" onClick={() => setFolders((current) => current.filter((item) => item !== folder))}>Remove</button></div>)}</div><div className="dialog-actions"><Button variant="ghost" type="button" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" type="submit" disabled={saving || !name.trim()}>{saving ? "Saving…" : "Save project"}</Button></div></form></ModalDialog>
   </div>;
 }
