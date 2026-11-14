@@ -144,7 +144,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     }
   };
 
-  return <div className="feature-page coding-page">
+  return <div className={`feature-page coding-page ${selectedProject ? "coding-page-active" : ""}`}>
     <PageHeader className={selectedProject ? "page-header-coding-session" : ""} eyebrow="CODING WORKSPACE" title={selectedProject?.name ?? "Build with context"} description={selectedProject ? "A focused local session for files, tasks, terminal output, and reviewable edits." : "A local project workspace for planning tasks, reviewing edits, and running guarded commands."} actions={<Button variant="primary" onClick={() => setDialogOpen(true)}><NavIcon name="plus" />New project</Button>} />
     <div className="coding-session-bar" aria-label="Coding session status"><div className="coding-session-copy"><span className="coding-session-dot" aria-hidden="true" /><strong>Local coding session</strong><span>Files stay in the folders you choose.</span></div><div className="coding-shortcuts"><span><kbd>Ctrl P</kbd> Find file</span><span><kbd>Ctrl J</kbd> Terminal</span></div></div>
     {!selectedProject && <div className="workspace-grid coding-overview-grid">

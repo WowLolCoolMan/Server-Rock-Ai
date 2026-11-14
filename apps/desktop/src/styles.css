@@ -317,6 +317,21 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .ui-empty-icon .nav-icon { width: 18px; height: 18px; }
 .coding-page .page-header-coding-session h2 { font-size: 24px; letter-spacing: -.035em; }
 .coding-page .page-header-coding-session .page-description { max-width: 620px; font-size: 11px; }
+.app-content-coding { display: flex; min-height: 0; flex-direction: column; padding-bottom: 24px; overflow: hidden; }
+.app-content-coding .coding-page { display: flex; min-height: 0; height: 100%; flex: 1 1 0; max-width: none; flex-direction: column; }
+.app-content-coding .coding-page > .page-header, .app-content-coding .coding-page > .coding-session-bar, .app-content-coding .coding-page > .coding-project-context { flex: 0 0 auto; }
+.app-content-coding .coding-page-active > .page-header { margin-bottom: 8px; }
+.app-content-coding .coding-page-active .coding-session-bar { margin-bottom: 10px; }
+.app-content-coding .coding-page-active .coding-project-context { margin-bottom: 10px; }
+.app-content-coding .coding-page-active .coding-project-browser { display: grid; min-height: 0; margin-top: 0; grid-template-rows: auto auto auto minmax(0, 1fr) auto; flex: 1 1 0; overflow: hidden; }
+.app-content-coding .coding-page-active .coding-project-browser > .panel-heading, .app-content-coding .coding-page-active .coding-project-browser > .file-summary, .app-content-coding .coding-page-active .coding-project-browser > .coding-task-composer { flex: 0 0 auto; }
+.app-content-coding .coding-page-active .coding-project-browser > .file-summary { margin-bottom: 10px; }
+.app-content-coding .coding-page-active .coding-project-browser .project-file-layout { min-height: 0; overflow: hidden; }
+.app-content-coding .coding-page-active .project-file-explorer, .app-content-coding .coding-page-active .file-editor-panel { min-height: 0; overflow: hidden; }
+.app-content-coding .coding-page-active .project-file-list, .app-content-coding .coding-page-active .file-editor-panel > textarea, .app-content-coding .coding-page-active .diff-preview { min-height: 0; max-height: none; height: 100%; overflow: auto; }
+.app-content-coding .coding-page-active .file-editor-panel > textarea { resize: none; }
+.app-content-coding .coding-page-active .project-dock { min-height: 0; max-height: min(32vh, 260px); overflow: auto; }
+@media (max-height: 760px) and (min-width: 641px) { .app-content-coding .coding-page-active .coding-project-browser { grid-template-rows: auto auto auto minmax(260px, 1fr) auto; }.app-content-coding .coding-page-active .project-dock { max-height: 190px; } }
 .coding-flow-mark .nav-icon, .project-icon .nav-icon, .project-arrow .nav-icon { width: 16px; height: 16px; }
 @media (max-width: 1100px) { .coding-project-browser .file-editor-heading { align-items: flex-start; flex-direction: column; }.coding-project-browser .file-editor-heading > span { width: 100%; max-width: 100%; }.coding-project-browser .file-editor-heading > div { width: 100%; justify-content: flex-start; } }
 .scheduled-row small { color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.35; }

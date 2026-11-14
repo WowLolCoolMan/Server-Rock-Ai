@@ -46,6 +46,44 @@ Remaining: run a live successful local provider request to capture the bubble
 in Electron, and add a native UI harness for drag/drop bounds if the desktop
 test harness is expanded.
 
+## Slice 262 — Bound the active Coding Workspace workbench
+
+Status: `implemented_renderer_workbench_viewport_live_electron_verified`
+
+The selected-project Coding Workspace now uses the same bounded desktop
+viewport discipline as Chat. The active project header, session bar, and
+project switcher stay fixed while the project browser owns the remaining
+height. The explorer and editor are independent scroll regions, the terminal
+dock has an explicit bounded height, and the task brief expands inside the
+workbench instead of turning the entire route into a long dashboard document.
+The empty project state and the existing local-only task environment contract
+remain unchanged.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run build` — passed after the viewport changes.
+- `npm run typecheck` — passed.
+- Live Electron rendered the active project state from a temporary local
+  project with no connected folders; the project header, task brief, explorer
+  empty state, and guarded editor state remained in one workbench surface.
+- Live AX state exposed the task brief controls, Local selection, disabled
+  Worktree option, file filter, and editor empty state without renderer errors.
+- The expanded task brief was captured at the normal 1440×900 desktop window
+  size; the file region remained reachable below the brief instead of being
+  rendered as a second page.
+- The temporary project store was moved out of the user data directory after
+  verification; no user project existed before the test.
+
+Remaining: verify the same bounded behavior with a real connected folder and
+an opened file at constrained desktop widths, then continue the shared
+keyboard-focus and secondary-workspace audit.
+
 ## Slice 260 — Dock the Electron Chat composer
 
 Status: `implemented_renderer_chat_viewport_live_electron_verified`
