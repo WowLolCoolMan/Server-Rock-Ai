@@ -26,6 +26,19 @@ commands, and drag-and-drop intact.
 Evidence: desktop typecheck/build, packaged Electron build, overflow acceptance
 across 10 routes × 5 viewport widths, and diff validation passed.
 
+## Slice 327 — Prompt-first Image Studio workflow
+
+Image Studio now leads with the prompt composer and keeps endpoint/workflow
+configuration inside a collapsible local setup inspector. Users can save up to
+12 named ComfyUI API workflows locally and select them for reuse, so ordinary
+generation no longer requires repasting JSON after the first setup. Generated
+outputs are actionable gallery items with a full-size modal inspector and
+download action; empty and readiness states remain truthful when ComfyUI or a
+workflow is unavailable.
+
+Evidence: desktop typecheck/build, packaged Electron build, overflow acceptance
+across 10 routes × 5 viewport widths, and diff validation passed.
+
 ## Slice 316 — Packaged Electron overflow acceptance matrix
 
 The packaged Electron smoke suite now checks every primary route at five
