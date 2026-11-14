@@ -1,6 +1,7 @@
 const loopbackHosts = new Set(["localhost", "127.0.0.1", "::1"]);
 
 export const LOCAL_ENDPOINT_ERROR = "Skai Desktop only connects to local services. Use localhost, 127.0.0.1, or ::1.";
+export const CLOUD_ENDPOINT_ERROR = "Cloud routes must use HTTPS without embedded credentials, queries, or URL fragments.";
 
 export function isLocalEndpoint(value: string) {
   try {
@@ -10,6 +11,20 @@ export function isLocalEndpoint(value: string) {
   } catch {
     return false;
   }
+}
+
+export function isRemoteEndpoint(value: string) {
+  try {
+    const url = new URL(value.trim());
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    return url.protocol === "https:" && !loopbackHosts.has(host) && !url.username && !url.password && !url.search && !url.hash;
+  } catch {
+    return false;
+  }
+}
+
+export function isAllowedModelEndpoint(value: string, cloudRouteEnabled: boolean) {
+  return isLocalEndpoint(value) || (cloudRouteEnabled && isRemoteEndpoint(value));
 }
 
 export function localEndpointOrFallback(value: string | null | undefined, fallback: string) {

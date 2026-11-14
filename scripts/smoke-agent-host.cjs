@@ -51,7 +51,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("voice.speak"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
@@ -71,8 +71,8 @@ async function run() {
   if (!settings.ok || typeof settings.result?.endpoint !== "string") throw new Error("settings.get did not return bounded settings.");
   const savedSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model });
   if (!savedSettings.ok) throw new Error("settings.save failed in the disposable profile.");
-  const remoteSettings = await request("settings.save", { endpoint: "https://api.example.invalid/v1", model: "remote-model", provider: "Hosted compatible" });
-  if (remoteSettings.ok || !remoteSettings.error?.message.includes("local loopback")) throw new Error("settings.save accepted a non-local model endpoint.");
+  const remoteSettings = await request("settings.save", { endpoint: "https://api.example.invalid/v1", model: "remote-model", provider: "Hosted compatible", cloudRouteEnabled: true });
+  if (!remoteSettings.ok || remoteSettings.result?.cloudRouteEnabled !== true) throw new Error("settings.save did not preserve an explicitly enabled HTTPS cloud route.");
   const restoredSettings = await request("settings.save", { endpoint: settings.result.endpoint, model: settings.result.model, provider: "Ollama" });
   if (!restoredSettings.ok) throw new Error("settings.save could not restore the disposable local profile.");
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local" });

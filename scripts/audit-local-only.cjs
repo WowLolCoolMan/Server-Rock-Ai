@@ -9,9 +9,11 @@ const runtimeRoots = [
   path.join(root, "services", "agent-host", "Protocol"),
 ];
 const extensions = new Set([".cjs", ".cs", ".js", ".json", ".ts", ".tsx"]);
-// User-facing copy may explain future cloud routes. The shipped runtime must
-// still reject remote transport and must not hard-code hosted provider URLs.
-const forbidden = /api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com/i;
+// Cloud model routes are now explicit features: the renderer may show the
+// canonical OpenAI route, while custom routes remain user-entered and the
+// host enforces HTTPS, consent, and credential storage. Keep unrelated hosted
+// integrations out of shipped source until their contracts are implemented.
+const forbidden = /api\.anthropic\.com|generativelanguage\.googleapis\.com/i;
 const hits = [];
 
 function visit(directory) {
@@ -33,5 +35,5 @@ if (hits.length) {
   for (const file of hits) console.error(`- ${file}`);
   process.exitCode = 1;
 } else {
-  console.log("Local transport audit passed: shipped runtime contains no hard-coded hosted provider URLs; cloud labels remain explicit and non-routable.");
+  console.log("Transport audit passed: cloud model routing is explicit and limited to the implemented HTTPS provider boundary.");
 }

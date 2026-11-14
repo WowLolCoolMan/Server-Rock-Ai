@@ -91,6 +91,16 @@ internal static class GitHubTests
             await credentialStore.DeleteAsync();
             Check(!File.Exists(credentialPath), "Windows GitHub credential disconnect removes the protected file");
             Directory.Delete(Path.GetDirectoryName(credentialPath)!, recursive: true);
+
+            var providerDirectory = Path.Combine(Path.GetTempPath(), "server-rock-provider-credentials-" + Guid.NewGuid().ToString("N"));
+            var providerStore = new ProviderCredentialStore(providerDirectory);
+            await providerStore.WriteAsync("openai-api", "sk-test-provider-key");
+            var providerPath = Path.Combine(providerDirectory, "openai-api.bin");
+            Check(File.Exists(providerPath) && !File.ReadAllText(providerPath).Contains("sk-test-provider-key", StringComparison.Ordinal), "Windows provider keys are stored as DPAPI ciphertext outside settings.json");
+            Check(await providerStore.ReadAsync("openai-api") == "sk-test-provider-key" && await providerStore.ExistsAsync("openai-api"), "Windows provider keys decrypt and report configured state for the same user");
+            await providerStore.DeleteAsync("openai-api");
+            Check(!File.Exists(providerPath), "provider key removal clears the protected credential");
+            Directory.Delete(providerDirectory, recursive: true);
         }
         Check(GitHubApiClient.ParseRepositoryReference("owner/project") == "owner/project", "GitHub repository input accepts owner/name references");
         Check(GitHubApiClient.ParseRepositoryReference("https://github.com/owner/project.git") == "owner/project", "GitHub repository input safely normalizes HTTPS clone URLs");

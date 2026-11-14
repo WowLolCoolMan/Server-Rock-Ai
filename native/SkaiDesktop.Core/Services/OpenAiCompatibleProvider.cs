@@ -11,7 +11,7 @@ using SkaiDesktop.Core.Models;
 
 namespace SkaiDesktop.Core.Services;
 
-/// <summary>Transport for local and compatible chat-completions servers.</summary>
+/// <summary>Transport for local and explicitly authorized HTTPS OpenAI-compatible servers.</summary>
 public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
 {
     private const int MaxMessages = 500;
@@ -257,12 +257,10 @@ public sealed class OpenAiCompatibleProvider(HttpClient? httpClient = null)
 
     private static Uri BuildBaseUri(string endpoint)
     {
-        if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/'), UriKind.Absolute, out var uri)
-            || uri.Scheme is not ("http" or "https")
-            || !uri.IsLoopback
-            || !string.IsNullOrEmpty(uri.UserInfo)
-            || !string.IsNullOrEmpty(uri.Fragment))
-            throw new InvalidOperationException("Skai Desktop only accepts a local loopback model endpoint without embedded credentials or a URL fragment.");
+        if (!ProviderRoutePolicy.IsAllowed(endpoint))
+            throw new InvalidOperationException("Skai Desktop accepts loopback endpoints or explicit HTTPS cloud endpoints without embedded credentials, queries, or URL fragments.");
+        if (!Uri.TryCreate(endpoint.Trim().TrimEnd('/'), UriKind.Absolute, out var uri) || uri is null)
+            throw new InvalidOperationException("The model endpoint is invalid.");
         return uri;
     }
 

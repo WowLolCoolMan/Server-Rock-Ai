@@ -8,6 +8,8 @@ namespace SkaiDesktop.Core.Models;
 public sealed class AppSettings
 {
     public string Endpoint { get; set; } = "http://localhost:11434/v1";
+    /// <summary>Explicit consent to send model requests to the selected HTTPS cloud endpoint.</summary>
+    public bool CloudRouteEnabled { get; set; }
     public string Model { get; set; } = "llama3.2";
     public string ModelProvider { get; set; } = "Ollama";
     /// <summary>Automatically retry a local model through AirLLM after a capacity/compatibility failure.</summary>

@@ -40,11 +40,16 @@ public sealed class JsonSettingsStore
         settings.Endpoint ??= defaults.Endpoint;
         settings.Model ??= defaults.Model;
         settings.ModelProvider ??= defaults.ModelProvider;
-        if (!LocalEndpoint.IsLocal(settings.Endpoint))
+        if (!ProviderRoutePolicy.IsAllowed(settings.Endpoint) || (ProviderRoutePolicy.IsRemote(settings.Endpoint) && !settings.CloudRouteEnabled))
         {
             settings.Endpoint = defaults.Endpoint;
+            settings.CloudRouteEnabled = false;
             if (!settings.ModelProvider.Equals("AirLLM", StringComparison.OrdinalIgnoreCase))
                 settings.ModelProvider = defaults.ModelProvider;
+        }
+        else if (LocalEndpoint.IsLocal(settings.Endpoint))
+        {
+            settings.CloudRouteEnabled = false;
         }
         settings.RequireLocalModelEndpoints = true;
         settings.VisionApiFormat ??= defaults.VisionApiFormat;
