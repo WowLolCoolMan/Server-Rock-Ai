@@ -13,6 +13,9 @@ const commands: Command[] = [
   { id: "marketplace", label: "Open Marketplace", detail: "Find models, voices, tools, and skills", route: "marketplace" },
   { id: "usage", label: "Open Usage", detail: "Review measured activity and unavailable telemetry", route: "usage" },
   { id: "memory", label: "Open Memory", detail: "Review approved local memory", route: "memory" },
+  { id: "voice", label: "Open Voice Studio", detail: "Configure and preview local speech", route: "voice" },
+  { id: "permissions", label: "Open Permissions", detail: "Review local approval boundaries", route: "permissions" },
+  { id: "onboarding", label: "Open First-run Setup", detail: "Connect a runtime and choose a model", route: "onboarding" },
   { id: "settings", label: "Open Settings", detail: "Appearance and workspace preferences", route: "settings" },
 ];
 

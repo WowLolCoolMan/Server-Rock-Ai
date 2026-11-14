@@ -8201,6 +8201,19 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Latest UI checkpoint — auxiliary reference routes
+
+Added reachable, production-rendered routes for First-run setup, Permissions,
+and Voice Studio. These are integrated into the universal route union, toolbar,
+sidebar, command palette, and route renderer. They reuse existing discovery,
+native speech, and host-boundary primitives instead of introducing sample
+telemetry or fake approvals.
+
+Verification: `npm run desktop:typecheck`, `npm run desktop:build`, and
+`git diff --check` passed. Live visual inspection was attempted but the desktop
+computer-use surface was stopped by the Escape-key guard before the new routes
+could be captured.
+
 ## Slice — Align shell continuity and model manager
 
 Status: `implemented_build_visual_verified`

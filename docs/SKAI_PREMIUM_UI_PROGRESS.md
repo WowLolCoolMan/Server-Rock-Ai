@@ -337,3 +337,27 @@ Evidence:
 Remaining: approval controls are still constrained by the current host contract;
 the workbench correctly keeps unsupported approval actions informational rather
 than implying execution.
+
+## Slice — Make auxiliary reference workspaces reachable
+
+Status: `implemented_build_verified`
+
+The shell now exposes the reference-aligned First-run setup, Permissions, and
+Voice Studio surfaces through the sidebar and command palette. Onboarding uses
+the existing provider, endpoint, model inventory, and discovery actions;
+Permissions reports the current local policy and an honest empty approval queue;
+Voice Studio uses the existing native speech service for local profile/runtime
+selection, preview, stop, and opt-in output settings. Unsupported speech
+recognition and interruption states remain explicitly marked rather than being
+presented as implemented.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Remaining: the desktop computer-use inspection was stopped by the Escape-key
+guard before these three newly added routes could be visually captured. A
+follow-up live interaction pass should cover the three routes at desktop and
+narrow widths; the production build and TypeScript route coverage are green.

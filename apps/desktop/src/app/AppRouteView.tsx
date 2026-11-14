@@ -8,6 +8,7 @@ import { SettingsPage } from "../features/settings/SettingsPage";
 import { TerminalPage } from "../features/terminal/TerminalPage";
 import { WorkbenchPage } from "../features/agents/WorkbenchPage";
 import { UsagePage } from "../features/usage/UsagePage";
+import { OnboardingPage, PermissionsPage, VoiceStudioPage } from "../features/auxiliary/AuxiliaryPages";
 
 export type AppRouteState = {
   route: Route;
@@ -130,6 +131,9 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} />;
   if (route === "usage") return <UsagePage tasks={state.tasks} scheduled={state.scheduledTasks} onNavigate={(nextRoute) => actions.onNavigate(nextRoute)} />;
+  if (route === "permissions") return <PermissionsPage />;
+  if (route === "onboarding") return <OnboardingPage provider={state.provider} endpoint={state.endpoint} model={state.model} models={state.models} onDiscoverModels={actions.onDiscoverModels} onNavigate={(nextRoute) => actions.onNavigate(nextRoute)} />;
+  if (route === "voice") return <VoiceStudioPage />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} onRun={actions.onRunProjectCommand} onOpenCoding={() => actions.onNavigate("coding")} />;
 }
 
