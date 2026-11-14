@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { MemoryEntry } from "../../app/types";
-import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
+import { Button, Card, EmptyState, PageHeader, StatusBadge } from "../../components/ui/Primitives";
 
 type MemoryPageProps = {
   entries: MemoryEntry[];
@@ -23,6 +23,9 @@ export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, o
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [scopeFilter, setScopeFilter] = useState("all");
+  const scopes = useMemo(() => ["all", ...Array.from(new Set(entries.map((entry) => entry.scope))).sort()], [entries]);
+  const visibleEntries = useMemo(() => scopeFilter === "all" ? entries : entries.filter((entry) => entry.scope === scopeFilter), [entries, scopeFilter]);
 
   const resetEditor = () => {
     setContent("");
@@ -63,8 +66,8 @@ export function MemoryPage({ entries, busy, loading, error, onRetry, onSearch, o
         <div className="memory-editor-footer"><span className={`memory-save-status memory-save-${saveState}`} role="status">{saveState === "saving" ? "Saving locally…" : saveState === "saved" ? "Saved locally" : "Explicit notes only · local storage"}</span><Button variant="primary" disabled={busy || loading || saveState === "saving" || !content.trim()} onClick={() => void save()}>{saveState === "saving" ? "Saving…" : editingId ? "Update memory" : "Save memory"}</Button></div>
       </Card>
       <Card className="memory-results">
-        <div className="memory-search"><input value={query} onChange={(event) => { setQuery(event.target.value); onSearch(event.target.value); }} placeholder="Search approved memory…" aria-label="Search approved memory" />{loading && <span className="inline-status">Loading memory…</span>}</div>
-        {error ? <div className="surface-error" role="alert"><strong>Memory is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="memory-skeleton" aria-label="Loading memory"><span /><span /><span /></div> : entries.length === 0 ? <EmptyState title="No approved memory" description="Saved notes will appear here with their scope and privacy controls." /> : entries.map((entry) => <article className={`memory-entry ${editingId === entry.id ? "is-editing" : ""}`} key={entry.id}><div><strong>{entry.content}</strong><span>{entry.scope} · {entry.tags.join(", ") || "untagged"} · updated {new Date(entry.updatedAtUtc).toLocaleDateString()}</span></div>{pendingRemoveId === entry.id ? <div className="memory-remove-confirm"><span>Remove this note?</span><Button variant="danger" disabled={busy} onClick={() => void removeEntry(entry)}>Confirm</Button><Button variant="ghost" disabled={busy} onClick={() => setPendingRemoveId(null)}>Keep</Button></div> : <div><Button variant="ghost" disabled={busy} onClick={() => editEntry(entry)}>Edit</Button><Button variant="ghost" disabled={busy} onClick={() => onToggle(entry)}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="danger" disabled={busy} onClick={() => setPendingRemoveId(entry.id)}>Remove</Button></div>}</article>)}
+        <div className="memory-toolbar"><div className="memory-search"><input value={query} onChange={(event) => { setQuery(event.target.value); onSearch(event.target.value); }} placeholder="Search approved memory…" aria-label="Search approved memory" />{loading && <span className="inline-status">Loading memory…</span>}</div><div className="memory-scope-filter" role="toolbar" aria-label="Filter memory by scope">{scopes.map((scope) => <Button key={scope} variant={scopeFilter === scope ? "secondary" : "ghost"} aria-pressed={scopeFilter === scope} onClick={() => setScopeFilter(scope)}>{scope === "all" ? "All scopes" : scope}</Button>)}</div></div>
+        {error ? <div className="surface-error" role="alert"><strong>Memory is unavailable</strong><p>{error}</p><Button variant="secondary" onClick={onRetry}>Retry</Button></div> : loading ? <div className="memory-skeleton" aria-label="Loading memory"><span /><span /><span /></div> : entries.length === 0 ? <EmptyState title="No approved memory" description="Saved notes will appear here with their scope and privacy controls." /> : visibleEntries.length === 0 ? <EmptyState title="No notes in this scope" description="Choose another scope or return to All scopes." action={<Button variant="secondary" onClick={() => setScopeFilter("all")}>Show all scopes</Button>} /> : visibleEntries.map((entry) => <article className={`memory-entry ${editingId === entry.id ? "is-editing" : ""}`} key={entry.id}><div><strong>{entry.content}</strong><span>{entry.scope} · {entry.tags.join(", ") || "untagged"} · updated {new Date(entry.updatedAtUtc).toLocaleDateString()}</span><small className="memory-provenance">{entry.source || "local"} · {entry.enabled ? "Enabled for context" : "Disabled"}</small></div>{pendingRemoveId === entry.id ? <div className="memory-remove-confirm"><span>Remove this note?</span><Button variant="danger" disabled={busy} onClick={() => void removeEntry(entry)}>Confirm</Button><Button variant="ghost" disabled={busy} onClick={() => setPendingRemoveId(null)}>Keep</Button></div> : <div className="memory-entry-actions"><StatusBadge tone={entry.enabled ? "success" : "neutral"}>{entry.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" disabled={busy} onClick={() => editEntry(entry)}>Edit</Button><Button variant="ghost" disabled={busy} onClick={() => onToggle(entry)}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="danger" disabled={busy} onClick={() => setPendingRemoveId(entry.id)}>Remove</Button></div>}</article>)}
       </Card>
     </div>
   </div>;

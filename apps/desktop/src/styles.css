@@ -252,3 +252,9 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .workbench-next-step-warning { border-left-color: var(--skai-color-warning); }
 .workbench-next-step-danger { border-left-color: var(--skai-color-danger); }
 .workbench-next-step-success { border-left-color: var(--skai-color-success); }
+.memory-toolbar { display: grid; gap: 9px; }
+.memory-scope-filter { display: flex; flex-wrap: wrap; gap: 5px; }
+.memory-scope-filter .ui-button { padding: 6px 8px; font-size: 10px; }
+.memory-entry-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: start; justify-content: flex-end; }
+.memory-provenance { display: block; color: var(--skai-color-text-muted); font-size: 10px; }
+@media (max-width: 640px) { .memory-entry-actions { justify-content: flex-start; } }
