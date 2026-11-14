@@ -356,6 +356,22 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
   .app-content-settings .settings-window { flex: none; }
   .app-content-settings .settings-nav, .app-content-settings .settings-content { overflow: visible; }
 }
+.app-content-images { display: flex; height: 100%; min-height: 0; flex-direction: column; padding-bottom: 24px; overflow: hidden; }
+.app-content-images .image-studio-page { display: flex; min-height: 0; height: 100%; flex: 1 1 0; max-width: none; flex-direction: column; }
+.app-content-images .image-studio-page > .page-header { flex: 0 0 auto; margin-bottom: 14px; }
+.app-content-images .image-studio-layout { height: clamp(360px, calc(100vh - 288px), 720px); min-height: 0; flex: 0 1 auto; grid-template-rows: minmax(0, 1fr); align-items: stretch; overflow: hidden; }
+.app-content-images .image-editor-card, .app-content-images .image-history { min-height: 0; overflow: hidden; scrollbar-gutter: stable; }
+.app-content-images .image-editor-card { display: flex; flex-direction: column; }
+.app-content-images .image-editor-card .form-grid { min-height: 0; flex: 1 1 0; overflow: auto; scrollbar-gutter: stable; }
+.app-content-images .image-editor-card .form-footer { flex: 0 0 auto; margin-top: 14px; }
+.app-content-images .image-history { display: flex; flex-direction: column; }
+.app-content-images .image-history .ui-empty, .app-content-images .image-history .image-gallery { min-height: 0; flex: 1 1 0; overflow: auto; }
+@media (max-width: 900px) {
+  .app-content-images { overflow: auto; }
+  .app-content-images .image-studio-page { height: auto; }
+  .app-content-images .image-studio-layout { flex: none; grid-template-rows: none; overflow: visible; }
+  .app-content-images .image-editor-card, .app-content-images .image-history, .app-content-images .image-editor-card .form-grid { overflow: visible; }
+}
 .coding-flow-mark .nav-icon, .project-icon .nav-icon, .project-arrow .nav-icon { width: 16px; height: 16px; }
 @media (max-width: 1100px) { .coding-project-browser .file-editor-heading { align-items: flex-start; flex-direction: column; }.coding-project-browser .file-editor-heading > span { width: 100%; max-width: 100%; }.coding-project-browser .file-editor-heading > div { width: 100%; justify-content: flex-start; } }
 .scheduled-row small { color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.35; }

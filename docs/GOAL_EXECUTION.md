@@ -153,6 +153,37 @@ Evidence:
 - `npm run check:syntax` — passed.
 - `git diff --check` — passed.
 
+## Slice 265 — Dock the Image Studio workflow
+
+Status: `implemented_renderer_image_studio_viewport_live_electron_verified`
+
+Image Studio now behaves as a bounded two-pane creation workspace. The local
+workflow editor and generation history share the available desktop height;
+long endpoint, prompt, recipe, and workflow content scroll inside the editor,
+while readiness and Generate image remain visible in a persistent action
+footer. Narrow windows retain the natural stacked layout and page scrolling.
+The existing local ComfyUI bridge, recipe actions, readiness states, and output
+history contracts are unchanged.
+
+Changed files:
+
+- `apps/desktop/src/App.tsx`
+- `apps/desktop/src/features/catalog/CatalogPages.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- Before the change, the live 1440×900 Image Studio editor extended below the
+  viewport and its primary Generate image action was not visible.
+- Rebuilt Electron rendered the editor and Recent outputs as a bounded pair;
+  the editor scrollbar is internal and the readiness/action footer remains
+  visible at the bottom of the workspace.
+- Clicking the Product scene recipe populated the prompt and updated the
+  readiness state to Workflow required without leaving the workspace.
+- `npm run build` — passed.
+- `npm run typecheck` — passed.
+- `git diff --check` — passed.
+
 ## Slice 260 — Dock the Electron Chat composer
 
 Status: `implemented_renderer_chat_viewport_live_electron_verified`
