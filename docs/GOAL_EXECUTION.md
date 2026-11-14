@@ -3,6 +3,49 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 259 — Add reusable local attachment previews
+
+Status: `implemented_renderer_attachment_preview_build_and_picker_verified`
+
+Checkpoint: this commit on `main`.
+
+Electron chat attachments now use one reusable attachment-card component in
+both the composer and message history. Image attachments render bounded local
+thumbnails, text files show a short local-content preview, PDFs identify that
+text was extracted locally, and other files show a type mark. Composer cards
+retain accessible remove actions, while message cards stay read-only.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/AttachmentList.tsx`
+- `apps/desktop/src/features/chat/ChatMessage.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run agent-host:build` — passed with 0 warnings and 0 errors.
+- `npm run smoke:pdf-attachment` — passed bounded invalid-content and
+  protected-name rejection assertions.
+- Live Electron acceptance confirmed the local attachment picker opens and
+  cancels cleanly without leaving a dialog or mutating chat state.
+- `git diff --check` — passed.
+
+Privacy/security/licensing: previews use the already validated local picker
+payload; no upload, cloud route, dependency, or new permission was added.
+
+Rollback: remove `AttachmentList.tsx` and restore the two existing filename
+strips; attachment selection and host validation remain independent.
+
+Remaining: live selection of a representative image/PDF in the packaged
+renderer, richer preview/editing acceptance, and broader RAG coverage remain
+separate slices.
+
 ## Slice 258 — Add opt-in Electron memory injection
 
 Status: `implemented_host_renderer_opt_in_memory_smoke_verified`
