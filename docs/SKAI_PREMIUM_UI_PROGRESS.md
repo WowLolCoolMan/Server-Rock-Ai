@@ -55,6 +55,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `26a84d0` — expanded Settings search across category labels, descriptions, and real controls, with automatic selection of the first matching settings panel.
 - `55f231a` — tightened Chat density and contextual rail behavior so active threads stay focused while empty Chat retains its Quick Start guidance.
 - `410e8db` — completed the sidebar conversation-menu focus contract with keyboard navigation, trigger restoration, and viewport-safe upward placement.
+- `294dcb0` — made the Coding Workspace task brief a persisted, collapsible panel so the file/editor surface remains the primary active-project view.
 
 ## Current evidence
 
@@ -105,6 +106,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Settings semantic-search check: passed `endpoint`, `reduced motion`, and `memory` queries, automatic selection of the first matching panel, clearing search to restore all 11 sections, and no horizontal overflow at 1280px and 960px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-settings-search.png`.
 - Chat density/context check: passed active-thread summary rendering, Quick Start visibility only for empty Chat, a 350px active conversation panel bound, and no horizontal overflow at 1440px and 960px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-chat-current.png`.
 - Sidebar conversation-menu check: passed first-action focus, Arrow/Home/End navigation, Escape restoration to the originating trigger, outside-click close, viewport-safe upward placement, and no horizontal overflow at 1280px and 960px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-sidebar-menu-focus.png`.
+- Coding task-panel check: passed default-collapsed task brief behavior, expand/collapse controls, persisted selected-project and panel state after reload, editor preservation, and no horizontal overflow at 1440px and 960px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-coding-task-panel.png`.
 - Conversation context-menu check: passed right-click and keyboard-visible menu actions for stable-ID pinning and renaming, persisted title rendering, compact action-row geometry at 1440px, and no Cloud UI. Screenshot: `output/playwright/skai-sidebar-context-menu.png`.
 - Chat retry check: passed replacement of the selected assistant response through `chat.complete`, stable conversation persistence, custom-title preservation, failure recovery with the previous response restored, and no Cloud UI. Screenshot: `output/playwright/skai-chat-retry.png`.
 - Coding terminal persistence check: passed renderer typecheck/build plus project-browser and guarded-editor smoke coverage for the local coding workflow; the per-project dock preference is stored locally and no Cloud references are present in shipped source. Live Electron visual interaction remains limited by the Windows screenshot/input bridge returning another app's pixels.
