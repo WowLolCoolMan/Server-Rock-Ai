@@ -57,9 +57,10 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
+            "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
             "marketplace.skills.search" => SearchMarketplaceSkills(request).GetAwaiter().GetResult(),
             "marketplace.tools.list" => ListMarketplaceTools(request),
             "marketplace.mcp.list" => ListMarketplaceMcpServers(request),
@@ -267,6 +268,41 @@ public static class AgentHostLoop
         "any" => true,
         _ => throw new InvalidOperationException("The model size filter is invalid."),
     };
+
+    private static async Task<AgentResponse> DownloadMarketplaceModelAsync(AgentRequest request)
+    {
+        var provider = RequiredBoundedString(request, "provider", 40).Trim().ToLowerInvariant();
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 512);
+        var id = RequiredBoundedString(request, "id", 1_024);
+        var quantization = OptionalString(request, "quantization");
+        var uncensored = OptionalBoolean(request, "uncensored");
+        var progress = string.Empty;
+        var library = new ModelLibraryService();
+        void CaptureProgress(string message) => progress = message.Length > 512 ? message[..512] : message;
+
+        switch (provider)
+        {
+            case "huggingface":
+                await library.DownloadFromHuggingFaceAsync(endpoint, id, quantization, CaptureProgress, CancellationToken.None).ConfigureAwait(false);
+                break;
+            case "modelscope":
+            {
+                var separator = id.IndexOf(':');
+                if (separator <= 0 || separator == id.Length - 1) throw new InvalidOperationException("The ModelScope download identifier is invalid.");
+                var repository = id[..separator];
+                var packageName = id[(separator + 1)..];
+                var packages = await library.SearchModelScopeGgufAsync(repository, uncensored, CancellationToken.None).ConfigureAwait(false);
+                var package = packages.SingleOrDefault(item => item.Repository.Equals(repository, StringComparison.OrdinalIgnoreCase) && item.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+                if (package is null) throw new InvalidOperationException("The selected ModelScope GGUF package is no longer available.");
+                await library.DownloadAndImportModelScopeGgufAsync(endpoint, package, CaptureProgress, CancellationToken.None).ConfigureAwait(false);
+                break;
+            }
+            default:
+                throw new InvalidOperationException("Only Hugging Face and ModelScope model downloads are supported.");
+        }
+
+        return new(ProtocolVersion, request.Id, true, new { provider, id, progress, completed = true });
+    }
 
     private static async Task<AgentResponse> SearchMarketplaceSkills(AgentRequest request)
     {

@@ -78,6 +78,9 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const [modelQuantization, setModelQuantization] = useState("ANY");
   const [modelUncensored, setModelUncensored] = useState(false);
   const [modelSource, setModelSource] = useState("all");
+  const [modelRuntime, setModelRuntime] = useState<{ provider: string; endpoint: string } | null>(null);
+  const [downloadBusyId, setDownloadBusyId] = useState<string | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [skillLane, setSkillLane] = useState("All lanes");
   const filtered = useMemo(() => cards.filter((card) => {
     const matchesCategory = category === "All" || card.category === category;
@@ -107,6 +110,28 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
       if (errors.length) setCatalogError(errors.join(" · ")); else setCatalogError(null);
     } catch (error) { setCatalogError(error instanceof Error ? error.message : "The marketplace could not be loaded."); }
     finally { setCatalogBusy(false); }
+  };
+  const loadModelRuntime = async () => {
+    try {
+      const response = await window.serverRockAgent.request("settings.get");
+      if (response.ok) {
+        const result = response.result as { provider?: string; endpoint?: string };
+        if (result.provider && result.endpoint) setModelRuntime({ provider: result.provider, endpoint: result.endpoint });
+      }
+    } catch { /* The catalog remains usable as a source browser when settings are unavailable. */ }
+  };
+  const canDownloadModel = (model: MarketplaceModel) => modelRuntime !== null && (model.provider === "ModelScope" ? modelRuntime.provider.toLowerCase() === "ollama" : modelRuntime.provider.toLowerCase() === "lm studio");
+  const downloadModel = async (model: MarketplaceModel) => {
+    if (!modelRuntime || !canDownloadModel(model) || downloadBusyId) return;
+    const provider = model.provider === "ModelScope" ? "modelscope" : "huggingface";
+    setDownloadBusyId(model.id); setDownloadStatus(null); setCatalogError(null);
+    try {
+      const response = await window.serverRockAgent.request("marketplace.models.download", { provider, endpoint: modelRuntime.endpoint, id: model.id, quantization: modelQuantization === "ANY" ? undefined : modelQuantization, uncensored: model.uncensored });
+      if (!response.ok) throw new Error(response.error?.message ?? "The model download could not be completed.");
+      const result = response.result as { progress?: string };
+      setDownloadStatus(`${model.id} is ready in ${modelRuntime.provider}. ${result.progress ?? "Download completed."}`);
+    } catch (error) { setDownloadStatus(error instanceof Error ? error.message : "The model download could not be completed."); }
+    finally { setDownloadBusyId(null); }
   };
   const loadInstalledSkills = async () => {
     try {
@@ -176,7 +201,7 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
     } catch (error) { setSkillError(error instanceof Error ? error.message : "The installed skill could not be removed."); }
     finally { setSkillBusy(false); }
   };
-  useEffect(() => { void refreshCatalog(); void loadInstalledSkills(); }, []);
+  useEffect(() => { void refreshCatalog(); void loadInstalledSkills(); void loadModelRuntime(); }, []);
 
   const selectedModels = models.filter(model => model.kind === (selected?.title === "Voices & TTS" ? "voice" : selected?.title === "Image Studio" ? "image" : "llm"));
   const sizeLabel = (bytes: number) => bytes > 0 ? `${(bytes / 1073741824).toFixed(1)} GB` : "size not published";
@@ -220,7 +245,8 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
               {selected.title === "LLMs" && <label className="settings-toggle"><span><strong>Show abliterated / uncensored</strong><small>Only explicitly labeled repositories are included.</small></span><input type="checkbox" checked={modelUncensored} onChange={(event) => setModelUncensored(event.target.checked)} /></label>}
               <Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>Apply filters</Button>
             </div>
-            <CatalogList title={`${selected.title === "LLMs" ? "Multi-provider GGUF LLMs" : selected.title === "Voices & TTS" ? "Hugging Face voice models" : "Hugging Face image models"}`} loading={catalogBusy} empty="No model assets matched these filters. Try Any size, All sources, or a broader search." items={selectedModels.map(model => ({ id: `${model.provider}:${model.id}`, title: model.id, detail: `${model.provider} · ${model.task} · ${sizeLabel(model.sizeBytes)} · ${model.downloads.toLocaleString()} downloads${model.uncensored ? " · abliterated/uncensored" : ""}${model.quantizations.length ? ` · ${model.quantizations.join(", ")}` : ""}`, href: model.url, action: `Open ${model.provider}` }))} />
+            {downloadStatus && <div className="marketplace-download-status" role="status"><strong>Model transfer</strong><span>{downloadStatus}</span></div>}
+            <CatalogList title={`${selected.title === "LLMs" ? "Multi-provider GGUF LLMs" : selected.title === "Voices & TTS" ? "Hugging Face voice models" : "Hugging Face image models"}`} loading={catalogBusy} empty="No model assets matched these filters. Try Any size, All sources, or a broader search." items={selectedModels.map(model => ({ id: `${model.provider}:${model.id}`, title: model.id, detail: `${model.provider} · ${model.task} · ${sizeLabel(model.sizeBytes)} · ${model.downloads.toLocaleString()} downloads${model.uncensored ? " · abliterated/uncensored" : ""}${model.quantizations.length ? ` · ${model.quantizations.join(", ")}` : ""}`, href: model.url, action: canDownloadModel(model) ? (downloadBusyId === model.id ? "Downloading…" : model.provider === "ModelScope" ? "Import to Ollama" : "Download to LM Studio") : `Open ${model.provider}`, onAction: canDownloadModel(model) ? () => void downloadModel(model) : undefined }))} />
           </> : selected.title === "Skills" ? <>
             <div className="marketplace-filter-panel"><div><p className="section-kicker">CURATED SKILLS</p><strong>Universal workflows authored for Skai</strong><small>Skai polls multiple GitHub discovery lanes, then keeps only public, non-fork repositories with useful community signal.</small></div><label>Skill lane<select value={skillLane} onChange={(event) => setSkillLane(event.target.value)}>{skillLanes.map(lane => <option key={lane}>{lane}</option>)}</select></label><Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>Poll GitHub lanes</Button></div>
             <div className="marketplace-skill-management"><div className="marketplace-skill-management-heading"><div><p className="section-kicker">LOCAL LIBRARY</p><strong>Install a reviewed Markdown skill</strong><small>Choose a local folder containing <code>skill.json</code> and <code>SKILL.md</code>. Skai validates the package, records a digest, and never executes package files.</small></div><div className="marketplace-skill-actions"><Button variant="secondary" onClick={() => void previewLocalSkill()} disabled={skillBusy}>{skillBusy ? "Checking…" : "Review local package"}</Button><Button variant="ghost" onClick={() => void loadInstalledSkills()} disabled={skillBusy}>Refresh library</Button></div></div>
@@ -245,6 +271,6 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   </div>;
 }
 
-function CatalogList({ title, loading, empty, items }: { title: string; loading: boolean; empty: string; items: Array<{ id: string; title: string; detail: string; href?: string; action: string }> }) {
-  return <section className="marketplace-catalog-results"><div className="panel-heading"><div><p className="section-kicker">LIVE CATALOG</p><h3>{title}</h3></div><span className="panel-count">{loading ? "…" : items.length}</span></div>{loading ? <p className="marketplace-honesty">Loading the local catalog bridge…</p> : items.length === 0 ? <p className="marketplace-honesty">{empty}</p> : <div className="catalog-list">{items.slice(0, 30).map(item => <div className="catalog-row" key={item.id}><span className="catalog-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.href ? <a className="catalog-action" href={item.href} target="_blank" rel="noreferrer">{item.action} ↗</a> : <span className="catalog-action">{item.action}</span>}</div>)}</div>}</section>;
+function CatalogList({ title, loading, empty, items }: { title: string; loading: boolean; empty: string; items: Array<{ id: string; title: string; detail: string; href?: string; action: string; onAction?: () => void }> }) {
+  return <section className="marketplace-catalog-results"><div className="panel-heading"><div><p className="section-kicker">LIVE CATALOG</p><h3>{title}</h3></div><span className="panel-count">{loading ? "…" : items.length}</span></div>{loading ? <p className="marketplace-honesty">Loading the local catalog bridge…</p> : items.length === 0 ? <p className="marketplace-honesty">{empty}</p> : <div className="catalog-list">{items.slice(0, 30).map(item => <div className="catalog-row" key={item.id}><span className="catalog-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span>{item.onAction ? <button className="catalog-action catalog-action-button" type="button" onClick={item.onAction}>{item.action}</button> : item.href ? <a className="catalog-action" href={item.href} target="_blank" rel="noreferrer">{item.action} ↗</a> : <span className="catalog-action">{item.action}</span>}</div>)}</div>}</section>;
 }

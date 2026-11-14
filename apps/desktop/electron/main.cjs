@@ -19,6 +19,7 @@ let nextRequestId = 1;
 const pending = new Map();
 const standardRequestTimeoutMs = 30_000;
 const chatRequestTimeoutMs = 5 * 60_000;
+const longRunningMethods = new Set(["marketplace.models.download"]);
 const chatHostDeadlineSeconds = 285;
 let isQuitting = false;
 let mainWindow;
@@ -50,7 +51,7 @@ const isJpeg = (bytes) => bytes.length >= 3 && bytes[0] === 0xff && bytes[1] ===
 const allowedMethods = new Set([
   "runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "tasks.list",
   "scheduled.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "settings.get",
-  "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop", "marketplace.models.search", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback",
+  "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "project.file.write", "project.file.undo", "project.command.run", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback",
   "workspace.pickFolder",
 ]);
 
@@ -143,7 +144,7 @@ function requestAgent(method, params) {
     ? { ...params, timeoutSeconds: chatHostDeadlineSeconds }
     : params;
   return new Promise((resolve) => {
-    const timeoutMs = method === "chat.complete" ? chatRequestTimeoutMs : standardRequestTimeoutMs;
+    const timeoutMs = method === "chat.complete" ? chatRequestTimeoutMs : longRunningMethods.has(method) ? 50 * 60_000 : standardRequestTimeoutMs;
     const timer = setTimeout(() => {
       if (!pending.has(id)) return;
       pending.delete(id);

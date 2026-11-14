@@ -57,7 +57,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.installed.inspect") || !health.result?.capabilities?.includes("skills.installed.remove") || !health.result?.capabilities?.includes("skills.rollback"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.models.download") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.installed.inspect") || !health.result?.capabilities?.includes("skills.installed.remove") || !health.result?.capabilities?.includes("skills.rollback"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const tools = await request("marketplace.tools.list");
   if (!tools.ok || !Array.isArray(tools.result) || !tools.result.some(item => item.id === "github" && item.builtIn === true)) throw new Error("marketplace.tools.list did not return the built-in tool catalog.");
@@ -67,6 +67,8 @@ async function run() {
   if (!emptyModelScope.ok || !Array.isArray(emptyModelScope.result)) throw new Error("marketplace.models.search did not accept the ModelScope provider lane.");
   const invalidModelProvider = await request("marketplace.models.search", { query: "", kind: "llm", provider: "unknown-provider", limit: 20 });
   if (invalidModelProvider.ok) throw new Error("marketplace.models.search accepted an unknown provider filter.");
+  const unsupportedDownloadProvider = await request("marketplace.models.download", { provider: "unknown-provider", endpoint: "http://127.0.0.1:11434/v1", id: "example/model" });
+  if (unsupportedDownloadProvider.ok) throw new Error("marketplace.models.download accepted an unknown provider.");
   const emptySkills = await request("skills.installed.list");
   if (!emptySkills.ok || !Array.isArray(emptySkills.result) || emptySkills.result.length !== 0) throw new Error("Disposable skill library was not empty.");
   const skillPreview = await request("skills.local.preview", { sourceDirectory: skillSource });

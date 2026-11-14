@@ -204,3 +204,26 @@ Evidence:
 
 Remaining: remote pinned GitHub acquisition, publisher trust/signature policy,
 and packaged Windows acceptance remain intentionally open.
+
+## Slice — Connect gated model acquisition actions
+
+Status: `implemented_build_smoke_verified`
+
+Marketplace results now expose real acquisition actions when the selected local
+runtime supports the provider: Hugging Face downloads target LM Studio, and
+ModelScope GGUF packages import through Ollama. Transfers use a long-running
+Electron bridge timeout, host-side local-endpoint validation, provider-specific
+identifier validation, and the existing Core checksum/import boundaries. When
+the runtime does not match, the UI keeps the safe provider source link instead
+of presenting a misleading download button.
+
+Evidence:
+
+- Renderer typecheck passed.
+- Isolated Agent Host build passed with 0 warnings and 0 errors.
+- Host smoke passed provider capability and unknown-provider rejection for both
+  discovery and acquisition routes.
+- `git diff --check` passed.
+
+Remaining: a live model transfer requires a running compatible LM Studio or
+Ollama runtime; no external model was downloaded during this verification.

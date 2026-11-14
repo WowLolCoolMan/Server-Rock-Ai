@@ -8215,6 +8215,16 @@ Agent Host build, and disposable protocol smoke coverage for provider filter
 validation. Download/import actions remain gated behind the selected local
 runtime adapter rather than being presented as generic remote downloads.
 
+## Marketplace model acquisition
+
+Marketplace results now expose a real long-running acquisition action when the
+configured local runtime supports it: Hugging Face downloads use LM Studio,
+and ModelScope GGUF packages import through Ollama. The Electron bridge grants
+the operation a bounded long-running timeout while the Agent Host enforces
+loopback endpoints, provider-specific identifiers, and the existing Core
+download/import checks. Unsupported runtime/provider combinations remain
+source-link-only in the renderer.
+
 ## Marketplace local skill management controls
 
 The installed Skills library now supports bounded in-app instruction inspection
