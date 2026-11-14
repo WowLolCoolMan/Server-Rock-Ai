@@ -12,6 +12,7 @@ const providerChoices = [
   { id: "ChatGPT", label: "ChatGPT sign-in", detail: "Use ChatGPT account access through its separate sign-in flow." },
   { id: "Custom", label: "Another cloud service", detail: "Connect any OpenAI-compatible HTTPS endpoint with its own API key." },
 ];
+const localProviders = new Set(["Ollama", "LM Studio", "AirLLM"]);
 
 type SettingsProps = {
   provider: string;
@@ -52,9 +53,9 @@ export function SettingsPage(props: SettingsProps) {
   const change = (key: string, value: string | boolean) => { setSaveState("idle"); props.onChange(key, value); };
   const save = async () => { if (saveState === "saving") return; setSaveState("saving"); setSaveState(await props.onSave() ? "saved" : "idle"); };
   const updateVoice = (key: "profileId" | "primaryModelId" | "lowResourceModelId" | "lowResourceMode" | "voiceOutputEnabled", value: string | boolean) => { saveVoiceSetting(key, value); setVoiceSettings(selectedVoiceSettings()); };
-  const selectedProvider = providerChoices.find((choice) => choice.id === props.provider) ?? { id: props.provider, label: props.provider || "Local models", detail: "This saved route uses a local endpoint." };
+  const selectedProvider = providerChoices.find((choice) => choice.id === props.provider) ?? { id: props.provider, label: props.provider || "Local models", detail: "This saved provider uses a compatibility route. Review its endpoint and key before sending data." };
   const visibleProviderChoices = providerChoices.some((choice) => choice.id === props.provider) ? providerChoices : [selectedProvider, ...providerChoices];
-  const localRoute = !["OpenAI API", "ChatGPT", "Custom"].includes(props.provider);
+  const localRoute = localProviders.has(props.provider);
   const cloudCredentialReady = props.credentialStorageAvailable && props.credentialConfigured;
 
   return <div className="feature-page settings-page">
@@ -62,7 +63,7 @@ export function SettingsPage(props: SettingsProps) {
     <Card className="settings-window">
       <aside className="settings-nav"><p className="section-kicker">SETTINGS</p><input className="settings-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search settings…" aria-label="Search settings" />{visibleCategories.map((category) => <button className={activeCategory === category ? "is-active" : ""} key={category} onClick={() => setActiveCategory(category)} type="button">{category}</button>)}{visibleCategories.length === 0 && <p className="settings-no-results">No categories match.</p>}</aside>
       <main className="settings-content">
-        <div className="settings-section-heading"><div><p className="section-kicker">{activeCategory.toUpperCase()}</p><h3>{activeCategory}</h3><p>{categoryDescription(activeCategory)}</p></div><StatusBadge tone={activeCategory === "Integrations" && !localRoute ? "warning" : "success"}>{activeCategory === "Integrations" && !localRoute ? "Needs setup" : "Available"}</StatusBadge></div>
+        <div className="settings-section-heading"><div><p className="section-kicker">{activeCategory.toUpperCase()}</p><h3>{activeCategory}</h3><p>{categoryDescription(activeCategory)}</p></div><StatusBadge tone={activeCategory === "Integrations" ? "warning" : "success"}>{activeCategory === "Integrations" ? "Some need setup" : "Available"}</StatusBadge></div>
 
         {activeCategory === "General" && <><div className="settings-callout"><strong>{selectedProvider.label}</strong><span>{selectedProvider.detail}</span></div><div className="settings-field"><label>How should Skai answer?<select value={props.provider} onChange={(event) => change("provider", event.target.value)}>{visibleProviderChoices.map((choice) => <option key={choice.id} value={choice.id}>{choice.label}</option>)}</select></label><label>Preferred model<select value={props.model} onChange={(event) => change("model", event.target.value)}>{props.models.length === 0 && <option value={props.model}>{props.model}</option>}{props.models.map((item) => <option key={item.model} value={item.model}>{item.model}</option>)}</select></label></div><p className="settings-help">Local models stay on this computer. Cloud routes work only after you choose an HTTPS endpoint, explicitly allow it, and save its key securely.</p></>}
         {activeCategory === "Appearance" && <><div className="settings-field"><label>Color theme<select value={props.themeMode} onChange={(event) => change("themeMode", event.target.value)}><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></label><label>Accent<select value={props.accentColor} onChange={(event) => change("accentColor", event.target.value)}><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="amber">Amber</option><option value="rose">Rose</option></select></label></div><div className="settings-field"><label>Interface density<select value={props.density} onChange={(event) => change("density", event.target.value)}><option value="compact">Compact</option><option value="comfortable">Comfortable</option><option value="spacious">Spacious</option></select></label><label>Backdrop<select value={props.backdrop} onChange={(event) => change("backdrop", event.target.value)}><option value="none">None</option><option value="deep-sea">Deep sea</option><option value="deep-space">Deep space</option></select></label></div><Toggle label="Reduced motion" detail="Minimize interface animations and decorative movement." checked={props.reduceMotion} onChange={(value) => change("reduceMotion", value)} /><Toggle label="Show Skai pet" detail="Keep the companion visible above the workspace." checked={props.petVisible} onChange={(value) => change("petVisible", value)} /><Toggle label="Let the pet walk around" detail="The pet wanders gently and pauses when you drag it." checked={props.petWander} onChange={(value) => change("petWander", value)} /></>}
@@ -93,3 +94,4 @@ function Toggle({ label, detail, checked, onChange }: { label: string; detail: s
 function Integration({ title, detail, status }: { title: string; detail: string; status: "Ready" | "Planned" }) {
   return <div className="settings-provider-row"><span><strong>{title}</strong><small>{detail}</small></span><StatusBadge tone={status === "Ready" ? "success" : "warning"}>{status}</StatusBadge></div>;
 }
+

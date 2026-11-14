@@ -79,6 +79,13 @@ export type DesktopScheduledTask = {
   outcome?: string | null;
 };
 
+export type ScheduledTaskDraft = {
+  prompt: string;
+  dueAt: string;
+  repeatEveryMinutes?: number | null;
+  workspaceMode?: "chat" | "coding-agent";
+};
+
 export type DesktopQueuedMessage = {
   index: number;
   text: string;

@@ -16,6 +16,7 @@ const env = {
   SRAI_SETTINGS_PATH: path.join(tempRoot, "settings.json"),
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
+  SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
 };
 const hostOutput = path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
 const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
@@ -81,7 +82,17 @@ async function run() {
   if (!tasks.ok || tasks.result.length !== 1 || tasks.result[0].title !== "Protocol smoke task" || tasks.result[0].instruction !== "Review the local task workflow.") throw new Error("tasks.plan persistence round-trip failed.");
   const rejectedEnvironment = await request("tasks.plan", { title: "Unsupported environment", instruction: "Must be rejected.", environment: "worktree" });
   if (rejectedEnvironment.ok || !rejectedEnvironment.error?.message.includes("Only the Local environment")) throw new Error("tasks.plan accepted an unsupported environment.");
-  console.log("Agent host replacement smoke passed: health, voice protocol, disposable conversation/settings persistence, local task planning, and direct host lifecycle.");
+  const scheduled = await request("scheduled.create", { prompt: "Run the local review", dueAt: new Date(Date.now() + 60_000).toISOString(), repeatEveryMinutes: 60 });
+  if (!scheduled.ok || scheduled.result?.status !== "scheduled") throw new Error("scheduled.create did not persist a scheduled run.");
+  const runNow = await request("scheduled.runNow", { id: scheduled.result.id });
+  if (!runNow.ok || runNow.result?.id !== scheduled.result.id) throw new Error("scheduled.runNow did not update the scheduled run.");
+  const paused = await request("scheduled.pause", { id: scheduled.result.id });
+  if (!paused.ok || paused.result?.status !== "paused") throw new Error("scheduled.pause did not pause the scheduled run.");
+  const resumed = await request("scheduled.resume", { id: scheduled.result.id });
+  if (!resumed.ok || resumed.result?.status !== "scheduled") throw new Error("scheduled.resume did not resume the scheduled run.");
+  const cancelled = await request("scheduled.cancel", { id: scheduled.result.id });
+  if (!cancelled.ok || cancelled.result?.status !== "cancelled") throw new Error("scheduled.cancel did not cancel the scheduled run.");
+  console.log("Agent host replacement smoke passed: health, voice protocol, disposable conversation/settings persistence, local task planning, scheduled automation lifecycle, and direct host lifecycle.");
 }
 
 async function stopHost() {

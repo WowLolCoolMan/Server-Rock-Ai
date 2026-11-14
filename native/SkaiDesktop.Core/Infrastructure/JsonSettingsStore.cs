@@ -40,6 +40,7 @@ public sealed class JsonSettingsStore
         settings.Endpoint ??= defaults.Endpoint;
         settings.Model ??= defaults.Model;
         settings.ModelProvider ??= defaults.ModelProvider;
+        settings.ModelProvider = NormalizeProviderName(settings.ModelProvider);
         if (!ProviderRoutePolicy.IsAllowed(settings.Endpoint) || (ProviderRoutePolicy.IsRemote(settings.Endpoint) && !settings.CloudRouteEnabled))
         {
             settings.Endpoint = defaults.Endpoint;
@@ -138,6 +139,16 @@ public sealed class JsonSettingsStore
         settings.WorkspaceDrafts ??= new(StringComparer.Ordinal);
         settings.SplitChatRatios ??= new(StringComparer.OrdinalIgnoreCase);
         return settings;
+    }
+
+    private static string NormalizeProviderName(string provider)
+    {
+        var trimmed = provider.Trim();
+        if (trimmed.Equals("OpenAI", StringComparison.OrdinalIgnoreCase)) return "OpenAI API";
+        if (trimmed.Equals("Another cloud service", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Custom endpoint", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Hosted compatible", StringComparison.OrdinalIgnoreCase)) return "Custom";
+        return trimmed;
     }
 
     private static string? NormalizeOptional(string? value, int maxLength)

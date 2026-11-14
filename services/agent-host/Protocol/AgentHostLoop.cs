@@ -55,7 +55,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -70,6 +70,11 @@ public static class AgentHostLoop
             "tasks.cancel" => TransitionTask(request, "cancel"),
             "tasks.retry" => TransitionTask(request, "retry"),
             "scheduled.list" => ListScheduledTasks(request),
+            "scheduled.create" => CreateScheduledTask(request),
+            "scheduled.pause" => TransitionScheduledTask(request, "pause"),
+            "scheduled.resume" => TransitionScheduledTask(request, "resume"),
+            "scheduled.cancel" => TransitionScheduledTask(request, "cancel"),
+            "scheduled.runNow" => TransitionScheduledTask(request, "runNow"),
             "conversations.list" => ListConversations(request),
             "conversations.search" => SearchConversations(request),
             "conversation.save" => SaveConversation(request),
@@ -442,7 +447,7 @@ public static class AgentHostLoop
 
     private static AgentResponse ListScheduledTasks(AgentRequest request)
     {
-        var tasks = new ScheduledTaskStore().Load()
+        var tasks = CreateScheduledTaskStore().Load()
             .OrderBy(task => task.DueAtUtc)
             .Select(task => new
             {
@@ -457,6 +462,48 @@ public static class AgentHostLoop
             .ToArray();
         return new(ProtocolVersion, request.Id, true, tasks);
     }
+
+    private static AgentResponse CreateScheduledTask(AgentRequest request)
+    {
+        var dueAtText = RequiredBoundedString(request, "dueAt", 128);
+        if (!DateTimeOffset.TryParse(dueAtText, out var dueAt))
+            throw new InvalidOperationException("dueAt must be a valid date and time.");
+        var repeat = OptionalInt(request, "repeatEveryMinutes");
+        var task = CreateScheduledTaskStore().Schedule(
+            RequiredBoundedString(request, "prompt", ScheduledTaskStore.MaxPromptCharacters),
+            dueAt.ToUniversalTime(),
+            OptionalString(request, "workspaceMode") ?? WorkspaceModes.Chat,
+            repeatEveryMinutes: repeat);
+        return ScheduledTaskResponse(request, task);
+    }
+
+    private static AgentResponse TransitionScheduledTask(AgentRequest request, string operation)
+    {
+        var store = CreateScheduledTaskStore();
+        var id = RequiredBoundedString(request, "id", 128);
+        switch (operation)
+        {
+            case "pause": store.Pause(id); break;
+            case "resume": store.Resume(id); break;
+            case "cancel": store.Cancel(id); break;
+            case "runNow": store.RunNow(id); break;
+            default: throw new InvalidOperationException("Unknown scheduled-task operation.");
+        }
+        var task = store.Load().Single(item => item.Id == id);
+        return ScheduledTaskResponse(request, task);
+    }
+
+    private static AgentResponse ScheduledTaskResponse(AgentRequest request, ScheduledTask task) =>
+        new(ProtocolVersion, request.Id, true, new
+        {
+            id = task.Id,
+            prompt = task.Prompt,
+            workspaceMode = task.WorkspaceMode,
+            dueAt = task.DueAtUtc,
+            repeatEveryMinutes = task.RepeatEveryMinutes,
+            status = task.Status,
+            outcome = task.Outcome,
+        });
 
     private static AgentResponse ListConversations(AgentRequest request)
     {
@@ -838,6 +885,9 @@ public static class AgentHostLoop
 
     private static JsonSettingsStore CreateSettingsStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_SETTINGS_PATH"));
+
+    private static ScheduledTaskStore CreateScheduledTaskStore() =>
+        new(Environment.GetEnvironmentVariable("SRAI_SCHEDULED_TASKS_PATH"));
 
     private static ProviderCredentialStore CreateCredentialStore() =>
         new(Environment.GetEnvironmentVariable("SRAI_PROVIDER_CREDENTIALS_PATH"), Environment.GetEnvironmentVariable("SRAI_SECRET_TOOL_PATH"));

@@ -1,4 +1,4 @@
-import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, TaskEnvironment } from "../../shared/contracts";
+import type { ChatAttachment, DesktopProject, DesktopProjectFile, DesktopQueuedMessage, DesktopScheduledTask, DesktopTask, ScheduledTaskDraft, TaskEnvironment } from "../../shared/contracts";
 import type { MemoryEntry, Message, Model, Route, ThemeMode } from "./types";
 import { ChatPage } from "../features/chat/ChatPage";
 import { CodingPage } from "../features/coding/CodingPage";
@@ -97,6 +97,8 @@ export type AppRouteActions = {
   onGenerateImage: () => void;
   onRetryWorkbench: () => void;
   onTransitionTask: (id: string, operation: "queue" | "cancel" | "retry") => void;
+  onScheduleTask: (draft: ScheduledTaskDraft) => Promise<boolean>;
+  onTransitionScheduledTask: (id: string, operation: "pause" | "resume" | "cancel" | "runNow") => Promise<boolean>;
   onRetryMemory: () => void;
   onSearchMemory: (query: string) => void;
   onSaveMemory: (content: string, scope: string, tags: string, id?: string) => Promise<boolean>;
@@ -114,7 +116,8 @@ export function AppRouteView({ state, actions }: { state: AppRouteState; actions
   if (route === "models") return <ModelsPage models={state.models} onDiscover={actions.onDiscoverModels} onSelect={actions.onSelectModel} />;
   if (route === "images") return <ImagesPage endpoint={state.imageEndpoint} prompt={state.imagePrompt} workflow={state.imageWorkflow} busy={state.imageBusy} images={state.generatedImages} onChange={actions.onImageChange} onGenerate={actions.onGenerateImage} />;
   if (route === "marketplace") return <MarketplacePage />;
-  if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} />;
+  if (route === "workbench") return <WorkbenchPage tasks={state.tasks} scheduled={state.scheduledTasks} busyTask={state.taskBusy} loading={state.tasksLoading} error={state.tasksError} onRetry={actions.onRetryWorkbench} onTransition={actions.onTransitionTask} onSchedule={actions.onScheduleTask} onScheduledTransition={actions.onTransitionScheduledTask} />;
   if (route === "memory") return <MemoryPage entries={state.memoryEntries} busy={state.memoryBusy} loading={state.memoryLoading} error={state.memoryError} onRetry={actions.onRetryMemory} onSearch={actions.onSearchMemory} onSave={actions.onSaveMemory} onToggle={actions.onToggleMemory} onRemove={actions.onRemoveMemory} onExport={actions.onExportMemory} />;
   return <TerminalPage projects={state.projects} initialProjectId={state.selectedProject?.id} busy={state.terminalBusy} output={state.terminalOutput} exitCode={state.terminalExitCode} onRun={actions.onRunProjectCommand} onOpenCoding={() => actions.onNavigate("coding")} />;
 }
+

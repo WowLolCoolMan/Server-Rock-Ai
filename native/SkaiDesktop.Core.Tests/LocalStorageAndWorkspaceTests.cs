@@ -63,6 +63,10 @@ internal static class LocalStorageAndWorkspaceTests
             var migratedSettings = new JsonSettingsStore(legacyRemoteSettingsPath).Load();
             Check(migratedSettings.Endpoint == "http://localhost:11434/v1" && migratedSettings.ModelProvider == "Ollama" && migratedSettings.RequireLocalModelEndpoints,
                 "legacy hosted settings are reduced to the local-only default before runtime use");
+            var legacyProviderPath = Path.Combine(settingsDirectory, "legacy-provider-settings.json");
+            File.WriteAllText(legacyProviderPath, "{\"endpoint\":\"http://localhost:11434/v1\",\"modelProvider\":\"Custom endpoint\"}");
+            var normalizedProvider = new JsonSettingsStore(legacyProviderPath).Load();
+            Check(normalizedProvider.ModelProvider == "Custom", "legacy provider labels normalize to the current cloud provider choice");
 
             var conversationsPath = Path.Combine(settingsDirectory, "conversations.json");
             var conversationStore = new ConversationStore(conversationsPath);

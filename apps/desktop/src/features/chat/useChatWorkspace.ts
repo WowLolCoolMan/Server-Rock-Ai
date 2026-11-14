@@ -146,3 +146,4 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
 
   return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
+
