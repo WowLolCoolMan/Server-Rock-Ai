@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
+import type { DesktopGitStatus, DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
 import type { AgentRequest } from "../../services/agentClient";
 
 type CodingWorkspaceOptions = {
@@ -23,6 +23,8 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [terminalBusy, setTerminalBusy] = useState(false);
   const [terminalOutput, setTerminalOutput] = useState<string | null>(null);
   const [terminalExitCode, setTerminalExitCode] = useState<number | null>(null);
+  const [gitStatus, setGitStatus] = useState<DesktopGitStatus | null>(null);
+  const [gitBusy, setGitBusy] = useState(false);
 
   useEffect(() => {
     if (connection !== "ready") return;
@@ -50,13 +52,24 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
 
   const selectProject = async (project: DesktopProject) => {
     localStorage.setItem("skai.selectedProject", project.id);
-    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null);
+    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null); setGitStatus(null);
     const response = await request("project.files", { id: project.id });
     if (!response.ok) { onError(response.error?.message ?? "Project browser failed."); return; }
     const result = response.result as { files: DesktopProjectFile[]; protectedFilesSkipped: number; hitEntryLimit: boolean };
     setProjectFiles(result.files ?? []);
     setFileSummary(`${result.files.length} readable files · ${result.protectedFilesSkipped} protected names hidden${result.hitEntryLimit ? " · entry limit reached" : ""}`);
+    await refreshGitStatus(project.id);
     onNavigate("coding");
+  };
+
+  const refreshGitStatus = async (projectId = selectedProject?.id) => {
+    if (!projectId || gitBusy) return;
+    setGitBusy(true);
+    const response = await request("project.git.status", { id: projectId });
+    setGitBusy(false);
+    if (!response.ok) { setGitStatus(null); onError(response.error?.message ?? "Git status could not be loaded."); return; }
+    setGitStatus(response.result as DesktopGitStatus);
+    onError(null);
   };
 
   useEffect(() => {
@@ -107,5 +120,5 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalExitCode(result.exitCode);
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal };
+  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable: Boolean(fileUndoId), terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal, refreshGitStatus };
 }

@@ -22,6 +22,11 @@ process interruption into an explicit blocked state. It never silently retries
 the model or releases a retained worktree; the user must review and make a
 new retry decision.
 
+Coding Workspace now reads the selected project's local Git branch, changed
+paths, ahead/behind counts, and conflict state through a dedicated host method.
+The UI exposes refreshable status and a bounded change list, while clearly
+labeling stage/commit/push as not yet connected.
+
 ## Current slice — Packaged appearance acceptance
 
 The packaged Electron acceptance harness now drives the real Appearance

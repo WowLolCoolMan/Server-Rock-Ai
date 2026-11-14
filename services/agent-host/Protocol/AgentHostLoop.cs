@@ -61,7 +61,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
@@ -70,6 +70,7 @@ public static class AgentHostLoop
             "project.file.write" => WriteProjectFile(request),
             "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
+            "project.git.status" => GetProjectGitStatusAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -388,6 +389,25 @@ public static class AgentHostLoop
             timedOut = result.TimedOut,
             outputTruncated = result.OutputTruncated,
             workingDirectory = result.WorkingDirectory,
+        });
+    }
+
+    private static async Task<AgentResponse> GetProjectGitStatusAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault()
+            ?? throw new InvalidOperationException("Select a project folder before reading Git status.");
+        var status = await new GitHubWorkspaceService().GetLocalStatusAsync(root, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            branch = status.Branch,
+            repository = status.Repository,
+            commitsAhead = status.CommitsAhead,
+            commitsBehind = status.CommitsBehind,
+            hasConflicts = GitHubWorkspaceService.HasConflicts(status.Changes),
+            changes = status.Changes.Select(change => new { status = change.Status, path = change.Path, originalPath = change.OriginalPath }).ToArray(),
         });
     }
 

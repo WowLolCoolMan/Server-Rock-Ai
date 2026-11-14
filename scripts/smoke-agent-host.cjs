@@ -6,7 +6,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
+const { spawn, spawnSync } = require("node:child_process");
 const readline = require("node:readline");
 
 const root = path.resolve(__dirname, "..");
@@ -17,7 +17,9 @@ const env = {
   SRAI_CONVERSATIONS_PATH: path.join(tempRoot, "conversations.json"),
   SRAI_TASKS_PATH: path.join(tempRoot, "agent-tasks.json"),
   SRAI_SCHEDULED_TASKS_PATH: path.join(tempRoot, "scheduled-tasks.json"),
+  SRAI_PROJECTS_PATH: path.join(tempRoot, "projects.json"),
 };
+spawnSync("git", ["init", "--quiet", tempRoot], { cwd: tempRoot, windowsHide: true });
 const interruptedTaskId = "interrupted-smoke-task";
 fs.writeFileSync(env.SRAI_TASKS_PATH, JSON.stringify([{
   id: interruptedTaskId,
@@ -74,6 +76,11 @@ async function run() {
   const interrupted = recovered.result?.find(task => task.id === interruptedTaskId);
   if (!recovered.ok || interrupted?.status !== "blocked" || !interrupted.resultSummary?.includes("interrupted"))
     throw new Error("Agent Host did not reconcile an interrupted task after restart.");
+  const project = await request("project.save", { name: "Git status smoke", folderPaths: [tempRoot] });
+  if (!project.ok || typeof project.result?.id !== "string") throw new Error("project.save did not create the Git status smoke project.");
+  const gitStatus = await request("project.git.status", { id: project.result.id });
+  if (!gitStatus.ok || gitStatus.result?.repository !== "local repository" || typeof gitStatus.result?.branch !== "string" || !Array.isArray(gitStatus.result?.changes))
+    throw new Error("project.git.status did not return bounded local Git state.");
   const voices = await request("voice.models");
   if (!voices.ok || !Array.isArray(voices.result?.models) || !voices.result.models.some(model => model.id === "os-native" && model.installed))
     throw new Error("voice.models did not advertise the installed OS-native voice engine.");

@@ -11513,6 +11513,39 @@ Evidence:
 Remaining: add verified tool/file execution and recovery boundaries, then
 continue through the remaining product gaps and overflow acceptance matrix.
 
+## Slice 314 — Surface truthful local Git state in Coding Workspace
+
+Status: `implemented_and_smoke_verified`
+
+Coding Workspace now requests local Git status through the isolated Agent Host
+boundary. It shows the current branch, changed-file count, ahead/behind state,
+conflicts, and a bounded list of changed paths. Repositories do not need a
+GitHub origin or credentials for this read-only inspection.
+
+The UI explicitly says that stage/commit/push review is still not connected;
+the status panel does not fabricate source-control actions.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `apps/desktop/src/features/coding/useCodingWorkspace.ts`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-agent-host.cjs`
+- `scripts/audit-electron-runtime.cjs`
+
+Evidence: desktop typecheck, Agent Host build, syntax checks, and Agent Host
+smoke all pass, including a disposable local Git repository.
+
+Remaining: implement reviewed diff selection and stage/commit/push actions
+without weakening protected-path or remote-state safeguards.
+
 ## Slice 313 — Reconcile interrupted local tasks on host restart
 
 Status: `implemented_and_smoke_verified`

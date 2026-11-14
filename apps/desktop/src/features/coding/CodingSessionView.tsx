@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
+import type { DesktopGitStatus, DesktopProject, DesktopProjectFile, DesktopTask, TaskEnvironment } from "../../../shared/contracts";
 import { Button, Card, EmptyState } from "../../components/ui/Primitives";
 import { EnvironmentPicker } from "../../components/ui/EnvironmentPicker";
 import { NavIcon } from "../../components/ui/NavIcon";
@@ -46,6 +46,8 @@ type CodingSessionViewProps = {
   terminalBusy: boolean;
   terminalOutput: string | null;
   terminalExitCode: number | null;
+  gitStatus: DesktopGitStatus | null;
+  gitBusy: boolean;
   onOpenProject: (project: DesktopProject) => void;
   onOpenFile: (relativePath: string) => void;
   onCloseFile: () => void;
@@ -53,11 +55,12 @@ type CodingSessionViewProps = {
   onSaveFile: () => void;
   onUndoFile: () => void;
   onRunTerminal: (projectId: string, command: string, cwd: string) => void;
+  onRefreshGitStatus: () => void;
   onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>;
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
+export function CodingSessionView({ projects, selectedProject, tasks, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, fileUndoAvailable, terminalBusy, terminalOutput, terminalExitCode, gitStatus, gitBusy, onRefreshGitStatus, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingSessionViewProps) {
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [fileQuery, setFileQuery] = useState("");
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -167,10 +170,11 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
   };
 
   return <>
-    <div className="coding-project-context" aria-label="Active coding project"><div><p className="section-kicker">ACTIVE PROJECT</p><strong>{selectedProject.name}</strong><span>{selectedProject.folderPaths.length} connected folder{selectedProject.folderPaths.length === 1 ? "" : "s"} · local files only</span></div><label><span className="sr-only">Switch coding project</span><select value={selectedProject.id} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); if (project) onOpenProject(project); }} aria-label="Switch coding project">{projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label></div>
+    <div className="coding-project-context" aria-label="Active coding project"><div><p className="section-kicker">ACTIVE PROJECT</p><strong>{selectedProject.name}</strong><span>{selectedProject.folderPaths.length} connected folder{selectedProject.folderPaths.length === 1 ? "" : "s"} · local files only</span></div><div className="coding-project-context-actions"><div className={`git-summary${gitStatus?.hasConflicts ? " has-conflicts" : ""}`} aria-live="polite"><strong>{gitStatus ? gitStatus.branch : "Git status unavailable"}</strong><span>{gitStatus ? `${gitStatus.changes.length} change${gitStatus.changes.length === 1 ? "" : "s"}${gitStatus.hasConflicts ? " · conflicts" : ""}` : "Select a Git repository to inspect changes"}</span></div><Button variant="ghost" disabled={gitBusy} onClick={onRefreshGitStatus}>{gitBusy ? "Checking…" : "Refresh Git"}</Button><label><span className="sr-only">Switch coding project</span><select value={selectedProject.id} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); if (project) onOpenProject(project); }} aria-label="Switch coding project">{projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label></div></div>
     <div className="coding-session-grid"><Card className="project-browser-card coding-project-browser">
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>Files &amp; changes</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
+      {gitStatus && <div className={`git-change-summary${gitStatus.hasConflicts ? " has-conflicts" : ""}`} aria-label="Local Git changes"><div><p className="section-kicker">LOCAL GIT REVIEW</p><strong>{gitStatus.changes.length ? `${gitStatus.changes.length} changed file${gitStatus.changes.length === 1 ? "" : "s"}` : "Working tree clean"}</strong><span>{gitStatus.commitsAhead} ahead · {gitStatus.commitsBehind} behind · {gitStatus.repository}</span></div>{gitStatus.changes.length > 0 && <ul>{gitStatus.changes.slice(0, 8).map((change) => <li key={`${change.status}-${change.path}`}><b>{change.status}</b><span>{change.path}</span></li>)}</ul>}{gitStatus.changes.length > 8 && <small>Showing the first 8 changes. Full staging and commit review is not connected yet.</small>}{gitStatus.hasConflicts && <small role="alert">Conflicts need review before any commit workflow can proceed.</small>}</div>}
       <div className={`task-composer coding-task-composer ${taskComposerOpen ? "is-open" : ""}`}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>{taskComposerOpen ? "Write the outcome you want, then review it in Agent Workbench before anything runs." : "Draft a reviewed local task without leaving this project."}</p></div><span className="task-composer-badge">Local only</span><Button variant="secondary" type="button" aria-expanded={taskComposerOpen} aria-controls="coding-task-brief" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Hide brief" : "Plan task"}</Button></div>
         {taskComposerOpen && <form id="coding-task-brief" className="task-composer-form" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
