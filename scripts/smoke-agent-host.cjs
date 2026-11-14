@@ -6,7 +6,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
+const { spawn, execFileSync } = require("node:child_process");
 const readline = require("node:readline");
 
 const root = path.resolve(__dirname, "..");
@@ -25,6 +25,7 @@ fs.mkdirSync(skillSource, { recursive: true });
 fs.writeFileSync(path.join(skillSource, "skill.json"), JSON.stringify({ id: "review-skill", name: "Review skill", version: "1.0.0", publisher: "Smoke publisher", requiredPermissions: ["project.read"] }));
 fs.writeFileSync(path.join(skillSource, "SKILL.md"), "# Review\n\nRead-only review instructions.");
 fs.writeFileSync(path.join(tempRoot, "task-context.md"), "Bounded task context fixture.\n");
+execFileSync("git", ["init", "-q", tempRoot], { cwd: root, stdio: "ignore", windowsHide: true });
 const hostOutput = process.env.SRAI_AGENT_HOST_OUTPUT || path.join(root, "services", "agent-host", "bin", "Debug", "net10.0");
 const hostProgram = process.platform === "win32" ? path.join(hostOutput, "ServerRock.AgentHost.exe") : "dotnet";
 const hostArgs = process.platform === "win32" ? ["--stdio"] : [path.join(hostOutput, "ServerRock.AgentHost.dll"), "--stdio"];
@@ -59,7 +60,7 @@ function request(method, params) {
 
 async function run() {
   const health = await request("runtime.health");
-  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.models.download") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("marketplace.skills.inspect") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.installed.inspect") || !health.result?.capabilities?.includes("skills.installed.remove") || !health.result?.capabilities?.includes("skills.rollback") || !health.result?.capabilities?.includes("tasks.approve") || !health.result?.capabilities?.includes("tasks.deny") || !health.result?.capabilities?.includes("tasks.execute"))
+  if (!health.ok || !health.result?.capabilities?.includes("conversation.save") || !health.result?.capabilities?.includes("settings.save") || !health.result?.capabilities?.includes("credentials.status") || !health.result?.capabilities?.includes("voice.speak") || !health.result?.capabilities?.includes("voice.speak.cloud") || !health.result?.capabilities?.includes("marketplace.models.search") || !health.result?.capabilities?.includes("marketplace.models.download") || !health.result?.capabilities?.includes("marketplace.skills.search") || !health.result?.capabilities?.includes("marketplace.skills.inspect") || !health.result?.capabilities?.includes("skills.local.preview") || !health.result?.capabilities?.includes("skills.local.install") || !health.result?.capabilities?.includes("skills.enabled.set") || !health.result?.capabilities?.includes("skills.installed.inspect") || !health.result?.capabilities?.includes("skills.installed.remove") || !health.result?.capabilities?.includes("skills.rollback") || !health.result?.capabilities?.includes("project.git.status") || !health.result?.capabilities?.includes("tasks.approve") || !health.result?.capabilities?.includes("tasks.deny") || !health.result?.capabilities?.includes("tasks.execute"))
     throw new Error("runtime.health did not advertise the replacement persistence capabilities.");
   const tools = await request("marketplace.tools.list");
   if (!tools.ok || !Array.isArray(tools.result) || !tools.result.some(item => item.id === "github" && item.builtIn === true)) throw new Error("marketplace.tools.list did not return the built-in tool catalog.");
@@ -121,6 +122,8 @@ async function run() {
   if (!restoredSettings.ok) throw new Error("settings.save could not restore the disposable local profile.");
   const project = await request("project.save", { name: "Task context fixture", instructions: "Use the fixture only as read-only reference.", folderPaths: [tempRoot] });
   if (!project.ok || typeof project.result?.id !== "string") throw new Error("project.save did not return a disposable project identity.");
+  const gitStatus = await request("project.git.status", { id: project.result.id });
+  if (!gitStatus.ok || !Array.isArray(gitStatus.result?.changes) || !gitStatus.result.changes.some(change => change.path === "task-context.md")) throw new Error("project.git.status did not return the disposable repository state.");
   const planned = await request("tasks.plan", { title: "Protocol smoke task", instruction: "Review the local task workflow.", environment: "local", projectId: project.result.id });
   if (!planned.ok || planned.result?.status !== "awaiting_approval") throw new Error("tasks.plan did not create an approval-gated local task.");
   const tasks = await request("tasks.list");

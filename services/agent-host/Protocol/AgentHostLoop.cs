@@ -58,7 +58,7 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
+                ["runtime.health", "models.list", "marketplace.models.search", "marketplace.models.download", "marketplace.skills.search", "marketplace.skills.inspect", "marketplace.tools.list", "marketplace.mcp.list", "skills.installed.list", "skills.installed.inspect", "skills.installed.remove", "skills.local.preview", "skills.local.install", "skills.enabled.set", "skills.rollback", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.git.status", "tasks.list", "tasks.plan", "tasks.queue", "tasks.approve", "tasks.deny", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "credentials.status", "credentials.save", "credentials.clear", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.speak.cloud", "voice.stop"])),
             "models.list" => ListModels(request),
             "marketplace.models.search" => SearchMarketplaceModels(request).GetAwaiter().GetResult(),
             "marketplace.models.download" => DownloadMarketplaceModelAsync(request).GetAwaiter().GetResult(),
@@ -80,6 +80,7 @@ public static class AgentHostLoop
             "project.file.write" => WriteProjectFile(request),
             "project.file.undo" => UndoProjectFile(request),
             "project.command.run" => RunProjectCommandAsync(request).GetAwaiter().GetResult(),
+            "project.git.status" => ReadProjectGitStatusAsync(request).GetAwaiter().GetResult(),
             "tasks.list" => ListTasks(request),
             "tasks.plan" => PlanTask(request),
             "tasks.queue" => TransitionTask(request, "queue"),
@@ -944,6 +945,32 @@ public static class AgentHostLoop
             timedOut = result.TimedOut,
             outputTruncated = result.OutputTruncated,
             workingDirectory = result.WorkingDirectory,
+        });
+    }
+
+    private static async Task<AgentResponse> ReadProjectGitStatusAsync(AgentRequest request)
+    {
+        var id = RequiredBoundedString(request, "id", 128);
+        var project = CreateProjectStore().Load().SingleOrDefault(item => item.Id == id)
+            ?? throw new KeyNotFoundException("The project does not exist.");
+        var root = project.FolderPaths.FirstOrDefault()
+            ?? throw new InvalidOperationException("Select a project folder before reading Git status.");
+        var status = await new GitHubWorkspaceService().GetLocalStatusAsync(root).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new
+        {
+            branch = status.Branch,
+            repository = status.Repository,
+            commitsAhead = status.CommitsAhead,
+            commitsBehind = status.CommitsBehind,
+            hasConflicts = GitHubWorkspaceService.HasConflicts(status.Changes),
+            changes = status.Changes.Select(change => new
+            {
+                status = change.Status,
+                path = change.Path,
+                originalPath = change.OriginalPath,
+                protectedPath = GitHubWorkspaceService.FindUnsafeChangePaths([change]).Count > 0,
+                conflict = GitHubWorkspaceService.IsConflictStatus(change.Status),
+            }).ToArray(),
         });
     }
 

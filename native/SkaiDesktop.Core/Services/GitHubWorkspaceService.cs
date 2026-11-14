@@ -58,6 +58,16 @@ public sealed class GitHubWorkspaceService
         return ParseStatus(statusResult.StandardOutput, repository);
     }
 
+    /// <summary>Reads local Git state without requiring a GitHub origin or credentials.</summary>
+    public async Task<GitWorkspaceStatus> GetLocalStatusAsync(string repositoryPath, CancellationToken cancellationToken = default)
+    {
+        var root = await GetRepositoryRootAsync(repositoryPath, cancellationToken).ConfigureAwait(false);
+        var statusResult = await RunGitAsync(root, ["status", "--porcelain=v2", "--branch", "--untracked-files=all"], null,
+            TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+        EnsureSuccess(statusResult, "Git could not read the local workspace status.");
+        return ParseStatus(statusResult.StandardOutput, "local repository");
+    }
+
     public async Task<string> CommitSelectedAsync(string repositoryPath, IEnumerable<GitWorkspaceFileChange> selectedChanges, string message,
         string accessToken, CancellationToken cancellationToken = default)
     {

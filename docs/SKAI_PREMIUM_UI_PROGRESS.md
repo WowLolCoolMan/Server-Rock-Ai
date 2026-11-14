@@ -609,3 +609,33 @@ Evidence:
 
 Remaining: task execution still produces a read-only model plan/result; reviewed
 worktree-backed file edits, terminal actions, and process isolation remain open.
+
+## Slice — Surface local Git review state in Coding Workspace
+
+Status: `implemented_host_renderer_smoke_verified`
+
+The Electron Coding Workspace now shows the selected project's local Git branch,
+ahead/behind counts, changed paths, conflict signals, and protected-path signals
+through a read-only host contract. The status view does not require a GitHub
+origin or credentials and does not add commit, push, checkout, or remote mutation
+operations. Non-Git folders remain honest with an unavailable-state message.
+
+Changed files:
+
+- `native/SkaiDesktop.Core/Services/GitHubWorkspaceService.cs`
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `apps/desktop/shared/contracts.ts`
+- `apps/desktop/src/features/coding/useCodingWorkspace.ts`
+- `apps/desktop/src/features/coding/CodingPage.tsx`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/styles.css`
+- `scripts/smoke-agent-host.cjs`
+
+Evidence:
+
+- `project.git.status` is advertised by `runtime.health` and covered by the disposable Agent Host smoke repository.
+- Renderer typecheck, production build, host build, and smoke verification remain required before commit.
+
+Remaining: reviewed Git diff selection, commit/push approval, and worktree-backed
+agent edits remain separate guarded migration slices.

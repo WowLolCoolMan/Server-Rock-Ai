@@ -36,6 +36,23 @@ export type DesktopProjectFile = {
   bytes: number;
 };
 
+export type DesktopGitChange = {
+  status: string;
+  path: string;
+  originalPath?: string | null;
+  protectedPath: boolean;
+  conflict: boolean;
+};
+
+export type DesktopGitStatus = {
+  branch: string;
+  repository: string;
+  commitsAhead: number;
+  commitsBehind: number;
+  hasConflicts: boolean;
+  changes: DesktopGitChange[];
+};
+
 export type DesktopConversation = {
   id: string;
   title: string;

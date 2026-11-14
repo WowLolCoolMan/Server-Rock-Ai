@@ -1,4 +1,4 @@
-import type { DesktopProject, DesktopProjectFile, TaskEnvironment } from "../../../shared/contracts";
+import type { DesktopGitStatus, DesktopProject, DesktopProjectFile, TaskEnvironment } from "../../../shared/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, PageHeader } from "../../components/ui/Primitives";
 import { ModalDialog } from "../../components/ui/ModalDialog";
@@ -27,6 +27,7 @@ type CodingPageProps = {
   projects: DesktopProject[];
   selectedProject: DesktopProject | null;
   projectFiles: DesktopProjectFile[];
+  gitStatus: DesktopGitStatus | null;
   selectedFile: string | null;
   fileDraft: string;
   fileOriginal: string;
@@ -38,6 +39,7 @@ type CodingPageProps = {
   onPickFolder: () => Promise<string | null>;
   onSaveProject: (name: string, instructions: string, folders: string[]) => Promise<boolean>;
   onOpenProject: (project: DesktopProject) => void;
+  onRefreshGitStatus: () => void;
   onOpenFile: (relativePath: string) => void;
   onCloseFile: () => void;
   onDraftChange: (value: string) => void;
@@ -48,7 +50,7 @@ type CodingPageProps = {
   onNavigate: (route: "terminal" | "workbench") => void;
 };
 
-export function CodingPage({ projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingPageProps) {
+export function CodingPage({ projects, selectedProject, projectFiles, gitStatus, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, onPickFolder, onSaveProject, onOpenProject, onRefreshGitStatus, onOpenFile, onCloseFile, onDraftChange, onSaveFile, onUndoFile, onRunTerminal, onPlanTask, onNavigate }: CodingPageProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -150,6 +152,7 @@ export function CodingPage({ projects, selectedProject, projectFiles, selectedFi
     </div>
     {selectedProject && <Card className="project-browser-card coding-project-browser">
       <div className="panel-heading"><div><p className="section-kicker">PROJECT FILES</p><h3>{selectedProject.name}</h3></div><div className="project-browser-actions"><span className="panel-count">{projectFiles.length}</span><Button variant={terminalOpen ? "secondary" : "ghost"} aria-pressed={terminalOpen} onClick={() => setTerminalOpen((open) => !open)}>{terminalOpen ? "Hide terminal" : "Dock terminal"}</Button><Button variant="ghost" onClick={() => onNavigate("terminal")}>Open terminal</Button><Button variant="ghost" onClick={() => onNavigate("workbench")}>Review tasks</Button></div></div>
+      <div className="coding-git-status" aria-label="Git workspace status">{gitStatus ? <><div className="coding-git-status-heading"><div><span className="section-kicker">GIT REVIEW</span><strong>{gitStatus.branch}</strong><small>{gitStatus.repository} · {gitStatus.changes.length} changed {gitStatus.changes.length === 1 ? "path" : "paths"}{gitStatus.commitsAhead ? ` · ${gitStatus.commitsAhead} ahead` : ""}{gitStatus.commitsBehind ? ` · ${gitStatus.commitsBehind} behind` : ""}</small></div><div className="coding-git-status-actions"><span className={`coding-git-signal ${gitStatus.hasConflicts ? "is-warning" : gitStatus.changes.length ? "is-changed" : "is-clean"}`}>{gitStatus.hasConflicts ? "Conflicts" : gitStatus.changes.length ? "Changes" : "Clean"}</span><Button variant="ghost" onClick={onRefreshGitStatus}>Refresh</Button></div></div>{gitStatus.changes.length > 0 && <div className="coding-git-changes">{gitStatus.changes.slice(0, 6).map((change) => <span key={`${change.status}-${change.path}`} className={change.conflict ? "is-conflict" : change.protectedPath ? "is-protected" : ""}><b>{change.status}</b>{change.path}{change.originalPath ? ` ← ${change.originalPath}` : ""}</span>)}{gitStatus.changes.length > 6 && <small>+{gitStatus.changes.length - 6} more paths</small>}</div>}</> : <div className="coding-git-status-heading"><div><span className="section-kicker">GIT REVIEW</span><strong>Repository status unavailable</strong><small>This project folder is not currently recognized as a local Git repository, or Git is not installed.</small></div><Button variant="ghost" onClick={onRefreshGitStatus}>Check Git</Button></div>}</div>
       {fileSummary && <p className="file-summary">{fileSummary}</p>}
       <form className="task-composer" onSubmit={(event) => { event.preventDefault(); void planTask(); }}>
         <div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan the next change</h3><p>Write the outcome you want, then review it in Agent Workbench before anything runs.</p></div><span className="task-composer-badge">Local only</span></div>

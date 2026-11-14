@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
+import type { DesktopGitStatus, DesktopProject, DesktopProjectFile } from "../../../shared/contracts";
 import type { AgentRequest } from "../../services/agentClient";
 
 type CodingWorkspaceOptions = {
@@ -13,6 +13,7 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
   const [projects, setProjects] = useState<DesktopProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<DesktopProject | null>(null);
   const [projectFiles, setProjectFiles] = useState<DesktopProjectFile[]>([]);
+  const [gitStatus, setGitStatus] = useState<DesktopGitStatus | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileDraft, setFileDraft] = useState("");
   const [fileOriginal, setFileOriginal] = useState("");
@@ -50,13 +51,21 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
 
   const selectProject = async (project: DesktopProject) => {
     localStorage.setItem("skai.selectedProject", project.id);
-    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null);
+    setSelectedProject(project); setSelectedFile(null); setFileDraft(""); setFileOriginal(""); setFileHash(null); setFileUndoId(null); setGitStatus(null);
     const response = await request("project.files", { id: project.id });
     if (!response.ok) { onError(response.error?.message ?? "Project browser failed."); return; }
     const result = response.result as { files: DesktopProjectFile[]; protectedFilesSkipped: number; hitEntryLimit: boolean };
     setProjectFiles(result.files ?? []);
     setFileSummary(`${result.files.length} readable files · ${result.protectedFilesSkipped} protected names hidden${result.hitEntryLimit ? " · entry limit reached" : ""}`);
+    await refreshGitStatus(project.id);
     onNavigate("coding");
+  };
+
+  const refreshGitStatus = async (projectId = selectedProject?.id) => {
+    if (!projectId) { setGitStatus(null); return; }
+    const response = await request("project.git.status", { id: projectId });
+    if (!response.ok) { setGitStatus(null); return; }
+    setGitStatus(response.result as DesktopGitStatus);
   };
 
   const openProjectFile = async (relativePath: string) => {
@@ -100,5 +109,5 @@ export function useCodingWorkspace({ request, connection, onError, onNavigate }:
     setTerminalExitCode(result.exitCode);
   };
 
-  return { projects, selectedProject, projectFiles, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, pickProjectFolder, saveProject, selectProject, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal };
+  return { projects, selectedProject, projectFiles, gitStatus, selectedFile, fileDraft, fileOriginal, fileSummary, fileBusy, terminalBusy, terminalOutput, terminalExitCode, pickProjectFolder, saveProject, selectProject, refreshGitStatus, openProjectFile, closeProjectFile, setFileDraft, saveProjectFile, undoProjectFile, runTerminal };
 }
