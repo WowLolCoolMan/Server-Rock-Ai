@@ -102,8 +102,9 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   const selectedModels = models.filter(model => model.kind === (selected.title === "Voices & TTS" ? "voice" : selected.title === "Image Studio" ? "image" : "llm"));
   const sizeLabel = (bytes: number) => bytes > 0 ? `${(bytes / 1073741824).toFixed(1)} GB` : "size not published";
 
-  return <div className="feature-page">
-    <PageHeader eyebrow="MARKETPLACE" title="Extend Skai" description="Discover Hugging Face models, GitHub skills, built-in tools, and permission-aware MCP server sources." actions={<Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Refreshing…" : "↻ Refresh catalogs"}</Button>} />
+  return <div className="feature-page marketplace-v4">
+    <PageHeader eyebrow="MARKETPLACE / DISCOVER" title="Explore models, voices, skills & tools" description="Live Hugging Face discovery, curated GitHub skills, and local-first integrations for a stronger Skai workspace." actions={<><StatusBadge tone={catalogError ? "warning" : "success"}>{catalogBusy ? "Polling catalogs" : catalogError ? "Review catalog state" : "Catalogs ready"}</StatusBadge><Button variant="secondary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Polling…" : "↻ Refresh catalogs"}</Button></>} />
+    <section className="marketplace-featured" aria-label="Featured marketplace collection"><div><p className="section-kicker">FEATURED COLLECTION</p><h3>Build a stronger local agent workflow</h3><p>Bring together a model that fits your hardware, a voice that fits your work, and skills you can inspect before they touch the workspace.</p></div><div className="marketplace-featured-meta"><StatusBadge tone="success">Local-first</StatusBadge><span>Hugging Face · GitHub · host-backed</span></div></section>
     <Card className="marketplace-browser">
       <div className="marketplace-toolbar">
         <div className="marketplace-search-row">
