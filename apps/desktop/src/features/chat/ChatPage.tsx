@@ -11,7 +11,9 @@ const SKAI_WOLF_ICON = new URL("../../../../../assets/branding/skaiwolficon.png"
 type ChatPageProps = { provider: string; model: string; models: Model[]; messages: Message[]; busy: boolean; taskBusy: string | null; attachments: ChatAttachment[]; queuedMessages: DesktopQueuedMessage[]; conversationId: string | null; conversationTitle: string; pinned: boolean; archived: boolean; onSend: (text: string, attachments: ChatAttachment[]) => void; onQueue: (text: string, attachments: ChatAttachment[]) => void; onRemoveQueued: (index: number) => void; onAttach: () => void; onRemoveAttachment: (index: number) => void; onModelChange: (model: string) => void; onNavigate: (route: "coding" | "images" | "marketplace" | "workbench") => void; onPlanTask: (title: string, instruction: string, environment: TaskEnvironment) => Promise<boolean>; onExport: () => void; onFork: () => void; onForkFromMessage: (index: number) => void; onRetryMessage: (index: number) => void; onTogglePinned: () => void; onArchive: () => void; onRenameConversation: (title: string) => Promise<boolean> };
 
 export function ChatPage({ provider, model, models, messages, busy, taskBusy, attachments, queuedMessages, conversationId, conversationTitle, pinned, archived, onSend, onQueue, onRemoveQueued, onAttach, onRemoveAttachment, onModelChange, onNavigate, onPlanTask, onExport, onFork, onForkFromMessage, onRetryMessage, onTogglePinned, onArchive, onRenameConversation }: ChatPageProps) {
-  const [draft, setDraft] = useState(() => localStorage.getItem("skai.chat.draft") ?? "");
+  const draftStorageKey = conversationId ? `skai.chat.draft.${conversationId}` : "skai.chat.draft.new";
+  const skipDraftPersistRef = useRef(false);
+  const [draft, setDraft] = useState(() => localStorage.getItem(draftStorageKey) ?? "");
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskInstruction, setTaskInstruction] = useState("");
@@ -22,7 +24,8 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const [renameBusy, setRenameBusy] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { localStorage.setItem("skai.chat.draft", draft); }, [draft]);
+  useEffect(() => { skipDraftPersistRef.current = true; setDraft(localStorage.getItem(draftStorageKey) ?? ""); }, [draftStorageKey]);
+  useEffect(() => { if (skipDraftPersistRef.current) { skipDraftPersistRef.current = false; return; } localStorage.setItem(draftStorageKey, draft); }, [draftStorageKey, draft]);
   useEffect(() => { if (!renameOpen) setRenameDraft(conversationTitle); }, [conversationTitle, renameOpen]);
   useEffect(() => { messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages.length, busy]);
   const submit = () => {

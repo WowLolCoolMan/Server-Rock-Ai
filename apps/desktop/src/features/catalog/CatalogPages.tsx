@@ -42,9 +42,36 @@ type RemoteSkillDetails = {
   installBoundary: string;
 };
 
-export function ModelsPage({ models, onDiscover, onSelect }: { models: Model[]; onDiscover: () => void; onSelect: (model: string) => void }) {
-  const [query, setQuery] = useState(""); const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
-  return <div className="feature-page"><PageHeader eyebrow="MODEL LIBRARY" title="Choose your model" description="Choose models already running on this computer, or prepare a very large local model through AirLLM." actions={<><StatusBadge tone={models.length ? "success" : "neutral"}>{models.length ? "Registry ready" : "No models loaded"}</StatusBadge><Button variant="primary" onClick={onDiscover}>↻ Discover local models</Button></>} /><Card className="catalog-card"><div className="catalog-toolbar"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search local models…" aria-label="Search local models" /><span>{filtered.length} available</span></div>{models.length === 0 ? <EmptyState title="No local models discovered" description="Start Ollama, LM Studio, or another compatible server on this computer, then discover its models. For a very large model, choose AirLLM in the local runtime settings." action={<Button variant="secondary" onClick={onDiscover}>Discover local models</Button>} /> : filtered.length === 0 ? <EmptyState title="No matching local models" description="Try a different model name or capability." /> : <div className="catalog-list">{filtered.map((model) => <button className="catalog-row" key={model.model} onClick={() => onSelect(model.model)} type="button"><span className="catalog-icon">◌</span><span className="catalog-row-copy"><strong>{model.model}</strong><small>{modelProvider(model.model)} · {modelVisionLabel(model.vision)} · {model.capabilities.join(" · ") || "Text generation"}</small></span><span className="catalog-row-meta"><StatusBadge tone="success">On this computer</StatusBadge><span className="catalog-action">Use model →</span></span></button>)}</div>}</Card></div>;
+export function ModelsPage({ models, selectedModel, onDiscover, onSelect }: { models: Model[]; selectedModel: string; onDiscover: () => void; onSelect: (model: string) => void }) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => models.filter((model) => `${model.model} ${model.provider ?? ""} ${model.capabilities.join(" ")}`.toLowerCase().includes(query.trim().toLowerCase())), [models, query]);
+  const providers = useMemo(() => Array.from(new Set(models.map((model) => model.provider || modelProvider(model.model)).filter(Boolean))), [models]);
+  const activeModel = models.find((model) => model.model === selectedModel);
+
+  return <div className="feature-page models-v4">
+    <PageHeader eyebrow="SETTINGS / MODELS" title="Models & runtimes" description="Discover, inspect and select local models — no silent provider switching." actions={<><StatusBadge tone={models.length ? "success" : "neutral"}>{models.length ? "Local inventory" : "No inventory"}</StatusBadge><Button variant="primary" onClick={onDiscover}>＋ Discover local models</Button></>} />
+    <div className="models-metrics" aria-label="Model inventory summary">
+      <Card><span>Detected runtimes</span><strong>{providers.length}</strong><small>{providers.length ? "Observed from model inventory" : "Not reported by host"}</small></Card>
+      <Card><span>Installed models</span><strong>{models.length}</strong><small>{models.length ? "Reported by local provider" : "Nothing discovered"}</small></Card>
+      <Card><span>Active model</span><strong>{activeModel?.model || "Unavailable"}</strong><small>{activeModel?.provider || (activeModel ? modelProvider(activeModel.model) : "Select a discovered model")}</small></Card>
+      <Card><span>Provider policy</span><strong>Local-first</strong><small>Runtime selection stays explicit</small></Card>
+    </div>
+    <div className="models-layout">
+      <Card className="models-inventory">
+        <div className="panel-heading"><div><h3>Available models</h3><p>Only models reported by a configured local runtime appear here.</p></div><span className="panel-count">{filtered.length}</span></div>
+        <div className="catalog-toolbar models-search"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search installed models, capabilities, and providers" aria-label="Search installed models, capabilities, and providers" /></div>
+        {models.length === 0 ? <EmptyState title="No local models discovered" description="Start Ollama, LM Studio, or another compatible server on this computer, then discover its models. Skai will not invent a runtime or silently switch providers." action={<Button variant="secondary" onClick={onDiscover}>Discover local models</Button>} /> : filtered.length === 0 ? <EmptyState title="No matching local models" description="Try a different model name, provider, or capability." /> : <div className="models-list">{filtered.map((model) => {
+          const provider = model.provider || modelProvider(model.model);
+          const isActive = model.model === selectedModel;
+          return <div className={`model-row${isActive ? " is-active" : ""}`} key={`${provider}:${model.model}`}><div className="model-row-copy"><strong>{model.model}</strong><small>{provider} · {modelVisionLabel(model.vision)} · {model.capabilities.join(" · ") || "Text generation"}</small></div><div className="model-row-meta"><span>{model.capabilities.length ? model.capabilities.length + " capabilities" : "Capabilities not reported"}</span><Button variant={isActive ? "ghost" : "secondary"} onClick={() => onSelect(model.model)}>{isActive ? "Active" : "Select"}</Button></div></div>;
+        })}</div>}
+      </Card>
+      <div className="models-side-stack">
+        <Card><div className="panel-heading"><div><h3>Runtime connections</h3><p>Observed providers and their reported model inventory.</p></div></div>{providers.length ? <div className="runtime-list">{providers.map((provider) => <div className="runtime-row" key={provider}><div><strong>{provider}</strong><small>Local provider · discovery source</small></div><StatusBadge tone="success">Observed</StatusBadge></div>)}</div> : <EmptyState title="No runtime connections" description="Discover models after starting a local provider." />}</Card>
+        <Card><h3>Model selection policy</h3><p className="models-policy-copy">Provider, model identity, capability, and resource estimates remain visible before use. Unavailable models require explicit recovery — Skai never silently substitutes a different runtime.</p></Card>
+      </div>
+    </div>
+  </div>;
 }
 
 export function ImagesPage({ endpoint, prompt, workflow, busy, images, onChange, onGenerate }: { endpoint: string; prompt: string; workflow: string; busy: boolean; images: Array<{ url: string; fileName: string }>; onChange: (key: "endpoint" | "prompt" | "workflow", value: string) => void; onGenerate: () => void }) {
