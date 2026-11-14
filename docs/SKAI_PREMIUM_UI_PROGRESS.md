@@ -10,6 +10,16 @@ backdrops. It checks the resulting semantic theme tokens, verifies no
 horizontal overflow at normal and constrained widths, and captures each state
 under `.tmp/theme-acceptance/` for visual review.
 
+## Current slice — Utility capability audit
+
+The remaining secondary workspaces were audited against their actual local
+handlers. Model discovery, OS voice preview, ComfyUI generation, project
+terminal execution, task transitions, memory editing/export, and settings
+save all retain real handlers. Marketplace categories do not expose fabricated
+install or activation controls; unavailable catalogs are labeled as such.
+The Models surface now also provides a one-action recovery when a valid local
+model inventory has no search match.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to

@@ -11193,3 +11193,36 @@ header values is affected.
 Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
+
+## Slice 298 — Audit utility actions and recover model search
+
+Status: `implemented_audited_verified`
+
+The Electron utility surfaces were reviewed against their handlers before
+adding UI. Model discovery, native voice preview, local ComfyUI generation,
+project-scoped terminal execution, task transitions, memory editing/export,
+and settings save remain backed by real local operations. Marketplace cards
+continue to avoid invented installation or activation behavior and explicitly
+describe unavailable local catalogs. The model library now offers a `Clear
+search` action when a loaded local inventory has no matching result, so a
+valid registry cannot strand the user in an empty state.
+
+Changed files:
+
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Source audit confirmed every remaining utility action maps to a local
+  handler or an explicit unavailable state.
+- The model no-match state now exposes a functional recovery action.
+- Existing packaged Electron, theme, syntax, and artifact smoke checks remain
+  the validation gate for this UI slice.
+
+Privacy/security/licensing: no provider, catalog, credential, or network
+behavior changed. The change is renderer-only and local-only.
+
+Remaining: continue the keyboard focus pass for any newly uncovered overlays,
+then deepen the remaining local workbench and project workflows.
