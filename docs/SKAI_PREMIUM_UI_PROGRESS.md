@@ -329,6 +329,26 @@ Evidence:
 Remaining: reopen the dev Electron process for a fresh visual pass at desktop
 and narrow widths; the previous live window closed before the rebuilt shell
 could be inspected after HMR.
+
+## Slice — Make marketplace discovery and management visible
+
+Status: `implemented_build_verified`
+
+Marketplace now exposes explicit Discover, Skills, Tools & MCP, My library,
+and Updates views in the page itself. The discovery view keeps the model source,
+size, quantization, abliterated/uncensored, and skill-lane filters visible;
+library and update views surface installed-skill management and rollback state
+without hiding those capabilities behind a route or command.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Remaining: add a fresh Electron screenshot of each marketplace view after the
+next runtime restart; remote result counts remain dependent on provider health
+and network availability.
 - Reopened the production Electron build and inspected the live Image Studio
   accessibility tree and foreground screenshot. The tree exposed the prompt,
   recipe buttons, model/workflow selector, aspect ratio selector, output
@@ -401,3 +421,46 @@ Evidence:
 - `npm run desktop:typecheck` — passed.
 - `npm run desktop:build` — passed.
 - `git diff --check` — passed.
+
+## Slice — Complete the premium shell and marketplace continuity pass
+
+Status: `implemented_build_tests_visual_verified`
+
+This pass closes the remaining workflow continuity gaps called out by the
+reference pack. The desktop now keeps a fixed global rail, a resizable project
+and conversation sidebar, and route-specific workspaces behind one consistent
+shell. Chat is an open canvas with a persistent composer and contextual
+controls; the marketplace is a real multi-provider discovery surface with
+Discover, Skills, Tools & MCP, My library, and Updates views. Model filters
+surface provider, size, quantization, and explicitly labeled abliterated /
+uncensored results, while curated GitHub skills retain review, install, enable,
+disable, inspect, and rollback controls.
+
+The companion window is initialized and clamped to the rail/sidebar dock so a
+single Percy instance does not obscure the active workspace or composer. The
+marketplace detail column was also tightened for compact workspace widths and
+the featured surface was moved to a neutral graphite treatment instead of a
+purple gradient.
+
+Evidence:
+
+- `npm test` — passed (native core checks).
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed (1108 tracked files).
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:future-features` — passed (161 items, 12 sections, 27 checked).
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `git diff --check` — passed.
+- Reopened the production Electron build and inspected live screenshots and
+  accessibility trees for Marketplace and Chat. The marketplace exposed live
+  Hugging Face results, multi-provider controls, catalog tabs, and an
+  `Agent ready` host state; Chat exposed the fixed rail, thread sidebar,
+  selected model, contextual actions, persistent composer, and one docked
+  companion.
+
+Remaining: provider result counts and image/voice generation availability still
+depend on network health and configured local runtimes. Those states remain
+explicit in the UI and are not represented as completed capability.

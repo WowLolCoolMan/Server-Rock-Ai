@@ -250,6 +250,47 @@ button:disabled { cursor: not-allowed; opacity: .48; transform: none !important;
 .usage-guidance p:not(.section-kicker) { margin: 0; color: var(--skai-color-text-muted); font-size: 11px; line-height: 1.5; }
 @media (max-width:1100px) { .app-shell { grid-template-columns: 52px 224px minmax(0,1fr); }.app-shell.sidebar-collapsed { grid-template-columns: 52px 78px minmax(0,1fr); } }
 @media (max-width:760px) { .global-rail { flex-direction: row; min-height: auto; padding: 8px 12px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.09); }.global-rail-mark { margin: 0 15px 0 0; }.global-rail-items, .global-rail-footer { display: flex; }.global-rail-footer { margin: 0 0 0 auto; }.global-rail-item { width: 34px; height: 34px; }.app-shell, .app-shell.sidebar-collapsed { display: block; }.app-sidebar, .app-sidebar.is-collapsed { min-height: auto; width: auto; padding: 14px; }.usage-grid { grid-template-columns: 1fr; }.usage-guidance { display: grid; }.usage-stat-grid { grid-template-columns: 1fr; } }
+
+/* Premium workspace refinement: the chat is an open canvas with one intentional working surface. */
+.app-shell { grid-template-columns: 58px var(--skai-sidebar-width, 286px) minmax(0, 1fr); }
+.app-sidebar.thread-sidebar { position: relative; }
+.sidebar-resize-handle { position: absolute; z-index: 6; top: 0; right: -4px; bottom: 0; width: 8px; cursor: col-resize; background: transparent; }
+.sidebar-resize-handle:hover, .sidebar-resize-handle:focus-visible { background: rgba(182,165,245,.3); outline: 0; }
+.sidebar-tools-search { display: block; padding: 0 3px 4px; }
+.sidebar-tools-search input { width: 100%; padding: 8px 9px; border: 1px solid #34363a; border-radius: 7px; color: #f0efef; background: #1b1c1e; font-size: 10px; }
+.sidebar-tools-search input:focus { border-color: #b6a5f5; outline: 2px solid rgba(182,165,245,.18); }
+.sidebar-menu-empty { margin: 8px; color: #a0a2a8; font-size: 10px; }
+.chat-page { max-width: none; min-height: calc(100vh - 150px); }
+.chat-page .chat-context-bar { max-width: 1120px; width: 100%; margin: 0 auto 10px; }
+.chat-layout { height: calc(100vh - 198px); min-height: 520px; align-items: stretch; }
+.chat-column { min-height: 0; }
+.conversation-card { min-height: 0; padding: 0 8px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.conversation-header { display: none; }
+.message-list { width: 100%; max-width: 880px; margin: 0 auto; padding: 26px 18px 36px; gap: 22px; overflow-y: auto; }
+.message-bubble { max-width: 760px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.message-bubble.user { justify-self: end; padding: 12px 14px; border: 1px solid #34363a; border-radius: 12px; background: #222326; }
+.message-bubble.assistant { justify-self: start; }
+.message-meta { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 7px; }
+.message-actions { opacity: .3; transition: opacity 120ms ease; }
+.message-bubble:hover .message-actions, .message-actions:focus-within { opacity: 1; }
+.composer-card { position: sticky; bottom: 0; z-index: 3; width: min(900px, 100%); margin: 0 auto; padding: 12px 14px; border: 1px solid #34363a; border-radius: 14px; background: #222326; box-shadow: 0 -12px 32px rgba(0,0,0,.25); }
+.chat-page .ui-empty-state { max-width: 560px; margin: 0 auto; padding-top: 20vh; }
+[data-backdrop="deep-space"] .app-main, [data-backdrop="deep-space"] .main-canvas, [data-backdrop="deep-sea"] .app-main, [data-backdrop="deep-sea"] .main-canvas { background: #191a1c; }
+.feature-page { min-width: 0; max-width: 100%; }
+.marketplace-v4 { overflow-x: hidden; }
+.marketplace-v4 .catalog-row { min-width: 0; }
+.marketplace-v4 .catalog-row-copy { min-width: 0; overflow: hidden; }
+.marketplace-v4 .catalog-row-copy strong, .marketplace-v4 .catalog-row-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Final marketplace fit pass: keep the inspector usable at compact workspace widths. */
+.marketplace-v4 .marketplace-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 300px); }
+.marketplace-v4 .marketplace-detail { min-width: 0; overflow: hidden; }
+.marketplace-v4 .marketplace-detail > .ui-button { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; justify-self: stretch; white-space: normal; overflow-wrap: anywhere; }
+.marketplace-v4 .marketplace-featured { background: #29282f; }
+.marketplace-v4 .skill-details-card { background: #242529; }
+@media (max-width:1100px) { .app-shell { grid-template-columns: 52px var(--skai-sidebar-width, 238px) minmax(0,1fr); } }
+@media (max-width:900px) { .chat-layout { height: auto; min-height: calc(100vh - 198px); }.message-list { max-height: 56vh; }.composer-card { position: sticky; } }
+@media (max-width:760px) { .sidebar-resize-handle { display: none; }.chat-page .chat-context-bar { align-items: flex-start; flex-direction: column; }.chat-layout { min-height: 0; }.message-list { max-height: none; padding-inline: 8px; }.composer-card { border-radius: 12px; } }
 .ui-empty-visual { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 14px; border: 1px solid color-mix(in srgb, var(--skai-color-accent) 28%, var(--skai-color-border)); border-radius: 16px; background: color-mix(in srgb, var(--skai-color-accent) 8%, var(--skai-color-surface-soft)); }.ui-empty-visual img { display: block; width: 44px; height: 44px; object-fit: contain; }
 .conversation-card { display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; }
 .message-list { align-content: start; min-height: 0; overflow-y: auto; scrollbar-color: color-mix(in srgb, var(--skai-color-accent) 40%, transparent) transparent; }

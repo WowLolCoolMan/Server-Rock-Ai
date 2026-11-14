@@ -134,6 +134,7 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
   ];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("All");
+  const [catalogView, setCatalogView] = useState<"discover" | "skills" | "tools" | "library" | "updates">("discover");
   const [selectedTitle, setSelectedTitle] = useState(cards[0].title);
   const [models, setModels] = useState<MarketplaceModel[]>([]);
   const [skills, setSkills] = useState<MarketplaceSkill[]>([]);
@@ -301,11 +302,15 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
           <Button variant="primary" onClick={() => void refreshCatalog()} disabled={catalogBusy}>{catalogBusy ? "Polling…" : "Search"}</Button>
           <span>{filtered.length} {filtered.length === 1 ? "category" : "categories"}</span>
         </div>
+        <div className="marketplace-filters" role="group" aria-label="Marketplace views">
+          {([ ["discover", "Discover"], ["skills", "Skills"], ["tools", "Tools & MCP"], ["library", "My library"], ["updates", "Updates"] ] as const).map(([view, label]) => <button className={`marketplace-filter${catalogView === view ? " is-active" : ""}`} key={view} type="button" aria-pressed={catalogView === view} onClick={() => { setCatalogView(view); if (view === "skills") setSelectedTitle("Skills"); if (view === "tools") setSelectedTitle("MCP & OpenAPI tools"); }}>{label}</button>)}
+        </div>
         <div className="marketplace-filters" role="group" aria-label="Marketplace categories">
           {(["All", "LLMs", "Voices", "Image models", "Skills", "Tools"] as Category[]).map((item) => <button className={`marketplace-filter${category === item ? " is-active" : ""}`} key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
         </div>
       </div>
       <div className="marketplace-layout">
+        {catalogView === "library" ? <Card className="marketplace-library-panel"><div className="panel-heading"><div><p className="section-kicker">MARKETPLACE / LIBRARY</p><h3>Installed capabilities</h3><p>Manage reviewed local skills and see the runtime boundary for downloaded models.</p></div><span className="panel-count">{installedSkills.length}</span></div>{installedSkills.length === 0 ? <EmptyState title="Your local library is empty" description="Install a reviewed Markdown skill from the Skills view. Local model inventory is reported separately by Models & runtimes." action={<Button variant="secondary" onClick={() => { setCatalogView("skills"); setSelectedTitle("Skills"); }}>Browse skills</Button>} /> : <div className="installed-skill-list">{installedSkills.map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>{skill.publisher} · v{skill.version} · {skill.sourceRef}</small></div><div className="marketplace-skill-actions"><StatusBadge tone={skill.enabled ? "success" : "neutral"}>{skill.enabled ? "Enabled" : "Disabled"}</StatusBadge><Button variant="ghost" onClick={() => void inspectInstalledSkill(skill)} disabled={skillBusy}>Inspect</Button><Button variant="ghost" onClick={() => void setSkillEnabled(skill)} disabled={skillBusy}>{skill.enabled ? "Disable" : "Enable"}</Button></div></div>)}</div>}</Card> : catalogView === "updates" ? <Card className="marketplace-library-panel"><div className="panel-heading"><div><p className="section-kicker">MARKETPLACE / UPDATES</p><h3>Review extension updates</h3><p>Updates appear only after a package revision is inspected and its digest and permissions are known.</p></div><span className="panel-count">{installedSkills.filter(skill => skill.canRollback).length}</span></div>{installedSkills.filter(skill => skill.canRollback).length === 0 ? <EmptyState title="No reviewed updates" description="Skai has no host-reported update candidates yet. Refresh the library after reviewing a newer local package." action={<Button variant="secondary" onClick={() => { setCatalogView("skills"); setSelectedTitle("Skills"); }}>Review skills</Button>} /> : <div className="installed-skill-list">{installedSkills.filter(skill => skill.canRollback).map(skill => <div className="installed-skill-row" key={skill.id}><div><strong>{skill.name}</strong><small>Rollback available · v{skill.version}</small></div><Button variant="secondary" onClick={() => void rollbackSkill(skill)} disabled={skillBusy}>Rollback reviewed update</Button></div>)}</div>}</Card> : <>
         {filtered.length === 0 ? <EmptyState title="No matching categories" description="Try another search term or clear the category filter." action={<Button variant="ghost" onClick={() => { setQuery(""); setCategory("All"); }}>Clear filters</Button>} /> : <div className="marketplace-grid" aria-label="Marketplace categories">
           {filtered.map((card) => <button className={`marketplace-card${selected?.title === card.title ? " is-selected" : ""}`} key={card.title} type="button" onClick={() => setSelectedTitle(card.title)} aria-pressed={selected?.title === card.title}>
             <span className="marketplace-card-heading"><span className="marketplace-icon">{card.icon}</span><StatusBadge tone={card.status === "Ready" ? "success" : card.status === "Review only" ? "warning" : "neutral"}>{card.status}</StatusBadge></span>
@@ -319,7 +324,7 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
           <div className="marketplace-detail-heading"><div><p className="section-kicker">CAPABILITY</p><h3>{selected.title}</h3></div><StatusBadge tone={selected.status === "Ready" ? "success" : selected.status === "Review only" ? "warning" : "neutral"}>{selected.status}</StatusBadge></div>
           <p>{selected.detail}</p>
           <dl className="marketplace-detail-list"><div><dt>Availability</dt><dd>{selected.status === "Ready" ? "Available in this desktop build" : "Core capability present; Electron integration remains bounded"}</dd></div><div><dt>Next step</dt><dd>{selected.status === "Ready" ? `Use ${selected.action} to open the workflow.` : "Keep this capability visible until its host-backed workflow is connected."}</dd></div></dl>
-          {selected.title === "Skills" || selected.title === "MCP & OpenAPI tools" ? <Button variant="secondary" onClick={() => document.getElementById("marketplace-detail-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}>{selected.action}</Button> : <Button variant={selected.status === "Ready" ? "primary" : "secondary"} onClick={() => onNavigate(selected.route)}>{selected.action}</Button>}
+          {selected.title === "Skills" || selected.title === "MCP & OpenAPI tools" ? <Button variant="secondary" onClick={() => document.getElementById("marketplace-detail-panel")?.scrollIntoView({ behavior: "smooth", block: "start" })}>{selected.action}</Button> : <Button variant={selected.status === "Ready" ? "primary" : "secondary"} onClick={() => onNavigate(selected.route)}>{selected.title === "LLMs" ? "Models" : selected.action}</Button>}
           {selected.title === "LLMs" || selected.title === "Voices & TTS" || selected.title === "Image Studio" ? <>
             <div className="marketplace-filter-panel">
               <div><p className="section-kicker">MODEL FILTERS</p><strong>Choose what Skai should surface</strong><small>LLMs poll Hugging Face and ModelScope; voices and image models use Hugging Face. Downloads remain user-approved.</small></div>
@@ -351,6 +356,7 @@ export function MarketplacePage({ onNavigate }: { onNavigate: (route: "chat" | "
             <p className="marketplace-honesty">OS-native speech is installed and active now. Kokoro and Pocket TTS are selectable profiles, but remain unavailable until their C# model-pack adapter is installed.</p>
           </div> : <p className="marketplace-honesty">This capability is intentionally surfaced with its current boundary. The status above reflects what can be used from Electron today and what still needs a host-backed integration.</p>}
         </Card>}
+        </>}
       </div>
     </Card>
   </div>;

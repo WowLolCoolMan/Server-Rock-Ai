@@ -8201,6 +8201,60 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 223 — Finish premium shell continuity and visual verification
+
+Status: `implemented_build_tests_visual_verified`
+
+The current Electron renderer now presents the reference workflow as one
+usable application surface: the fixed global rail owns Home, Image Gen, Usage,
+command palette, Settings, and profile actions; the adjacent sidebar owns
+workspace selection, projects, recent conversations, pinned work, task status,
+search, and a keyboard-accessible resize handle. Chat remains an open canvas
+with a persistent composer and context-only task controls, while Coding,
+Workbench, Images, Models, Memory, Terminal, Permissions, Voice, Onboarding,
+and Marketplace remain reachable through the shell and command palette.
+
+Marketplace now makes the intended discovery workflow visible and usable:
+multi-provider model polling, provider and size filters, explicit
+abliterated/uncensored filtering, curated GitHub skill lanes, MCP/tool catalog
+views, library and update views, and review-gated local skill management. The
+live surface was tightened for compact widths and the featured treatment was
+neutralized to match the graphite reference palette. Percy is initialized with
+a safe sidebar-docked position and clamped away from the active workspace.
+
+Changed files in this slice:
+
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/components/layout/Sidebar.tsx`
+- `apps/desktop/src/features/catalog/CatalogPages.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Verification:
+
+- `npm test` — passed.
+- `npm run check:syntax` — passed.
+- `npm run check:hygiene` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `dotnet build services/agent-host/ServerRock.AgentHost.csproj --no-restore` — passed with 0 warnings and 0 errors.
+- `npm run audit:future-features` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run audit:local-only` — passed.
+- `git diff --check` — passed.
+- Live production Electron inspection covered Marketplace and Chat at the
+  current desktop window size. The accessibility tree confirmed provider
+  filters, marketplace tabs, live catalog entries, `Agent ready`, the fixed
+  rail, conversation sidebar, contextual chat actions, persistent composer,
+  and one Percy companion window.
+
+Limitations are explicit: remote catalogs still depend on provider/network
+availability, and image/voice generation remains runtime-configured rather than
+fabricated when a local adapter is absent. The app remains local-first and
+host-backed.
+
 ## Slice 221 — Replace duplicate destination sidebar with project/thread shell
 
 Status: `implemented_build_verified`
@@ -8222,6 +8276,27 @@ Evidence:
 Remaining: perform a fresh Electron visual pass at desktop and narrow widths,
 then continue connecting chat, coding, agent activity, Image Gen, and
 Marketplace state through durable host-backed context.
+
+## Slice 222 — Make marketplace discovery and management visible
+
+Status: `implemented_build_verified`
+
+Marketplace now has first-class Discover, Skills, Tools & MCP, My library, and
+Updates views. Model discovery keeps the source, size, quantization, and
+abliterated/uncensored controls visible; curated GitHub skill lanes, reviewed
+installation, local enable/disable, inspection, and rollback remain accessible
+from the same surface. Empty and unavailable states continue to report actual
+provider or host boundaries instead of pretending a catalog is populated.
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `git diff --check` — passed.
+
+Remaining: visually inspect each marketplace view in Electron after restarting
+the current production bundle and continue the durable cross-workspace state
+work.
 
 ## Latest UI checkpoint — auxiliary reference routes
 

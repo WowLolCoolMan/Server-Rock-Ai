@@ -37,7 +37,8 @@ let petSettings = {
   petId: "byte",
   spritePath: "",
   manifestPath: "",
-  position: { x: -1, y: -1 },
+  // Dock the companion beside the global rail by default so it never obscures the chat canvas or composer.
+  position: { x: 72, y: 72 },
 };
 const petWindowSize = { width: 128, height: 146 };
 const petAssetLimitBytes = 8 * 1024 * 1024;
@@ -255,7 +256,9 @@ function mainWindowBounds() {
 function clampPetPosition(position) {
   const bounds = mainWindowBounds();
   if (!bounds) return position;
-  const maxX = Math.max(12, bounds.width - petWindowSize.width - 12);
+  // Keep the always-on-top companion in the rail/sidebar dock. Dragging and wandering
+  // remain available, but the pet must not cover the active workspace or composer.
+  const maxX = Math.max(12, Math.min(160, bounds.width - petWindowSize.width - 12));
   const maxY = Math.max(56, bounds.height - petWindowSize.height - 12);
   return { x: Math.max(12, Math.min(Math.round(position.x), maxX)), y: Math.max(56, Math.min(Math.round(position.y), maxY)) };
 }
@@ -263,7 +266,7 @@ function clampPetPosition(position) {
 function syncPetWindowPosition() {
   if (!petWindow || petWindow.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return;
   const bounds = mainWindow.getBounds();
-  if (petSettings.position.x < 0 || petSettings.position.y < 0) petSettings.position = { x: Math.max(12, bounds.width - petWindowSize.width - 28), y: Math.max(56, bounds.height - petWindowSize.height - 70) };
+  if (petSettings.position.x < 0 || petSettings.position.y < 0) petSettings.position = { x: 72, y: 72 };
   petSettings.position = clampPetPosition(petSettings.position);
   petWindow.setPosition(bounds.x + petSettings.position.x, bounds.y + petSettings.position.y, false);
 }
@@ -296,7 +299,7 @@ function stepPetWander() {
   if (!bounds) return;
   const now = Date.now();
   if (!petWanderTarget && now >= petWanderNextAt) {
-    const maxX = Math.max(12, bounds.width - petWindowSize.width - 12);
+    const maxX = Math.max(12, Math.min(160, bounds.width - petWindowSize.width - 12));
     const maxY = Math.max(56, bounds.height - petWindowSize.height - 12);
     petWanderTarget = { x: 12 + Math.random() * Math.max(1, maxX - 12), y: 56 + Math.random() * Math.max(1, maxY - 56) };
     petActivity = "walking";
