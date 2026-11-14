@@ -64,6 +64,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - `410e8db` — completed the sidebar conversation-menu focus contract with keyboard navigation, trigger restoration, and viewport-safe upward placement.
 - `294dcb0` — made the Coding Workspace task brief a persisted, collapsible panel so the file/editor surface remains the primary active-project view.
 - `db988de` — clarified the local Marketplace contract with capability-specific availability/status copy and replaced its remaining decorative Unicode icons with the shared SVG icon system.
+- `90ba352` — added a host-backed Chat message editing flow with local-only validation, inline draft controls, Save & regenerate behavior, failure-safe restoration, and a dedicated `ChatMessage` component; live Electron acceptance confirmed the edited prompt and regenerated response.
 
 ## Current evidence
 

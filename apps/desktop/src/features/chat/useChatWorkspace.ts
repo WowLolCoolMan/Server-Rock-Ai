@@ -79,6 +79,25 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
     void speakNativeResponse(completed.at(-1)?.content ?? "");
   };
 
+  const editMessage = async (messageIndex: number, content: string) => {
+    if (busy || !conversationId || !content.trim()) return false;
+    if (messages[messageIndex]?.role !== "user") return false;
+    if (!isLocalEndpoint(endpoint)) { onError(LOCAL_ENDPOINT_ERROR); return false; }
+    const originalMessages = messages;
+    const prefix = messages.slice(0, messageIndex);
+    const edited = { ...messages[messageIndex], content: content.trim() };
+    const next = [...prefix, edited];
+    stopNativeSpeech();
+    setMessages(next); setBusy(true); onError(null);
+    const response = await request("chat.complete", { provider, endpoint, model, messages: next });
+    setBusy(false);
+    if (!response.ok) { setMessages(originalMessages); onError(response.error?.message ?? "The edited message could not be completed."); return false; }
+    const completed = [...next, { role: "assistant" as const, content: (response.result as { content: string }).content }];
+    setMessages(completed); await saveConversation(completed, conversationId);
+    void speakNativeResponse(completed.at(-1)?.content ?? "");
+    return true;
+  };
+
   const pickAttachments = async () => {
     const response = await request("workspace.pickFiles");
     if (!response.ok) { onError(response.error?.message ?? "File selection failed."); return; }
@@ -146,5 +165,5 @@ export function useChatWorkspace({ request, connection, provider, endpoint, mode
   };
   const activeConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
 
-  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
+  return { messages, conversationId, attachments, conversations, queuedMessages, busy, activeConversation, setAttachments, sendMessage, retryMessage, editMessage, pickAttachments, queueMessage, removeQueuedMessage, exportConversations, updateConversationMetadata, forkConversation, startNewChat, selectConversation };
 }
