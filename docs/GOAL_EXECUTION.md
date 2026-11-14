@@ -11284,3 +11284,31 @@ Evidence:
 
 Remaining: continue the local project workflow and remaining overlay focus
 checks; the overall goal is still active.
+
+## Slice 301 — Persist local project editor tabs
+
+Status: `implemented_renderer_typechecked`
+
+Coding Workspace now stores up to twelve open relative-path tabs per local
+project and restores them when that project is selected again. The tab list is
+navigation metadata only: file contents remain unloaded until the user selects
+a tab, at which point the existing guarded `project.file.read` path supplies
+the current content and hash.
+
+Changed files:
+
+- `apps/desktop/src/features/coding/CodingSessionView.tsx`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Renderer typecheck and production build passed after the persistence change.
+- Persistence is scoped by the stable local project ID and bounded to twelve
+  relative paths.
+
+Privacy/security/licensing: only local UI navigation metadata is stored; no
+file contents, credentials, network route, or host permission changed.
+
+Remaining: continue the local project review flow and keyboard-focus coverage;
+the comprehensive premium rebuild remains active.

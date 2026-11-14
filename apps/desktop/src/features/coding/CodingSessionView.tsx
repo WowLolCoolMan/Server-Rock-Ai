@@ -16,6 +16,10 @@ function taskComposerStorageKey(projectId: string) {
   return `skai.coding.taskComposerOpen.${projectId}`;
 }
 
+function openTabsStorageKey(projectId: string) {
+  return `skai.coding.openTabs.${projectId}`;
+}
+
 function createDiff(before: string, after: string): DiffRow[] {
   const beforeLines = before.split("\n");
   const afterLines = after.split("\n");
@@ -62,6 +66,8 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
   const [taskComposerOpen, setTaskComposerOpen] = useState(false);
   const [planningTask, setPlanningTask] = useState(false);
   const [panelMode, setPanelMode] = useState<"editor" | "diff">("editor");
+  const loadedTabsProjectRef = useRef<string | null>(null);
+  const skipTabPersistenceRef = useRef(false);
   const hasChanges = Boolean(selectedFile && fileDraft !== fileOriginal);
   const diffRows = useMemo(() => createDiff(fileOriginal, fileDraft), [fileDraft, fileOriginal]);
   const filteredFiles = useMemo(() => {
@@ -72,11 +78,28 @@ export function CodingSessionView({ projects, selectedProject, tasks, projectFil
 
   useEffect(() => { setPanelMode("editor"); }, [selectedFile, fileOriginal]);
   useEffect(() => {
-    setOpenTabs([]);
+    let restoredTabs: string[] = [];
+    try {
+      const storedTabs = JSON.parse(localStorage.getItem(openTabsStorageKey(selectedProject.id)) ?? "[]");
+      if (Array.isArray(storedTabs)) restoredTabs = storedTabs.filter((path): path is string => typeof path === "string" && path.length > 0).slice(0, 12);
+    } catch {
+      restoredTabs = [];
+    }
+    loadedTabsProjectRef.current = selectedProject.id;
+    skipTabPersistenceRef.current = true;
+    setOpenTabs(restoredTabs);
     setFileQuery("");
     setTerminalOpen(localStorage.getItem(terminalStorageKey(selectedProject.id)) === "true");
     setTaskComposerOpen(localStorage.getItem(taskComposerStorageKey(selectedProject.id)) === "true");
   }, [selectedProject.id]);
+  useEffect(() => {
+    if (loadedTabsProjectRef.current !== selectedProject.id) return;
+    if (skipTabPersistenceRef.current) {
+      skipTabPersistenceRef.current = false;
+      return;
+    }
+    localStorage.setItem(openTabsStorageKey(selectedProject.id), JSON.stringify(openTabs));
+  }, [openTabs, selectedProject.id]);
   useEffect(() => { localStorage.setItem(terminalStorageKey(selectedProject.id), String(terminalOpen)); }, [selectedProject.id, terminalOpen]);
   useEffect(() => { localStorage.setItem(taskComposerStorageKey(selectedProject.id), String(taskComposerOpen)); }, [selectedProject.id, taskComposerOpen]);
   useEffect(() => { if (selectedFile) setOpenTabs((current) => current.includes(selectedFile) ? current : [...current, selectedFile]); }, [selectedFile]);

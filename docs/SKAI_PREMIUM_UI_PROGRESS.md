@@ -30,6 +30,11 @@ invented by the renderer.
 The same labels are now echoed in the compact Coding Workspace activity rail,
 so a user can see completed outputs without leaving the project session.
 
+Open editor tabs are now restored per local project and capped to a bounded
+list. Switching projects no longer destroys the user's working set, while file
+contents are still re-read through the guarded project-file handler when a tab
+is opened.
+
 ## Current slice — Menu exit behavior
 
 Overflow actions and recent-chat context menus now close and restore focus to
