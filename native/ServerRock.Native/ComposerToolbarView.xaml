@@ -4,7 +4,7 @@
   <Grid x:Name="Toolbar" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" Margin="0,0,0,8" SizeChanged="ToolbarSizeChanged">
     <Grid x:Name="PrimaryComposerToolbar" ColumnDefinitions="Auto,Auto">
       <Button x:Name="ModelButton" Content="◉　Ollama　·　llama3.2　⌄" Click="ModelHotswapClick" Style="{StaticResource ContextButtonStyle}" AutomationProperties.Name="Switch pinned model" AutomationProperties.HelpText="Choose a pinned model for this chat. Use Manage models to pin or unpin models." />
-      <Button x:Name="ComposerToolsButton" Grid.Column="1" Content="Tools　⌄" Click="ComposerToolsClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.Name="Open composer tools" AutomationProperties.HelpText="Show optional composer controls such as web search, temporary chat, project files, and smart rewriting." />
+      <Button x:Name="ComposerToolsButton" Grid.Column="1" Content="Tools　⌄" Click="ComposerToolsClick" Style="{StaticResource ContextButtonStyle}" Margin="8,0,0,0" HorizontalAlignment="Right" AutomationProperties.AutomationId="ComposerToolsButton" AutomationProperties.Name="Open composer tools" AutomationProperties.HelpText="Show optional composer controls such as web search, temporary chat, project files, and smart rewriting." />
     </Grid>
     <ScrollViewer x:Name="SecondaryComposerToolbar" Grid.Column="1" Visibility="Collapsed" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
       <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
