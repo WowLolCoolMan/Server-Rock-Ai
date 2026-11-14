@@ -125,6 +125,7 @@ This ledger records the evidence-backed state of the active frontend migration. 
 - Chat actions menu check: passed compact 1280px toolbar geometry, first/last menu-item keyboard navigation, Escape focus restoration, and no horizontal overflow. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-chat-actions-menu.png`.
 - Chat scroll restoration check: passed switching between two long conversations, saving the prior thread’s scroll position, restoring it on return, and no horizontal overflow at 1280px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-chat-scroll-restoration.png`.
 - Memory scope check: passed scope filtering by stable scope value, enabled/disabled status and source rendering, empty-scope recovery, and no horizontal overflow at 1280px. Screenshot reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-memory-scopes.png`.
+- Shell theme-token audit: passed dark and light sidebar/toolbar contrast, a real Settings change to light + amber + compact + Deep Sea + reduced motion with local persistence, all eight primary/utility route transitions, system theme resolution under light and dark OS preferences, Deep Space rendering, and no horizontal overflow at 1280px or 960px. Screenshots reviewed at `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-shell-dark.png`, `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-shell-light-deep-sea.png`, and `C:\\Users\\basic\\AppData\\Local\\Temp\\skai-shell-dark-deep-space.png`.
 
 ## Current task
 
@@ -136,7 +137,7 @@ Continue the premium vertical slices, prioritizing the coding workflow and share
 2. Replace remaining utility placeholders with real backend-backed surfaces or explicit unavailable states.
 3. Continue improving Memory and Agent Workbench interaction depth with richer recovery actions. Memory editing and Workbench task details are now backed by existing host capabilities; approval controls and failed-task retry remain intentionally unavailable where the host does not expose them.
 4. Extend the keyboard-focus pass from the shared modal surfaces and new workspace shortcuts to remaining overlay and menu surfaces, including more real Electron interaction capture.
-5. Extend the theme audit from Settings to every major route, including system appearance, density, reduced motion, and backdrop combinations.
+5. Preserve the route-wide theme coverage now verified in the shared shell, then add packaged Electron visual acceptance for the same combinations.
 6. Connect Marketplace installation and activation only when real local runtime capabilities exist; keep the current local discovery shell honest and do not fabricate integrations.
 
 ## Scope guard
