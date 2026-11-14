@@ -2,6 +2,22 @@ import type { DesktopTask } from "../../../shared/contracts";
 import { Button, StatusBadge } from "../../components/ui/Primitives";
 import { labelFor, nextStepFor, timeLabel, toneFor, type WorkbenchTaskTransition } from "./workbenchPresentation";
 
+const CHAT_TASK_PREFILL_KEY = "skai.chat.taskPrefill";
+
+function stageTaskForChat(task: DesktopTask) {
+  const title = task.title.trim().slice(0, 200);
+  const instruction = [
+    "Re-plan this task locally after reviewing the previous attempt.",
+    "",
+    "Task brief:",
+    task.instruction.trim().slice(0, 6000),
+    "",
+    "Previous result:",
+    (task.resultSummary || "No result was recorded.").trim().slice(0, 3000),
+  ].join("\n");
+  localStorage.setItem(CHAT_TASK_PREFILL_KEY, JSON.stringify({ title, instruction, environment: "local" }));
+}
+
 export function TaskDetails({ task, openByDefault = false }: { task: DesktopTask; openByDefault?: boolean }) {
   return <details className="task-details" open={openByDefault || undefined}>
     <summary>View task details</summary>
@@ -33,7 +49,7 @@ export function WorkbenchTaskDetail({ task, busyTask, onTransition, onNavigate }
     {task.resultSummary && <p className="workbench-result">{task.resultSummary}</p>}
     <div className={`workbench-next-step workbench-next-step-${toneFor(task.status)}`} aria-label="Next task step"><span className="section-kicker">NEXT STEP</span><strong>{nextStep.label}</strong><p>{nextStep.description}</p></div>
     <TaskDetails task={task} openByDefault />
-    {task.status === "failed" && <div className="workbench-recovery"><span className="section-kicker">CONTINUE LOCALLY</span><p>Start a fresh plan with the failed brief as context. The host does not expose failed-task retry.</p><div className="workbench-recovery-actions"><Button variant="secondary" onClick={() => onNavigate("chat")}>Re-plan in Chat</Button><Button variant="ghost" onClick={() => onNavigate("coding")}>Open Coding</Button></div></div>}
+    {task.status === "failed" && <div className="workbench-recovery"><span className="section-kicker">CONTINUE LOCALLY</span><p>Start a fresh local plan with this brief and the previous result already included. The host does not expose failed-task retry.</p><div className="workbench-recovery-actions"><Button variant="secondary" onClick={() => { stageTaskForChat(task); onNavigate("chat"); }}>Re-plan in Chat</Button><Button variant="ghost" onClick={() => onNavigate("coding")}>Open Coding</Button></div></div>}
     <TaskActions task={task} busyTask={busyTask} onTransition={onTransition} />
   </>;
 }

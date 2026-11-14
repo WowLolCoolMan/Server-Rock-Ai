@@ -2,6 +2,14 @@
 
 This ledger records the evidence-backed state of the active frontend migration. It is intentionally honest about partial and unverified work.
 
+## Current slice — Failed-task replanning handoff
+
+Workbench’s failed-task recovery now carries the bounded task brief and prior
+result into the local Chat planner. The handoff opens the planner, keeps Local
+selected, and removes its one-shot storage payload after consumption. A
+packaged Electron smoke test exercises the route change and rendered values;
+the host still honestly reports failed-task retry as unavailable.
+
 ## Current slice — Bounded recent-chat navigation
 
 The desktop sidebar now gives recent conversations their own bounded scroll

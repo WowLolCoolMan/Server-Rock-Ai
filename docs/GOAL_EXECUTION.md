@@ -3,6 +3,42 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 290 — Carry failed task context into local replanning
+
+Status: `implemented_task_replan_handoff_packaged_smoke_verified`
+
+Workbench recovery now makes its Chat handoff truthful and useful. Selecting
+`Re-plan in Chat` stages a bounded local task brief and prior result, opens the
+Chat task planner, restores the local environment selection, and consumes the
+one-shot handoff so a later reload does not duplicate it. The existing host
+boundary remains intact: failed tasks still do not expose a fabricated retry
+or approval control.
+
+Changed files:
+
+- `apps/desktop/src/features/agents/WorkbenchTaskDetails.tsx`
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `scripts/smoke-task-replan.cjs`
+- `package.json`
+- `docs/GOAL_EXECUTION.md`
+- `docs/SKAI_PREMIUM_UI_PROGRESS.md`
+
+Evidence:
+
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed.
+- `npm run check:syntax` — passed.
+- `npm run audit:local-only` — passed.
+- `npm run audit:native-ui` — passed.
+- `npm run package:electron` — passed.
+- `npm run smoke:task-replan` — passed against the packaged Electron
+  renderer; route, prefilled title/instruction, open planner state, and
+  one-shot storage consumption were verified.
+
+Remaining: continue the active goal’s supporting-workspace, responsive,
+accessibility, and interaction-test slices; the full handoff remains
+incomplete.
+
 ## Slice 289 — Bound recent-chat navigation
 
 Status: `implemented_sidebar_history_scroll_packaged_live_verified`

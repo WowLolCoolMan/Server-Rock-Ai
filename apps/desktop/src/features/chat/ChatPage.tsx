@@ -11,6 +11,22 @@ import { ChatComposer } from "./ChatComposer";
 
 const SKAI_WOLF_ICON = new URL("../../../../../assets/branding/skaiwolficon.png", import.meta.url).href;
 const CHAT_SCROLL_KEY_PREFIX = "skai.chat.scroll.";
+const CHAT_TASK_PREFILL_KEY = "skai.chat.taskPrefill";
+
+type ChatTaskPrefill = { title: string; instruction: string; environment: TaskEnvironment };
+
+function takeTaskPrefill(): ChatTaskPrefill | null {
+  const raw = localStorage.getItem(CHAT_TASK_PREFILL_KEY);
+  if (!raw) return null;
+  localStorage.removeItem(CHAT_TASK_PREFILL_KEY);
+  try {
+    const value = JSON.parse(raw) as Partial<ChatTaskPrefill>;
+    if (typeof value.title !== "string" || typeof value.instruction !== "string") return null;
+    return { title: value.title.slice(0, 200), instruction: value.instruction.slice(0, 9000), environment: "local" };
+  } catch {
+    return null;
+  }
+}
 
 function chatScrollKey(conversationId: string | null) {
   return `${CHAT_SCROLL_KEY_PREFIX}${conversationId ?? "new"}`;
@@ -49,12 +65,13 @@ type ChatPageProps = {
 };
 
 export function ChatPage({ provider, model, models, messages, busy, taskBusy, attachments, queuedMessages, conversationId, conversationTitle, pinned, archived, onSend, onQueue, onRemoveQueued, onAttach, onFilesDropped, onRemoveAttachment, onModelChange, onNavigate, onPlanTask, onExport, onFork, onForkFromMessage, onRetryMessage, onEditMessage, onTogglePinned, onArchive, onRenameConversation }: ChatPageProps) {
+  const [taskPrefill] = useState<ChatTaskPrefill | null>(takeTaskPrefill);
   const [draft, setDraft] = useState(() => localStorage.getItem("skai.chat.draft") ?? "");
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskInstruction, setTaskInstruction] = useState("");
-  const [taskEnvironment, setTaskEnvironment] = useState<TaskEnvironment>("local");
-  const [taskComposerOpen, setTaskComposerOpen] = useState(() => localStorage.getItem("skai.chat.taskComposerOpen") === "true");
+  const [taskTitle, setTaskTitle] = useState(() => taskPrefill?.title ?? "");
+  const [taskInstruction, setTaskInstruction] = useState(() => taskPrefill?.instruction ?? "");
+  const [taskEnvironment, setTaskEnvironment] = useState<TaskEnvironment>(() => taskPrefill?.environment ?? "local");
+  const [taskComposerOpen, setTaskComposerOpen] = useState(() => Boolean(taskPrefill) || localStorage.getItem("skai.chat.taskComposerOpen") === "true");
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(conversationTitle);
   const [renameBusy, setRenameBusy] = useState(false);
