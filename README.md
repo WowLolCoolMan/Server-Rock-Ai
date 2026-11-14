@@ -11,9 +11,9 @@
   <img src="assets/branding/skai-desktop-hero.png" alt="Skai Desktop workspace illustration" />
 </p>
 
-Skai Desktop is an Electron + React desktop application with a persistent .NET Agent Host. It brings local model chat, project files, guarded terminal work, task review, GitHub workflows, settings, memory, and creative tools into one focused workspace.
+Skai Desktop is an Electron + React desktop application with a persistent .NET Agent Host. It brings local model chat, project files, guarded terminal work, task review, GitHub workflows, settings, memory, and creative tools into one focused workspace—not a hosted chat wrapper or a collection of disconnected mock screens.
 
-> **Project status:** active development. The Electron surface is the product being advanced now. Capability claims below describe the current synchronized `main` branch; unfinished ideas remain in the [future feature backlog](docs/FUTURE_FEATURES.md).
+> **Status:** active development · current release line: `0.1.x` · Electron is the product surface under active development. Capability claims below describe the current synchronized `main` branch; unfinished ideas remain in the [future feature backlog](docs/FUTURE_FEATURES.md).
 
 ## The product boundary
 
@@ -24,17 +24,19 @@ Skai Desktop is **local-only** for AI runtime and application data:
 - GitHub is an explicit project integration for repository context and guarded Git workflows; it is not an AI model provider.
 - Local services such as Ollama, LM Studio, LocalAI, llama.cpp, vLLM, OpenAI-compatible loopback servers, and ComfyUI can be connected by the user.
 
-## What is working today
+## What Skai is today
 
-- **Chat** — persistent conversations, attachments, queued follow-ups, Markdown/code rendering, retry, fork, pin, archive, rename, folders, tags, split view, and local memory controls.
-- **Coding Workspace** — project-scoped files, bounded previews, editing, reviewable diffs, guarded terminal commands, undo, task planning, and focused project context.
-- **Agent Workbench** — durable local task plans, dependency-aware readiness, activity filters, cancellation, approvals, and reviewable task state.
-- **Scheduled work** — local one-time and repeating schedules with pause/resume/cancel and reviewed Run now controls. No unattended provider request is implied.
-- **Models** — local provider discovery, model library, pinned models, capability checks, comparison, explicit unavailable-model recovery, and no silent model switching.
-- **Workspace shell** — resizable persistent sidebar, browser-like navigation state, responsive layouts, command palette, settings, in-app documentation, and Deep Sea/Deep Space theme presets.
-- **Integrations and media** — guarded GitHub project workflows, local ComfyUI-compatible image workflows, local attachments, and Percy, the optional Skai wolf companion.
+| Surface | Current state |
+| --- | --- |
+| **Chat** | Persistent conversations, attachments, queued follow-ups, Markdown/code rendering, retry, fork, pin, archive, rename, folders, tags, split view, search, and local memory controls. |
+| **Coding Workspace** | Project-scoped browsing, bounded previews, editing, reviewable diffs, guarded terminal commands, undo, task planning, and focused project context. |
+| **Agent Workbench** | Durable local task plans, dependency-aware readiness, activity filters, cancellation, approvals, and reviewable task state. Autonomous dispatch is still in progress. |
+| **Scheduled work** | Local one-time and repeating schedules with pause/resume/cancel and reviewed Run now controls. No unattended provider request is implied. |
+| **Models** | Local provider discovery, model library, pinned models, capability checks, comparison, explicit unavailable-model recovery, and no silent model switching. |
+| **Workspace shell** | Resizable sidebar, persistent navigation state, command palette, settings search, responsive layouts, in-app documentation, and Deep Sea/Deep Space appearance presets. |
+| **Local integrations** | Guarded GitHub repository workflows, local ComfyUI-compatible image workflows, local attachments, and Percy, the optional Skai wolf companion. |
 
-The project favors small, tested vertical slices over static mock screens. UI work is checked against the running desktop surface at multiple widths, with interaction evidence recorded in [`docs/SKAI_PREMIUM_UI_PROGRESS.md`](docs/SKAI_PREMIUM_UI_PROGRESS.md).
+The [capability matrix](docs/CAPABILITY_MATRIX.md) is the source of truth for working, partial, unverified, and planned areas. The project favors small, tested vertical slices over static mock screens, with screenshots and interaction evidence recorded in [`docs/SKAI_PREMIUM_UI_PROGRESS.md`](docs/SKAI_PREMIUM_UI_PROGRESS.md).
 
 ## Why Skai
 
@@ -76,6 +78,10 @@ npm run desktop:install
 # Start the Electron + React desktop app
 npm run desktop:dev
 
+# Or build the renderer and open the desktop shell
+npm run desktop:build
+npm run open:desktop
+
 # Run the native Core checks
 dotnet run --project native/SkaiDesktop.Core.Tests/SkaiDesktop.Core.Tests.csproj
 ```
@@ -116,9 +122,9 @@ Useful docs:
 - [`docs/GITHUB_INTEGRATION.md`](docs/GITHUB_INTEGRATION.md) — repository project workflows.
 - [`services/agent-host/README.md`](services/agent-host/README.md) — Agent Host protocol notes.
 
-## Open work
+## What is next
 
-The next work is deliberately visible rather than implied: richer editor panes, complete agent execution, broader accessibility and packaged acceptance, Linux validation, deeper retrieval, and additional local integrations remain in progress. See the capability matrix for evidence-backed status instead of assuming every item in the product backlog is shipped.
+The next work is deliberately visible rather than implied: complete the local task execution path, deepen editor and diff workflows, finish remaining keyboard/focus and packaged acceptance checks, validate Linux support with a supported .NET environment, improve retrieval, and add more local integrations. See the capability matrix for evidence-backed status instead of assuming every item in the product backlog is shipped.
 
 ## Contributing
 
