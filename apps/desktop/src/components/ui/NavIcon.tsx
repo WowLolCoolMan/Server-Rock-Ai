@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type NavIconName = "chat" | "code" | "activity" | "model" | "image" | "sparkle" | "terminal" | "memory" | "settings";
+export type NavIconName = "chat" | "code" | "activity" | "model" | "image" | "sparkle" | "terminal" | "memory" | "settings" | "project";
 
 export function NavIcon({ name, ...props }: { name: NavIconName } & SVGProps<SVGSVGElement>) {
   const common = { fill: "none", stroke: "currentColor", strokeLinecap: "round" as const, strokeLinejoin: "round" as const, strokeWidth: 1.65 };
@@ -15,6 +15,7 @@ export function NavIcon({ name, ...props }: { name: NavIconName } & SVGProps<SVG
     case "terminal": content = <><path {...common} d="m4 6 6 6-6 6M13 18h7" /></> ; break;
     case "memory": content = <><ellipse {...common} cx="12" cy="6" rx="7" ry="3" /><path {...common} d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></> ; break;
     case "settings": content = <><circle {...common} cx="12" cy="12" r="3" /><path {...common} d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.1h-2.4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L8 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H6.7v-2.4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.1h2.4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1V14h-.1a1.7 1.7 0 0 0-1.6 1Z" /></> ; break;
+    case "project": content = <><path {...common} d="M3.5 7.5h6l1.8 2h9.2v9.2a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8z" /><path {...common} d="M3.5 7.5V5.8A1.8 1.8 0 0 1 5.3 4h4l1.8 2h7.6a1.8 1.8 0 0 1 1.8 1.8v1.7" /></> ; break;
   }
   return <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" {...props}>{content}</svg>;
 }
