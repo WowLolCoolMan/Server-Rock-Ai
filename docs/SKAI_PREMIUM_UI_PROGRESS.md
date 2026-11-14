@@ -4,6 +4,11 @@ This ledger records the evidence-backed state of the active frontend migration. 
 
 ## Completed checkpoints
 
+- Current checkpoint — Percy’s separate transparent companion window now has
+  safer drag lifecycle handling, monitor-aware native clamping, reliable hide
+  control behavior, and a retry completion summary while retaining the bundled
+  six-frame walk/idle/success sprite sheets.
+
 - Current checkpoint — fixed packaged Electron smoke target selection so the release gate verifies the main Skai window and separate Percy companion independently; portable Windows artifact packaging and smoke validation passed.
 
 - Current checkpoint — shared sidebar routes now expose semantic `aria-current="page"` state alongside their visual active styling; the rebuilt Chat shell was inspected live in Electron.

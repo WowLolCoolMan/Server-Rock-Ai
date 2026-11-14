@@ -89,6 +89,14 @@ function petWorkArea() {
   return screen.getDisplayNearestPoint({ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }).workArea;
 }
 
+function clampPetPosition(point) {
+  const area = screen.getDisplayNearestPoint(point).workArea;
+  return {
+    x: Math.min(Math.max(Math.round(point.x), area.x + PET_WINDOW_MARGIN), area.x + area.width - PET_WINDOW_WIDTH - PET_WINDOW_MARGIN),
+    y: Math.min(Math.max(Math.round(point.y), area.y + PET_WINDOW_MARGIN), area.y + area.height - PET_WINDOW_HEIGHT - PET_WINDOW_MARGIN),
+  };
+}
+
 function schedulePetWander() {
   if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible() || !petMotion.wander || petMotion.reduceMotion || petDragOffset) return;
   if (petWanderPauseTimer || petWanderStepTimer) return;
@@ -187,6 +195,7 @@ function petCompletionText(method, response) {
     "project.command.run": "Finished the local project command.",
     "tasks.plan": "Created a local task plan.",
     "tasks.queue": "Queued the local task.",
+    "tasks.retry": "Retried the local task.",
     "tasks.cancel": "Stopped the local task.",
     "scheduled.create": "Scheduled the local task for review.",
     "scheduled.pause": "Paused the local scheduled task.",
@@ -458,7 +467,8 @@ app.whenReady().then(() => {
   });
   ipcMain.on("pet:drag-move", (event, point) => {
     if (BrowserWindow.fromWebContents(event.sender) !== petWindow || !petDragOffset || !point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
-    petWindow.setPosition(Math.round(point.x - petDragOffset.x), Math.round(point.y - petDragOffset.y));
+    const position = clampPetPosition({ x: point.x - petDragOffset.x, y: point.y - petDragOffset.y });
+    petWindow.setPosition(position.x, position.y);
   });
   ipcMain.on("pet:drag-end", (event) => {
     if (BrowserWindow.fromWebContents(event.sender) !== petWindow) return;

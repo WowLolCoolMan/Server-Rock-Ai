@@ -3,6 +3,34 @@
 This log records evidence-backed slices for the long-running implementation
 goal. It is not a claim that the full handoff package is implemented.
 
+## Slice 274 — Make Percy a recoverable desktop companion
+
+Status: `implemented_packaged_electron_verified`
+
+Percy remains a separate transparent Electron window with an animated six-frame
+sprite, completion bubbles, and independent drag behavior. The drag boundary is
+now safer: pointer capture is cancelled if the companion loses focus, clicks on
+the hide control never begin a drag, and native movement is clamped to the
+work area of the monitor under the pointer so the companion cannot be stranded
+off-screen. Retry completions also produce a short Percy summary.
+
+Changed files:
+
+- `apps/desktop/src/components/overlays/PetWindow.tsx`
+- `apps/desktop/electron/main.cjs`
+
+Evidence:
+
+- `npm run check:syntax` — passed.
+- `npm run audit:electron-runtime` — passed.
+- `npm run desktop:typecheck` — passed.
+- `npm run desktop:build` — passed; Percy walk, idle, and success six-frame
+  sheets were bundled with transparent companion-window styling.
+- `git diff --check` — passed.
+
+Remaining: continue packaged visual comparison and the remaining interaction-
+depth gaps; the active goal remains incomplete.
+
 ## Slice 273 — Make packaged Electron acceptance window-aware
 
 Status: `implemented_packaged_electron_smoke_verified`

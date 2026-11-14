@@ -37,9 +37,17 @@ export function PetWindow() {
     };
     const removeMessage = pet.onMessage(showCompletion);
     const removeMotion = pet.onMotionChange(setMotion);
+    const cancelDrag = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      pet.endDrag();
+    };
+    window.addEventListener("blur", cancelDrag);
     return () => {
       removeMessage();
       removeMotion();
+      window.removeEventListener("blur", cancelDrag);
+      cancelDrag();
       window.clearTimeout(bubbleTimer.current);
       window.clearTimeout(poseTimer.current);
       delete document.documentElement.dataset.petWindow;
@@ -51,7 +59,7 @@ export function PetWindow() {
   const sheet = activePose === "success" ? SUCCESS_SHEET : activePose === "idle" ? IDLE_SHEET : WALK_SHEET;
   const animationPaused = motion.reduceMotion;
   const beginDrag = (event: PointerEvent<HTMLElement>) => {
-    if (event.target instanceof HTMLElement && event.target.closest("button")) return;
+    if (event.button !== 0 || event.target instanceof Element && event.target.closest("button")) return;
     event.preventDefault();
     dragging.current = true;
     event.currentTarget.setPointerCapture?.(event.pointerId);
