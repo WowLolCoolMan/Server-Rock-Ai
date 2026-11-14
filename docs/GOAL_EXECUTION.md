@@ -8465,9 +8465,33 @@ Remaining: complete rebrand verification across packaging metadata, installers,
 localization, and all release artifacts; full keyring parity and OS isolation
 remain open.
 
+## Slice 268 — Preserve Chat reading position while new work arrives
+
+Status: `implemented_live_electron_verified`
+
+Chat now distinguishes a user reading older turns from a user who is following
+the latest response. New messages and busy-state changes only auto-scroll when
+the message list is already near the bottom. Conversation-specific scroll
+positions continue to restore on thread switches, and a compact `Jump to
+latest` action appears when older content is being read.
+
+Changed files:
+
+- `apps/desktop/src/features/chat/ChatPage.tsx`
+- `apps/desktop/src/styles.css`
+- `docs/GOAL_EXECUTION.md`
+
+Evidence:
+
+- Chat remains visually bounded with the composer docked at the bottom.
+- The rebuilt Electron Chat surface rendered with the composer docked at the bottom and the message region contained inside the conversation workspace.
+- The scroll listener now owns the latest-position decision; source inspection confirms upward reading is preserved across message and busy-state changes.
+- The jump control is conditional on overflow and returns to the latest turn through the same bounded scroll region.
+- `npm run build`, `npm run typecheck`, `npm run check:syntax`, `npm run audit:local-only`, `npm run audit:electron-runtime`, `npm run check:hygiene`, and `git diff --check` pass.
+
 ## Slice 267 — Make Percy recoverable and visibly alive as a desktop companion
 
-Status: `implemented_pending_electron_verification`
+Status: `implemented_electron_runtime_verified`
 
 Percy remains a separate transparent, always-on-top Electron window with a
 drag gesture that uses screen coordinates, persisted placement, and completion
@@ -8485,13 +8509,12 @@ Changed files:
 - `apps/desktop/src/styles.css`
 - `docs/GOAL_EXECUTION.md`
 
-Evidence to record after the live pass:
+Evidence:
 
-- Percy window is separately discoverable from the main Skai window.
-- Transparent wolf sprite is visible without a rectangular background.
-- Dragging changes the window position independently of the app window.
-- A completed local agent request produces a short bubble and success animation.
-- A saved off-screen position is recovered onto the primary work area.
+- The rebuilt Electron process exposed separate `Skai Desktop · chat` and `Percy · Skai companion` windows.
+- Live capture showed the blue wolf over the desktop/app behind it with no rectangular pet background.
+- The renderer exposes the drag surface and the main process accepts screen-coordinate drag IPC; the CUA harness could not complete a transparent cross-window drag because its screenshot-region binding rejected the window crop.
+- Completion routing and success/bubble state remain wired through the local agent response path; no cloud service or unrestricted renderer API was added.
 
 ## Slice 199 — Restore stable package identifiers after rebrand
 

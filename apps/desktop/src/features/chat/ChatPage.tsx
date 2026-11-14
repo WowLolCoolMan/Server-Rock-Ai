@@ -56,10 +56,12 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(conversationTitle);
   const [renameBusy, setRenameBusy] = useState(false);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef(conversationId);
   const restoreScrollPendingRef = useRef(false);
+  const stickToLatestRef = useRef(true);
 
   useEffect(() => { localStorage.setItem("skai.chat.draft", draft); }, [draft]);
   useEffect(() => { localStorage.setItem("skai.chat.taskComposerOpen", String(taskComposerOpen)); }, [taskComposerOpen]);
@@ -68,6 +70,19 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
     const key = chatScrollKey(conversationId);
     return () => { localStorage.setItem(key, String(Math.max(0, Math.round(messageListRef.current?.scrollTop ?? 0)))); };
   }, [conversationId]);
+  useEffect(() => {
+    const node = messageListRef.current;
+    if (!node) return;
+    const updateScrollState = () => {
+      const distanceFromLatest = node.scrollHeight - node.scrollTop - node.clientHeight;
+      const atLatest = distanceFromLatest < 56;
+      stickToLatestRef.current = atLatest;
+      setShowJumpToLatest(!atLatest && node.scrollHeight > node.clientHeight + 12);
+    };
+    node.addEventListener("scroll", updateScrollState, { passive: true });
+    updateScrollState();
+    return () => node.removeEventListener("scroll", updateScrollState);
+  }, [messages.length > 0]);
   useEffect(() => {
     const conversationChanged = previousConversationIdRef.current !== conversationId;
     if (conversationChanged) {
@@ -81,8 +96,15 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
       window.requestAnimationFrame(() => { if (messageListRef.current) messageListRef.current.scrollTop = top; });
       return;
     }
+    if (!stickToLatestRef.current) return;
     window.requestAnimationFrame(() => { if (messageListRef.current) messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior: "smooth" }); });
   }, [conversationId, messages.length, busy]);
+
+  const jumpToLatest = () => {
+    stickToLatestRef.current = true;
+    setShowJumpToLatest(false);
+    messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: "smooth" });
+  };
 
   const submit = () => {
     const text = draft.trim();
@@ -130,7 +152,7 @@ export function ChatPage({ provider, model, models, messages, busy, taskBusy, at
     </div>
     <div className="chat-layout">
       <main className="chat-column">
-        <Card className="conversation-card"><div className="conversation-header"><span className="conversation-context">LOCAL CHAT</span><span className="conversation-count">{messages.length} messages</span></div>{messages.length === 0 ? <EmptyState visual={<img src={SKAI_WOLF_ICON} alt="" />} title="Start a conversation" description="Ask a question, attach a file, or jump into a coding workspace." /> : <div className="message-list" ref={messageListRef}>{messages.map((message, index) => <ChatMessage key={`${message.role}-${index}`} message={message} index={index} model={model} busy={busy} conversationId={conversationId} copied={copiedMessage === index} onCopy={(content, itemIndex) => void copyMessage(content, itemIndex)} onRetry={onRetryMessage} onFork={onForkFromMessage} onEdit={onEditMessage} />)}{busy && <article className="message-bubble assistant"><span>{model}</span><p className="typing">Thinking…</p></article>}</div>}</Card>
+        <Card className="conversation-card"><div className="conversation-header"><span className="conversation-context">LOCAL CHAT</span><span className="conversation-count">{messages.length} messages</span></div>{messages.length === 0 ? <EmptyState visual={<img src={SKAI_WOLF_ICON} alt="" />} title="Start a conversation" description="Ask a question, attach a file, or jump into a coding workspace." /> : <><div className="message-list" ref={messageListRef}>{messages.map((message, index) => <ChatMessage key={`${message.role}-${index}`} message={message} index={index} model={model} busy={busy} conversationId={conversationId} copied={copiedMessage === index} onCopy={(content, itemIndex) => void copyMessage(content, itemIndex)} onRetry={onRetryMessage} onFork={onForkFromMessage} onEdit={onEditMessage} />)}{busy && <article className="message-bubble assistant"><span>{model}</span><p className="typing">Thinking…</p></article>}</div>{showJumpToLatest && <div className="chat-latest-action"><Button variant="secondary" type="button" onClick={jumpToLatest}>Jump to latest ↓</Button></div>}</>}</Card>
         <Card className="composer-card">{queuedMessages.length > 0 && <div className="queued-messages" aria-label="Queued messages"><div className="queued-heading"><span className="section-kicker">UP NEXT</span><span>{queuedMessages.length}/8 queued</span></div>{queuedMessages.map((queued) => <div className="queued-message" key={queued.index}><span>{queued.text}</span>{queued.attachments?.length ? <small>{queued.attachments.map((attachment) => attachment.fileName).join(", ")}</small> : null}<button type="button" onClick={() => onRemoveQueued(queued.index)} aria-label={`Remove queued message ${queued.index + 1}`}>×</button></div>)}</div>}{attachments.length > 0 && <AttachmentList attachments={attachments} onRemove={onRemoveAttachment} />}<textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }} placeholder={busy ? "Type a follow-up while the model responds…" : "Message your model…"} aria-label="Message your model" rows={3} /><div className="composer-actions"><Button variant="ghost" type="button" onClick={onAttach} disabled={attachments.length >= 5}>Attach</Button><div><span className="composer-hint">Enter to {busy ? "queue" : "send"} · Shift+Enter for a new line</span><Button variant={busy ? "secondary" : "primary"} disabled={!draft.trim() && attachments.length === 0} onClick={submit}>{busy ? "Queue ↗" : "Send ↗"}</Button></div></div></Card>
       </main>
       <aside className="chat-rail">{messages.length === 0 ? <Card className="rail-card"><p className="section-kicker">QUICK START</p><button onClick={() => onNavigate("coding")} type="button"><strong>Build in a project</strong><span>Open files, terminal, and agent tasks</span></button><button onClick={() => onNavigate("images")} type="button"><strong>Create an image</strong><span>Use a local image workflow</span></button><button onClick={() => onNavigate("workbench")} type="button"><strong>Run an agent</strong><span>Plan, execute, and verify work</span></button><button onClick={() => onNavigate("marketplace")} type="button"><strong>Find a model or tool</strong><span>Browse voices, image models, skills, and runtimes</span></button></Card> : <Card className="rail-card chat-thread-summary"><p className="section-kicker">ACTIVE THREAD</p><strong>{conversationTitle}</strong><span>{messages.length} messages · {model}</span><small>Saved locally on this device.</small></Card>}<form className={`task-composer chat-task-composer ${taskComposerOpen ? "is-open" : ""}`} onSubmit={(event) => { event.preventDefault(); void planTask(); }}><div className="task-composer-heading"><div><p className="section-kicker">TASK BRIEF</p><h3>Plan local work</h3><p>Prepare a task for review before any tools run.</p></div><div className="task-composer-heading-actions"><span className="task-composer-badge">Local only</span><Button variant="ghost" type="button" className="task-composer-toggle" aria-expanded={taskComposerOpen} aria-controls="chat-task-composer-fields" onClick={() => setTaskComposerOpen((open) => !open)}>{taskComposerOpen ? "Collapse" : "Open"}</Button></div></div>{taskComposerOpen && <div id="chat-task-composer-fields"><div className="task-composer-fields"><label>Task title<input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Triage the next change" /></label><label>What should happen?<textarea value={taskInstruction} onChange={(event) => setTaskInstruction(event.target.value)} placeholder="Describe the outcome and how you will verify it." rows={4} /></label></div><EnvironmentPicker value={taskEnvironment} onChange={setTaskEnvironment} /><div className="task-composer-footer"><span>Creates a proposed task. Nothing runs yet.</span><Button variant="primary" type="submit" disabled={taskBusy === "planning" || !taskTitle.trim() || !taskInstruction.trim()}>{taskBusy === "planning" ? "Planning…" : "Add to task plan"}</Button></div></div>}</form></aside>
