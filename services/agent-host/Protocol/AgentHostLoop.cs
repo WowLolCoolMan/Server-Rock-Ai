@@ -64,8 +64,9 @@ public static class AgentHostLoop
                 "agent-host",
                 ProtocolVersion,
                 "ready",
-                ["runtime.health", "models.list", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
+                ["runtime.health", "models.list", "models.pull", "projects.list", "project.save", "project.files", "project.file.read", "project.file.write", "project.file.undo", "project.command.run", "project.terminal.start", "project.terminal.read", "project.terminal.write", "project.terminal.close", "project.git.status", "project.git.diff", "project.git.commit", "project.git.push", "project.git.pullRequest", "tasks.list", "tasks.plan", "tasks.queue", "tasks.execute", "tasks.cancel", "tasks.retry", "scheduled.list", "scheduled.create", "scheduled.pause", "scheduled.resume", "scheduled.cancel", "scheduled.runNow", "conversations.list", "conversations.search", "conversation.save", "conversation.metadata.save", "conversations.export", "conversation.fork", "memory.list", "memory.search", "memory.save", "memory.remove", "memory.enabled", "memory.export", "corpus.list", "corpus.search", "corpus.upsert", "corpus.remove", "chat.queue.list", "chat.queue.enqueue", "chat.queue.remove", "settings.get", "settings.save", "image.generate", "chat.complete", "workspace.attachment.extract", "voice.models", "voice.speak", "voice.stop"])),
             "models.list" => ListModels(request),
+            "models.pull" => PullModelAsync(request).GetAwaiter().GetResult(),
             "projects.list" => ListProjects(request),
             "project.save" => SaveProject(request),
             "project.files" => ListProjectFiles(request),
@@ -171,6 +172,18 @@ public static class AgentHostLoop
             capabilities = model.Capabilities,
             provider = providerId,
         }).ToArray());
+    }
+
+    private static async Task<AgentResponse> PullModelAsync(AgentRequest request)
+    {
+        var endpoint = RequiredLocalEndpoint(request, "endpoint", 2_000);
+        var model = RequiredBoundedString(request, "model", 512);
+        var progress = new List<string>();
+        await new ModelLibraryService().PullOllamaAsync(endpoint, model, message =>
+        {
+            if (progress.Count < 64 && !string.IsNullOrWhiteSpace(message)) progress.Add(message[..Math.Min(message.Length, 240)]);
+        }, CancellationToken.None).ConfigureAwait(false);
+        return new(ProtocolVersion, request.Id, true, new { model, provider = "Ollama", completed = true, progress });
     }
 
     private static AgentResponse ListProjects(AgentRequest request)

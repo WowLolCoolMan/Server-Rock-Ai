@@ -469,6 +469,11 @@ html[data-pet-window="true"], body[data-pet-window="true"], body[data-pet-window
 .scheduled-row-heading .status-badge { flex: 0 0 auto; }
 .scheduled-row-meta { display: flex; flex-wrap: wrap; gap: 3px 9px; color: var(--skai-color-text-muted); font-size: 10px; line-height: 1.35; }
 .scheduled-row-meta span + span::before { margin-right: 9px; color: var(--skai-color-border-strong); content: "·"; }
+.model-install-card { margin-bottom: 14px; padding: 18px; }
+.model-install-form { display: flex; gap: 8px; min-width: 0; }
+.model-install-form input { flex: 1 1 auto; min-width: 0; padding: 10px 11px; border: 1px solid var(--skai-color-border); border-radius: 8px; color: var(--skai-color-text); background: var(--skai-color-surface-soft); }
+.model-install-progress { display: grid; gap: 4px; margin-top: 10px; padding: 9px 10px; border-left: 2px solid var(--skai-color-accent); color: var(--skai-color-text-muted); background: color-mix(in srgb, var(--skai-color-accent) 6%, var(--skai-color-surface-soft)); font-family: var(--skai-font-mono); font-size: 9px; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .model-install-form { display: grid; }.model-install-form .ui-button { width: 100%; } }
 
 /* Overflow contract: every shared shell row must be allowed to shrink or wrap.
    Feature pages may opt into scrolling, but no label or action should be clipped

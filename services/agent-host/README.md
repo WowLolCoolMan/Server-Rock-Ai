@@ -3,7 +3,7 @@
 This is the first migration seam for the Electron desktop prototype. It is a
 small, local-only .NET process that speaks versioned JSON lines over stdin/stdout.
 
-The host exposes `runtime.health`, `models.list`, `projects.list`,
+The host exposes `runtime.health`, `models.list`, `models.pull`, `projects.list`,
 `tasks.list`, `scheduled.list`, `conversations.list`, `conversation.save`, and
 `chat.complete`, using the existing `SkaiDesktop.Core` provider and persistence
 contracts. The Electron renderer receives only the narrow context-isolated

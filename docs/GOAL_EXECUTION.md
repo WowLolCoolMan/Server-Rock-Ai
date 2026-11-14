@@ -11517,6 +11517,39 @@ Evidence:
 Remaining: live PR creation requires an authenticated GitHub CLI session and a
 feature-branch project; that external acceptance is not claimed here.
 
+## Slice 327 — Expose local model download progress
+
+Status: `implemented_local_runtime_typechecked`
+
+The Electron Models route now exposes the existing bounded Ollama pull adapter
+through the Agent Host. Users can enter a local Ollama model identifier, see
+the streamed local status messages after completion, and refresh discovery to
+confirm the installed model. The host accepts only the configured loopback
+endpoint and bounded model identifier; non-Ollama providers and remote routes
+remain explicitly unavailable.
+
+Changed files:
+
+- `services/agent-host/Protocol/AgentHostLoop.cs`
+- `services/agent-host/README.md`
+- `apps/desktop/electron/main.cjs`
+- `apps/desktop/src/app/AppRouteView.tsx`
+- `apps/desktop/src/app/useDesktopWorkspace.ts`
+- `apps/desktop/src/features/catalog/ModelsPage.tsx`
+- `apps/desktop/src/styles.css`
+
+Evidence:
+
+- `npm run desktop:typecheck` passed.
+- `npm run agent-host:build` passed with 0 warnings and 0 errors.
+- `npm run check:syntax` passed.
+- The route is local-only and uses the existing Core `ModelLibraryService`
+  rather than a second downloader or a renderer-side network path.
+
+Remaining: live download acceptance requires a running local Ollama instance
+and a model selected by the user; that external runtime evidence is not
+claimed here.
+
 ## Slice 310 — Make scheduled-run failures recoverable
 
 Status: `implemented_renderer_typechecked`
